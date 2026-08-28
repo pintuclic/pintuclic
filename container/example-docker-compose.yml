@@ -4,13 +4,13 @@ services:
     container_name: pintuclic-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-pintuclic}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pintuclic}
-      POSTGRES_DB: ${POSTGRES_DB:-pintuclic}
+      POSTGRES_USER: ${POSTGRES_USER:?Defina POSTGRES_USER en container/.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD en container/.env}
+      POSTGRES_DB: ${POSTGRES_DB:?Defina POSTGRES_DB en container/.env}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pintuclic} -d ${POSTGRES_DB:-pintuclic}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:?Defina POSTGRES_USER} -d ${POSTGRES_DB:?Defina POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
     environment:
       PORT: 3000
-      DATABASE_URL: postgres://${POSTGRES_USER:-pintuclic}:${POSTGRES_PASSWORD:-pintuclic}@db:5432/${POSTGRES_DB:-pintuclic}
+      DATABASE_URL: postgres://${POSTGRES_USER:?Defina POSTGRES_USER}:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:?Defina POSTGRES_DB}
     depends_on:
       db:
         condition: service_healthy

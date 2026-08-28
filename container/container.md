@@ -24,8 +24,23 @@ dentro de los contenedores: el host solo necesita Docker y Docker Compose.
 
 ## Uso
 
+`docker-compose.yml` no se versiona (ver `container/.gitignore`) para evitar
+publicar credenciales. Crearlo desde la plantilla si no existe:
+
 ```bash
-# Desde la raíz del proyecto
+cp container/example-docker-compose.yml container/docker-compose.yml
+```
+
+Configurar las credenciales (obligatorias):
+
+```bash
+cp container/.env.example container/.env
+# editar container/.env con credenciales fuertes
+```
+
+Levantar el stack (`.env` se carga automáticamente al estar junto al compose):
+
+```bash
 docker compose -f container/docker-compose.yml up --build -d
 ```
 
@@ -35,20 +50,19 @@ docker compose -f container/docker-compose.yml up --build -d
 
 ## Variables de entorno
 
-| Variable           | Default     | Descripción                          |
-| ------------------ | ----------- | ------------------------------------ |
-| `POSTGRES_USER`    | `pintuclic` | Usuario de PostgreSQL                |
-| `POSTGRES_PASSWORD`| `pintuclic` | Contraseña de PostgreSQL             |
-| `POSTGRES_DB`      | `pintuclic` | Base de datos                        |
-| `BACKEND_PORT`     | `3000`      | Puerto expuesto del backend          |
-| `FRONTEND_PORT`    | `80`        | Puerto expuesto del frontend         |
+No existen credenciales por defecto: si `POSTGRES_USER`, `POSTGRES_PASSWORD` o
+`POSTGRES_DB` no están definidas, `docker compose` aborta el arranque.
 
-Se pueden sobrescribir desde un archivo `.env` (no versionado) en el directorio
-`container/` o inline:
+| Variable           | Requerida | Descripción                                  |
+| ------------------ | --------- | -------------------------------------------- |
+| `POSTGRES_USER`    | Sí        | Usuario de PostgreSQL                        |
+| `POSTGRES_PASSWORD`| Sí        | Contraseña (alfanumérica, sin `@ : / #`, por ir embebida en `DATABASE_URL`) |
+| `POSTGRES_DB`      | Sí        | Base de datos                                |
+| `BACKEND_PORT`     | No        | Puerto expuesto del backend (default `3000`) |
+| `FRONTEND_PORT`    | No        | Puerto expuesto del frontend (default `80`)  |
 
-```bash
-POSTGRES_PASSWORD=secreto BACKEND_PORT=8080 docker compose -f container/docker-compose.yml up --build -d
-```
+Se definen en `container/.env` (no versionado). Nunca se publican en el repo:
+`container/.gitignore` excluye `.env` y `docker-compose.yml`.
 
 ## Notas
 
