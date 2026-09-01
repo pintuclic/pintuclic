@@ -12,14 +12,22 @@ Esta documentación está organizada bajo una arquitectura modular y transversal
 equipo-2-doc/
 ├── README.md                         <-- Este archivo (índice general)
 ├── AGENTS.md                         <-- Protocolo obligatorio para agentes de IA
+├── CHANGELOG.md                      <-- Registro central de versiones SemVer
 │
-├── 00_SISTEMA/                       <-- Arquitectura global y trazabilidad
-│   ├── ARQUITECTURA_GENERAL.md       <-- Visión general, actores, mapa de dominios y principios
-│   ├── ARQUITECTURA_BACKEND.md       <-- Stack oficial: TS, Express, Kysely, Zod, JWT, BCrypt, SMTP, CORS
-│   ├── MATRIZ_TRAZABILIDAD.md        <-- Mapeo HU <-> Requisitos de Seguridad <-> Diagramas
-│   ├── CHECKLIST_CIERRE_MODULOS.md   <-- Checklist de validación de Definition of Done
-│   ├── PLANTILLA_REPORTE_QA_MODULO.md <-- Plantilla estándar de informe de pruebas (.md y .docx)
-│   └── ESTANDAR_Y_GUIA_INCORPORACION.md <-- Guía y plantilla para agregar/refactorizar módulos
+├── 00_SISTEMA/                       <-- Gobernanza, arquitectura y plantillas del sistema
+│   ├── 01_ARQUITECTURA/              <-- Diseño estructural y dependencias
+│   │   ├── ARQUITECTURA_GENERAL.md   <-- Visión general, actores, mapa de dominios y principios
+│   │   ├── ARQUITECTURA_BACKEND.md   <-- Stack oficial: TS, Express, Kysely, Zod, JWT, BCrypt, SMTP, CORS
+│   │   └── MATRIZ_TRAZABILIDAD.md    <-- Mapeo HU <-> Requisitos de Seguridad <-> Diagramas
+│   │
+│   ├── 02_GUIAS_Y_ESTANDARES/        <-- Normativas de trabajo y contribución
+│   │   ├── GUIA_VERSIONADO_Y_WALKTHROUGHS.md <-- Normativa de SemVer y protocolo de walkthroughs
+│   │   └── ESTANDAR_Y_GUIA_INCORPORACION.md  <-- Guía para agregar o refactorizar módulos
+│   │
+│   └── 03_PLANTILLAS_Y_CHECKLISTS/   <-- Formatos de entrega y control de calidad
+│       ├── CHECKLIST_CIERRE_MODULOS.md       <-- Checklist de validación de Definition of Done
+│       ├── PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md / .docx <-- Plantilla de entrega post-implementación
+│       └── PLANTILLA_REPORTE_QA_MODULO.md / .docx          <-- Plantilla estándar de pruebas QA
 │
 ├── 01_TRANSVERSALES/                 <-- Capa de políticas globales (aplican a todo el sistema)
 │   ├── M20_SEGURIDAD_Y_AUDITORIA.md  <-- Cifrado, sesiones, autorización y protección de datos
@@ -44,5 +52,5 @@ equipo-2-doc/
 
 ## 🚀 Guías de Inicio Rápido
 
-- **Si eres un desarrollador del equipo:** Consulta primero la [Matriz de Trazabilidad](./00_SISTEMA/MATRIZ_TRAZABILIDAD.md) para ver el alcance de tu módulo y las políticas de seguridad asociadas.
+- **Si eres un desarrollador del equipo:** Consulta primero la [Matriz de Trazabilidad](./00_SISTEMA/01_ARQUITECTURA/MATRIZ_TRAZABILIDAD.md) para ver el alcance de tu módulo y las políticas de seguridad asociadas.
 - **Si eres un Agente de IA (Copilot / Assistant):** Consulta obligatoriamente [AGENTS.md](./AGENTS.md) antes de proponer cambios de código o generar nuevos módulos.

@@ -105,8 +105,8 @@ sequenceDiagram
     actor Dev as Desarrollador / IA
     participant Mod as 02_MODULOS_FUNCIONALES/
     participant Assets as assets/diagrams/
-    participant Matriz as 00_SISTEMA/MATRIZ_TRAZABILIDAD.md
-    participant Arq as 00_SISTEMA/ARQUITECTURA_GENERAL.md
+    participant Matriz as 00_SISTEMA/01_ARQUITECTURA/MATRIZ_TRAZABILIDAD.md
+    participant Arq as 00_SISTEMA/01_ARQUITECTURA/ARQUITECTURA_GENERAL.md
 
     Dev->>Mod: 1. Crear MXX_NOMBRE.md usando la plantilla
     Dev->>Assets: 2. Exportar diagramas a PNG/SVG en assets/diagrams/MXX/
@@ -123,14 +123,14 @@ Crear `02_MODULOS_FUNCIONALES/M[XX]_[NOMBRE].md` asegurando que no queden depend
 - Guardar el archivo fuente `.drawio` en `assets/raw_drawio/`.
 
 ### Paso 3: Registrar en la Matriz de Trazabilidad
-Abrir `00_SISTEMA/MATRIZ_TRAZABILIDAD.md` y agregar la sección correspondiente al nuevo módulo, indicando explícitamente:
+Abrir `00_SISTEMA/01_ARQUITECTURA/MATRIZ_TRAZABILIDAD.md` y agregar la sección correspondiente al nuevo módulo, indicando explícitamente:
 - Qué historias de `M20` (Seguridad) aplican.
 - Qué permisos de `M17` se requieren.
 - Qué eventos de `M18` (Notificaciones) se consumen o emiten.
 - Las rutas relativas a sus diagramas.
 
 ### Paso 4: Actualizar el Diagrama de Arquitectura
-Abrir `00_SISTEMA/ARQUITECTURA_GENERAL.md` y registrar las conexiones del nuevo módulo con los dominios existentes.
+Abrir `00_SISTEMA/01_ARQUITECTURA/ARQUITECTURA_GENERAL.md` y registrar las conexiones del nuevo módulo con los dominios existentes.
 
 ---
 
