@@ -24,7 +24,7 @@ graph TD
 ---
 
 ### 1. Política de Unicidad de Cuentas (`HU-CUE-08`)
-📄 **Documento de Referencia:** [politica_HU-CUE-08_unicidad_cuentas.md](../01_TRANSVERSALES/POLITICAS/politica_HU-CUE-08_unicidad_cuentas.md)
+📄 **Documento de Referencia:** [politica_HU-CUE-08_unicidad_cuentas.md](../../01_TRANSVERSALES/POLITICAS/politica_HU-CUE-08_unicidad_cuentas.md)
 
 - [ ] **Identificador Único:** Cada cuenta (particular, empresa o empleado) está identificada de forma inequívoca por su correo electrónico.
 - [ ] **No Solapamiento:** Un mismo correo no puede existir simultáneamente como cliente y como empleado/administrador.
@@ -33,7 +33,7 @@ graph TD
 ---
 
 ### 2. Política de Control de Acceso y Verificación en Servidor (`HU-ADM-03`)
-📄 **Documento de Referencia:** [politica_HU-ADM-03_control_acceso_servidor.md](../01_TRANSVERSALES/POLITICAS/politica_HU-ADM-03_control_acceso_servidor.md)
+📄 **Documento de Referencia:** [politica_HU-ADM-03_control_acceso_servidor.md](../../01_TRANSVERSALES/POLITICAS/politica_HU-ADM-03_control_acceso_servidor.md)
 
 - [ ] **Validación en Backend:** La seguridad no depende del frontend. Cada endpoint REST o query comprueba la sesión y los permisos atómicos del usuario en el servidor.
 - [ ] **Protección de Consultas y Modificaciones:** Las rutas `GET` que devuelven datos protegidos tienen la misma verificación de autorización que las rutas `POST`, `PUT` o `DELETE`.
@@ -43,7 +43,7 @@ graph TD
 ---
 
 ### 3. Política de No Exposición de Datos Sensibles (`HU-SEG-06`)
-📄 **Documento de Referencia:** [politica_HU-SEG-06_no_exposicion_datos_sensibles.md](../01_TRANSVERSALES/POLITICAS/politica_HU-SEG-06_no_exposicion_datos_sensibles.md)
+📄 **Documento de Referencia:** [politica_HU-SEG-06_no_exposicion_datos_sensibles.md](../../01_TRANSVERSALES/POLITICAS/politica_HU-SEG-06_no_exposicion_datos_sensibles.md)
 
 - [ ] **Payloads Mínimos:** Las respuestas JSON solo entregan al cliente los atributos necesarios para la vista actual.
 - [ ] **Cero Contraseñas / Hashes en Respuestas:** Ningún objeto de usuario serializado en la API contiene el campo `password_hash` o `salt`.
