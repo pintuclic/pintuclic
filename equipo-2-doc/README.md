@@ -1,4 +1,4 @@
-# Documentación Técnica y Funcional - Pintu Clic
+﻿# Documentación Técnica y Funcional - Pintu Clic
 
 Bienvenido al repositorio de documentación centralizada del equipo de desarrollo de **Pintu Clic**.
 
@@ -20,6 +20,7 @@ equipo-2-doc/
 │   │   └── MATRIZ_TRAZABILIDAD.md    <-- Mapeo HU <-> Requisitos de Seguridad <-> Diagramas
 │   │
 │   ├── 02_GUIAS_Y_ESTANDARES/        <-- Normativas de trabajo y contribución
+│   │   ├── GUIA_GIT_COMMITS_Y_PUSH.md        <-- Convención de Conventional Commits y flujo de push
 │   │   ├── GUIA_VERSIONADO_Y_WALKTHROUGHS.md <-- Normativa de SemVer y protocolo de walkthroughs
 │   │   └── ESTANDAR_Y_GUIA_INCORPORACION.md  <-- Guía para agregar o refactorizar módulos
 │   │
