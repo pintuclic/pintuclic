@@ -536,77 +536,79 @@ logotipo---, que corresponde a M16.*
 
 **Requisitos**
 
-  ------------------------------------------------------------------------------------------------------
-  **ID**              **Tipo**   **Categoría**    **Requisito**                **Origen**   **Prior.**
-  ------------------- ---------- ---------------- ---------------------------- ------------ ------------
-  **RF-ADM-05-01**    RF         Configuración    El sistema debe permitir al  Definido     Alta
-                                                  administrador modificar                   
-                                                  desde el panel los                        
-                                                  parámetros operativos y                   
-                                                  comerciales configurables,                
-                                                  sin intervención del equipo               
-                                                  de desarrollo.                            
+  -------------------------------------------------------------------------------------------------------
+  **ID**              **Tipo**   **Categoría**    **Requisito**                 **Origen**   **Prior.**
+  ------------------- ---------- ---------------- ----------------------------- ------------ ------------
+  **RF-ADM-05-01**    RF         Configuración    El sistema debe permitir al   Definido     Alta
+                                                  administrador modificar desde              
+                                                  el panel los parámetros                    
+                                                  operativos y comerciales                   
+                                                  configurables, sin                         
+                                                  intervención del equipo de                 
+                                                  desarrollo.                                
 
-  **RF-ADM-05-02**    RF         Configuración    El sistema debe agrupar los  Deducido     Media
-                                                  parámetros por área                       
-                                                  funcional y describir junto               
-                                                  a cada uno su efecto.                     
+  **RF-ADM-05-02**    RF         Configuración    El sistema debe agrupar los   Deducido     Media
+                                                  parámetros por área funcional              
+                                                  y describir junto a cada uno               
+                                                  su efecto. El catálogo                     
+                                                  completo de los parámetros                 
+                                                  gestionados por esta                       
+                                                  historia, y de las áreas                   
+                                                  funcionales en que se                      
+                                                  agrupan, se define en                      
+                                                  HU-ADM-07.                                 
 
-  **RF-ADM-05-03**    RF         Configuración    El sistema debe aplicar el   Deducido     Alta
-                                                  valor nuevo de un parámetro               
-                                                  de forma inmediata, sin                   
-                                                  requerir un reinicio ni un                
-                                                  despliegue.                               
+  **RF-ADM-05-03**    RF         Configuración    El sistema debe aplicar el    Deducido     Alta
+                                                  valor nuevo de un parámetro                
+                                                  de forma inmediata, sin                    
+                                                  requerir un reinicio ni un                 
+                                                  despliegue.                                
 
-  **RF-ADM-05-04**    RF         Configuración    El sistema debe conservar un Deducido     Media
-                                                  valor por defecto para cada               
-                                                  parámetro y permitir                      
-                                                  restituirlo.                              
+  **RF-ADM-05-04**    RF         Configuración    El sistema debe conservar un  Deducido     Media
+                                                  valor por defecto para cada                
+                                                  parámetro y permitir                       
+                                                  restituirlo.                               
 
-  **RF-ADM-05-05**    RF         Configuración    El sistema debe impedir que  Deducido     Alta
-                                                  un parámetro quede sin                    
-                                                  valor.                                    
+  **RF-ADM-05-05**    RF         Configuración    El sistema debe impedir que   Deducido     Alta
+                                                  un parámetro quede sin valor.              
 
-  **RF-ADM-05-06**    RF         Validación       El sistema debe validar que  Definido     Alta
-                                                  el valor introducido                      
-                                                  pertenezca al rango o al                  
-                                                  conjunto admisible del                    
-                                                  parámetro antes de                        
-                                                  aceptarlo.                                
+  **RF-ADM-05-06**    RF         Validación       El sistema debe validar que   Definido     Alta
+                                                  el valor introducido                       
+                                                  pertenezca al rango o al                   
+                                                  conjunto admisible del                     
+                                                  parámetro antes de aceptarlo.              
 
-  **RF-ADM-05-07**    RF         Validación       El sistema debe advertir al  Deducido     Media
-                                                  administrador cuando el                   
-                                                  valor introducido, siendo                 
-                                                  admisible, tenga un efecto                
-                                                  amplio sobre la operación, y              
-                                                  exigir confirmación.                      
+  **RF-ADM-05-07**    RF         Validación       El sistema debe advertir al   Deducido     Media
+                                                  administrador cuando el valor              
+                                                  introducido, siendo                        
+                                                  admisible, tenga un efecto                 
+                                                  amplio sobre la operación, y               
+                                                  exigir confirmación.                       
 
-  **RF-ADM-05-08**    RF         Trazabilidad     El sistema debe registrar    Definido     Alta
-                                                  cada cambio de configuración              
-                                                  indicando el parámetro, el                
-                                                  valor anterior, el valor                  
-                                                  nuevo, el autor y el                      
-                                                  momento.                                  
+  **RF-ADM-05-08**    RF         Trazabilidad     El sistema debe registrar     Definido     Alta
+                                                  cada cambio de configuración               
+                                                  indicando el parámetro, el                 
+                                                  valor anterior, el valor                   
+                                                  nuevo, el autor y el momento.              
 
-  **RF-ADM-05-09**    RF         Trazabilidad     El sistema debe mostrar      Deducido     Baja
-                                                  junto a cada parámetro la                 
-                                                  fecha de su última                        
-                                                  modificación.                             
+  **RF-ADM-05-09**    RF         Trazabilidad     El sistema debe mostrar junto Deducido     Baja
+                                                  a cada parámetro la fecha de               
+                                                  su última modificación.                    
 
-  **RF-ADM-05-10**    RF         Alcance          El sistema no debe aplicar   Deducido     Alta
-                                                  retroactivamente un cambio                
-                                                  de configuración sobre                    
-                                                  operaciones ya cerradas.                  
+  **RF-ADM-05-10**    RF         Alcance          El sistema no debe aplicar    Deducido     Alta
+                                                  retroactivamente un cambio de              
+                                                  configuración sobre                        
+                                                  operaciones ya cerradas.                   
 
-  **RNF-ADM-05-01**   RNF        Seguridad        El acceso a la configuración Deducido     Alta
-                                                  general debe reservarse al                
-                                                  administrador.                            
+  **RNF-ADM-05-01**   RNF        Seguridad        El acceso a la configuración  Deducido     Alta
+                                                  general debe reservarse al                 
+                                                  administrador.                             
 
-  **RNF-ADM-05-02**   RNF        Mantenibilidad   La incorporación de un       Deducido     Media
-                                                  parámetro nuevo no debe                   
-                                                  requerir modificar los                    
-                                                  valores ya configurados.                  
-  ------------------------------------------------------------------------------------------------------
+  **RNF-ADM-05-02**   RNF        Mantenibilidad   La incorporación de un        Deducido     Media
+                                                  parámetro nuevo no debe                    
+                                                  requerir modificar los                     
+                                                  valores ya configurados.                   
+  -------------------------------------------------------------------------------------------------------
 
 **Criterios de aceptación**
 
@@ -618,7 +620,7 @@ logotipo---, que corresponde a M16.*
                      parámetros agrupados por área con su valor vigente y la
                      descripción de su efecto.
 
-  **CA-ADM-05-02**   Dado que modifico el valor de un parámetro, cuando lo
+  **CA-ADM-05-02**   Dado que modificó el valor de un parámetro, cuando lo
                      guardo, entonces el sistema lo aplica de inmediato sin
                      requerir reinicio.
 
@@ -800,6 +802,102 @@ ni de permisos, que corresponden a HU-ADM-01 y HU-ADM-02.*
                      sistema envía el enlace de restablecimiento al correo
                      verificado de la cuenta.
   ----------------------------------------------------------------------------
+
+### **HU-ADM-07 --- Catalogo de parámetros configurables**
+
+**Como** administrador,
+
+**quiero** que el sistema tenga definido explícitamente cuáles son todos
+los parámetros operativos y comerciales configurables, agrupados por
+área funcional,
+
+**para** saber con certeza qué puedo ajustar desde la configuración
+general, sin depender de que el equipo de desarrollo me lo confirme caso
+por caso.
+
+  -----------------------------------------------------------------------------------------------------
+  **ID**             **Tipo**   **Categoría**    **Requisito**                **Origen**   **Prior.**
+  ------------------ ---------- ---------------- ---------------------------- ------------ ------------
+                                                                                           
+
+  **RF-ADM-07-01**   RF         Catálogo         El sistema debe mantener un  Definido     Alta
+                                                 catálogo con todos los                    
+                                                 parámetros configurables                  
+                                                 existentes, agrupados en las              
+                                                 siguientes áreas                          
+                                                 funcionales: Autenticación y              
+                                                 verificación,                             
+                                                 Comunicaciones, y Comercial.              
+
+  **RF-ADM-07-02**   RF         Catálogo         El área de Autenticación y   Definido     Alta
+                                                 verificación debe incluir,                
+                                                 como mínimo, los siguientes               
+                                                 parámetros: vigencia del                  
+                                                 código de verificación de                 
+                                                 registro; intentos                        
+                                                 permitidos para introducir                
+                                                 el código; complejidad                    
+                                                 mínima de la contraseña;                  
+                                                 vigencia del enlace o código              
+                                                 de recuperación de                        
+                                                 contraseña; intentos                      
+                                                 fallidos de inicio de sesión              
+                                                 antes de aplicar                          
+                                                 restricción; y duración de                
+                                                 la restricción por intentos               
+                                                 fallidos.                                 
+
+  **RF-ADM-07-03**   RF         Catálogo         El área de Comunicaciones    Definido     Alta
+                                                 debe incluir, como mínimo,                
+                                                 el parámetro de número de                 
+                                                 reintentos de envío de una                
+                                                 comunicación transaccional                
+                                                 ante fallo.                               
+
+  **RF-ADM-07-04**   RF         Catálogo         El área Comercial debe       Pendiente    Alta
+                                                 incluir los parámetros                    
+                                                 comerciales configurables                 
+                                                 del sistema. **Pendiente**:               
+                                                 definir con Isabella el                   
+                                                 listado completo (por                     
+                                                 ejemplo, porcentaje de IVA,               
+                                                 costo de envío, umbral de                 
+                                                 envío gratis), dado que el                
+                                                 único parámetro comercial                 
+                                                 mencionado en el análisis                 
+                                                 (IVA) aparece como ejemplo                
+                                                 suelto y no está aún                      
+                                                 catalogado formalmente.                   
+
+  **RF-ADM-07-05**   RF         Mantenibilidad   El catálogo de esta historia Deducido     Media
+                                                 debe mantenerse sincronizado              
+                                                 con el Anexo A.3, de modo                 
+                                                 que ningún parámetro exista               
+                                                 en uno sin existir en el                  
+                                                 otro                                      
+  -----------------------------------------------------------------------------------------------------
+
+**Criterios de aceptación**
+
+  ----------------------------------------------------------------------------
+  **ID**             **Criterio**
+  ------------------ ---------------------------------------------------------
+  **CA-ADM-07-01**   Dado que soy administrador y accedo a la configuración
+                     general, cuando reviso el área de Autenticación y
+                     verificación, entonces encuentro exactamente los seis
+                     parámetros definidos en RF-ADM-07-02.
+
+  **CA-ADM-07-02**   Dado que soy administrador y accedo a la configuración
+                     general, cuando reviso el área de Comunicaciones,
+                     entonces encuentro el parámetro de reintentos de envío
+                     definido en RF-ADM-07-03.
+
+  **CA-ADM-07-03**   Dado que se incorpora un parámetro nuevo al sistema,
+                     cuando se agrega al Anexo A.3, entonces también se agrega
+                     al catálogo de esta historia, y viceversa.
+  ----------------------------------------------------------------------------
+
+### 
 
 # **6. Preguntas pendientes**
 
