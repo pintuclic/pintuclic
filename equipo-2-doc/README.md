@@ -11,7 +11,6 @@ Esta documentación está organizada bajo una arquitectura modular y transversal
 ```text
 equipo-2-doc/
 ├── README.md                         <-- Este archivo (índice general)
-├── AGENTS.md                         <-- Protocolo obligatorio para agentes de IA
 ├── CHANGELOG.md                      <-- Registro central de versiones SemVer
 │
 ├── 00_SISTEMA/                       <-- Gobernanza, arquitectura y plantillas del sistema
@@ -36,7 +35,7 @@ equipo-2-doc/
 │   └── POLITICAS/                    <-- Políticas transversales (Unicidad, Control Servidor, Datos Sensibles)
 │
 ├── 02_MODULOS_FUNCIONALES/           <-- Especificación funcional detallada por módulo
-│   ├── M04_CUENTAS_Y_PERFIL.md       <-- Registro, login B2C/B2B, perfil, direcciones y aprobación
+│   ├── M04_CUENTAS_AUTH_PERFIL.md    <-- Registro, login B2C/B2B, perfil, direcciones y aprobación
 │   └── ...                           <-- Futuros módulos funcionales (M07, M08, M12...)
 │
 └── assets/                           <-- Recursos visuales y diagramas
@@ -53,4 +52,4 @@ equipo-2-doc/
 ## 🚀 Guías de Inicio Rápido
 
 - **Si eres un desarrollador del equipo:** Consulta primero la [Matriz de Trazabilidad](./00_SISTEMA/01_ARQUITECTURA/MATRIZ_TRAZABILIDAD.md) para ver el alcance de tu módulo y las políticas de seguridad asociadas.
-- **Si eres un Agente de IA (Copilot / Assistant):** Consulta obligatoriamente [AGENTS.md](./AGENTS.md) antes de proponer cambios de código o generar nuevos módulos.
+- **Si eres un Agente de IA (Copilot / Assistant):** Consulta obligatoriamente [AGENTS.md](../AGENTS.md) en la raíz del proyecto antes de proponer cambios de código o generar nuevos módulos.

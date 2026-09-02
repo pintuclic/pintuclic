@@ -36,7 +36,7 @@
 | tanda**         | coordinador del reparto, conforme al orden de      |
 |                 | construcción general y a la disponibilidad de M08  |
 |                 | (Carril C) y M21.                                  |
-+-----------------+----------------------------------------------------+
++=================+====================================================+
 
 # 
 
@@ -176,23 +176,42 @@ ya creada por correo. No comprende la gestión de perfil posterior
 
   RF-CUE-02-03    RF         Identidad       **\[Deducido\]** Si el correo  Deducido     Alta
                                              que entrega Google coincide                 
-                                             con el de una cuenta ya creada              
+                                             con el de una cuenta de                     
+                                             cliente particular ya creada                
                                              por correo y contraseña, el                 
-                                             sistema debe vincular el                    
-                                             acceso de Google a esa misma                
-                                             cuenta en lugar de crear una                
-                                             segunda: la unicidad de correo              
-                                             (RN-CUE-01) impide que existan              
-                                             dos cuentas de cliente con el               
-                                             mismo correo.                               
+                                             sistema debe sugerir al                     
+                                             usuario vincular el acceso de               
+                                             Google a esa cuenta existente,              
+                                             en lugar de crearla o                       
+                                             vincularla automáticamente.                 
+                                             Solo si el usuario confirma la              
+                                             sugerencia, el sistema vincula              
+                                             ambos accesos a la misma                    
+                                             cuenta, por aplicación de la                
+                                             unicidad de correo de                       
+                                             RF-CUE-08-02.                               
 
-  RF-CUE-02-04    RF         Credenciales    **\[Deducido\]** Una cuenta    Deducido     Alta
-                                             creada o vinculada mediante                 
-                                             Google no debe requerir ni                  
-                                             almacenar contraseña propia en              
-                                             el sistema, consistente con lo              
-                                             ya cerrado en HU-SEG-01 (Tanda              
-                                             2) para cuentas de este tipo.               
+  RF-CUE-02-04    RF         Credenciales    **\[Deducido\]** El sistema    Deducido     Alta
+                                             debe exigir que el cliente                  
+                                             registre una contraseña propia              
+                                             inmediatamente después de                   
+                                             completar el registro exitoso               
+                                             mediante Google, de modo que                
+                                             la cuenta cuente con ambas                  
+                                             vías de acceso desde su                     
+                                             creación. Vincular Google a                 
+                                             una cuenta que ya tenía                     
+                                             contraseña no se la retira:                 
+                                             esa cuenta conserva las dos                 
+                                             vías de acceso.                             
+
+  RF-CUE-02-05    RF                         **El sistema debe permitir que              
+                                             una cuenta vinculada entre                  
+                                             Google y formulario propio                  
+                                             inicie sesión indistintamente               
+                                             por cualquiera de las dos                   
+                                             vías, una vez completada la                 
+                                             vinculación.**                              
 
   RNF-CUE-02-01   RNF        Fiabilidad      **\[Deducido\]** Un fallo o    Deducido     Media
                                              cancelación del flujo de                    
@@ -214,16 +233,24 @@ ya creada por correo. No comprende la gestión de perfil posterior
 
   CA-CUE-02-02   Dado que el correo entregado por Google coincide con una
                  cuenta ya creada por correo y contraseña, cuando el usuario
-                 autoriza el acceso, entonces el sistema vincula el inicio de
-                 sesión a la cuenta existente en lugar de crear una nueva.
+                 autoriza el acceso, entonces el sistema le presenta la
+                 sugerencia de vincular ambas cuentas; si el usuario
+                 confirma, el inicio de sesión queda vinculado a la cuenta
+                 existente en lugar de crear una nueva.
 
   CA-CUE-02-03   Dado que el usuario cancela el flujo de autorización de
                  Google, cuando regresa al sitio, entonces no queda ninguna
                  cuenta ni sesión creada.
 
-  CA-CUE-02-04   Dado que una cuenta fue creada mediante Google, cuando el
-                 sistema construye el perfil, entonces no le asigna ni
-                 solicita contraseña.
+  CA-CUE-02-04   Dado que una cuenta de cliente particular fue creada
+                 mediante Google, cuando el sistema construye el perfil,
+                 entonces le solicita digitar y confirmar una contraseña
+                 antes de dar el registro por completado.
+
+  CA-CUE-02-05   Dado que una cuenta quedó vinculada entre Google y
+                 formulario propio, cuando el cliente intenta iniciar sesión
+                 por cualquiera de las dos vías, entonces el sistema le
+                 concede acceso a la misma cuenta.
   ---------------------------------------------------------------------------
 
 ### HU-CUE-03 --- Registro de cliente empresa sujeto a aprobación
@@ -517,6 +544,24 @@ abierta) sobre el alcance de \"gestionar\" un cliente.*
                                             secundario es un dato                       
                                             obligatorio, opcional, o si                 
                                             admite más de un valor.                     
+
+  RF-CUE-06-06   RF                         **El sistema debe prohibir                  
+                                            explícitamente que un cliente               
+                                            tipo empresa modifique el NIT               
+                                            de su cuenta desde la gestión               
+                                            estándar del perfil.**                      
+
+  RF-CUE-06-07   RF                         **El sistema debe definir en                
+                                            el panel del cliente tipo                   
+                                            particular una sección donde                
+                                            pueda solicitar el cambio de                
+                                            su cuenta a cliente tipo                    
+                                            empresa, digitando el NIT                   
+                                            correspondiente. Esta                       
+                                            solicitud debe quedar visible               
+                                            para el administrador en la                 
+                                            gestión descrita en                         
+                                            HU-CUE-09.**                                
   --------------------------------------------------------------------------------------------------
 
 **Criterios de aceptación**
@@ -540,6 +585,15 @@ abierta) sobre el alcance de \"gestionar\" un cliente.*
   CA-CUE-06-04   Dado que un cliente cambia su contraseña desde el perfil,
                  cuando se confirma, entonces todas sus sesiones activas
                  quedan invalidadas.
+
+  CA-CUE-06-05   Dado que un cliente tipo empresa intenta modificar el campo
+                 de NIT desde su perfil, cuando envía el formulario, entonces
+                 el sistema rechaza el cambio y no permite editar ese campo.
+
+  CA-CUE-06-06   Dado que un cliente particular accede a la sección de cambio
+                 a cuenta empresa, cuando digita un NIT y confirma la
+                 solicitud, entonces el sistema la registra como pendiente y
+                 la pone a disposición del administrador en HU-CUE-09.
   ---------------------------------------------------------------------------
 
 ### HU-CUE-07 --- Gestión de direcciones del cliente
@@ -582,12 +636,21 @@ el checkout, que dependen del modelo de entrega (M10, bloqueado).*
                                             cuenta.                                     
 
   RF-CUE-07-05   RF         Direcciones     **\[Pendiente\]** No está      Pendiente    Media
-                                            definido si la dirección se                 
-                                            valida contra alguna zona de                
+                                            definido si la dirección                    
+                                            registrada ---manual o por                  
+                                            geolocalización--- se valida                
+                                            contra alguna zona de                       
                                             cobertura, ni si es                         
                                             obligatoria para completar el               
                                             registro o el perfil; depende               
                                             del modelo de entrega de M10.               
+
+  RF-CUE-07-06   RF                         **El sistema debe permitir                  
+                                            registrar una dirección                     
+                                            automáticamente a partir de la              
+                                            ubicación del dispositivo del               
+                                            cliente, sin exigir que digite              
+                                            manualmente cada campo.**                   
   --------------------------------------------------------------------------------------------------
 
 **Criterios de aceptación**
@@ -606,6 +669,12 @@ el checkout, que dependen del modelo de entrega (M10, bloqueado).*
   CA-CUE-07-03   Dado que un cliente elimina una dirección, cuando confirma
                  la acción, entonces deja de estar disponible para futuras
                  compras.
+
+  CA-CUE-07-04   Dado que un cliente autoriza el acceso a la ubicación de su
+                 dispositivo, cuando confirma el registro de dirección,
+                 entonces el sistema completa los campos de dirección con los
+                 datos obtenidos de la geolocalización, permitiendo su
+                 edición manual antes de guardar.
   ---------------------------------------------------------------------------
 
 ### HU-CUE-08 --- Identidad y unicidad de la cuenta
@@ -643,12 +712,23 @@ cuentas de empleado o de administrador.*
                                             cuenta antes de aceptar el                  
                                             registro**                                  
 
-  RF-CUE-08-03   RF         Identidad       **\[Pendiente\]** No está      Pendiente    Media
-                                            definido si un cliente                      
-                                            particular puede cambiar de                 
-                                            tipo a empresa después de                   
-                                            registrado, o si necesita una               
-                                            cuenta nueva.                               
+  RF-CUE-08-03   RF         Identidad       **\[Pendiente\]** Un cliente   Pendiente    Media
+                                            particular puede solicitar el               
+                                            cambio de su cuenta a tipo                  
+                                            empresa sin necesidad de crear              
+                                            una cuenta nueva, mediante la               
+                                            sección definida en                         
+                                            RF-CUE-06-07, digitando el                  
+                                            NIT. Si el cliente particular               
+                                            accedió originalmente mediante              
+                                            Google y aún no cuenta con                  
+                                            contraseña propia, el sistema               
+                                            debe exigírsela como parte de               
+                                            la solicitud de cambio a                    
+                                            empresa, dado que la cuenta                 
+                                            empresa no dispone de acceso                
+                                            mediante Google                             
+                                            (RF-CUE-02-01).                             
   --------------------------------------------------------------------------------------------------
 
 **Criterios de aceptación**
@@ -723,6 +803,25 @@ NIT, que se realiza fuera del sistema.*
                                             misma solicitud, o si obliga a              
                                             una solicitud completamente                 
                                             nueva.                                      
+
+  RF-CUE-09-07   RF                         **El sistema debe presentar al              
+                                            administrador las solicitudes               
+                                            de actualización de NIT de                  
+                                            clientes empresa, junto con el              
+                                            documento de renovación de RUT              
+                                            adjunto, permitiéndole aprobar              
+                                            o rechazar la solicitud con un              
+                                            campo opcional para el motivo               
+                                            del rechazo.**                              
+
+  RF-CUE-09-08   RF                         **El sistema debe definir una               
+                                            vista independiente donde el                
+                                            administrador pueda aprobar o               
+                                            rechazar las solicitudes de                 
+                                            cambio de cliente tipo                      
+                                            particular a cliente tipo                   
+                                            empresa, con un campo opcional              
+                                            para el motivo del rechazo.**               
   --------------------------------------------------------------------------------------------------
 
 **Criterios de aceptación**
@@ -745,13 +844,104 @@ NIT, que se realiza fuera del sistema.*
 
   CA-CUE-09-04   Dado que una solicitud ya fue decidida, cuando se intenta
                  decidir de nuevo, entonces el sistema rechaza la operación.
+
+  CA-CUE-09-05   Dado que existe una solicitud de actualización de NIT
+                 pendiente, cuando el administrador la aprueba, entonces el
+                 sistema actualiza el NIT de la cuenta empresa y notifica la
+                 aprobación al cliente.
+
+  CA-CUE-09-06   Dado que el administrador rechaza una solicitud de
+                 actualización de NIT, cuando confirma el rechazo, entonces
+                 el sistema notifica al cliente empresa, incluyendo el motivo
+                 si fue registrado.
+
+  CA-CUE-09-07   Dado que existe una solicitud de cambio de cliente
+                 particular a empresa, cuando el administrador la aprueba,
+                 entonces el sistema convierte la cuenta a tipo empresa y
+                 notifica al cliente.
+
+  CA-CUE-09-08   Dado que el administrador rechaza una solicitud de cambio de
+                 cliente particular a empresa, cuando confirma el rechazo,
+                 entonces el sistema notifica al cliente, incluyendo el
+                 motivo si fue registrado.
+
+  CA-CUE-09-09   El sistema debe registrar en auditoría toda decisión de
+                 aprobación o rechazo sobre solicitudes de actualización de
+                 NIT y de cambio a cliente empresa, dejando constancia de
+                 quién decidió, cuándo, y el motivo si aplica; esta auditoría
+                 debe generar la notificación correspondiente al cliente
+                 empresa.
   ---------------------------------------------------------------------------
 
 ## 
 
-## 
+### HU-CUE-10 --- Renovación de NIT del cliente empresa
 
-## 
+**Como** cliente tipo empresa,
+
+**quiero** solicitar la actualización del NIT de mi cuenta adjuntando el
+documento de renovación del RUT,
+
+**para** mantener actualizada mi información fiscal en el sistema sin
+perder mi cuenta ni mi historial.
+
+**Requisitos**
+
+  --------------------------------------------------------------------------------------------------
+  **ID**         **Tipo**   **Categoría**   **Requisito**                  **Origen**   **Prior.**
+  -------------- ---------- --------------- ------------------------------ ------------ ------------
+  RF-CUE-10-01   RF         Actualización   **El sistema debe permitir a   Definido     Alta
+                            de datos        un cliente tipo empresa                     
+                                            solicitar la actualización de               
+                                            su NIT únicamente cuando                    
+                                            adjunte el documento de                     
+                                            renovación del RUT                          
+                                            correspondiente**                           
+
+  RF-CUE-10-02   RF         Validación      El sistema debe rechazar       Definido     Alta
+                                            cualquier solicitud de                      
+                                            actualización de NIT que no                 
+                                            incluya el documento de                     
+                                            renovación del RUT adjunto.                 
+
+  RF-CUE-10-03   RF         Estado          El sistema debe dejar la       Deducido     Alta
+                                            solicitud de actualización de               
+                                            NIT en condición pendiente de               
+                                            revisión hasta que el                       
+                                            administrador la apruebe o la               
+                                            rechace, sin modificar el NIT               
+                                            vigente mientras tanto.                     
+
+  RF-CUE-10-04   RF         Notificación    El sistema debe notificar al   Deducido     Media
+                                            cliente empresa la recepción                
+                                            de su solicitud de                          
+                                            actualización de NIT.                       
+  --------------------------------------------------------------------------------------------------
+
+**Criterios de aceptación**
+
+  ---------------------------------------------------------------------------
+  **ID**         **Criterio**
+  -------------- ------------------------------------------------------------
+  CA-CUE-10-01   Dado que un cliente empresa inicia una solicitud de
+                 actualización de NIT sin adjuntar el documento de renovación
+                 del RUT, cuando intenta enviarla, entonces el sistema no
+                 permite continuar.
+
+  CA-CUE-10-02   Dado que un cliente empresa adjunta el documento de
+                 renovación del RUT junto con el nuevo NIT, cuando envía la
+                 solicitud, entonces el sistema la registra como pendiente
+                 para revisión del administrador
+
+  CA-CUE-10-03   Dado que existe una solicitud de actualización de NIT
+                 pendiente, cuando el cliente empresa consulta el estado de
+                 su cuenta, entonces el sistema le muestra que la solicitud
+                 está en revisión y que el NIT vigente no ha cambiado.
+
+  CA-CUE-10-04   Dado que un cliente empresa envía correctamente su
+                 solicitud, cuando el sistema la registra, entonces le
+                 notifica la recepción de la solicitud.
+  ---------------------------------------------------------------------------
 
 ## 
 
