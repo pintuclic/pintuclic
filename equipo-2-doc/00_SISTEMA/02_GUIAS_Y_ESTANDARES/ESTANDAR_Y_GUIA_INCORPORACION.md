@@ -30,8 +30,9 @@ graph TD
 | **Directorio de Diagramas** | `assets/diagrams/M[XX]/` | `assets/diagrams/M07/` |
 | **Imágenes de Diagramas** | `[prefijo_o_hu]_[descripcion_corta].png` | `HU-CHK-01_flujo_pago.png` |
 | **Archivos Editables** | `assets/raw_drawio/[Nombre_Original].drawio` | `assets/raw_drawio/Diagrama_M07.drawio` |
+| **Carpetas de Código (Backend y Frontend)** | `m[xx]-[nombre-modulo]` (minúsculas, kebab-case) | `backend/src/modules/m04-cuentas/`<br>`frontend/src/modules/m04-cuentas/` |
 
-> ⚠️ **Regla de Oro:** **NUNCA crear subcarpetas por Historia de Usuario individual** (evitar `HU-01/`, `HU-02/`). Toda la especificación del módulo reside en un único archivo `.md` consolidado.
+> ⚠️ **Regla de Oro:** **NUNCA crear subcarpetas por Historia de Usuario individual** (evitar `HU-01/`, `HU-02/`). Toda la especificación del módulo reside en un único archivo `.md` consolidado, y todo el código del módulo vive dentro de su carpeta `m[xx]-[nombre-modulo]/`.
 
 ---
 

@@ -40,6 +40,7 @@ graph TD
 
 1. **Enfoque 100% en Historias de Usuario:** El trabajo del equipo y del Agente de IA debe centrarse exclusivamente en cumplir los Criterios de Aceptación (CA) y Requisitos Funcionales (RF) del módulo asignado.
 2. **Encapsulamiento:** Todo controlador, servicio, repositorio, esquema Zod o ruta nueva debe vivir estrictamente dentro del espacio del módulo asignado.
+3. **Nomenclatura Obligatoria de Carpetas (`m[xx]-[nombre-modulo]`):** Cada módulo nuevo debe residir en su propia carpeta bajo `backend/src/modules/` nombrada con el código del módulo en minúsculas y kebab-case (ej: `m20-seguridad/`, `m17-permisos/`, `m18-notificaciones/`, `m04-cuentas/`). Está prohibido crear carpetas sin el prefijo de código asignado.
 
 ---
 

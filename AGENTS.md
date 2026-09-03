@@ -1,4 +1,4 @@
-﻿# Protocolo y Guía de Desarrollo para Agentes de IA - PINTU CLIC
+# Protocolo y Guía de Desarrollo para Agentes de IA - PINTU CLIC
 
 Bienvenido. Este repositorio contiene la especificación funcional, técnica, diagramas y políticas de negocio de la plataforma **Pintu Clic**.
 
@@ -6,7 +6,7 @@ Como agente de IA responsable de implementar código, pruebas o arquitectura par
 
 > ⛔ **DIRECTIVAS CRÍTICAS DE ALCANCE Y CONCURRENCIA (PRODUCT OWNER):**
 > 1. **Aislamiento Estricto de Módulo:** Está terminantemente PROHIBIDO modificar o eliminar archivos, rutas o controladores existentes que pertenezcan a otros módulos o que estén siendo desarrollados por otros equipos. Tu código debe vivir exclusivamente dentro del módulo asignado.
-> 2. **Lectura Obligatoria de Estructura de Carpetas (`backend/infraestructura.md` y `frontend/infraestructura.md`):** Antes de crear o editar cualquier archivo de código, el agente DEBE leer la documentación de infraestructura del backend y frontend en la raíz del proyecto para ubicar los archivos respetando con precisión la estructura global definida para toda la organización.
+> 2. **Lectura Obligatoria de Estructura de Carpetas (`backend/infraestructura.md` y `frontend/infraestructura.md`) y Nomenclatura por Código de Módulo:** Antes de crear o editar cualquier archivo de código, el agente DEBE leer la documentación de infraestructura del backend y frontend en la raíz del proyecto para ubicar los archivos respetando con precisión la estructura global definida para toda la organización. Las carpetas dentro de `src/modules/` en backend y frontend deben nombrarse obligatoriamente con el estándar `m[xx]-[nombre-modulo]` en minúsculas y kebab-case (ej: `m20-seguridad`, `m17-permisos`, `m18-notificaciones`, `m04-cuentas`).
 > 3. **Protocolo de Parada e Informe de Inconsistencias:** Si para completar una HU consideras necesario modificar un archivo compartido o externo a tu módulo, **DEBES DETENER LA EJECUCIÓN INMEDIATAMENTE**, no realizar ningún cambio y presentar un reporte detallado al equipo humano explicando la inconsistencia o necesidad técnica. Solo podrás continuar tras recibir aprobación explícita.
 > 4. **Objetivo 100% Funcional:** No reconstruyas la arquitectura global del backend ni del frontend. Concéntrate en cumplir al 100% los Criterios de Aceptación (CA) y Requisitos Funcionales (RF) de cada Historia de Usuario usando el stack tecnológico aprobado.
 > 5. **Los Diagramas son Contratos de Flujo Obligatorios:** Los diagramas han sido diseñados y consensuados por todo el equipo de ingeniería. No son meras ilustraciones: **definen la máquina de estados, ramificaciones condicionales, secuencias de llamadas y manejo de errores exactos** que tu código debe respetar.
@@ -60,11 +60,12 @@ Antes de escribir una sola línea de código, **debes abrir y analizar visualmen
 - **M18 - Notificaciones ([equipo-2-doc/01_TRANSVERSALES/M18_NOTIFICACIONES.md](./equipo-2-doc/01_TRANSVERSALES/M18_NOTIFICACIONES.md)):**
   - Para flujos que involucren códigos de verificación o confirmaciones, consumir la capa de eventos/notificaciones desacoplada por SMTP.
 
-### Paso 5: Lectura Obligatoria de Estructura de Carpetas (`backend/` y `frontend/`)
+### Paso 5: Lectura Obligatoria de Estructura de Carpetas (`backend/` y `frontend/`) y Nomenclatura por Código
 Antes de crear o modificar cualquier archivo de código:
-- **Backend:** Lee el archivo `backend/infraestructura.md` (o `backend/README.md`) para ubicar rutas, controladores, servicios, repositorios Kysely y esquemas Zod en el directorio exacto asignado a tu módulo (`src/modules/[modulo]/`).
-- **Frontend:** Lee el archivo `frontend/infraestructura.md` (o `frontend/README.md`) para estructurar vistas, componentes, llamadas a la API y estilos en el lugar correspondiente según las convenciones del proyecto.
-- **Límites de Módulo:** Asegúrate de que todos los archivos nuevos se ubiquen dentro de la carpeta asignada a tu módulo, sin tocar archivos de otros equipos (ej: `src/modules/productos/`).
+- **Backend:** Lee el archivo `backend/infraestructura.md` (o `backend/README.md`) para ubicar rutas, controladores, servicios, repositorios Kysely y esquemas Zod en el directorio exacto asignado a tu módulo (`src/modules/m[xx]-[nombre]/`).
+- **Frontend:** Lee el archivo `frontend/infraestructura.md` (o `frontend/README.md`) para estructurar vistas, componentes, llamadas a la API y estilos en el directorio asignado a tu módulo (`src/modules/m[xx]-[nombre]/`).
+- **Nomenclatura Obligatoria de Carpetas de Módulo:** Toda carpeta creada dentro de `src/modules/` (tanto en `backend/` como en `frontend/`) DEBE seguir estrictamente la convención de código de módulo en minúsculas y nombre en kebab-case: `m[xx]-[nombre-modulo]` (ejemplos: `m20-seguridad`, `m17-permisos`, `m18-notificaciones`, `m04-cuentas`, `m02-productos`, `m07-carrito`, `m08-ordenes`).
+- **Límites de Módulo:** Asegúrate de que todos los archivos nuevos se ubiquen dentro de la carpeta asignada a tu módulo, sin tocar archivos de otros equipos ni carpetas ajenas.
 
 ### Paso 6: Stack Backend Obligatorio y Reglas de Arquitectura
 Todo código del backend generado para cualquier módulo DEBE ceñirse estrictamente al stack definido en [equipo-2-doc/00_SISTEMA/01_ARQUITECTURA/ARQUITECTURA_BACKEND.md](./equipo-2-doc/00_SISTEMA/01_ARQUITECTURA/ARQUITECTURA_BACKEND.md):
