@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
 
 /* Directivas y configuraciones base para Pintuclic */
 @layer base {
