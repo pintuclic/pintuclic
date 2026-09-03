@@ -9,28 +9,31 @@ El frontend replica la arquitectura modular y aislada del backend, permitiendo q
 ## 1. Estructura de Directorios
 
 ```text
-frontend/src/
- ├── assets/                 # Recursos estáticos (imágenes, logos SVG, iconos)
- ├── core/                   # 🌍 ZONA GLOBAL (Transversal y compartida)
- │    ├── api/               # Instancia global de Axios configurada (baseURL, interceptores JWT)
- │    ├── components/        # UI Design System base reutilizable con Tailwind (Botones, Modales, Inputs, Badges)
- │    ├── router/            # Enrutador principal de Vue e integración de rutas por módulo
- │    └── utils/             # Funciones utilitarias globales (formateo de moneda COP, fechas, etc.)
- │
- ├── modules/                # 📦 MÓDULOS DE NEGOCIO (convención obligatoria: m[xx]-[nombre])
- │    ├── m02-productos/     # Ej: Módulo M02 Catálogo de Pinturas
- │    │    ├── components/   # Piezas visuales con Tailwind (ej. ProductCard.vue, FilterSidebar.vue)
- │    │    ├── views/        # Páginas orquestadoras (ej. ProductGalleryView.vue)
- │    │    ├── services/     # Peticiones HTTP exclusivas del módulo (.ts)
- │    │    ├── store/        # Estado local con Pinia (ej. filtros seleccionados activos)
- │    │    ├── interfaces/   # Modelos y contratos TypeScript del módulo
- │    │    └── productos.routes.ts # Definición de rutas hijas del módulo
+frontend/
+ ├── src/
+ │    ├── assets/            # Recursos estáticos (imágenes, logos SVG, iconos)
+ │    ├── core/              # 🌍 ZONA GLOBAL (Transversal y compartida)
+ │    │    ├── api/          # Instancia global de Axios configurada (baseURL, interceptores JWT)
+ │    │    ├── components/   # UI Design System base reutilizable con Tailwind (Botones, Modales, Inputs, Badges)
+ │    │    ├── router/       # Enrutador principal de Vue e integración de rutas por módulo
+ │    │    └── utils/        # Funciones utilitarias globales (formateo de moneda COP, fechas, etc.)
  │    │
- │    └── m07-carrito/       # Ej: Módulo M07 Carrito de Compras (Gestión de orden con Pinia)
- │
- ├── App.vue                 # Componente raíz del layout (<router-view />)
- ├── main.ts                 # Punto de entrada (Instancia Vue, montaje de Pinia, Router y CSS)
- └── style.css               # Punto de entrada de estilos globales con Tailwind CSS v4 (@import "tailwindcss";)
+ │    ├── modules/           # 📦 MÓDULOS DE NEGOCIO (convención obligatoria: m[xx]-[nombre])
+ │    │    ├── m02-productos/# Ej: Módulo M02 Catálogo de Pinturas
+ │    │    │    ├── components/ # Piezas visuales con Tailwind (ej. ProductCard.vue, FilterSidebar.vue)
+ │    │    │    ├── views/   # Páginas orquestadoras (ej. ProductGalleryView.vue)
+ │    │    │    ├── services/# Peticiones HTTP exclusivas del módulo (.ts)
+ │    │    │    ├── store/   # Estado local con Pinia (ej. filtros seleccionados activos)
+ │    │    │    ├── interfaces/# Modelos y contratos TypeScript del módulo
+ │    │    │    └── productos.routes.ts # Definición de rutas hijas del módulo
+ │    │    │
+ │    │    └── m07-carrito/  # Ej: Módulo M07 Carrito de Compras (Gestión de orden con Pinia)
+ │    │
+ │    ├── App.vue            # Componente raíz del layout (<router-view />)
+ │    ├── main.ts            # Punto de entrada (Instancia Vue, montaje de Pinia, Router y CSS)
+ │    └── style.css          # Punto de entrada de estilos globales con Tailwind CSS v4 (@import "tailwindcss"; @config "../tailwind.config.ts";)
+ ├── tailwind.config.ts      # Configuración fuertemente tipada de temas, tokens y rutas de escaneo
+ └── vite.config.ts          # Configuración de Vite con plugin oficial de Tailwind
 ```
 
 ---
@@ -89,6 +92,7 @@ El proyecto utiliza **Tailwind CSS v4** integrado directamente con Vite mediante
 - **Punto de Entrada CSS:** Configurado en `frontend/src/style.css` e importado en `src/main.ts`:
   ```css
   @import "tailwindcss";
+  @config "../tailwind.config.ts";
 
   @layer base {
     html, body {
@@ -100,7 +104,8 @@ El proyecto utiliza **Tailwind CSS v4** integrado directamente con Vite mediante
     }
   }
   ```
-- **Sin archivos de configuración heredados:** Tailwind v4 opera directamente sobre CSS nativo con la directiva `@theme` si se requieren extensiones personalizadas. No se deben crear archivos `tailwind.config.js` ni `postcss.config.js`.
+- **Configuración Tipada (`tailwind.config.ts`):** Vinculada directamente mediante la directiva `@config "../tailwind.config.ts";`. Permite definir rutas de escaneo explícitas (`content`), autocompletado e IntelliSense con tipos nativos (`satisfies Config`), y extensiones de tema centralizadas (paleta corporativa `brand`, fuentes, etc.).
+
 
 ---
 
