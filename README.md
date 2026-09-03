@@ -11,7 +11,7 @@ cp example-docker-compose.yml docker-compose.yml
 Configurar las credenciales (obligatorias):
 
 ```bash
-cp container/.env.example container/.env
+cp .env.example .env
 # editar .env con sus credenciales
 ```
 Levantar el stack (`.env` se carga automáticamente al estar junto al compose):
