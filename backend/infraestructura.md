@@ -14,20 +14,20 @@ El código fuente (`src/`) se divide en dos áreas principales: el núcleo (`cor
 ```text
 backend/src/
  ├── core/                   # 🌍 ZONA GLOBAL (Infraestructura técnica)
- │    ├── db/                # Configuración de conexión a PostgreSQL con Kysely
+ │    ├── db/                # Conexión PostgreSQL con Kysely y types.ts central (interface Database)
  │    ├── middlewares/       # Interceptores globales (CORS, Manejo de Errores, Auth JWT)
  │    ├── utils/             # Funciones auxiliares genéricas
  │    └── types/             # Interfaces globales (Respuestas HTTP genéricas)
  │
- ├── modules/                # 📦 ZONA DE NEGOCIO (Lógica de Pintuclic)
- │    ├── products/          # Ej: Módulo de Catálogo e Inventario
- │    │    ├── interfaces/   # Contratos (ej. IProduct, ICategory)
+ ├── modules/                # 📦 ZONA DE NEGOCIO (Lógica de Pintuclic: convención m[xx]-[nombre])
+ │    ├── m02-productos/     # Ej: Módulo M02 Catálogo e Inventario
+ │    │    ├── interfaces/   # Contratos y schemas Zod
  │    │    ├── repositories/ # Consultas SQL exclusivas de productos (Kysely)
  │    │    ├── services/     # Reglas de negocio (ej. validar stock disponible)
  │    │    ├── controllers/  # Manejo de peticiones HTTP (req, res)
- │    │    └── product.routes.ts # Ensamblaje e inyección de dependencias
+ │    │    └── productos.routes.ts # Ensamblaje e inyección de dependencias
  │    │
- │    └── orders/            # Ej: Módulo de Pedidos y Facturación (Aislado)
+ │    └── m04-cuentas/       # Ej: Módulo M04 Cuentas, Autenticación y Perfil (Aislado)
  │
  ├── app.routes.ts           # Enrutador principal que agrupa todas las rutas
  └── index.ts                # Raíz de composición: inicializa Express
