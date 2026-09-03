@@ -23,7 +23,7 @@ graph TD
 | :--- | :--- | :--- |
 | **TypeScript** | Lenguaje principal (Backend & DTOs) | Tipado estricto (`strict: true`). Prohibido el uso de `any`; tipar todas las entradas, salidas y entidades. |
 | **Express.js** | Framework HTTP / Enrutamiento | Exponer únicamente las rutas y controladores correspondientes al módulo asignado. |
-| **Kysely** | Type-Safe SQL Query Builder | Construcción de consultas SQL tipadas. Prohibido concatenar strings para SQL. Previene inyecciones SQL. |
+| **Kysely** | Type-Safe SQL Query Builder | Consultas SQL fuertemente tipadas. Todos los tipos de tablas residen exclusivamente en `backend/src/core/db/types.ts`. Prohibido crear tipos duplicados o consultas sin tipar. |
 | **Zod** | Validación de Entradas y DTOs | Validar en tiempo de ejecución todos los `req.body`, `req.query` y `req.params`. Inferir tipos directamente (`z.infer<typeof Schema>`). |
 | **JWT (jsonwebtoken)** | Gestión de Sesión y Tokens | Emisión y verificación de tokens de acceso y refresco (`HU-SEG-02`). No incluir datos sensibles en el payload (`HU-SEG-06`). |
 | **BCrypt** | Hashing de Contraseñas | Hashing con salt dinámico (costo mínimo: 12) para contraseñas (`HU-SEG-01`). |
@@ -88,15 +88,46 @@ export const RegisterUserSchema = z.object({
 export type RegisterUserDTO = z.infer<typeof RegisterUserSchema>['body'];
 ```
 
-### B. Consultas SQL Type-Safe con Kysely (`repository.ts`)
+### B. Tipado de Base de Datos y Repositorios con Kysely (`src/core/db/types.ts` y `repository.ts`)
+
+> 🔒 **Regla Estricta para la IA y Desarrolladores:**  
+> Todos los esquemas y tablas de la base de datos deben definirse **en un único archivo central** (`backend/src/core/db/types.ts`).  
+> Está **prohibido inventar tipos o interfaces locales** para entidades de base de datos dentro de los módulos. Toda entidad debe derivarse de los utilitarios de Kysely (`Selectable`, `Insertable`, `Updateable`).
+
 ```typescript
+// 1. backend/src/core/db/types.ts (Archivo Central Único)
+import { Generated, ColumnType, Selectable, Insertable, Updateable } from 'kysely';
+
+export interface Database {
+  users: UsersTable;
+  audit_logs: AuditLogsTable;
+}
+
+export interface UsersTable {
+  id: Generated<string>;
+  email: string;
+  password_hash: string;
+  full_name: string;
+  is_active: boolean;
+  created_at: Generated<Date>;
+  updated_at: ColumnType<Date, never, Date>;
+}
+
+// Helpers exportados para uso global en repositorios/servicios:
+export type User = Selectable<UsersTable>;
+export type NewUser = Insertable<UsersTable>;
+export type UserUpdate = Updateable<UsersTable>;
+```
+
+```typescript
+// 2. Uso en el Repositorio del Módulo (ej: accounts.repository.ts)
 import { Kysely } from 'kysely';
-import { Database } from '../../database/types';
+import { Database, User, NewUser } from '../../../core/db/types';
 
 export class AccountsRepository {
   constructor(private db: Kysely<Database>) {}
 
-  async findByEmail(email: string) {
+  async findByEmail(email: string): Promise<User | undefined> {
     return await this.db
       .selectFrom('users')
       .selectAll()
@@ -104,11 +135,11 @@ export class AccountsRepository {
       .executeTakeFirst();
   }
 
-  async createUser(data: NewUser) {
+  async createUser(data: NewUser): Promise<User> {
     return await this.db
       .insertInto('users')
       .values(data)
-      .returning(['id', 'email', 'full_name', 'created_at'])
+      .returningAll()
       .executeTakeFirstOrThrow();
   }
 }

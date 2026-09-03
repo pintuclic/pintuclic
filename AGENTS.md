@@ -71,7 +71,7 @@ Antes de crear o modificar cualquier archivo de código:
 Todo código del backend generado para cualquier módulo DEBE ceñirse estrictamente al stack definido en [equipo-2-doc/00_SISTEMA/01_ARQUITECTURA/ARQUITECTURA_BACKEND.md](./equipo-2-doc/00_SISTEMA/01_ARQUITECTURA/ARQUITECTURA_BACKEND.md):
 - **Lenguaje:** TypeScript estricto (`strict: true`, sin tipos `any`).
 - **Framework HTTP:** Express.js estructurado en controladores y servicios dentro del módulo asignado.
-- **Acceso a Base de Datos:** **Kysely** con tipado fuerte (nunca concatenar strings SQL ni usar queries sin tipar).
+- **Acceso y Tipado de Base de Datos:** **Kysely** con tipado fuerte. Todos los tipos de tablas y esquemas de base de datos DEBEN centralizarse en un único archivo (`backend/src/core/db/types.ts`). La interfaz raíz `Database` es la única fuente de la verdad. Se prohíbe duplicar interfaces de entidades de base de datos en los módulos. Todo repositorio debe inyectar `Kysely<Database>` y utilizar exclusivamente los helpers de Kysely (`Selectable<T>`, `Insertable<T>`, `Updateable<T>`) para retornos y parámetros. Prohibido terminantemente el uso de `any` o queries SQL en texto plano sin tipar.
 - **Validación de Entradas (DTOs):** **Zod** para validar `req.body`, `req.query`, `req.params`.
 - **Autenticación y Sesiones:** **JWT** con tiempos de vida cortos y rotación segura.
 - **Hashing de Contraseñas:** **BCrypt** con costo de sal mínimo de 12 (`HU-SEG-01`).

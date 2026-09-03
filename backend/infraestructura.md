@@ -14,7 +14,7 @@ El código fuente (`src/`) se divide en dos áreas principales: el núcleo (`cor
 ```text
 backend/src/
  ├── core/                   # 🌍 ZONA GLOBAL (Infraestructura técnica)
- │    ├── db/                # Configuración de conexión a PostgreSQL con Kysely
+ │    ├── db/                # Conexión PostgreSQL con Kysely y types.ts central (interface Database)
  │    ├── middlewares/       # Interceptores globales (CORS, Manejo de Errores, Auth JWT)
  │    ├── utils/             # Funciones auxiliares genéricas
  │    └── types/             # Interfaces globales (Respuestas HTTP genéricas)
