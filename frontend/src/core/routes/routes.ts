@@ -9,3 +9,4 @@ export const attendanceRoutes: RouteRecordRaw[] = [
     component: () => import('../views/attendance/AttendanceDashboard.vue'), // <-- Asi se importaran las vistas , usando lazy loading, da error por que la vista no exite
   }
 ];
+
