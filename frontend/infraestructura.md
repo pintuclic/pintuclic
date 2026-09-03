@@ -17,16 +17,16 @@ frontend/src/
  │    ├── router/            # Enrutador principal de Vue
  │    └── utils/             # Formateadores (ej. formatear precios en moneda local)
  │
- ├── modules/                # 📦 MÓDULOS DE NEGOCIO
- │    ├── catalog/           # Ej: Módulo de Catálogo de Pinturas
+ ├── modules/                # 📦 MÓDULOS DE NEGOCIO (convención obligatoria: m[xx]-[nombre])
+ │    ├── m02-productos/     # Ej: Módulo M02 Catálogo de Pinturas
  │    │    ├── components/   # Piezas visuales (ej. ProductCard.vue, FilterSidebar.vue)
  │    │    ├── views/        # Páginas orquestadoras (ej. ProductGalleryView.vue)
  │    │    ├── services/     # Peticiones HTTP exclusivas del catálogo (.ts)
  │    │    ├── store/        # Estado local (ej. filtros seleccionados activos)
  │    │    ├── interfaces/   # Modelos TypeScript
- │    │    └── catalog.routes.ts 
+ │    │    └── productos.routes.ts 
  │    │
- │    └── cart/              # Ej: Módulo de Carrito de Compras (Gestión global con Pinia)
+ │    └── m07-carrito/       # Ej: Módulo M07 Carrito de Compras (Gestión global con Pinia)
  │
  ├── App.vue                 # Layout raíz (Navbar, Footer, <router-view />)
  └── main.ts                 # Instancia Vue, Pinia y Router
