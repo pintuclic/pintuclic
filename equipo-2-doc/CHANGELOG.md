@@ -6,6 +6,26 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v1.1.0] - 2026-09-04
+### Módulo: 00_SISTEMA y Core Backend / Infraestructura Docker
+- **Alcance:** Implementación de la capa transversal `backend/src/core/` y refactorización de Dockerfiles para compilación limpia a producción.
+- **Añadido:**
+  - `backend/src/core/db/types.ts`: Tipado Kysely centralizado de las 25 tablas de la base de datos y 8 ENUMs nativos a partir de `schema_pintuclic.sql`.
+  - `backend/src/core/db/connection.ts`: Conexión PostgreSQL con Kysely y fallback de entorno por defecto.
+  - `backend/src/core/utils/crypto.ts`: Hashing seguro de contraseñas con BCrypt (costo 12, `HU-SEG-01`).
+  - `backend/src/core/utils/jwt.ts` y middleware `auth.middleware.ts`: Gestión de sesiones y tokens seguros (`HU-SEG-02`).
+  - `backend/src/core/middlewares/errorHandler.ts`: Manejador centralizado de excepciones y validaciones Zod con protección contra exposición de datos sensibles (`HU-SEG-06`).
+  - `backend/src/core/middlewares/cors.middleware.ts`: CORS restrictivo.
+  - `backend/src/app.routes.ts`: Enrutador global con endpoint `/api/health`.
+  - `backend/.dockerignore` y `frontend/.dockerignore`: Prevención de filtración de `node_modules` del host a contenedores Linux.
+- **Refactorizado:**
+  - `backend/Dockerfile` y `Dockerfile.backend`: Multi-stage build con compilación estricta de TypeScript a JavaScript (`tsc` $\rightarrow$ `dist/`) y runtime mínimo con `node dist/index.js` bajo usuario no-root `USER node`.
+  - `frontend/Dockerfile` y `Dockerfile.frontend`: Multi-stage build estandarizado con `npm ci` determinístico y servidor estático Nginx 1.27.
+  - `backend/tsconfig.json`: Habilitados `rootDir` y `outDir` para compilación limpia en `/dist`.
+- **Estado:** ✅ Compilación limpia con `tsc` y build verificado en backend y frontend.
+
+---
+
 ## [v1.0.0] - 2026-09-01
 ### Módulo: 00_SISTEMA y Transversales (Línea Base del Proyecto)
 - **Alcance:** Creación y formalización de la arquitectura documental, técnica y de seguridad de Pintu Clic.
