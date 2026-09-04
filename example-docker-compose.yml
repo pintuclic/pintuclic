@@ -17,18 +17,8 @@ services:
 
   backend:
     build:
-<<<<<<< HEAD
-<<<<<<<< HEAD:docker-compose.yml
-      context: ./backend
-      dockerfile: Dockerfile
-========
       context: .
       dockerfile: Dockerfile.backend
->>>>>>>> origin/develop:example-docker-compose.yml
-=======
-      context: ./backend
-      dockerfile: Dockerfile
->>>>>>> 2f6c1d6b98e9aafa955e609cfaff917a535f1fb5
     container_name: pintuclic-backend
     restart: unless-stopped
     environment:
@@ -42,18 +32,8 @@ services:
 
   frontend:
     build:
-<<<<<<< HEAD
-<<<<<<<< HEAD:docker-compose.yml
-      context: ./frontend
-      dockerfile: Dockerfile
-========
       context: .
       dockerfile: Dockerfile.frontend
->>>>>>>> origin/develop:example-docker-compose.yml
-=======
-      context: ./frontend
-      dockerfile: Dockerfile
->>>>>>> 2f6c1d6b98e9aafa955e609cfaff917a535f1fb5
       args:
         VITE_API_URL: /api
     container_name: pintuclic-frontend
