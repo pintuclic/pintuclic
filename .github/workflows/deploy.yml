@@ -1,0 +1,54 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: false
+
+      - name: Validar .env presente en el repositorio
+        run: |
+          if [ ! -f .env ]; then
+            echo "No se encontro .env en la raiz del repositorio" >&2
+            echo "Crear .env en el servidor con las variables de .env.example" >&2
+            exit 1
+          fi
+
+      - name: Levantar contenedores con Docker Compose
+        run: docker compose up -d --build
+
+      - name: Verificar salud del backend
+        run: |
+          set -a
+          source .env
+          set +a
+          URL="http://localhost:${BACKEND_PORT:-3000}/api/health"
+          for i in $(seq 1 30); do
+            if curl -fsS "$URL" >/dev/null 2>&1; then
+              echo "Backend saludable en el intento $i"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend no respondio a tiempo" >&2
+          exit 1
+
+      - name: Limpiar imagenes de docker sin usar
+        run: docker image prune -f
