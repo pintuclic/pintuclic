@@ -15,6 +15,7 @@ frontend/
  │    ├── core/              # 🌍 ZONA GLOBAL (Transversal y compartida)
  │    │    ├── api/          # Instancia global de Axios configurada (baseURL, interceptores JWT)
  │    │    ├── components/   # UI Design System base reutilizable con Tailwind (Botones, Modales, Inputs, Badges)
+ │    │    ├── theme/        # 🎨 Paleta de colores oficial, tokens y guía de diseño (colors.ts, GUIA_COLORES.md)
  │    │    ├── router/       # Enrutador principal de Vue e integración de rutas por módulo
  │    │    └── utils/        # Funciones utilitarias globales (formateo de moneda COP, fechas, etc.)
  │    │
@@ -118,16 +119,27 @@ Cualquier agente de IA o desarrollador que construya código para el frontend de
 - **Uso directo en `<template>`:** Todos los estilos deben aplicarse directamente usando clases utilitarias de Tailwind (ej. `flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-slate-200`).
 - **Prohibición de estilos inline:** No usar atributos `style="..."` salvo para valores dinámicos calculados en tiempo de ejecución (ej. porcentajes dinámicos de barras de progreso).
 
-### 4.2. Paleta de Colores y Tokens Semánticos
-Para mantener coherencia en toda la plataforma:
-- **Superficies y Fondos:** Escala neutra de Tailwind `slate` o `gray` (ej. `bg-slate-50`, `bg-white`, `border-slate-200`, `text-slate-900`, `text-slate-600`).
-- **Color de Marca Primario (Pintuclic):** Gama naranja cálida (`orange-600` / `hover:bg-orange-700`, `focus:ring-orange-500`) para llamadas a la acción (CTA), botones principales y acentos de marca.
-- **Acciones Secundarias:** Tonos neutros o neutros con borde (`bg-white border border-slate-300 text-slate-700 hover:bg-slate-50`).
-- **Estados Semánticos:**
-  - Éxito / Confirmación: `emerald-600` / `bg-emerald-50 text-emerald-700 border-emerald-200`.
-  - Peligro / Error / Eliminación: `red-600` / `bg-red-50 text-red-700 border-red-200`.
-  - Advertencia / Alerta: `amber-500` / `bg-amber-50 text-amber-800 border-amber-200`.
-  - Información / Estado neutro: `blue-600` / `bg-blue-50 text-blue-700 border-blue-200`.
+### 4.2. Paleta Oficial de Colores y Tokens Semánticos (Obligatoria)
+
+> 🚨 **REGLA DE ORO DE DISEÑO (TOLERANCIA CERO):**  
+> Todo desarrollador o Agente de IA **DEBE utilizar única y exclusivamente los tokens oficiales** declarados en `src/core/theme/colors.ts` y mapeados en `tailwind.config.ts`.  
+> Queda terminantemente PROHIBIDO inventar clases con valores arbitrarios (ej. `bg-[#002855]`, `text-[#123]`) o usar colores de Tailwind ajenos a la marca (ej. `bg-purple-600`, `text-pink-500`).
+
+| Rol de Negocio | Color | HEX | Clases Tailwind | Aplicación Principal |
+| :--- | :--- | :---: | :--- | :--- |
+| **Corporativo** | Azul Oscuro | `#002855` | `bg-corporate` / `text-corporate` | Títulos principales, precios, navegación, header. |
+| **Acción** | Azul Vivo | `#0877E8` | `bg-action` / `text-action` | Botones primarios, enlaces, bordes activos, sliders. |
+| **SubAcción** | Azul Claro | `#DAEEFC` | `bg-subaction` / `text-subaction` | Botones secundarios de selección, subprocesos (Calculadora). |
+| **Conversión** | Verde Principal | `#41BF5A` | `bg-conversion` / `text-conversion` | Botón "Agregar al Carrito", confirmaciones de compra. |
+| **Conversión (Hover)** | Verde Oscuro | `#1B6D24` | `bg-conversion-hover` / `text-conversion-hover` | Estado hover de botones de compra y conversión. |
+| **Conversión (Acento)**| Verde Acento | `#3CB148` | `bg-conversion-accent` / `text-conversion-accent` | Variantes o estados activos del flujo de compra. |
+| **Destacado** | Amarillo | `#FFC107` | `bg-highlight` / `text-highlight` | Etiquetas de "Patrocinado", ofertas, badges. |
+| **Neutros: Blanco** | Blanco | `#FFFFFF` | `bg-neutral-white` (o `bg-white`) / `text-white` | Fondos de tarjetas, modales, superficies principales. |
+| **Neutros: Gris Muy Claro** | Gris Fondo | `#F7F8FA` | `bg-neutral-lightest` / `text-neutral-lightest` | Fondo general de página, fondos de fotos de producto. |
+| **Neutros: Gris Claro** | Gris Bordes | `#E5E7EB` | `bg-neutral-light` / `border-neutral-light` | Bordes, divisores, separadores, sliders inactivos. |
+| **Neutros: Gris Medio** | Gris Secundario | `#6B7280` | `bg-neutral-medium` / `text-neutral-medium` | Textos secundarios, descripciones, precios tachados. |
+| **Neutros: Gris Oscuro**| Gris Cuerpo | `#374151` | `bg-neutral-dark` / `text-neutral-dark` | Texto general de lectura, párrafos de cuerpo. |
+| **Neutros: Negro** | Negro Títulos | `#111827` | `bg-neutral-black` / `text-neutral-black` | Títulos de alta jerarquía (H1, H2), nombres de producto. |
 
 ### 4.3. Diseño Responsivo Mobile-First
 - Diseñar pensando primero en dispositivos móviles, agregando modificadores para pantallas más grandes:
