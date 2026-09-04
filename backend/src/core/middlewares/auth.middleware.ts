@@ -18,7 +18,7 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
     const userPayload = verifyAccessToken(token);
     req.user = userPayload;
     next();
-  } catch (error) {
+  } catch (_error) {
     sendError(res, 'Token de autenticación inválido o expirado', 'FORBIDDEN', 403);
   }
 }

@@ -6,6 +6,19 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v1.1.1] - 2026-09-04
+### Módulo: 00_SISTEMA y Calidad de Código (Linters)
+- **Alcance:** Activación de restricción estricta contra tipos `any` explícitos en TypeScript para backend y frontend.
+- **Añadido:**
+  - `backend/eslint.config.mjs`: Configuración ESLint 9 + `typescript-eslint` con regla `@typescript-eslint/no-explicit-any: "error"`.
+  - `frontend/eslint.config.js`: Configuración ESLint 9 + `typescript-eslint` + `eslint-plugin-vue` con regla `@typescript-eslint/no-explicit-any: "error"`.
+  - Scripts `"lint"` y `"lint:fix"` en los `package.json` de backend y frontend.
+- **Ajustado:**
+  - `backend/src/core/db/connection.ts` y `auth.middleware.ts`: Tipado estricto de variables de error no utilizadas.
+- **Estado:** ✅ Regla probada y validada activamente contra violaciones de tipo `any` en ambos entornos.
+
+---
+
 ## [v1.1.0] - 2026-09-04
 ### Módulo: 00_SISTEMA y Core Backend / Infraestructura Docker
 - **Alcance:** Implementación de la capa transversal `backend/src/core/` y refactorización de Dockerfiles para compilación limpia a producción.
