@@ -4,6 +4,23 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.3.0] - 2026-09-04
+### Módulo: Frontend y Design System (Paleta Oficial de Colores)
+- **Alcance:** Implementación y estandarización de los tokens de color globales de Pintuclic (`corporate`, `action`, `subaction`, `conversion`, `highlight`, `neutral-*`), integración con Tailwind CSS v4, directiva de diseño estricta en `AGENTS.md` y documentación técnica en `frontend/src/core/theme/`.
+- **Añadido:**
+  - `frontend/src/core/theme/colors.ts`: Constantes fuertemente tipadas de la paleta oficial (HEX).
+  - `frontend/src/core/theme/index.ts`: Punto de exportación centralizado del tema.
+  - `frontend/src/core/theme/GUIA_COLORES.md`: Manual de uso de clases Tailwind, tabla de roles y ejemplos de componentes.
+- **Ajustado:**
+  - `frontend/tailwind.config.ts`: Mapeo oficial de los tokens semánticos en el tema extendido.
+  - `frontend/src/style.css`: Declaración de variables CSS nativas `@theme` para Tailwind CSS v4.
+  - `frontend/src/App.vue`: Showcase interactivo demostrativo de los roles visuales.
+  - `frontend/infraestructura.md`: Actualización de la arquitectura con el módulo `core/theme/` y la tabla oficial de colores.
+  - `AGENTS.md`: Directiva crítica #8 con regla estricta de prohibición de colores arbitrarios.
+- **Estado:** ✅ Validado con `npm run lint` y `npm run build` sin errores.
+
+---
+
 ## [v1.2.0] - 2026-09-04
 ### Módulo: BD (Base de Datos) y Documentación Técnica
 - **Alcance:** Actualización a la versión 2.0 del esquema relacional (25 tablas), reorganización modular del directorio `bd/`, documentación técnica, diagramas fuente y guía de refactorización para agentes de IA y desarrolladores.
