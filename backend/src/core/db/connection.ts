@@ -44,7 +44,7 @@ export async function checkDbConnection(): Promise<boolean> {
     const client = await pool.connect();
     client.release();
     return true;
-  } catch (error) {
+  } catch (_error) {
     console.warn('⚠️ No se pudo conectar a la base de datos PostgreSQL con la configuración actual.');
     console.warn('   Verifique las variables en el archivo .env o levante el contenedor Docker.');
     return false;
