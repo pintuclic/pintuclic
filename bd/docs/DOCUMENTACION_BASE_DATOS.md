@@ -1,9 +1,19 @@
 # 📘 Arquitectura y Documentación del Esquema de Base de Datos - PINTUCLIC
 
-> **Versión:** 2.0 (Actualizada con la página **FINAL** del diagrama Draw.io)  
+> **Versión Actual:** 2.0 (Actualizada con la página **FINAL** del diagrama Draw.io)  
 > **Motor de Base de Datos:** PostgreSQL 12+ (Compatible con PostgreSQL 18)  
 > **Total de Tablas:** 25  
-> **Script DDL Oficial:** [`schema_pintuclic.sql`](./schema_pintuclic.sql)
+> **Script DDL Oficial:** [`../sql/schema_pintuclic.sql`](../sql/schema_pintuclic.sql)  
+> **Walkthrough Detallado de Migraciones:** [`./WALKTHROUGH_DATABASE.md`](./WALKTHROUGH_DATABASE.md)
+
+---
+
+## 📜 Historial Resumido de Versiones (Changelog)
+
+| Versión | Fecha | Tablas Nuevas | Tablas Deprecadas | Cambios Destacados | Detalle Completo |
+| :---: | :---: | :--- | :--- | :--- | :---: |
+| **v2.0** | 2026-09-03 | `categoria`, `subcategorias`, `sub_subcategorias`, `linea`, `color`, `tonos`, `variante`, `caracteristica`, `combo`, `variante_combo` (10) | `descripcion`, `nesesidad`, `presentacion`, `producto_descripcion`, `producto_presentacion` (5) | Catálogo multinivel de 4 capas, variantes por color/tono, combos, 8 ENUMs nativos y `UNIQUE(id_usuario)` en `usuario_rol`. | [Ver v2.0](./WALKTHROUGH_DATABASE.md#-versión-20-2026-09-03) |
+| **v1.0** | 2026-09-02 | 21 tablas iniciales | Ninguna | Esquema fundacional derivado del diagrama `Pre-Final`. | [Ver v1.0](./WALKTHROUGH_DATABASE.md#-versión-10-2026-09-02) |
 
 ---
 
