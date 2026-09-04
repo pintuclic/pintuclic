@@ -1,4 +1,4 @@
-﻿# Documentación Técnica y Funcional - Pintu Clic
+# Documentación Técnica y Funcional - Pintu Clic
 
 Bienvenido al repositorio de documentación centralizada del equipo de desarrollo de **Pintu Clic**.
 
@@ -9,7 +9,7 @@ Esta documentación está organizada bajo una arquitectura modular y transversal
 ## 📂 Organización de la Documentación
 
 ```text
-equipo-2-doc/
+docs/
 ├── README.md                         <-- Este archivo (índice general)
 ├── CHANGELOG.md                      <-- Registro central de versiones SemVer
 │

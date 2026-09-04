@@ -1,6 +1,6 @@
 # Guía Estándar para Incorporación y Refactorización de Módulos - PINTU CLIC
 
-Este documento establece la **normativa y el procedimiento estándar** para integrar nuevos módulos de negocio (o refactorizar los existentes) en la carpeta `equipo-2-doc/`. 
+Este documento establece la **normativa y el procedimiento estándar** para integrar nuevos módulos de negocio (o refactorizar los existentes) en la carpeta `docs/`. 
 
 Su propósito es garantizar que la documentación crezca de forma ordenada, modular y directamente interpretable por **Agentes de Inteligencia Artificial (IA)** y desarrolladores del equipo.
 
