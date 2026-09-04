@@ -4,6 +4,20 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.2.0] - 2026-09-04
+### Módulo: BD (Base de Datos) y Documentación Técnica
+- **Alcance:** Actualización a la versión 2.0 del esquema relacional (25 tablas), reorganización modular del directorio `bd/`, documentación técnica, diagramas fuente y guía de refactorización para agentes de IA y desarrolladores.
+- **Añadido:**
+  - `bd/sql/schema_pintuclic.sql`: Script DDL PostgreSQL v2.0 (25 tablas, 8 ENUMs nativos, 27 FKs e índices de rendimiento).
+  - `bd/docs/DOCUMENTACION_BASE_DATOS.md`: Especificación técnica del modelo, diagrama Mermaid ER, diccionario de datos y tabla sinóptica de versiones.
+  - `bd/docs/WALKTHROUGH_DATABASE.md`: Registro histórico y técnico de migraciones (v1.0 $\rightarrow$ v2.0 con tablas nuevas, deprecadas, constraints e impacto en backend/frontend).
+  - `bd/docs/GUIA_REFACTORIZACION_BD.md`: Instrucciones paso a paso, reglas de oro, checklist y plantilla oficial para futuras refactorizaciones.
+  - `bd/assets/`: Recursos de diagramas ER (`ER_Pintuco.png`, `ER_Pintuco.drawio.xml`).
+  - `bd/README.md`: Mapa general y accesos directos al módulo de base de datos.
+- **Refactorizado:**
+  - Estructuración del directorio `bd/` en subcarpetas semánticas (`sql/`, `docs/`, `assets/`).
+- **Estado:** ✅ DDL validado, orden topológico de foreign keys comprobado y documentación sincronizada.
+
 ---
 
 ## [v1.1.1] - 2026-09-04
