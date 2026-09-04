@@ -34,6 +34,12 @@ graph LR
 | **MINOR (`0.X.0`)** | Implementación completa de una nueva Historia de Usuario (HU), nueva ruta/controlador funcional o nuevo caso de uso. | Implementación exitosa de `HU-CUE-01` (Registro con verificación de correo). |
 | **PATCH (`0.0.X`)** | Corrección de defectos (bugs), mejoras en esquemas de validación Zod, ajustes menores de seguridad o refactorización interna sin alterar contratos. | Fix en regex de contraseña en Zod, ajuste de mensajes de error genéricos `HU-SEG-06`. |
 
+> 🔄 **Regla Obligatoria del Reinicio a Cero (Efecto Odómetro en SemVer):**  
+> Cada vez que se incrementa un dígito a la izquierda, **todos los dígitos situados a su derecha se reinician obligatoriamente a `0`**:  
+> - **Al subir `PATCH`:** Solo se suma al parche $\rightarrow$ Ej: `1.5.4` pasa a **`1.5.5`**.  
+> - **Al subir `MINOR`:** Se suma a `MINOR` y el `PATCH` se reinicia a cero $\rightarrow$ Ej: `1.5.4` pasa a **`1.6.0`** *(nunca `1.6.4` ni `1.6.1`)*.  
+> - **Al subir `MAJOR`:** Se suma a `MAJOR` y tanto `MINOR` como `PATCH` se reinician a cero $\rightarrow$ Ej: `1.5.4` pasa a **`2.0.0`**.
+
 ---
 
 ## 3. Registro Central: `CHANGELOG.md`
