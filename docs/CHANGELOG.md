@@ -16,7 +16,8 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - `bd/README.md`: Mapa general y accesos directos al módulo de base de datos.
 - **Refactorizado:**
   - Estructuración del directorio `bd/` en subcarpetas semánticas (`sql/`, `docs/`, `assets/`).
-- **Estado:** ✅ DDL validado, orden topológico de foreign keys comprobado y documentación sincronizada.
+  - Renombrado y estandarización global del directorio raíz de documentación: `equipo-2-doc/` $\rightarrow$ `docs/` para abarcar a toda la organización.
+- **Estado:** ✅ DDL validado, orden topológico comprobado y rutas de documentación estandarizadas a `docs/`.
 
 ---
 
