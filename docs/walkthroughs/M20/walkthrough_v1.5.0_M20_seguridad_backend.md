@@ -43,7 +43,7 @@
 | **HU-SEG-02** | Gestión de sesión | **100% en backend** | `POST/GET/DELETE /api/seguridad/sesion`, `GET/DELETE /api/seguridad/sesiones`, `GET/PUT /api/seguridad/politica-sesion` |
 | **HU-SEG-03** | Autorización verificada en el servidor | **100% Cumplida** | `GuardasSeguridad` (validador central), `AutorizacionService` |
 | **HU-SEG-06** | No exposición de datos sensibles | **100% Cumplida (backend)** | `core/utils/sanitize.ts`, `errorHandler` endurecido |
-| **HU-SEG-04** | Registro de auditoría de acciones relevantes | **⏸️ EN PAUSA** | — (decisión del PO) |
+| **HU-SEG-04** | Registro de auditoría de acciones relevantes | **⏸️ EN PAUSA** | — (decisión del LG) |
 | **HU-SEG-05** | Protección de datos personales | **⛔ BLOQUEADA** | — (a la espera del modelo de datos de consentimiento) |
 
 ### Descripción del Alcance de la Versión

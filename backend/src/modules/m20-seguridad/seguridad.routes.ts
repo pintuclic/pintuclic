@@ -9,6 +9,9 @@ import { SesionService } from './services/sesion.service';
 import { RegistroSeguridadService } from './services/registro-seguridad.service';
 import { GuardasSeguridad } from './middlewares/autorizacion.middleware';
 import { SeguridadController } from './controllers/seguridad.controller';
+import { PrivacidadRepository } from './repositories/privacidad.repository';
+import { PrivacidadService } from './services/privacidad.service';
+import { PrivacidadController } from './controllers/privacidad.controller';
 
 /**
  * Nombre del permiso que habilita ajustar los tiempos de vigencia de sesión.
@@ -17,6 +20,13 @@ import { SeguridadController } from './controllers/seguridad.controller';
  * M17 debe registrar este permiso para que la ruta sea utilizable en producción.
  */
 export const PERMISO_CONFIGURAR_SESION = 'seguridad.configurar_sesion';
+
+/**
+ * Permiso que habilita resolver solicitudes de supresión de datos (HU-SEG-05).
+ *
+ * ⚠️ DEPENDENCIA EXTERNA: M17 debe registrarlo en el catálogo `permisos`.
+ */
+export const PERMISO_GESTIONAR_PRIVACIDAD = 'seguridad.gestionar_privacidad';
 
 // -----------------------------------------------------------------------------
 // Raíz de composición del módulo: inyección de dependencias (principio D de SOLID)
@@ -27,6 +37,8 @@ const registro = new RegistroSeguridadService();
 const autorizacion = new AutorizacionService(repositorio);
 const sesion = new SesionService(sesionRepositorio);
 const credenciales = new CredencialesService(repositorio, sesion);
+const privacidadRepositorio = new PrivacidadRepository(db);
+const privacidad = new PrivacidadService(privacidadRepositorio, registro);
 
 /**
  * Guardas centrales de autorización expuestos al resto de módulos (RNF-SEG-03-01).
@@ -36,9 +48,10 @@ const credenciales = new CredencialesService(repositorio, sesion);
 export const guardas = new GuardasSeguridad(autorizacion, sesion, registro);
 
 /** Servicios de M20 reutilizables por otros módulos (p. ej. M04 en el login). */
-export const serviciosSeguridad = { credenciales, sesion, autorizacion, registro };
+export const serviciosSeguridad = { credenciales, sesion, autorizacion, registro, privacidad };
 
 const controlador = new SeguridadController(credenciales, sesion, autorizacion);
+const controladorPrivacidad = new PrivacidadController(privacidad);
 const seguridadRoutes = Router();
 
 // -----------------------------------------------------------------------------
@@ -55,6 +68,15 @@ seguridadRoutes.post('/sesion', (req, res, next) => {
     return;
   }
   void controlador.abrirSesion(req, res).catch(next);
+});
+
+/**
+ * Aviso de privacidad vigente. Deliberadamente PÚBLICO: el usuario debe poder leer el
+ * texto antes de registrarse, porque no puede consentir lo que no ha visto
+ * (RF-SEG-05-03, RF-SEG-05-04).
+ */
+seguridadRoutes.get('/privacidad/aviso', (req, res, next) => {
+  void controladorPrivacidad.consultarAviso(req, res).catch(next);
 });
 
 // -----------------------------------------------------------------------------
@@ -75,5 +97,23 @@ seguridadRoutes.put(
 );
 
 seguridadRoutes.put('/credenciales', controlador.cambiarContrasena);
+
+// --- Protección de datos personales (HU-SEG-05) ---
+seguridadRoutes.get('/privacidad/consentimiento', controladorPrivacidad.consultarConsentimiento);
+seguridadRoutes.post('/privacidad/consentimiento', controladorPrivacidad.registrarConsentimiento);
+seguridadRoutes.post('/privacidad/supresion', controladorPrivacidad.solicitarSupresion);
+seguridadRoutes.get('/privacidad/supresion', controladorPrivacidad.listarMisSolicitudes);
+
+// Cola administrativa: exige permiso explícito comprobado en servidor (HU-SEG-03).
+seguridadRoutes.get(
+  '/privacidad/supresion/pendientes',
+  guardas.requierePermiso(PERMISO_GESTIONAR_PRIVACIDAD),
+  controladorPrivacidad.listarSolicitudesPendientes
+);
+seguridadRoutes.put(
+  '/privacidad/supresion/:id',
+  guardas.requierePermiso(PERMISO_GESTIONAR_PRIVACIDAD),
+  controladorPrivacidad.resolverSolicitud
+);
 
 export { seguridadRoutes };
