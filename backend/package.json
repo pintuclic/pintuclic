@@ -7,6 +7,9 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "tsx src/index.ts",
+    "db": "tsx src/core/db/setup.ts",
+    "db:setup": "tsx src/core/db/setup.ts",
+    "db:init": "tsx src/core/db/setup.ts",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
