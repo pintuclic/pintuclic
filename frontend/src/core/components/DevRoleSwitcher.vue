@@ -4,7 +4,11 @@ import { useAuth } from '../auth/useAuth';
 
 const { currentUser, currentRole, simularUsuario, logout, can } = useAuth();
 const isExpanded = ref(true);
-const isDev = import.meta.env.DEV ?? true;
+// Permite visualizar el widget en vite dev y en contenedores Docker locales (localhost / 127.0.0.1)
+const isDev =
+  import.meta.env.DEV ||
+  (typeof globalThis.location !== 'undefined' &&
+    (globalThis.location.hostname === 'localhost' || globalThis.location.hostname === '127.0.0.1'));
 </script>
 
 <template>
