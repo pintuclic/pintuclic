@@ -4,6 +4,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.6.0] - 2026-09-05
+### Módulo: M17 (Administración y Permisos - Frontend Core)
+- **Alcance:** Implementación de la infraestructura de autenticación simulada y comprobación reactiva de permisos (`useAuth`, `can()`) para frontend, integración del widget interactivo de desarrollo `DevRoleSwitcher` y publicación de la guía de testing de M17 para desacoplar el desarrollo de permisos de la pantalla de login (M04).
+- **Hitos Clave:**
+  - Composable `useAuth.ts` con persistencia en `localStorage`, roles tipados y catálogo de perfiles mock basado en el seed central.
+  - Componente flotante `DevRoleSwitcher.vue` con alternador de identidades en 1 clic (Admin, Empleado Parcial, Cliente, Empresa).
+  - Guía oficial de implementación y estándares visuales en `frontend/src/modules/m17-permisos/README.md`.
+- **Estado:** ✅ Build de Vite (`npm run build`) y linter limpios; contenedor Docker verificado.
+- 🔗 **Walkthrough Técnico M17 Frontend:** [walkthrough_v1.6.0_M17_frontend_auth_simulation.md](./walkthroughs/M17/walkthrough_v1.6.0_M17_frontend_auth_simulation.md)
+
+---
+
 ## [v1.5.5] - 2026-09-05
 ### Módulo: Base de Datos y Calidad de Desarrollo (Mocks y Fixtures Centralizados)
 - **Alcance:** Unificación del sistema de mocks de prueba en una única fuente centralizada ([`bd/sql/seed_pintuclic.sql`](../bd/sql/seed_pintuclic.sql)), eliminación definitiva de la carpeta aislada `backend/src/modules/m20-seguridad/__fixtures__`, creación del ejecutor `npm run db:seed` y publicación de la [Guía de Mocks y Datos de Prueba](../bd/docs/GUIA_MOCKS_Y_DATOS_PRUEBA.md).

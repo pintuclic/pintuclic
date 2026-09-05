@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import DevRoleSwitcher from './core/components/DevRoleSwitcher.vue'
 
 const count = ref(0)
 const selectedSubAction = ref('paredes')
@@ -208,5 +209,8 @@ const selectedSubAction = ref('paredes')
     <footer class="border-t border-neutral-light bg-neutral-white py-6 text-center text-xs text-neutral-medium">
       <p class="font-medium">Pintuclic Frontend — Vue 3 + Vite + Tailwind CSS v4 | Design System Oficial</p>
     </footer>
+
+    <!-- Widget Flotante de Simulación de Roles para Desarrollo -->
+    <DevRoleSwitcher />
   </main>
 </template>
