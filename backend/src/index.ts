@@ -20,6 +20,21 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // 2. Enrutador principal de la API
 app.use('/api', appRouter);
 
+// Ruta raíz informativa de bienvenida
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Servidor Backend Pintuclic API en línea',
+    version: '1.5.5',
+    endpoints: {
+      health: '/api/health',
+      base: '/api',
+      seguridad: '/api/seguridad',
+      productos: '/api/productos',
+    },
+  });
+});
+
 // 3. Manejador de rutas no encontradas (404)
 app.use((req, res) => {
   sendError(res, `Ruta no encontrada: ${req.method} ${req.originalUrl}`, 'NOT_FOUND', 404);
