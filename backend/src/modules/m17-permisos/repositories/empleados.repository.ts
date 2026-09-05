@@ -1,6 +1,6 @@
-﻿import { Kysely } from 'kysely';
+import { Kysely } from 'kysely';
 import { Database, EnumEstadoUsuario } from '../../../core/db/types';
-import { EmpleadoResumen, EmpleadoDetalle } from '../interfaces/m17.interfaces';
+import { EmpleadoResumen } from '../interfaces/m17.interfaces';
 
 // ==============================================================================
 // M17 - REPOSITORIO DE EMPLEADOS
