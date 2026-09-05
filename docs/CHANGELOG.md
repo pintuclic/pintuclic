@@ -4,6 +4,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.5.4] - 2026-09-05
+### Módulo: Core Backend e Infraestructura de Base de Datos
+- **Alcance:** Creación del script automatizado de despliegue y verificación de base de datos (`backend/src/core/db/setup.ts`) invocable mediante `npm run db` (o `npm run db:setup` / `npm run db:init`).
+- **Hitos Clave:**
+  - Ejecución integral del script DDL oficial (`bd/sql/schema_pintuclic.sql`) conectando por pool de PostgreSQL e inspeccionando `information_schema.tables`.
+  - Verificación automática de integridad para las 31 tablas operativas (incluyendo `sesion` y las entidades de Habeas Data).
+  - Configuración del archivo `backend/.env` local para conexión a PostgreSQL.
+- **Estado:** ✅ Validado y ejecutado con éxito en PostgreSQL local (31 tablas creadas en 0.19s); compilación `tsc` y linter limpios.
+
+---
+
 ## [v1.5.3] - 2026-09-05
 ### Módulo: BD (Base de Datos v2.3) y Privacidad (Habeas Data - M20 / HU-SEG-05)
 - **Alcance:** Actualización a la versión 2.3 del esquema relacional (31 tablas) con la incorporación de entidades de aviso de privacidad, consentimiento auditable y radicación de solicitudes de supresión de datos personales (Habeas Data). Sincronización completa de tipos Kysely en `backend/src/core/db/types.ts` preservando intacta la tabla `sesion` (v2.2).
