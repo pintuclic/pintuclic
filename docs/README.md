@@ -39,6 +39,14 @@ docs/
 │   ├── M04_CUENTAS_AUTH_PERFIL.md    <-- Registro, login B2C/B2B, perfil, direcciones y aprobación
 │   └── ...                           <-- Futuros módulos funcionales (M07, M08, M12...)
 │
+├── walkthroughs/                     <-- Entregables y walkthroughs de implementación por módulo
+│   └── M20/
+│
+├── reviews/                          <-- Auditorías técnicas y revisiones de código del Tech Lead
+│   ├── README.md                     <-- Normativa, criterios de evaluación y dictámenes
+│   ├── backend/                      <-- Revisiones de arquitectura en módulos Backend
+│   └── frontend/                     <-- Revisiones de componentes en Frontend
+│
 └── assets/                           <-- Recursos visuales y diagramas
     ├── diagrams/                     <-- Diagramas en formato imagen (PNG/SVG) organizados por módulo
     │   ├── M04/

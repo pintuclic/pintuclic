@@ -3,11 +3,11 @@ import { EnumMotivoCierreSesion } from '../../../core/db/types';
 import { SesionRepository } from '../repositories/sesion.repository';
 import {
   PoliticaSesion,
-  PoliticaSesionDTO,
   ResultadoValidacionSesion,
   SesionEmitida,
   TipoSesion,
 } from '../interfaces/seguridad.interfaces';
+import { PoliticaSesionDTO } from '../dtos';
 
 /** 30 minutos de inactividad para el panel administrativo (RF-SEG-02-02). */
 const INACTIVIDAD_ADMIN_POR_DEFECTO = 30 * 60;

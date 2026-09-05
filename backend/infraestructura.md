@@ -21,7 +21,8 @@ backend/src/
  │
  ├── modules/                # 📦 ZONA DE NEGOCIO (Lógica de Pintuclic: convención m[xx]-[nombre])
  │    ├── m02-productos/     # Ej: Módulo M02 Catálogo e Inventario
- │    │    ├── interfaces/   # Contratos y schemas Zod
+ │    │    ├── dtos/         # 🛡️ Schemas Zod de entrada HTTP y tipos inferidos (z.infer)
+ │    │    ├── interfaces/   # 📜 Contratos de tipos estáticos TypeScript de dominio (0 runtime)
  │    │    ├── repositories/ # Consultas SQL exclusivas de productos (Kysely)
  │    │    ├── services/     # Reglas de negocio (ej. validar stock disponible)
  │    │    ├── controllers/  # Manejo de peticiones HTTP (req, res)
@@ -39,8 +40,10 @@ backend/src/
 
 1. **(S) Responsabilidad Única:**
 
-   * `controllers/`: Solo extraen datos de la URL o el body, y devuelven JSON.
-   * `services/`: Contienen el "cerebro" (ej. descontar inventario al crear un pedido).
+   * `controllers/`: Solo extraen datos de la URL o el body delegando la validación a los DTOs, y devuelven JSON.
+   * `dtos/`: Responsables exclusivos de validar, sanitizar y tipar los datos de entrada HTTP (`req.body`, `req.query`, `req.params`) mediante Zod.
+   * `interfaces/`: Contratos puros de TypeScript (0 bytes en runtime). Prohibido mezclar esquemas Zod o lógica de validación aquí.
+   * `services/`: Contienen el "cerebro" y reglas de negocio (ej. descontar inventario al crear un pedido).
    * `repositories/`: Son los únicos que importan Kysely para hablar con PostgreSQL.
 2. **(I) Segregación de Interfaces:**
    Si el módulo de Pedidos necesita información de un Producto, importará una interfaz ligera `IProductReadOnly` del módulo de Productos, manteniendo un acoplamiento bajo.
