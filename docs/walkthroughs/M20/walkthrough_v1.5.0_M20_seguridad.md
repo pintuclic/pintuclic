@@ -44,7 +44,7 @@
 | **HU-SEG-03** | Autorización verificada en el servidor | **100% Cumplida** | `GuardasSeguridad` (validador central), `AutorizacionService` |
 | **HU-SEG-06** | No exposición de datos sensibles | **100% Cumplida (backend)** | `core/utils/sanitize.ts`, `errorHandler` endurecido |
 | **HU-SEG-04** | Registro de auditoría de acciones relevantes | **⏸️ EN PAUSA** | — (decisión del PO) |
-| **HU-SEG-05** | Protección de datos personales | **⛔ BLOQUEADA** | — (requiere columnas de consentimiento en el DDL) |
+| **HU-SEG-05** | Protección de datos personales | **⛔ BLOQUEADA** | — (a la espera del modelo de datos de consentimiento) |
 
 ### Descripción del Alcance de la Versión
 
@@ -107,9 +107,11 @@ CREATE TABLE IF NOT EXISTS sesion (
    por un tercero.
 2. **No se guardan IP ni `user-agent`.** Serían útiles para una pantalla de "tus dispositivos",
    pero son datos personales y su tratamiento entra en HU-SEG-05, que sigue bloqueada.
-3. **La documentación de `bd/docs/` quedó desactualizada.** `DOCUMENTACION_BASE_DATOS.md` y
-   `WALKTHROUGH_DATABASE.md` describen el esquema v2.1 (27 tablas) y no incluyen `sesion`.
-   No se editaron por pertenecer al equipo de BD; **requieren actualización a v2.2 por su parte.**
+3. **La documentación de `bd/docs/` fue actualizada en esta misma entrega**, siguiendo el
+   protocolo de `bd/docs/GUIA_REFACTORIZACION_BD.md`: entrada de la versión 2.2 en
+   `WALKTHROUGH_DATABASE.md` con la plantilla oficial, y encabezado, changelog, diagrama Mermaid
+   ER, diccionario de datos y catálogo de ENUMs puestos al día en `DOCUMENTACION_BASE_DATOS.md`.
+   Quien cambia el modelo documenta el cambio.
 
 ---
 
@@ -210,7 +212,7 @@ CREATE TABLE IF NOT EXISTS sesion (
 
 ### A. Dependencias Hacia Atrás (¿qué necesita para operar al 100% en producción?)
 
-1. **Equipo de BD:** debe correr el DDL actualizado y llevar `bd/docs/` a v2.1 (26 tablas).
+1. **Equipo de BD:** solo debe correr el DDL actualizado sobre sus entornos. La documentación de `bd/docs/` ya quedó al día en esta entrega.
 2. **Módulo M17 (Permisos):** el catálogo `permisos` **no trae semillas**; debe registrar los
    nombres de permiso, entre ellos `seguridad.configurar_sesion`. Y al revocar permisos debe
    invocar `serviciosSeguridad.sesion.invalidarSesionesDeUsuario(id, 'permisos_retirados')`;
@@ -223,8 +225,13 @@ CREATE TABLE IF NOT EXISTS sesion (
 3. **Módulo M04 (Cuentas/Auth):** el login sigue siendo suyo. Debe consumir
    `serviciosSeguridad.sesion.abrirSesion()` y `serviciosSeguridad.credenciales` en lugar de
    firmar JWT por su cuenta: un token sin `sid` es rechazado por el guarda.
-4. **HU-SEG-05:** sigue bloqueada, requiere columnas de consentimiento (fecha y versión del aviso
-   de privacidad aceptado) en `usuario`.
+4. **HU-SEG-05:** sigue bloqueada a la espera del modelo de datos de consentimiento, que el
+   equipo de BD está definiendo. **No basta con añadir columnas a `usuario`**, como se planteó en
+   un primer análisis: RF-SEG-05-06 exige registrar las *solicitudes de supresión*, que tienen su
+   propio ciclo de vida y fecha, y CA-SEG-05-06 exige informar al usuario cuando el aviso de
+   privacidad cambie de versión, lo que obliga a conservar el histórico de qué versión aceptó
+   cada quien. Un par de columnas solo guardaría el último estado. El código de M20 que consuma
+   ese modelo se implementará cuando la forma de las tablas esté definida.
 5. **Infraestructura:** variables `JWT_SECRET`, `JWT_REFRESH_SECRET`, `ROLES_ADMINISTRATIVOS`
    (lista de `id_rol` administrativos separados por coma) y, opcionalmente,
    `SESION_INACTIVIDAD_ADMIN_SEGUNDOS` / `SESION_INACTIVIDAD_CLIENTE_SEGUNDOS`.
