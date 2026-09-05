@@ -32,19 +32,38 @@ INSERT INTO rol (id_rol, nombre, id_sub_rol_empresa, estado) VALUES
     (3, 'empresa_vip',   1,    'activo')
 ON CONFLICT (id_rol) DO NOTHING;
 
--- 1.4 Permisos Atómicos
+-- 1.4 Permisos Atómicos (Catálogo Maestro Oficial M17 / M20)
 INSERT INTO permisos (id_permiso, nombre, descripcion, estado) VALUES
-    (1, 'seguridad.configurar_sesion', 'Ajustar tiempos de vigencia de sesion', 'activo'),
-    (2, 'productos.crear',             'Crear productos en el catalogo',        'activo'),
-    (3, 'productos.eliminar',          'Permiso desactivado a proposito',       'inactivo'),
-    (4, 'ordenes.ver',                 'Visualizar órdenes de compra y ventas', 'activo'),
-    (5, 'usuarios.gestionar',          'Administrar cuentas de usuarios',       'activo')
+    -- Permisos heredados / pruebas M20
+    (1,  'seguridad.configurar_sesion',    'Ajustar tiempos y políticas de vigencia de sesión', 'activo'),
+    (2,  'productos.crear',                'Crear productos en el catálogo (alias legado)',      'activo'),
+    (3,  'productos.eliminar',             'Permiso desactivado a propósito para pruebas',      'inactivo'),
+    (4,  'ordenes.ver',                    'Visualizar órdenes de compra y ventas (alias legado)', 'activo'),
+    (5,  'usuarios.gestionar',             'Administrar cuentas de usuarios (alias legado)',    'activo'),
+    -- Catálogo Maestro Oficial M17
+    (6,  'catalogo.ver',                   'Ver productos, variantes y categorías',             'activo'),
+    (7,  'catalogo.crear',                 'Crear productos y variantes en el catálogo',        'activo'),
+    (8,  'catalogo.editar',                'Editar productos, precios e imágenes',              'activo'),
+    (9,  'catalogo.eliminar',              'Desactivar productos y variantes',                  'activo'),
+    (10, 'ventas.ver',                     'Consultar órdenes de venta y cotizaciones',         'activo'),
+    (11, 'ventas.gestionar',               'Actualizar estados y despachos de órdenes',         'activo'),
+    (12, 'ventas.exportar',                'Exportar reportes comerciales y métricas de venta', 'activo'),
+    (13, 'personal.ver',                   'Ver listado y ficha de empleados y clientes',       'activo'),
+    (14, 'personal.editar',                'Editar datos de contacto y perfiles de empleados',  'activo'),
+    (15, 'personal.desactivar',            'Desactivar y reactivar cuentas de empleado',        'activo'),
+    (16, 'seguridad.gestionar_permisos',   'Asignar y revocar permisos individuales a empleados', 'activo'),
+    (17, 'seguridad.gestionar_privacidad', 'Gestionar solicitudes de supresión y habeas data',  'activo'),
+    (18, 'configuracion.ver',              'Consultar parámetros operativos del sistema',       'activo'),
+    (19, 'configuracion.editar',           'Actualizar parámetros y reglas del sistema',        'activo')
 ON CONFLICT (id_permiso) DO NOTHING;
 
 -- 1.5 Asignación de Permisos a Roles
 INSERT INTO asignacion_permiso (id_rol, id_permiso) VALUES
     (1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
-    (3, 4)
+    (1, 6), (1, 7), (1, 8), (1, 9), (1, 10),
+    (1, 11), (1, 12), (1, 13), (1, 14), (1, 15),
+    (1, 16), (1, 17), (1, 18), (1, 19),
+    (3, 4), (3, 10)
 ON CONFLICT (id_rol, id_permiso) DO NOTHING;
 
 -- ==============================================================================

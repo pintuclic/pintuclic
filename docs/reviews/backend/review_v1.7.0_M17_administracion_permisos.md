@@ -69,6 +69,27 @@ Durante la integración y verificación técnica en la rama `feature/m17-permiso
 
 ---
 
+### ⚠️ Hallazgo #3: Auto-siembra de Catálogo en Código y Violación de Pureza en `interfaces/`
+
+- **Archivos Originales:**
+  - `backend/src/modules/m17-permisos/interfaces/m17.interfaces.ts` (`PERMISOS_SISTEMA`)
+  - `backend/src/modules/m17-permisos/repositories/permisos.repository.ts` (`sembrarPermisosDelSistema()`)
+  - `backend/src/modules/m17-permisos/services/permisos.service.ts` (`sembrarPermisosSistema()`)
+  - `backend/src/modules/m17-permisos/m17.routes.ts` (`void permisosService.sembrarPermisosSistema()`)
+- **Descripción:**
+  El backend declaró una constante en memoria `PERMISOS_SISTEMA` con 14 objetos dentro del archivo de interfaces y disparaba una inserción automática a PostgreSQL cada vez que Express importaba las rutas (`m17.routes.ts`).
+- **Problemas Identificados:**
+  1. **Violación de Pureza:** `interfaces/` debe contener exclusivamente contratos de compilación (`interface`, `type`), con cero datos estáticos y cero runtime.
+  2. **Violación del Origen Único de Datos:** La única fuente de la verdad para datos iniciales, mocks y catálogos maestros es `bd/sql/seed_pintuclic.sql` (`npm run db:seed`). Los servidores HTTP no deben inyectar datos silenciosamente al arrancar.
+  3. **Disparidad de Nombres:** Existían discrepancias entre los permisos preexistentes en la BD (`productos.crear`, `ordenes.ver`, `usuarios.gestionar`) y los hardcodeados en el array (`catalogo.crear`, `ventas.ver`, `personal.ver`).
+- **Acción Correctiva:**
+  1. **Consolidación en el Seed Oficial:** Se incorporaron los 14 permisos oficiales y el permiso de privacidad de M20 directamente en `bd/sql/seed_pintuclic.sql` (IDs 1 al 19), asignados al rol administrador.
+  2. **Eliminación de la Auto-siembra:** Se eliminaron las funciones `sembrarPermisosDelSistema` del repositorio, servicio y la invocación en `m17.routes.ts`. La API consulta de forma pura y reactiva la tabla `permisos` de PostgreSQL.
+  3. **Purificación de `m17.interfaces.ts`:** Se removió `PERMISOS_SISTEMA`, dejando el archivo 100% libre de runtime, conservando únicamente `DEPENDENCIAS_PERMISOS` como regla de negocio tipada para la cascada.
+  4. **Directiva 10 en `AGENTS.md`:** Se formalizó la prohibición expresa de auto-siembras y arrays de datos en código para todos los desarrolladores y agentes de IA.
+
+---
+
 ## 🛡️ 3. Matriz de Verificación de Calidad
 
 | Validación | Comando | Resultado |

@@ -159,11 +159,4 @@ export class PermisosService {
 
     return enCascada;
   }
-
-  /**
-   * Siembra los permisos del sistema en la BD (llamado al iniciar el modulo).
-   */
-  async sembrarPermisosSistema(): Promise<void> {
-    await this.permisosRepo.sembrarPermisosDelSistema();
-  }
 }

@@ -1,6 +1,6 @@
-﻿import { Kysely } from 'kysely';
+import { Kysely } from 'kysely';
 import { Database } from '../../../core/db/types';
-import { PERMISOS_SISTEMA, PermisoDetalle, AreaFuncional } from '../interfaces/m17.interfaces';
+import { PermisoDetalle, AreaFuncional } from '../interfaces/m17.interfaces';
 
 // ==============================================================================
 // M17 - REPOSITORIO DE PERMISOS
@@ -9,25 +9,6 @@ import { PERMISOS_SISTEMA, PermisoDetalle, AreaFuncional } from '../interfaces/m
 
 export class PermisosRepository {
   constructor(private readonly db: Kysely<Database>) {}
-
-  /**
-   * Siembra los permisos del sistema en la tabla `permisos` si no existen.
-   * Operacion idempotente: ON CONFLICT DO NOTHING.
-   * Garantiza que seguridad.configurar_sesion (de M20) tambien quede registrado.
-   */
-  async sembrarPermisosDelSistema(): Promise<void> {
-    for (const permiso of PERMISOS_SISTEMA) {
-      await this.db
-        .insertInto('permisos')
-        .values({
-          nombre: permiso.nombre,
-          descripcion: permiso.descripcion,
-          estado: 'activo',
-        })
-        .onConflict((oc) => oc.column('nombre').doNothing())
-        .execute();
-    }
-  }
 
   /**
    * Retorna el catalogo completo de permisos activos, con el area funcional

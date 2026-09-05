@@ -1,4 +1,4 @@
-﻿import { EnumEstadoUsuario } from '../../../core/db/types';
+import { EnumEstadoUsuario } from '../../../core/db/types';
 
 // ==============================================================================
 // M17 - ADMINISTRACIÓN, EMPLEADOS Y PERMISOS
@@ -51,30 +51,6 @@ export const DEPENDENCIAS_PERMISOS: Readonly<Record<string, string>> = {
   'configuracion.editar': 'configuracion.ver',
 };
 
-/**
- * Semillas del catálogo maestro que M17 garantiza en la BD al arrancar.
- * M20 ya declaró `seguridad.configurar_sesion`; M17 registra el resto.
- */
-export const PERMISOS_SISTEMA: ReadonlyArray<{
-  nombre: string;
-  descripcion: string;
-  area: AreaFuncional;
-}> = [
-  { nombre: 'catalogo.ver',      descripcion: 'Ver productos, variantes y categorias',           area: 'catalogo'       },
-  { nombre: 'catalogo.crear',    descripcion: 'Crear productos y variantes',                     area: 'catalogo'       },
-  { nombre: 'catalogo.editar',   descripcion: 'Editar productos, precios e imagenes',            area: 'catalogo'       },
-  { nombre: 'catalogo.eliminar', descripcion: 'Desactivar productos y variantes',                area: 'catalogo'       },
-  { nombre: 'ventas.ver',        descripcion: 'Consultar ordenes y cotizaciones',                area: 'ventas'         },
-  { nombre: 'ventas.gestionar',  descripcion: 'Actualizar estado de ordenes',                    area: 'ventas'         },
-  { nombre: 'ventas.exportar',   descripcion: 'Exportar reportes de ventas',                     area: 'ventas'         },
-  { nombre: 'personal.ver',        descripcion: 'Ver listado y ficha de empleados y clientes',   area: 'personal'       },
-  { nombre: 'personal.editar',     descripcion: 'Editar datos de contacto de empleados',         area: 'personal'       },
-  { nombre: 'personal.desactivar', descripcion: 'Desactivar/reactivar cuentas de empleado',     area: 'personal'       },
-  { nombre: 'seguridad.gestionar_permisos', descripcion: 'Asignar/revocar permisos a empleados',area: 'seguridad'      },
-  { nombre: 'seguridad.configurar_sesion',  descripcion: 'Ajustar politica de vigencia de sesion', area: 'seguridad'   },
-  { nombre: 'configuracion.ver',   descripcion: 'Consultar parametros del sistema',              area: 'configuracion'  },
-  { nombre: 'configuracion.editar', descripcion: 'Actualizar parametros del sistema',            area: 'configuracion'  },
-];
 
 // ------------------------------------------------------------------------------
 // EMPLEADOS — Respuestas HTTP
