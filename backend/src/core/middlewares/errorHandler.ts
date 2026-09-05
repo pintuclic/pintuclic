@@ -47,11 +47,25 @@ export function errorHandler(
     return;
   }
 
-  // Manejo de errores no controlados / internos del servidor (HU-SEG-06 no filtrar trazas sensibles)
-  console.error('💥 Error no controlado en backend:', err);
+  // Errores no controlados (M20 - HU-SEG-06).
+  //
+  // El detalle técnico se registra internamente con lo necesario para diagnosticar
+  // (RF-SEG-06-07, CA-SEG-06-06), pero el mensaje que viaja al navegador es siempre
+  // genérico: sin rutas, consultas ni versiones de componentes (RF-SEG-06-04,
+  // CA-SEG-06-02). `EXPONER_DETALLE_ERRORES=true` levanta la mordaza solo en local.
+  console.error(
+    '[CORE][ERROR_NO_CONTROLADO]',
+    JSON.stringify({
+      nombre: err.name,
+      detalle: err.message,
+      pila: err.stack,
+      fecha: new Date().toISOString(),
+    })
+  );
 
-  const isProduction = process.env.NODE_ENV === 'production';
-  const message = isProduction ? 'Ocurrió un error interno en el servidor' : err.message;
+  const exponerDetalle =
+    process.env.NODE_ENV !== 'production' && process.env.EXPONER_DETALLE_ERRORES === 'true';
+  const message = exponerDetalle ? err.message : 'Ocurrió un error interno en el servidor';
 
   sendError(res, message, 'INTERNAL_SERVER_ERROR', 500);
 }

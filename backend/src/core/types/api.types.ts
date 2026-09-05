@@ -28,7 +28,12 @@ export interface AuthenticatedUser {
   id: number;
   correo: string;
   id_rol?: number | null;
+  /** Permisos vigentes resueltos en vivo por los guardas de M20 (RF-SEG-03-01). */
   permisos?: string[];
+  /** Ventana de inactividad aplicable a la sesión en curso (RF-SEG-02-02). */
+  tipo_sesion?: 'admin' | 'cliente';
+  /** Identificador de la sesión persistida que ampara esta petición (HU-SEG-02). */
+  sid?: string;
 }
 
 declare global {

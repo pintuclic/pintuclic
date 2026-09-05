@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { checkDbConnection } from './core/db/connection';
 import { sendSuccess } from './core/utils/apiResponse';
 import { productoRoutes } from './modules/productos/productos.routes';
+import { seguridadRoutes } from './modules/m20-seguridad/seguridad.routes';
 
 const appRouter = Router();
 
@@ -20,5 +21,6 @@ appRouter.get('/health', async (_req, res) => {
 
 // Ensamblaje de módulos de negocio
 appRouter.use('/productos', productoRoutes);
+appRouter.use('/seguridad', seguridadRoutes);
 
 export default appRouter;

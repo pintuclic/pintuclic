@@ -10,6 +10,8 @@ export interface TokenPayload {
   id: number;
   correo: string;
   id_rol?: number | null;
+  /** Identificador de la sesión persistida en la tabla `sesion` (M20 - HU-SEG-02). */
+  sid?: string;
 }
 
 /**
