@@ -4,11 +4,13 @@ import { useAuth } from '../auth/useAuth';
 
 const { currentUser, currentRole, simularUsuario, logout, can } = useAuth();
 const isExpanded = ref(true);
-// Permite visualizar el widget en vite dev y en contenedores Docker locales (localhost / 127.0.0.1)
+// Permite visualizar el widget en vite dev, localhost y en el subdominio de testing del Product Owner (adsoproject.dev)
 const isDev =
   import.meta.env.DEV ||
   (typeof globalThis.location !== 'undefined' &&
-    (globalThis.location.hostname === 'localhost' || globalThis.location.hostname === '127.0.0.1'));
+    (globalThis.location.hostname === 'localhost' ||
+      globalThis.location.hostname === '127.0.0.1' ||
+      globalThis.location.hostname.includes('adsoproject.dev')));
 </script>
 
 <template>
