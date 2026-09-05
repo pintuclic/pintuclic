@@ -4,6 +4,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.4.0] - 2026-09-04
+### Módulo: BD (Base de Datos) y Core Backend (Tipos Kysely v2.1)
+- **Alcance:** Actualización a la versión 2.1 del esquema relacional (27 tablas), implementación del patrón de e-commerce inmutable para ventas (`orden` y `linea_orden`), cotizaciones B2B/B2C (`cotizacion`), carrito vivo con soporte para visitantes anónimos (`token_visitante`) y variantes (`linea_carrito`), clasificación `enum_tipo_usuario`, sincronización completa de tipos Kysely en `backend/src/core/db/types.ts` y walkthrough técnico en `bd/docs/WALKTHROUGH_DATABASE.md`.
+- **Añadido:**
+  - `bd/assets/ER Pintuclic.drawio.xml` y `bd/assets/ER Pintuclic-Final 1.1.drawio.png`: Diagramas Entidad-Relación actualizados con las 27 tablas y relaciones formales.
+  - Tablas: `orden`, `linea_orden`, `linea_carrito`, `cotizacion`.
+  - Tipos enumerados de PostgreSQL: `enum_tipo_usuario`, `enum_origen_orden`, `enum_estado_orden`, `enum_estado_cotizacion`.
+- **Ajustado:**
+  - `bd/sql/schema_pintuclic.sql`: Reemplazo de `pedido` por `orden`/`linea_orden` y de `detalle_carrito` por `linea_carrito`. Actualización de `usuario` (con `tipo`), `variante` (con `precio_vigente` y `estado`), `carrito` (con `token_visitante`), `pagos` y `factura` vinculados a `id_orden`. 29 claves foráneas e índices de rendimiento.
+  - `bd/docs/WALKTHROUGH_DATABASE.md`: Registro oficial de la versión 2.1 con matriz de cambios, constraints, índices y plan de impacto.
+  - `bd/docs/DOCUMENTACION_BASE_DATOS.md`: Diagrama Mermaid ER actualizado, changelog y diccionario de 27 tablas.
+  - `backend/src/core/db/types.ts`: Sincronización completa de las 27 tablas y tipos helpers Kysely con cero errores de TypeScript (`tsc --noEmit`).
+- **Estado:** ✅ Compilación limpia con `npx tsc --noEmit` en backend, orden topológico de BD validado sin dependencias circulares.
+
+---
+
 ## [v1.3.0] - 2026-09-04
 ### Módulo: Frontend y Design System (Paleta Oficial de Colores)
 - **Alcance:** Implementación y estandarización de los tokens de color globales de Pintuclic (`corporate`, `action`, `subaction`, `conversion`, `highlight`, `neutral-*`), integración con Tailwind CSS v4, directiva de diseño estricta en `AGENTS.md` y documentación técnica en `frontend/src/core/theme/`.

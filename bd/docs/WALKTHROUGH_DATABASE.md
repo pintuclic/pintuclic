@@ -5,8 +5,122 @@ Este documento registra la evolución histórica del modelo de base de datos de 
 ---
 
 ## 📑 Índice de Versiones
+- [Versión 2.1 (E-Commerce Inmutable, Cotizaciones y Carrito con Variantes)](#-versión-21-2026-09-04)
 - [Versión 2.0 (Página FINAL del ER) - Reestructuración de Catálogo, Variantes y Combos](#-versión-20-2026-09-03)
 - [Versión 1.0 (Esquema Inicial Pre-Final) - Base de 21 Tablas](#-versión-10-2026-09-02)
+
+---
+
+## 📦 Versión 2.1 (2026-09-04)
+
+### 🎯 Resumen Ejecutivo
+Evolución mayor del modelo de ventas y carrito impulsada por la incorporación del diagrama Entidad-Relación actualizado (`ER Pintuclic.drawio.xml` y `ER Pintuclic-Final 1.1.drawio.png`).
+- **Total Tablas:** Pasa de 25 a **27 tablas**.
+- **Foco de la versión:** Implementación del patrón de e-commerce inmutable para pedidos (`orden` y `linea_orden`), incorporación de cotizaciones comerciales B2B/B2C (`cotizacion`), carrito vivo con soporte para visitantes anónimos y vinculación directa a variantes (`linea_carrito`), y clasificación de cuentas de usuario (`enum_tipo_usuario`).
+
+---
+
+### 🛑 1. Tablas Deprecadas / Eliminadas (2 Tablas)
+
+| Tabla Eliminada (v2.0) | Motivo de Deprecación | Reemplazo en v2.1 |
+| :--- | :--- | :--- |
+| `pedido` | Modelo transaccional previo que carecía de trazabilidad de origen (carrito vs cotización), código visible y snapshot legal desacoplado. | Reemplazado por **`orden`**. |
+| `detalle_carrito` | Apuntaba directamente a producto congelando precios en etapa previa a compra; no soportaba variantes en vivo. | Reemplazado por **`linea_carrito`** (apunta a `variante`). |
+
+---
+
+### ✨ 2. Tablas Nuevas Creadas (4 Tablas)
+
+| Nueva Tabla (v2.1) | Clave Primaria (PK) | Claves Foráneas (FK) | Propósito Funcional |
+| :--- | :--- | :--- | :--- |
+| **`linea_carrito`** | `id_linea_carrito SERIAL` | `id_carrito` $\rightarrow$ `carrito`<br>`id_variante` $\rightarrow$ `variante` | Líneas vivas de productos en carrito. La consulta de total calcula en tiempo real con `variante.precio_vigente`. Restricción `UNIQUE(id_carrito, id_variante)`. |
+| **`cotizacion`** | `id_cotizacion SERIAL` | Ninguna | Registro y control de cotizaciones comerciales B2B/B2C previas a la formalización de compra. |
+| **`orden`** | `id_orden SERIAL` | `id_usuario` $\rightarrow$ `usuario`<br>`id_cotizacion` $\rightarrow$ `cotizacion` (SET NULL) | Cabecera formal e inmutable de compra con `codigo_visible` amigable (ej: ORD-2026-0001), origen (`carrito` o `cotizacion`), pasarela (`transaccion_pago_id`) y montos finales. |
+| **`linea_orden`** | `id_linea_orden SERIAL` | `id_orden` $\rightarrow$ `orden` (CASCADE) | Snapshot histórico inmutable: congela `nombre_producto`, `variante_copia`, `precio_aplicado` y `cantidad` exactos al momento del pago. |
+
+---
+
+### 🔄 3. Tablas Modificadas y Nuevas Relaciones
+
+1. **`usuario`**:
+   - Se añadió la columna `tipo enum_tipo_usuario NOT NULL DEFAULT 'normal'` para segregar cuentas de persona natural (`'normal'`) y empresas (`'empresa'`).
+   - Se agregó índice `idx_usuario_tipo`.
+2. **`variante`**:
+   - Se renombró la columna `precio` a **`precio_vigente`** para clarificar que es el valor dinámico de catálogo.
+   - Se añadió la columna `estado enum_estado_producto NOT NULL DEFAULT 'activo'`.
+   - Se agregó índice `idx_variante_estado`.
+3. **`carrito`**:
+   - Se añadió la columna `token_visitante VARCHAR(255)` indexada para permitir carritos a usuarios no autenticados (visitantes).
+   - Se modificó `id_usuario` a nullable (`INT`), permitiendo carritos de invitados antes del login.
+   - Se añadió la columna `fecha_ultima_actividad TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP` para control de expiración.
+   - Se eliminó el campo calculado `total` y `estado` ya que el carrito vivo se evalúa bajo demanda mediante `linea_carrito`.
+4. **`pagos`**:
+   - Se modificó la clave foránea: reemplaza `id_pedido` por **`id_orden INT NOT NULL REFERENCES orden(id_orden) ON UPDATE CASCADE ON DELETE CASCADE`**.
+   - Se actualizó el índice a `idx_pagos_orden`.
+5. **`factura`**:
+   - Se modificó la clave foránea: reemplaza `id_pedido` por **`id_orden INT NOT NULL REFERENCES orden(id_orden) ON UPDATE CASCADE ON DELETE RESTRICT`**.
+   - Se actualizó el índice a `idx_factura_orden`.
+
+---
+
+### 🔒 4. Restricciones (`CONSTRAINTS`) y Tipos `ENUM` Agregados
+
+#### Nuevos Tipos ENUM Nativos:
+```sql
+enum_tipo_usuario      -- ('normal', 'empresa')
+enum_origen_orden      -- ('carrito', 'cotizacion')
+enum_estado_orden      -- ('pendiente', 'pagado', 'en_preparacion', 'enviado', 'entregado', 'cancelado')
+enum_estado_cotizacion -- ('borrador', 'enviada', 'aprobada', 'rechazada', 'vencida')
+```
+
+#### Nuevas Reglas de Validación (`CHECK` y `UNIQUE`):
+- `uq_carrito_variante`: `UNIQUE(id_carrito, id_variante)`.
+- `chk_lineacarrito_cantidad`: `cantidad > 0`.
+- `chk_orden_subtotal`: `sub_total >= 0`.
+- `chk_orden_descuento`: `descuento >= 0`.
+- `chk_orden_total`: `total >= 0`.
+- `chk_lineaorden_precio`: `precio_aplicado >= 0`.
+- `chk_lineaorden_cantidad`: `cantidad > 0`.
+- Restricción de unicidad: `orden(codigo_visible)` UNIQUE y `orden(transaccion_pago_id)` UNIQUE.
+
+---
+
+### ⚡ 5. Nuevos Índices de Rendimiento
+- `CREATE INDEX IF NOT EXISTS idx_usuario_tipo ON usuario(tipo);`
+- `CREATE INDEX IF NOT EXISTS idx_variante_estado ON variante(estado);`
+- `CREATE INDEX IF NOT EXISTS idx_carrito_token ON carrito(token_visitante);`
+- `CREATE INDEX IF NOT EXISTS idx_lineacarrito_carrito ON linea_carrito(id_carrito);`
+- `CREATE INDEX IF NOT EXISTS idx_lineacarrito_variante ON linea_carrito(id_variante);`
+- `CREATE INDEX IF NOT EXISTS idx_orden_codigo ON orden(codigo_visible);`
+- `CREATE INDEX IF NOT EXISTS idx_orden_usuario ON orden(id_usuario);`
+- `CREATE INDEX IF NOT EXISTS idx_orden_cotizacion ON orden(id_cotizacion);`
+- `CREATE INDEX IF NOT EXISTS idx_orden_estado ON orden(estado);`
+- `CREATE INDEX IF NOT EXISTS idx_orden_fecha ON orden(fecha);`
+- `CREATE INDEX IF NOT EXISTS idx_lineaorden_orden ON linea_orden(id_orden);`
+- `CREATE INDEX IF NOT EXISTS idx_pagos_orden ON pagos(id_orden);`
+- `CREATE INDEX IF NOT EXISTS idx_factura_orden ON factura(id_orden);`
+
+---
+
+### 💻 6. Impacto y Acciones Requeridas en Backend y Frontend
+
+#### Backend (TypeScript / Kysely / Express):
+1. **Actualizar `src/core/db/types.ts`**:
+   - Retirar `PedidoTable` y `DetalleCarritoTable`.
+   - Incorporar `OrdenTable`, `LineaOrdenTable`, `LineaCarritoTable` y `CotizacionTable`.
+   - Modificar `UsuarioTable` (con `tipo`), `VarianteTable` (con `precio_vigente` y `estado`), `CarritoTable` (con `token_visitante` y `fecha_ultima_actividad`), `PagosTable` y `FacturaTable` (con `id_orden`).
+   - Declarar tipos literales para `EnumTipoUsuario`, `EnumOrigenOrden`, `EnumEstadoOrden` y `EnumEstadoCotizacion`.
+2. **Módulos Afectados**:
+   - `M04 Cuentas`: Manejo del campo `tipo` de usuario ('normal' vs 'empresa').
+   - `M07 Carrito`: Soporte para tokens de invitados y consulta de líneas vivas.
+   - `M08 Órdenes`: Creación inmutable con snapshot de nombres y precios.
+   - `M09 Pagos y Facturas`: Vinculación por `id_orden`.
+
+#### Frontend (UI / Vistas / Componentes):
+1. **Carrito de Visitantes**:
+   - Persistir token anónimo en `localStorage` o cookies para carritos sin autenticación previa.
+2. **Detalle de Órdenes**:
+   - Mostrar el `codigo_visible` amigable para el usuario y listar ítems basados en `linea_orden`.
 
 ---
 

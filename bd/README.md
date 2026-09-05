@@ -12,7 +12,7 @@ bd/
 ├── README.md                      # Este archivo (guía general y mapa del módulo)
 │
 ├── sql/                           # Scripts DDL ejecutables en PostgreSQL
-│   └── schema_pintuclic.sql       # Script DDL oficial vigente (PostgreSQL 12+ / 18, 25 tablas)
+│   └── schema_pintuclic.sql       # Script DDL oficial vigente (PostgreSQL 12+ / 18, 27 tablas)
 │
 ├── docs/                          # Documentación viva, manuales y walkthroughs
 │   ├── DOCUMENTACION_BASE_DATOS.md# Especificación activa, ER Mermaid, diccionarios y changelog
@@ -20,8 +20,8 @@ bd/
 │   └── GUIA_REFACTORIZACION_BD.md # Guía, protocolo y plantilla oficial para IAs y desarrolladores
 │
 └── assets/                        # Recursos visuales y diagramas fuente
-    ├── ER_Pintuco.png             # Imagen de referencia del diagrama Entidad-Relación
-    └── ER_Pintuco.drawio.xml      # Archivo fuente XML/Draw.io editable
+    ├── ER Pintuclic-Final 1.1.drawio.png # Imagen de referencia del diagrama Entidad-Relación
+    └── ER Pintuclic.drawio.xml           # Archivo fuente XML/Draw.io editable
 ```
 
 ---
@@ -29,11 +29,11 @@ bd/
 ## 🚀 Acceso Rápido a Recursos Clave
 
 - 📄 **Script SQL Oficial:** [`sql/schema_pintuclic.sql`](./sql/schema_pintuclic.sql)  
-  *DDL idempotente para PostgreSQL con 25 tablas, 8 tipos `ENUM` y 27 claves foráneas.*
+  *DDL idempotente para PostgreSQL con 27 tablas, 10 tipos `ENUM` y 29 claves foráneas.*
 - 📘 **Documentación General y ER:** [`docs/DOCUMENTACION_BASE_DATOS.md`](./docs/DOCUMENTACION_BASE_DATOS.md)  
   *Diagrama interactivo Mermaid, diccionario de tablas/columnas y recomendaciones para Kysely.*
 - 🚀 **Walkthroughs de Versiones:** [`docs/WALKTHROUGH_DATABASE.md`](./docs/WALKTHROUGH_DATABASE.md)  
-  *Desglose detallado de migraciones (v1.0 $\rightarrow$ v2.0).*
+  *Desglose detallado de migraciones (v1.0 $\rightarrow$ v2.0 $\rightarrow$ v2.1).*
 - 🛠️ **Guía para Refactorizar:** [`docs/GUIA_REFACTORIZACION_BD.md`](./docs/GUIA_REFACTORIZACION_BD.md)  
   *Instrucciones paso a paso, checklist y plantilla obligatoria para agentes de IA y desarrolladores.*
 
@@ -41,8 +41,10 @@ bd/
 
 ## 📌 Estado Actual
 
-- **Versión Activa:** `v2.0`
-- **Total de Tablas:** 25 tablas normalizadas.
-- **Tipos Enumerados (ENUM):** 8 enums nativos para integridad de estados.
-- **Restricción de Rol Único:** Forzada mediante `UNIQUE (id_usuario)` en `usuario_rol`.
+- **Versión Activa:** `v2.1`
+- **Total de Tablas:** 27 tablas normalizadas.
+- **Tipos Enumerados (ENUM):** 10 enums nativos para integridad de estados.
+- **Patrón E-Commerce Inmutable:** `orden` y `linea_orden` con snapshots históricos de compra.
+- **Carrito Vivo Desacoplado:** `carrito` con `token_visitante` y `linea_carrito` con variantes.
 - **Motor:** PostgreSQL 12+ (Completamente testeado y compatible con PostgreSQL 18).
+
