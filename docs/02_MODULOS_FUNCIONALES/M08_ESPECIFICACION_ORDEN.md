@@ -86,7 +86,7 @@ Su alcance incluye la creación de la orden, la conservación de los datos de pr
 - **Notificaciones (M18):** Al entrar en "Consiguiendo stock", se debe notificar al cliente el retraso esperado.
 
 #### Diagramas de Referencia
-![Flujo del Proceso](../assets/diagrams/M08/HU-ORD-03.png)
+![Flujo del Proceso](../assets/diagrams/M08/Maquina_de_estados_de_la_Orden.drawio.png)
 
 ---
 

@@ -4,6 +4,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.5.2] - 2026-09-05
+### Módulo: Especificación Funcional de Negocio (M01, M02, M05, M08)
+- **Alcance:** Especificación funcional formal, historias de usuario y diagramas de arquitectura de flujo para Catálogo, Búsqueda, Carrito y Órdenes de venta.
+- **Hitos Clave:**
+  - Especificación de Catálogo (`M01`): jerarquía, atributos técnicos, marcas, líneas, colores CIELAB y productos entonables (`HU-CAT-01` a `13`).
+  - Especificación de Búsqueda y Navegación (`M02`): filtros facetados, ordenamiento y catálogo público (`HU-BUS-01` a `04`).
+  - Especificación de Carrito (`M05`) y Órdenes de Venta (`M08`): snapshot inmutable y ciclo de vida de la orden (`HU-ORD-01` a `07`).
+  - Incorporación de 15 diagramas de flujo y arquitectura en `docs/assets/diagrams/`.
+- 🔗 **Especificaciones:** Ver [M01](./02_MODULOS_FUNCIONALES/M01_ESPECIFICACION_CATALOGO.md), [M02](./02_MODULOS_FUNCIONALES/M02_ESPECIFICACION_BUSQUEDA.md), [M05](./02_MODULOS_FUNCIONALES/M05_ESPECIFICACION_CARRITO.md) y [M08](./02_MODULOS_FUNCIONALES/M08_ESPECIFICACION_ORDEN.md).
+
+---
+
 ## [v1.5.1] - 2026-09-05
 ### Módulo: 00_SISTEMA, Gobernanza de Calidad (Reviews) y Refactorización M20 (DTOs)
 - **Alcance:** Desacoplamiento estricto de esquemas Zod (runtime) de contratos e interfaces estáticas en el módulo `m20-seguridad`, estandarización de la carpeta obligatoria `dtos/` en la arquitectura backend y formalización del sistema de auditoría técnica en `docs/reviews/`.
