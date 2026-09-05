@@ -13,6 +13,8 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 ### Módulo: M20 (Seguridad, Auditoría y Protección de Datos) + BD v2.1
 - **Alcance:** Primera entrega funcional de M20. Instala el validador central de autorización del sistema, la política de credenciales, la gestión de sesiones con estado y la red transversal de no exposición de datos sensibles. Cubre **HU-SEG-01, HU-SEG-02, HU-SEG-03 y HU-SEG-06** en backend.
 - **Añadido (base de datos, esquema v2.2 — 28 tablas):**
+  - `bd/docs/WALKTHROUGH_DATABASE.md`: entrada oficial de la versión 2.2 siguiendo la plantilla de `GUIA_REFACTORIZACION_BD.md` (tablas nuevas, ENUMs, índices e impacto en backend y frontend).
+  - `bd/docs/DOCUMENTACION_BASE_DATOS.md`: encabezado, changelog, diagrama Mermaid ER, diccionario de datos y catálogo de ENUMs actualizados a 28 tablas y 13 tipos enumerados.
   - `bd/sql/schema_pintuclic.sql`: tabla `sesion` (UUID, tipo, fecha de inicio, último acceso, expiración, estado y motivo de cierre), 3 ENUM nuevos (`enum_estado_sesion`, `enum_tipo_sesion`, `enum_motivo_cierre_sesion`) y 2 índices. **Cambio de DDL autorizado explícitamente por el líder técnico.**
 - **Añadido (backend):**
   - `backend/src/modules/m20-seguridad/`: módulo completo (interfaces + Zod, repositorios Kysely, servicios, guardas y controlador) con inyección de dependencias en `seguridad.routes.ts`.
@@ -31,8 +33,8 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - `backend/src/app.routes.ts`: montaje de `/api/seguridad`.
 - **Pendiente / Bloqueado:**
   - **HU-SEG-04 (auditoría): EN PAUSA** por decisión del Product Owner hasta definir la tabla de auditoría. Mientras tanto los accesos denegados se emiten al registro técnico con la forma que exige CA-SEG-03-05.
-  - **HU-SEG-05 (protección de datos personales): BLOQUEADA**, requiere columnas de consentimiento en `usuario`.
-  - `bd/docs/DOCUMENTACION_BASE_DATOS.md` y `WALKTHROUGH_DATABASE.md` siguen documentando 25 tablas: **corresponde al equipo de BD** actualizarlos a v2.1.
+  - **HU-SEG-05 (protección de datos personales): BLOQUEADA** a la espera del modelo de datos de consentimiento. No basta con columnas en `usuario`: RF-SEG-05-06 exige registrar las *solicitudes de supresión* (con su propio ciclo de vida) y CA-SEG-05-06 exige saber qué versión del aviso aceptó cada usuario para avisarle cuando cambie, lo que requiere histórico. El equipo de BD está definiendo las tablas.
+
   - M17 debe sembrar el catálogo `permisos` (incluido `seguridad.configurar_sesion`) e invocar `invalidarSesionesDeUsuario(id, 'permisos_retirados')` al revocar permisos.
   - M04 debe consumir `serviciosSeguridad.sesion.abrirSesion()` en su login en lugar de firmar JWT por su cuenta.
 - **Estado:** ✅ `tsc --noEmit` y `npm run lint` sin errores, DDL aplicado y dos tandas de pruebas de integración contra PostgreSQL 18.4: 16 sobre autorización y credenciales (identidad en vivo, permiso inactivo, cuenta desactivada, retiro y restitución de permisos en caliente, cambio de contraseña y saneamiento de respuestas) y 12 sobre sesiones persistidas (apertura, cierre manual, caducidad por inactividad, revocación en cascada, 3 sesiones simultáneas y renovación deslizante).

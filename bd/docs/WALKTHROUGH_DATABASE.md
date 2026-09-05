@@ -5,9 +5,102 @@ Este documento registra la evolución histórica del modelo de base de datos de 
 ---
 
 ## 📑 Índice de Versiones
+- [Versión 2.2 (Sesiones de Usuario con Control de Inactividad e Invalidación)](#-versión-22-2026-09-05)
 - [Versión 2.1 (E-Commerce Inmutable, Cotizaciones y Carrito con Variantes)](#-versión-21-2026-09-04)
 - [Versión 2.0 (Página FINAL del ER) - Reestructuración de Catálogo, Variantes y Combos](#-versión-20-2026-09-03)
 - [Versión 1.0 (Esquema Inicial Pre-Final) - Base de 21 Tablas](#-versión-10-2026-09-02)
+
+---
+
+## 📦 Versión 2.2 (2026-09-05)
+
+### 🎯 Resumen Ejecutivo
+Incorporación del estado de sesión de usuario, exigido por la historia **HU-SEG-02** del módulo transversal **M20 (Seguridad, Auditoría y Protección de Datos)**. Hasta esta versión las sesiones eran completamente sin estado (JWT autocontenido), lo que hacía **imposible retirar un token ya emitido**: cerrar sesión, invalidar los accesos tras un cambio de contraseña o expulsar a una cuenta desactivada no tenían soporte en el modelo de datos.
+- **Total Tablas:** Pasa de 27 a **28 tablas**.
+- **Foco de la versión:** Seguridad y control de acceso.
+
+---
+
+### 🛑 1. Tablas Deprecadas / Eliminadas
+Ninguna en esta versión. El cambio es puramente aditivo y no altera ninguna estructura previa.
+
+---
+
+### ✨ 2. Tablas Nuevas Creadas (1 Tabla)
+
+| Nueva Tabla (v2.2) | Clave Primaria (PK) | Claves Foráneas (FK) | Propósito Funcional |
+| :--- | :--- | :--- | :--- |
+| **`sesion`** | `id_sesion UUID` | `id_usuario` $ightarrow$ `usuario` (CASCADE) | Sesión activa de un usuario en un dispositivo. Permite cerrar una sesión concreta, invalidar todas las de un usuario y aplicar la caducidad por inactividad verificada en servidor. Varias filas por usuario dan soporte a sesiones simultáneas (RF-SEG-02-05). |
+
+> **⚠️ Excepción justificada a la convención de PK.** La guía establece `SERIAL PRIMARY KEY` para toda tabla. `sesion` usa **`UUID` con `gen_random_uuid()`** de forma deliberada: el identificador viaja dentro del JWT como el claim `sid` y llega al navegador, de modo que un entero secuencial permitiría a un tercero enumerar las sesiones del sistema. Es la única tabla del esquema con esta excepción, y responde a un requisito de seguridad (RNF-SEG-02-01), no a una preferencia de estilo.
+
+**Columnas de `sesion`:**
+
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id_sesion` | `UUID` | PK no enumerable, generada con `gen_random_uuid()`. |
+| `id_usuario` | `INT` | Titular de la sesión. |
+| `tipo_sesion` | `enum_tipo_sesion` | Determina la ventana de inactividad aplicable (RF-SEG-02-02). |
+| `fecha_inicio` | `TIMESTAMPTZ` | Momento de apertura. Por defecto `now()`. |
+| `fecha_ultimo_acceso` | `TIMESTAMPTZ` | Se renueva en cada operación del usuario (RF-SEG-02-03). |
+| `fecha_expiracion` | `TIMESTAMPTZ` | Último acceso más la ventana de inactividad del tipo de sesión. |
+| `estado` | `enum_estado_sesion` | Ciclo de vida. Por defecto `activa`. |
+| `motivo_cierre` | `enum_motivo_cierre_sesion` | Causa del cierre; nulo mientras sigue activa. |
+
+---
+
+### 🔄 3. Tablas Modificadas y Nuevas Relaciones
+- **Ninguna tabla existente fue modificada.** `usuario` conserva íntegras todas sus columnas de la v2.1, incluida `tipo`.
+- **Nueva Relación:** `sesion.id_usuario` $ightarrow$ `usuario.id_usuario` con política `ON UPDATE CASCADE ON DELETE CASCADE`. Al eliminar una cuenta, sus sesiones desaparecen con ella; no tiene sentido conservar la sesión de un usuario inexistente.
+
+---
+
+### 🔒 4. Restricciones (`CONSTRAINTS`) y Tipos `ENUM` Agregados
+
+#### Nuevos Tipos ENUM Nativos (3):
+```sql
+enum_estado_sesion        -- ('activa', 'cerrada', 'expirada', 'revocada')
+enum_tipo_sesion          -- ('admin', 'cliente')
+enum_motivo_cierre_sesion -- ('cierre_manual', 'inactividad', 'cambio_contrasena',
+                          --  'cuenta_desactivada', 'permisos_retirados')
+```
+
+Los cuatro estados **no son intercambiables** y su distinción es funcional, no decorativa:
+- `cerrada` — el usuario pulsó cerrar sesión.
+- `expirada` — venció la ventana de inactividad.
+- `revocada` — un tercero la invalidó: cambio de contraseña, cuenta desactivada o permisos retirados.
+
+El `motivo_cierre` conserva la causa exacta para diagnóstico posterior. Al navegador le llega la misma respuesta en los cuatro casos: revelar si una sesión fue revocada o si simplemente venció también es información.
+
+#### Nuevas Reglas de Validación:
+- Ninguna restricción `CHECK` ni `UNIQUE` adicional. Un mismo usuario **debe** poder tener varias filas activas: es lo que permite sesiones simultáneas en distintos dispositivos.
+
+---
+
+### ⚡ 5. Nuevos Índices de Rendimiento
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_sesion_usuario_estado ON sesion(id_usuario, estado);
+CREATE INDEX IF NOT EXISTS idx_sesion_estado_expiracion ON sesion(estado, fecha_expiracion);
+```
+
+- **`idx_sesion_usuario_estado`** cubre la FK `id_usuario` (obligatorio por la Regla de Oro 5) y resuelve las dos consultas más frecuentes: listar las sesiones vigentes de un usuario e invalidarlas en bloque.
+- **`idx_sesion_estado_expiracion`** prepara el barrido periódico de sesiones caducadas. Hoy las filas se marcan como `expirada` al intentar usarlas; cuando el volumen lo justifique, una tarea de fondo podrá recorrerlas con este índice.
+
+---
+
+### 💻 6. Impacto y Acciones Requeridas en Backend y Frontend
+
+#### Backend (TypeScript / Kysely / Express):
+- **`src/core/db/types.ts`**: añadida la interfaz `SesionTable`, los tipos `EnumEstadoSesion`, `EnumTipoSesion` y `EnumMotivoCierreSesion`, el registro `sesion` en la interfaz raíz `Database` y los helpers `Sesion` / `NewSesion` / `SesionUpdate`. Compilación verificada con `npx tsc --noEmit` sin errores.
+- **`src/core/utils/jwt.ts`**: `TokenPayload` incorpora el claim opcional `sid`.
+- **Módulo afectado: `M20`** — consume la tabla desde `m20-seguridad/repositories/sesion.repository.ts`. Un token **sin `sid` es rechazado** por el guarda de sesión.
+- **Módulo pendiente: `M04`** — su flujo de login debe consumir `serviciosSeguridad.sesion.abrirSesion()` en lugar de firmar JWT por su cuenta, o los tokens que emita no serán aceptados.
+- **Módulo pendiente: `M17`** — al revocar permisos debe invocar `invalidarSesionesDeUsuario(id, 'permisos_retirados')`. El motivo ya existe en el ENUM; no se dispara automáticamente, porque una petición denegada no equivale a una revocación.
+
+#### Frontend (UI / Vistas / Componentes):
+- El código de error `SESSION_EXPIRED` debe conducir al usuario a autenticarse de nuevo, conservando el destino que pretendía alcanzar (RF-SEG-02-08).
+- `GET /api/seguridad/sesiones` habilita una futura pantalla de **"tus dispositivos conectados"**. No expone IP ni `user-agent`: son datos personales y su tratamiento entra en HU-SEG-05, todavía bloqueada.
 
 ---
 
