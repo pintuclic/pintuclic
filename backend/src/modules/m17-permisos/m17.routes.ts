@@ -1,4 +1,4 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { db } from '../../core/db/connection';
 import { guardas, serviciosSeguridad } from '../m20-seguridad/seguridad.routes';
 
@@ -40,9 +40,6 @@ const empleadosCtrl = new EmpleadosController(empleadosService);
 const permisosCtrl = new PermisosController(permisosService);
 const clientesCtrl = new ClientesController(clientesService);
 const parametrosCtrl = new ParametrosController(parametrosService);
-
-// Sembrar permisos del sistema al cargar el modulo (idempotente)
-void permisosService.sembrarPermisosSistema();
 
 const adminRoutes = Router();
 
