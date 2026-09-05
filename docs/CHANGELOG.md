@@ -4,15 +4,45 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
-## [v1.6.0] - 2026-09-05
+## [v1.7.0] - 2026-09-05
 ### Módulo: M17 (Administración y Permisos - Frontend Core)
-- **Alcance:** Implementación de la infraestructura de autenticación simulada y comprobación reactiva de permisos (`useAuth`, `can()`) para frontend, integración del widget interactivo de desarrollo `DevRoleSwitcher` y publicación de la guía de testing de M17 para desacoplar el desarrollo de permisos de la pantalla de login (M04).
+- **Alcance:** Implementación de la infraestructura de autenticación simulada y comprobación reactiva de permisos (`useAuth`, `can()`) para frontend, integración del widget interactivo de desarrollo `DevRoleSwitcher`, soporte en subdominio de testing (`adsoproject.dev`) y publicación de la guía de testing de M17 para desacoplar el desarrollo de permisos de la pantalla de login (M04).
 - **Hitos Clave:**
   - Composable `useAuth.ts` con persistencia en `localStorage`, roles tipados y catálogo de perfiles mock basado en el seed central.
   - Componente flotante `DevRoleSwitcher.vue` con alternador de identidades en 1 clic (Admin, Empleado Parcial, Cliente, Empresa).
   - Guía oficial de implementación y estándares visuales en `frontend/src/modules/m17-permisos/README.md`.
+  - Configuración de orígenes e infraestructura de despliegue en `docker-compose.dev.yml`.
 - **Estado:** ✅ Build de Vite (`npm run build`) y linter limpios; contenedor Docker verificado.
-- 🔗 **Walkthrough Técnico M17 Frontend:** [walkthrough_v1.6.0_M17_auth_simulation_frontend.md](./walkthroughs/M17/walkthrough_v1.6.0_M17_auth_simulation_frontend.md)
+- 🔗 **Walkthrough Técnico M17 Frontend:** [walkthrough_v1.7.0_M17_auth_simulation_frontend.md](./walkthroughs/M17/walkthrough_v1.7.0_M17_auth_simulation_frontend.md)
+
+---
+
+## [v1.6.0] - 2026-09-05
+### Módulo: M20 (Seguridad) - Protección de Datos Personales y Habeas Data (HU-SEG-05)
+- **Alcance:** Implementación de **HU-SEG-05**, que estuvo bloqueada desde la v1.4.0 por ausencia de modelo de datos. Consume las tablas `aviso_privacidad`, `consentimiento_usuario` y `solicitud_supresion` incorporadas en el esquema v2.3. **Sin cambios en el DDL.**
+- **Añadido:**
+  - `m20-seguridad/dtos/privacidad.dto.ts`: schemas Zod de consentimiento, resolución de solicitudes y parámetro de URL.
+  - `m20-seguridad/interfaces/privacidad.interfaces.ts`: contratos de dominio sin runtime.
+  - `m20-seguridad/repositories/privacidad.repository.ts`: consultas Kysely de las 3 tablas de privacidad y conteo de órdenes asociadas.
+  - `m20-seguridad/services/privacidad.service.ts`: reglas de consentimiento y circuito de supresión.
+  - `m20-seguridad/controllers/privacidad.controller.ts`: transporte HTTP.
+  - Endpoints: `GET /api/seguridad/privacidad/aviso` (**público**), `GET|POST /privacidad/consentimiento`, `GET|POST /privacidad/supresion`, `GET /privacidad/supresion/pendientes` y `PUT /privacidad/supresion/:id` (ambos con permiso).
+  - `docs/walkthroughs/M20/walkthrough_v1.6.0_M20_privacidad_backend.md`.
+- **Decisiones de diseño:**
+  - **El consentimiento es histórico, no un estado:** cada aceptación crea una fila y nunca se sobrescribe una anterior. Es lo que permite responder qué versión aceptó cada titular y cuándo, y hace posible avisar cuando el aviso cambia de versión (CA-SEG-05-06).
+  - **La versión se acepta explícitamente:** si el aviso cambia entre que el usuario lo lee y lo acepta, la operación falla con `409` en lugar de registrar consentimiento sobre un texto que nunca vio.
+  - **El aviso vigente es público:** debe poder leerse antes de registrarse, porque nadie puede consentir lo que no ha visto.
+  - **La supresión se registra con la verdad:** cuando hay órdenes asociadas, la respuesta informa que la información comercial exigida por la ley se conservará desvinculada de la identidad, en vez de prometer un borrado total que la ley no permite.
+- **Ajustado:**
+  - `m20-seguridad/dtos/index.ts` y `seguridad.routes.ts`: composición y cableado de las rutas nuevas.
+  - Renombrado `walkthrough_v1.5.0_M20_seguridad.md` → `..._backend.md` para cumplir la normativa de sufijo de capa.
+- **Pendiente:**
+  - **M17** debe registrar el permiso `seguridad.gestionar_privacidad` en el catálogo; no está en el seed oficial y sin él la cola administrativa responde `403` a todos.
+  - **M04** debe invocar `serviciosSeguridad.privacidad.exigirConsentimientoVigente(idUsuario)` al completar un registro, y es el dueño de la consulta y rectificación del perfil (CA-SEG-05-03).
+  - **CA-SEG-05-05 parcial — requiere decisión del líder técnico / PO:** el sistema identifica y comunica qué información comercial debe conservarse, pero **no ejecuta la desvinculación de la identidad**, que es estructuralmente imposible hoy (`orden.id_usuario` es `NOT NULL` y su FK usa `ON DELETE RESTRICT`). El walkthrough plantea tres opciones con su contrapartida y recomienda anonimizar la fila de `usuario` en lugar de la orden, por no requerir cambios de DDL. Queda además una colisión legal por resolver: la normativa tributaria exige que la factura identifique al comprador, mientras que la de protección de datos exige suprimir esa identidad. Ver [walkthrough v1.6.0](./walkthroughs/M20/walkthrough_v1.6.0_M20_privacidad_backend.md).
+  - **RF-SEG-05-08/09 bloqueados:** la rama de transferencia de datos a terceros depende de la postura sobre retención de imágenes del simulador y conversaciones de chatbot, aún sin definir.
+  - **HU-SEG-04 (auditoría)** sigue EN PAUSA por decisión del Lider general.
+- **Estado:** ✅ `tsc --noEmit` y `npm run lint` sin errores, y 16 pruebas de integración contra PostgreSQL 18.4 con el esquema v2.3 y el seed oficial (aviso público, cambio de versión del aviso, aceptación de versión retirada, histórico no sobrescrito, bifurcación de órdenes asociadas, no duplicación de solicitudes, control de permisos en la cola administrativa y ausencia de datos sensibles en las respuestas).
 
 ---
 
@@ -87,7 +117,7 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - Hashing seguro con BCrypt (costo 12) y saneamiento recursivo de credenciales en respuestas HTTP.
   - Sesiones con estado persistidas en PostgreSQL (`sesion` con UUID) y resolución de permisos en tiempo real.
 - **Estado:** ✅ `tsc --noEmit` y `npm run lint` limpios; 28 pruebas de integración ejecutadas contra PostgreSQL 18.
-- 🔗 **Walkthrough Técnico M20:** [walkthrough_v1.5.0_M20_seguridad.md](./walkthroughs/M20/walkthrough_v1.5.0_M20_seguridad.md)
+- 🔗 **Walkthrough Técnico M20:** [walkthrough_v1.5.0_M20_seguridad_backend.md](./walkthroughs/M20/walkthrough_v1.5.0_M20_seguridad_backend.md)
 - 🔗 **Walkthrough Técnico BD v2.2:** [WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md#-versión-22-2026-09-05)
 
 ---

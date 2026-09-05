@@ -177,6 +177,12 @@ const isDev =
             seguridad.configurar_sesion
           </span>
           <span
+            v-if="can('seguridad.gestionar_privacidad')"
+            class="bg-subaction text-corporate px-1.5 py-0.5 rounded text-[9px] font-semibold"
+          >
+            seguridad.gestionar_privacidad
+          </span>
+          <span
             v-if="!currentUser || (!currentUser.permisos.includes('*') && currentUser.permisos.length === 0)"
             class="text-neutral-medium italic"
           >

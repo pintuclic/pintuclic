@@ -29,6 +29,7 @@ export const PERFILES_MOCK: Record<string, UsuarioSimulado> = {
       'ordenes.ver',
       'usuarios.gestionar',
       'permisos.gestionar',
+      'seguridad.gestionar_privacidad',
       'empleados.crear',
       'empleados.desactivar',
     ],
