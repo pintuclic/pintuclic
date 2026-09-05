@@ -66,9 +66,17 @@ El archivo central `docs/CHANGELOG.md` es el **resumen ejecutivo de producto** p
 
 ---
 
-## 4. Estructura Obligatoria del Walkthrough de Implementación
+## 4. Estructura y Nomenclatura Obligatoria del Walkthrough de Implementación
 
-Cada implementación debe acompañarse de un archivo de Walkthrough detallado guardado en `walkthroughs/M[XX]/walkthrough_v[X.X.X]_[descripcion].md` (o documentado formalmente en el reporte de entrega).
+Cada implementación debe acompañarse de un archivo de Walkthrough detallado guardado en:
+`docs/walkthroughs/M[XX]/walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_[backend|frontend].md`
+
+> 🏷️ **SUFIJO OBLIGATORIO DE CAPA (`_backend` o `_frontend`):**  
+> Para evitar colisiones, sobreescrituras y ambigüedades cuando frontend y backend se desarrollan de forma desacoplada dentro del mismo módulo funcional, el nombre de CADA archivo de Walkthrough **DEBE terminar obligatoriamente con el sufijo de su capa técnica al final del nombre**:
+> - **Entregas de Backend:** `walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_backend.md`  
+>   *(Ejemplo: `docs/walkthroughs/M20/walkthrough_v1.5.0_M20_seguridad_backend.md`)*
+> - **Entregas de Frontend:** `walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_frontend.md`  
+>   *(Ejemplo: `docs/walkthroughs/M17/walkthrough_v1.6.0_M17_auth_simulation_frontend.md`)*
 
 El Walkthrough debe contener obligatoriamente las siguientes 6 secciones:
 
