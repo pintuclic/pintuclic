@@ -1,5 +1,10 @@
 # WALKTHROUGH DE IMPLEMENTACIÓN Y REPORTE DE VERSIÓN
 
+> 🏷️ **CONVENCIÓN OBLIGATORIA DE NOMENCLATURA DEL ARCHIVO:**  
+> Guardar obligatoriamente en `docs/walkthroughs/M[XX]/` con el sufijo de capa técnica **al final del nombre**:  
+> - **Backend:** `walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_backend.md`  
+> - **Frontend:** `walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_frontend.md`
+
 ---
 
 ## 1. METADATOS DE LA IMPLEMENTACIÓN
