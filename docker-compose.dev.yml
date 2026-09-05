@@ -19,7 +19,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: api-pintuclic-dev-backend
+    container_name: pintuclic-dev-backend
     restart: unless-stopped
     environment:
       PORT: 3000
