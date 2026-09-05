@@ -126,4 +126,5 @@ Siguiendo la [Guía de Commits y Push](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/G
 - [docs/01_TRANSVERSALES/M18_NOTIFICACIONES.md](./docs/01_TRANSVERSALES/M18_NOTIFICACIONES.md): Servicios de correo y notificaciones transaccionales.
 - [docs/01_TRANSVERSALES/POLITICAS/](./docs/01_TRANSVERSALES/POLITICAS/): Políticas transversales de unicidad, control de servidor y datos sensibles.
 - [docs/02_MODULOS_FUNCIONALES/M04_CUENTAS_AUTH_PERFIL.md](./docs/02_MODULOS_FUNCIONALES/M04_CUENTAS_AUTH_PERFIL.md): Cuentas particulares y empresas, login, registro, perfiles y direcciones.
+- [bd/docs/GUIA_MOCKS_Y_DATOS_PRUEBA.md](./bd/docs/GUIA_MOCKS_Y_DATOS_PRUEBA.md): Protocolo de mocks y datos de prueba centralizados (31 tablas) para testing local y desarrollo de módulos.
 - `docs/assets/diagrams/`: Diagramas de arquitectura, flujo funcional y secuencia por módulo.

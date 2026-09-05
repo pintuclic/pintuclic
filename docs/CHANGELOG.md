@@ -4,6 +4,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.5.5] - 2026-09-05
+### Módulo: Base de Datos y Calidad de Desarrollo (Mocks y Fixtures Centralizados)
+- **Alcance:** Unificación del sistema de mocks de prueba en una única fuente centralizada ([`bd/sql/seed_pintuclic.sql`](../bd/sql/seed_pintuclic.sql)), eliminación definitiva de la carpeta aislada `backend/src/modules/m20-seguridad/__fixtures__`, creación del ejecutor `npm run db:seed` y publicación de la [Guía de Mocks y Datos de Prueba](../bd/docs/GUIA_MOCKS_Y_DATOS_PRUEBA.md).
+- **Hitos Clave:**
+  - Siembra integral e idempotente de datos en las **31 tablas** del esquema relacional (79 registros de prueba vinculados).
+  - Eliminación de dependencias dispersas en `m20-seguridad/__fixtures__` concentrando toda la data en la capa `bd/`.
+  - Inclusión de comandos `db:seed` y `db:reset` en `backend/package.json`.
+  - Publicación de [`GUIA_MOCKS_Y_DATOS_PRUEBA.md`](../bd/docs/GUIA_MOCKS_Y_DATOS_PRUEBA.md) con roles, credenciales (`Pintuclic2026`) y catálogo de testing.
+- **Estado:** ✅ Validado contra PostgreSQL local con 31 tablas verificadas; `tsc --noEmit` y `eslint` limpios.
+
+---
+
 ## [v1.5.4] - 2026-09-05
 ### Módulo: Core Backend e Infraestructura de Base de Datos
 - **Alcance:** Creación del script automatizado de despliegue y verificación de base de datos (`backend/src/core/db/setup.ts`) invocable mediante `npm run db` (o `npm run db:setup` / `npm run db:init`).
