@@ -4,7 +4,7 @@
 
 ## 1. METADATOS DE LA IMPLEMENTACIÓN
 
-* **Versión Generada:** `v1.6.0`
+* **Versión Generada:** `v1.7.0`
 * **Tipo de Incremento:** `MINOR`
 * **Módulo de Origen:** `M17 - Administración, Empleados y Permisos (Frontend / Core)`
 * **Fecha de Entrega:** `05/09/2026`
