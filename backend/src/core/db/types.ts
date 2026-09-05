@@ -1,24 +1,28 @@
 import { Generated, ColumnType, Selectable, Insertable, Updateable } from 'kysely';
 
 // ==============================================================================
-// TIPOS ENUMERADOS (ENUMs) DE POSTGRESQL (schema_pintuclic.sql)
+// TIPOS ENUMERADOS (ENUMs) DE POSTGRESQL (schema_pintuclic.sql - v2.1)
 // ==============================================================================
 
 export type EnumEstadoGeneral = 'activo' | 'inactivo';
+
+export type EnumTipoUsuario = 'normal' | 'empresa';
 
 export type EnumEstadoUsuario = 'activo' | 'inactivo' | 'bloqueado' | 'pendiente';
 
 export type EnumEstadoProducto = 'activo' | 'inactivo' | 'agotado' | 'descontinuado';
 
-export type EnumEstadoReservacion = 'pendiente' | 'confirmada' | 'cancelada' | 'finalizada';
+export type EnumOrigenOrden = 'carrito' | 'cotizacion';
 
-export type EnumEstadoCarrito = 'activo' | 'abandonado' | 'procesado' | 'cancelado';
+export type EnumEstadoOrden = 'pendiente' | 'pagado' | 'en_preparacion' | 'enviado' | 'entregado' | 'cancelado';
 
-export type EnumEstadoPedido = 'pendiente' | 'pagado' | 'en_preparacion' | 'enviado' | 'entregado' | 'cancelado';
+export type EnumEstadoCotizacion = 'borrador' | 'enviada' | 'aprobada' | 'rechazada' | 'vencida';
 
 export type EnumEstadoPago = 'pendiente' | 'completado' | 'fallido' | 'reembolsado';
 
 export type EnumEstadoFactura = 'emitida' | 'pagada' | 'anulada';
+
+export type EnumEstadoReservacion = 'pendiente' | 'confirmada' | 'cancelada' | 'finalizada';
 
 // ==============================================================================
 // 1. MÓDULO DE DESCUENTOS, ROLES Y PERMISOS
@@ -70,6 +74,7 @@ export interface UsuarioTable {
   contrasena: string;
   id_rol: number | null;
   estado: Generated<EnumEstadoUsuario>;
+  tipo: Generated<EnumTipoUsuario>;
 }
 
 export interface UsuarioRolTable {
@@ -125,7 +130,8 @@ export interface TonosTable {
 export interface VarianteTable {
   id_variante: Generated<number>;
   id_producto: number;
-  precio: ColumnType<string, string | number, string | number>;
+  precio_vigente: ColumnType<string, string | number, string | number>;
+  estado: Generated<EnumEstadoProducto>;
   id_color: number | null;
 }
 
@@ -148,38 +154,60 @@ export interface VarianteComboTable {
 }
 
 // ==============================================================================
-// 4. MÓDULO DE CARRITO Y VENTAS
+// 4. MÓDULO DE CARRITO VIVO DE COMPRAS
 // ==============================================================================
 
 export interface CarritoTable {
   id_carrito: Generated<number>;
-  id_usuario: number;
-  total: ColumnType<string, string | number, string | number>;
-  estado: Generated<EnumEstadoCarrito>;
+  token_visitante: string | null;
+  id_usuario: number | null;
+  fecha_ultima_actividad: ColumnType<Date, string | Date | undefined, string | Date>;
 }
 
-export interface DetalleCarritoTable {
-  id_detalle_carrito: Generated<number>;
-  id_producto: number;
-  precio_unitario: ColumnType<string, string | number, string | number>;
+export interface LineaCarritoTable {
+  id_linea_carrito: Generated<number>;
+  id_carrito: number;
+  id_variante: number;
   cantidad: Generated<number>;
-  id_carrito: number;
 }
 
-export interface PedidoTable {
-  id_pedido: Generated<number>;
-  id_carrito: number;
+// ==============================================================================
+// 5. MÓDULO DE COTIZACIONES Y ÓRDENES (HISTÓRICO INMUTABLE)
+// ==============================================================================
+
+export interface CotizacionTable {
+  id_cotizacion: Generated<number>;
+  estado: Generated<EnumEstadoCotizacion>;
+  fecha_creacion: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+export interface OrdenTable {
+  id_orden: Generated<number>;
+  codigo_visible: string;
+  id_usuario: number;
+  origen: Generated<EnumOrigenOrden>;
+  id_cotizacion: number | null;
+  estado: Generated<EnumEstadoOrden>;
+  transaccion_pago_id: string | null;
   direccion: string;
   sub_total: ColumnType<string, string | number, string | number>;
   descuento: ColumnType<string, string | number, string | number>;
   total: ColumnType<string, string | number, string | number>;
   observaciones: string | null;
   fecha: ColumnType<Date, string | Date | undefined, string | Date>;
-  estado: Generated<EnumEstadoPedido>;
+}
+
+export interface LineaOrdenTable {
+  id_linea_orden: Generated<number>;
+  id_orden: number;
+  nombre_producto: string;
+  variante_copia: string;
+  precio_aplicado: ColumnType<string, string | number, string | number>;
+  cantidad: Generated<number>;
 }
 
 // ==============================================================================
-// 5. MÓDULO DE PAGOS Y FACTURACIÓN
+// 6. MÓDULO DE PAGOS Y FACTURACIÓN
 // ==============================================================================
 
 export interface MetodoPagoTable {
@@ -191,7 +219,7 @@ export interface MetodoPagoTable {
 
 export interface PagosTable {
   id_pago: Generated<number>;
-  id_pedido: number;
+  id_orden: number;
   id_metodo_pago: number;
   estado: Generated<EnumEstadoPago>;
   monto: ColumnType<string, string | number, string | number>;
@@ -199,13 +227,13 @@ export interface PagosTable {
 
 export interface FacturaTable {
   id_factura: Generated<number>;
-  id_pedido: number;
+  id_orden: number;
   fecha: ColumnType<Date, string | Date | undefined, string | Date>;
   estado: Generated<EnumEstadoFactura>;
 }
 
 // ==============================================================================
-// 6. MÓDULO DE SERVICIOS Y RESERVACIONES
+// 7. MÓDULO DE SERVICIOS Y RESERVACIONES
 // ==============================================================================
 
 export interface ReservacionesTable {
@@ -218,7 +246,7 @@ export interface ReservacionesTable {
 }
 
 // ==============================================================================
-// 7. INTERFAZ CENTRAL DATABASE (Única fuente de la verdad para Kysely)
+// 8. INTERFAZ CENTRAL DATABASE (Única fuente de la verdad para Kysely)
 // ==============================================================================
 
 export interface Database {
@@ -246,10 +274,14 @@ export interface Database {
   combo: ComboTable;
   variante_combo: VarianteComboTable;
 
-  // Carrito y ventas
+  // Carrito vivo
   carrito: CarritoTable;
-  detalle_carrito: DetalleCarritoTable;
-  pedido: PedidoTable;
+  linea_carrito: LineaCarritoTable;
+
+  // Cotizaciones y órdenes inmutables
+  cotizacion: CotizacionTable;
+  orden: OrdenTable;
+  linea_orden: LineaOrdenTable;
 
   // Pagos y facturación
   metodo_pago: MetodoPagoTable;
@@ -261,7 +293,7 @@ export interface Database {
 }
 
 // ==============================================================================
-// 8. TIPOS HELPERS EXPORTADOS PARA ENTIDADES
+// 9. TIPOS HELPERS EXPORTADOS PARA ENTIDADES
 // ==============================================================================
 
 export type Descuento = Selectable<DescuentoTable>;
@@ -340,13 +372,21 @@ export type Carrito = Selectable<CarritoTable>;
 export type NewCarrito = Insertable<CarritoTable>;
 export type CarritoUpdate = Updateable<CarritoTable>;
 
-export type DetalleCarrito = Selectable<DetalleCarritoTable>;
-export type NewDetalleCarrito = Insertable<DetalleCarritoTable>;
-export type DetalleCarritoUpdate = Updateable<DetalleCarritoTable>;
+export type LineaCarrito = Selectable<LineaCarritoTable>;
+export type NewLineaCarrito = Insertable<LineaCarritoTable>;
+export type LineaCarritoUpdate = Updateable<LineaCarritoTable>;
 
-export type Pedido = Selectable<PedidoTable>;
-export type NewPedido = Insertable<PedidoTable>;
-export type PedidoUpdate = Updateable<PedidoTable>;
+export type Cotizacion = Selectable<CotizacionTable>;
+export type NewCotizacion = Insertable<CotizacionTable>;
+export type CotizacionUpdate = Updateable<CotizacionTable>;
+
+export type Orden = Selectable<OrdenTable>;
+export type NewOrden = Insertable<OrdenTable>;
+export type OrdenUpdate = Updateable<OrdenTable>;
+
+export type LineaOrden = Selectable<LineaOrdenTable>;
+export type NewLineaOrden = Insertable<LineaOrdenTable>;
+export type LineaOrdenUpdate = Updateable<LineaOrdenTable>;
 
 export type MetodoPago = Selectable<MetodoPagoTable>;
 export type NewMetodoPago = Insertable<MetodoPagoTable>;
