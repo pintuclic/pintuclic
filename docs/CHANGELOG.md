@@ -21,55 +21,28 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 ---
 
 ## [v1.5.0] - 2026-09-05
-
-> **Nota de integración:** esta entrega se numeró inicialmente como `v1.4.0` mientras estaba
-> sin publicar. Al integrar `develop` se encontró que ese número ya estaba tomado por la
-> actualización de BD a 27 tablas, así que pasa a `v1.5.0` y el esquema a `v2.2`. El
-> criterio: quien no ha publicado es quien renumera.
-### Módulo: M20 (Seguridad, Auditoría y Protección de Datos) + BD v2.1
-- **Alcance:** Primera entrega funcional de M20. Instala el validador central de autorización del sistema, la política de credenciales, la gestión de sesiones con estado y la red transversal de no exposición de datos sensibles. Cubre **HU-SEG-01, HU-SEG-02, HU-SEG-03 y HU-SEG-06** en backend.
-- **Añadido (base de datos, esquema v2.2 — 28 tablas):**
-  - `bd/docs/WALKTHROUGH_DATABASE.md`: entrada oficial de la versión 2.2 siguiendo la plantilla de `GUIA_REFACTORIZACION_BD.md` (tablas nuevas, ENUMs, índices e impacto en backend y frontend).
-  - `bd/docs/DOCUMENTACION_BASE_DATOS.md`: encabezado, changelog, diagrama Mermaid ER, diccionario de datos y catálogo de ENUMs actualizados a 28 tablas y 13 tipos enumerados.
-  - `bd/sql/schema_pintuclic.sql`: tabla `sesion` (UUID, tipo, fecha de inicio, último acceso, expiración, estado y motivo de cierre), 3 ENUM nuevos (`enum_estado_sesion`, `enum_tipo_sesion`, `enum_motivo_cierre_sesion`) y 2 índices. **Cambio de DDL autorizado explícitamente por el líder técnico.**
-- **Añadido (backend):**
-  - `backend/src/modules/m20-seguridad/`: módulo completo (interfaces + Zod, repositorios Kysely, servicios, guardas y controlador) con inyección de dependencias en `seguridad.routes.ts`.
-  - Guardas centrales `sesionVigente`, `requierePermiso`, `requiereTitularidad` y `protegido`, exportados para que cualquier módulo proteja sus rutas sin escribir lógica propia (RNF-SEG-03-01).
-  - Resolución de identidad y permisos EN VIVO contra PostgreSQL en cada petición: una cuenta desactivada o un permiso retirado surten efecto de inmediato (CA-SEG-02-04, CA-SEG-02-05, CA-SEG-03-04).
-  - Sesiones persistidas: el JWT porta el claim `sid` y el guarda comprueba en cada petición que la sesión siga viva, de modo que un token ya emitido es revocable. Cierre manual, caducidad por inactividad, renovación deslizante de la vigencia e invalidación en bloque (RF-SEG-01-06, RF-SEG-02-06).
-  - Respuesta uniforme ante denegación: un recurso ajeno responde igual que uno inexistente (RF-SEG-03-05, CA-SEG-03-06).
-  - Endpoints `POST|GET|DELETE /api/seguridad/sesion`, `GET|DELETE /api/seguridad/sesiones`, `GET|PUT /api/seguridad/politica-sesion` y `PUT /api/seguridad/credenciales`.
-  - `backend/src/core/utils/sanitize.ts`: saneamiento recursivo de campos de credencial (HU-SEG-06).
-  - `docs/walkthroughs/M20/walkthrough_v1.5.0_M20_seguridad.md`: walkthrough oficial de la entrega.
-- **Ajustado:**
-  - `backend/src/core/db/types.ts`: `SesionTable`, tipos ENUM de sesión y registro en la interfaz `Database`.
-  - `backend/src/core/utils/apiResponse.ts`: `sendSuccess` sanea la carga útil antes de serializarla.
-  - `backend/src/core/middlewares/errorHandler.ts`: el detalle técnico se registra internamente y al navegador solo viaja un mensaje genérico (RF-SEG-06-04, CA-SEG-06-02). `EXPONER_DETALLE_ERRORES=true` lo reabre en local.
-  - `backend/src/core/utils/jwt.ts` y `core/types/api.types.ts`: claim y campo `sid`, y `tipo_sesion` (aditivos).
-  - `backend/src/app.routes.ts`: montaje de `/api/seguridad`.
-- **Pendiente / Bloqueado:**
-  - **HU-SEG-04 (auditoría): EN PAUSA** por decisión del Product Owner hasta definir la tabla de auditoría. Mientras tanto los accesos denegados se emiten al registro técnico con la forma que exige CA-SEG-03-05.
-  - **HU-SEG-05 (protección de datos personales): BLOQUEADA** a la espera del modelo de datos de consentimiento. No basta con columnas en `usuario`: RF-SEG-05-06 exige registrar las *solicitudes de supresión* (con su propio ciclo de vida) y CA-SEG-05-06 exige saber qué versión del aviso aceptó cada usuario para avisarle cuando cambie, lo que requiere histórico. El equipo de BD está definiendo las tablas.
-
-  - M17 debe sembrar el catálogo `permisos` (incluido `seguridad.configurar_sesion`) e invocar `invalidarSesionesDeUsuario(id, 'permisos_retirados')` al revocar permisos.
-  - M04 debe consumir `serviciosSeguridad.sesion.abrirSesion()` en su login en lugar de firmar JWT por su cuenta.
-- **Estado:** ✅ `tsc --noEmit` y `npm run lint` sin errores, DDL aplicado y dos tandas de pruebas de integración contra PostgreSQL 18.4: 16 sobre autorización y credenciales (identidad en vivo, permiso inactivo, cuenta desactivada, retiro y restitución de permisos en caliente, cambio de contraseña y saneamiento de respuestas) y 12 sobre sesiones persistidas (apertura, cierre manual, caducidad por inactividad, revocación en cascada, 3 sesiones simultáneas y renovación deslizante).
+### Módulo: M20 (Seguridad, Auditoría y Protección de Datos) + BD v2.2
+- **Alcance:** Primera entrega funcional de M20 (HU-SEG-01, HU-SEG-02, HU-SEG-03, HU-SEG-06) e incorporación de la tabla `sesion` en el esquema de base de datos v2.2 (28 tablas).
+- **Hitos Clave:**
+  - Validador central de autorización en servidor y guardas reutilizables (`sesionVigente`, `requierePermiso`, `requiereTitularidad`, `protegido`).
+  - Hashing seguro con BCrypt (costo 12) y saneamiento recursivo de credenciales en respuestas HTTP.
+  - Sesiones con estado persistidas en PostgreSQL (`sesion` con UUID) y resolución de permisos en tiempo real.
+- **Estado:** ✅ `tsc --noEmit` y `npm run lint` limpios; 28 pruebas de integración ejecutadas contra PostgreSQL 18.
+- 🔗 **Walkthrough Técnico M20:** [walkthrough_v1.5.0_M20_seguridad.md](./walkthroughs/M20/walkthrough_v1.5.0_M20_seguridad.md)
+- 🔗 **Walkthrough Técnico BD v2.2:** [WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md#-versión-22-2026-09-05)
 
 ---
 
 ## [v1.4.0] - 2026-09-04
-### Módulo: BD (Base de Datos) y Core Backend (Tipos Kysely v2.1)
-- **Alcance:** Actualización a la versión 2.1 del esquema relacional (27 tablas), implementación del patrón de e-commerce inmutable para ventas (`orden` y `linea_orden`), cotizaciones B2B/B2C (`cotizacion`), carrito vivo con soporte para visitantes anónimos (`token_visitante`) y variantes (`linea_carrito`), clasificación `enum_tipo_usuario`, sincronización completa de tipos Kysely en `backend/src/core/db/types.ts` y walkthrough técnico en `bd/docs/WALKTHROUGH_DATABASE.md`.
-- **Añadido:**
-  - `bd/assets/ER Pintuclic.drawio.xml` y `bd/assets/ER Pintuclic-Final 1.1.drawio.png`: Diagramas Entidad-Relación actualizados con las 27 tablas y relaciones formales.
-  - Tablas: `orden`, `linea_orden`, `linea_carrito`, `cotizacion`.
-  - Tipos enumerados de PostgreSQL: `enum_tipo_usuario`, `enum_origen_orden`, `enum_estado_orden`, `enum_estado_cotizacion`.
-- **Ajustado:**
-  - `bd/sql/schema_pintuclic.sql`: Reemplazo de `pedido` por `orden`/`linea_orden` y de `detalle_carrito` por `linea_carrito`. Actualización de `usuario` (con `tipo`), `variante` (con `precio_vigente` y `estado`), `carrito` (con `token_visitante`), `pagos` y `factura` vinculados a `id_orden`. 29 claves foráneas e índices de rendimiento.
-  - `bd/docs/WALKTHROUGH_DATABASE.md`: Registro oficial de la versión 2.1 con matriz de cambios, constraints, índices y plan de impacto.
-  - `bd/docs/DOCUMENTACION_BASE_DATOS.md`: Diagrama Mermaid ER actualizado, changelog y diccionario de 27 tablas.
-  - `backend/src/core/db/types.ts`: Sincronización completa de las 27 tablas y tipos helpers Kysely con cero errores de TypeScript (`tsc --noEmit`).
-- **Estado:** ✅ Compilación limpia con `npx tsc --noEmit` en backend, orden topológico de BD validado sin dependencias circulares.
+### Módulo: BD (Base de Datos v2.1) y Core Backend
+- **Alcance:** Actualización a la versión 2.1 del esquema relacional (27 tablas) y sincronización de tipos Kysely en `backend/src/core/db/types.ts`.
+- **Hitos Clave:**
+  - Patrón de e-commerce inmutable para ventas (`orden` y `linea_orden`).
+  - Desacoplamiento de cotizaciones comerciales B2B/B2C (`cotizacion`).
+  - Carrito vivo con soporte para visitantes anónimos (`token_visitante`) y variantes (`linea_carrito`).
+  - Clasificación de tipo de cuenta (`enum_tipo_usuario`).
+- **Estado:** ✅ Compilación limpia con `npx tsc --noEmit` en backend; orden topológico validado.
+- 🔗 **Walkthrough Técnico BD v2.1:** [WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md#-versión-21-2026-09-04)
 
 ---
 
@@ -91,19 +64,11 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 ---
 
 ## [v1.2.0] - 2026-09-04
-### Módulo: BD (Base de Datos) y Documentación Técnica
-- **Alcance:** Actualización a la versión 2.0 del esquema relacional (25 tablas), reorganización modular del directorio `bd/`, documentación técnica, diagramas fuente y guía de refactorización para agentes de IA y desarrolladores.
-- **Añadido:**
-  - `bd/sql/schema_pintuclic.sql`: Script DDL PostgreSQL v2.0 (25 tablas, 8 ENUMs nativos, 27 FKs e índices de rendimiento).
-  - `bd/docs/DOCUMENTACION_BASE_DATOS.md`: Especificación técnica del modelo, diagrama Mermaid ER, diccionario de datos y tabla sinóptica de versiones.
-  - `bd/docs/WALKTHROUGH_DATABASE.md`: Registro histórico y técnico de migraciones (v1.0 $\rightarrow$ v2.0 con tablas nuevas, deprecadas, constraints e impacto en backend/frontend).
-  - `bd/docs/GUIA_REFACTORIZACION_BD.md`: Instrucciones paso a paso, reglas de oro, checklist y plantilla oficial para futuras refactorizaciones.
-  - `bd/assets/`: Recursos de diagramas ER (`ER_Pintuco.png`, `ER_Pintuco.drawio.xml`).
-  - `bd/README.md`: Mapa general y accesos directos al módulo de base de datos.
-- **Refactorizado:**
-  - Estructuración del directorio `bd/` en subcarpetas semánticas (`sql/`, `docs/`, `assets/`).
-  - Renombrado y estandarización global del directorio raíz de documentación: `equipo-2-doc/` $\rightarrow$ `docs/` para abarcar a toda la organización.
-- **Estado:** ✅ DDL validado, orden topológico comprobado y rutas de documentación estandarizadas a `docs/`.
+### Módulo: BD (Base de Datos v2.0) y Reorganización Modular
+- **Alcance:** Actualización a la versión 2.0 del esquema relacional (25 tablas), reorganización de la carpeta `bd/` (`sql/`, `docs/`, `assets/`) y unificación de `docs/`.
+- **Hitos Clave:** Catálogo de 4 niveles (`categoria` $\rightarrow$ `subcategorias` $\rightarrow$ `sub_subcategorias` $\rightarrow$ `linea`), variantes por color/tono, combos y 8 ENUMs nativos.
+- **Estado:** ✅ DDL validado, orden topológico comprobado y rutas de documentación unificadas.
+- 🔗 **Walkthrough Técnico BD v2.0:** [WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md#-versión-20-2026-09-03)
 
 ---
 
