@@ -1,14 +1,15 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { checkDbConnection } from './core/db/connection';
 import { sendSuccess } from './core/utils/apiResponse';
 import { productoRoutes } from './modules/productos/productos.routes';
 import { seguridadRoutes } from './modules/m20-seguridad/seguridad.routes';
 import { adminRoutes } from './modules/m17-permisos/m17.routes';
+import { notificacionesRoutes } from './modules/m18-notificaciones/notificaciones.routes';
 
 const appRouter = Router();
 
 /**
- * Endpoint de verificaciÃ³n de salud de la API (Healthcheck).
+ * Endpoint de verificación de salud de la API (Healthcheck).
  */
 appRouter.get('/health', async (_req, res) => {
   const isDbConnected = await checkDbConnection();
@@ -20,10 +21,11 @@ appRouter.get('/health', async (_req, res) => {
   }, 'Pintuclic API operativa');
 });
 
-// Ensamblaje de mÃ³dulos de negocio
+// Ensamblaje de módulos de negocio
 appRouter.use('/productos', productoRoutes);
 appRouter.use('/seguridad', seguridadRoutes);
 appRouter.use('/admin', adminRoutes);
+appRouter.use('/notificaciones', notificacionesRoutes);
 
 export default appRouter;
 

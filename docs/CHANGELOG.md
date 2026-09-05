@@ -4,6 +4,20 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.8.0] - 2026-09-05
+### Módulo: M18 (Notificaciones y Comunicaciones Transaccionales - Backend)
+- **Alcance General:** Implementación completa de la infraestructura y lógica de backend para el módulo transversal M18 (HU-NOT-01 a HU-NOT-04), permitiendo el despacho asíncrono de correos transaccionales por SMTP, gestión de plantillas administrables y trazabilidad auditable sin datos sensibles.
+- **Hitos Clave Backend (HU-NOT-01 a HU-NOT-04):**
+  - **Motor de Envío Transaccional y Reintentos (`HU-NOT-01`):** Despacho SMTP (Nodemailer) con política de reintentos configurable (hasta 3 intentos con retroceso exponencial) y modo de simulación seguro para desarrollo y testing.
+  - **Suscripción a Eventos de Negocio (`HU-NOT-02`):** Orquestación de notificaciones ante cambios de estado de órdenes de compra (`M08`), alertas preventivas de demora por falta de stock y actualizaciones sobre cotizaciones comerciales (`M21`).
+  - **Plantillas Administrables e Inviolabilidad de Variables (`HU-NOT-03`):** Endpoints administrativos protegidos para listar, previsualizar en vivo con datos mock y actualizar plantillas, aplicando la regla de negocio crítica que bloquea con `422` cualquier intento de eliminar variables obligatorias (ej. enlaces o códigos de verificación).
+  - **Entregabilidad y Diagnóstico de Bitácora (`HU-NOT-04`):** Historial paginado de despachos, detección de rebotes y cálculo automático de métricas de entregabilidad cumpliendo la política de confidencialidad `HU-SEG-06`.
+  - **Seguridad en Servidor:** Rutas de administración protegidas con guardas `sesionVigente` y `requierePermiso` de `M20`/`M17`.
+  - 🔗 **Walkthrough Técnico M18 Backend:** [walkthrough_v1.8.0_M18_notificaciones_backend.md](./walkthroughs/M18/walkthrough_v1.8.0_M18_notificaciones_backend.md)
+- **Estado:** ✅ Validado con 22 pruebas de integración automatizadas; compilación limpia con `tsc --noEmit` y linters con 0 errores.
+
+---
+
 ## [v1.7.0] - 2026-09-05
 ### Módulo: M17 (Administración, Empleados y Permisos - Fullstack)
 - **Alcance General:** Implementación completa del backend operativo de M17 (HU-ADM-01 a HU-ADM-06) e infraestructura desacoplada de simulación y testing de permisos en frontend, permitiendo la gestión integral de empleados, permisos atómicos en cascada, clientes y parámetros de sistema.
