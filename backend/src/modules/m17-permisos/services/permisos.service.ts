@@ -1,8 +1,7 @@
-﻿import { PermisosRepository } from '../repositories/permisos.repository';
+import { PermisosRepository } from '../repositories/permisos.repository';
 import { EmpleadosRepository } from '../repositories/empleados.repository';
 import {
   CatalogoPermisos,
-  PermisoDetalle,
   DEPENDENCIAS_PERMISOS,
   AreaFuncional,
 } from '../interfaces/m17.interfaces';
