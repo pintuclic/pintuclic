@@ -10,6 +10,8 @@
     "db": "tsx src/core/db/setup.ts",
     "db:setup": "tsx src/core/db/setup.ts",
     "db:init": "tsx src/core/db/setup.ts",
+    "db:seed": "tsx src/core/db/seed.ts",
+    "db:reset": "npm run db && npm run db:seed",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
