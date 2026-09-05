@@ -4,6 +4,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.5.1] - 2026-09-05
+### Módulo: 00_SISTEMA, Gobernanza de Calidad (Reviews) y Refactorización M20 (DTOs)
+- **Alcance:** Desacoplamiento estricto de esquemas Zod (runtime) de contratos e interfaces estáticas en el módulo `m20-seguridad`, estandarización de la carpeta obligatoria `dtos/` en la arquitectura backend y formalización del sistema de auditoría técnica en `docs/reviews/`.
+- **Añadido:**
+  - `docs/reviews/`: Directorio central de auditoría técnica y code reviews del Tech Lead (`README.md`, `backend/`, `frontend/`).
+  - `docs/reviews/backend/review_v1.5.0_M20_seguridad.md`: Primer informe formal de code review evaluando M20, justificando el desacoplamiento de DTOs y emitiendo dictamen de aprobación.
+  - `backend/src/modules/m20-seguridad/dtos/`: Carpeta modular dedicada a esquemas Zod y tipos inferidos (`seguridad.dto.ts`, `index.ts`).
+- **Ajustado:**
+  - `backend/src/modules/m20-seguridad/interfaces/seguridad.interfaces.ts`: Purificación a tipos y contratos de dominio TypeScript 100% libres de dependencias de Zod en runtime.
+  - `backend/src/modules/m20-seguridad/controllers/seguridad.controller.ts` y `services/`: Actualizadas importaciones hacia la capa `dtos`.
+  - `backend/infraestructura.md`: Actualizada la especificación arquitectónica consagrando la carpeta `dtos/` separada de `interfaces/` para todos los módulos del proyecto.
+  - `docs/README.md`: Registro de `docs/reviews/` y `docs/walkthroughs/` en el árbol de gobernanza del sistema.
+- **Estado:** ✅ Compilación limpia con `npx tsc --noEmit` y `npm run lint` en backend con cero errores.
+
+---
+
 ## [v1.5.0] - 2026-09-05
 
 > **Nota de integración:** esta entrega se numeró inicialmente como `v1.4.0` mientras estaba

@@ -9,7 +9,7 @@ import {
   aperturaSesionSchema,
   cambioContrasenaSchema,
   politicaSesionSchema,
-} from '../interfaces/seguridad.interfaces';
+} from '../dtos';
 
 /**
  * Controlador del módulo M20. Solo extrae datos de la petición, delega en los

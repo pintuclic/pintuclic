@@ -2,11 +2,8 @@ import { hashPassword, comparePassword } from '../../../core/utils/crypto';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { SeguridadRepository } from '../repositories/seguridad.repository';
 import { SesionService } from './sesion.service';
-import {
-  CambioContrasenaDTO,
-  ResultadoCambioContrasena,
-  contrasenaSchema,
-} from '../interfaces/seguridad.interfaces';
+import { ResultadoCambioContrasena } from '../interfaces/seguridad.interfaces';
+import { CambioContrasenaDTO, contrasenaSchema } from '../dtos';
 
 /**
  * Política de credenciales (HU-SEG-01).
