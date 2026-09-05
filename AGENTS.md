@@ -94,7 +94,7 @@ Antes de declarar el módulo finalizado, **DEBES comprobar el cumplimiento de la
 Al completar la implementación, **DEBES SI O SI**:
 1. **Calcular el Incremento SemVer:** Determinar si corresponde a `PATCH` (fix), `MINOR` (nueva HU/endpoint) o `MAJOR` (cierre de módulo/cambio estructural) según [docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md).
 2. **Actualizar `docs/CHANGELOG.md`:** Registrar la entrada de la nueva versión con fecha, módulo, HUs cubiertas y resumen de cambios.
-3. **Generar el Walkthrough de Implementación:** Crear el documento formal usando la estructura de [docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md](./docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md), detallando:
+3. **Generar el Walkthrough de Implementación:** Crear el documento formal usando la estructura de [docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md](./docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md), guardándolo en `docs/walkthroughs/M[XX]/` con el **sufijo obligatorio de capa al final del nombre**: `walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_[backend|frontend].md`, detallando:
    - Módulo de origen y HUs completadas.
    - Reglas de negocio y políticas transversales validadas.
    - Criterios de Aceptación verificados.

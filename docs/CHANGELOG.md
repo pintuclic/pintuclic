@@ -12,7 +12,7 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - Componente flotante `DevRoleSwitcher.vue` con alternador de identidades en 1 clic (Admin, Empleado Parcial, Cliente, Empresa).
   - Guía oficial de implementación y estándares visuales en `frontend/src/modules/m17-permisos/README.md`.
 - **Estado:** ✅ Build de Vite (`npm run build`) y linter limpios; contenedor Docker verificado.
-- 🔗 **Walkthrough Técnico M17 Frontend:** [walkthrough_v1.6.0_M17_frontend_auth_simulation.md](./walkthroughs/M17/walkthrough_v1.6.0_M17_frontend_auth_simulation.md)
+- 🔗 **Walkthrough Técnico M17 Frontend:** [walkthrough_v1.6.0_M17_auth_simulation_frontend.md](./walkthroughs/M17/walkthrough_v1.6.0_M17_auth_simulation_frontend.md)
 
 ---
 
