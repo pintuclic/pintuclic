@@ -1,8 +1,8 @@
 # 📘 Arquitectura y Documentación del Esquema de Base de Datos - PINTUCLIC
 
-> **Versión Actual:** 2.2 (Sesiones de usuario con control de inactividad e invalidación)  
+> **Versión Actual:** 2.3 (Módulo de Privacidad, Consentimiento y Habeas Data - HU-SEG-05)  
 > **Motor de Base de Datos:** PostgreSQL 13+ (`gen_random_uuid()` nativo; compatible con PostgreSQL 18)  
-> **Total de Tablas:** 28  
+> **Total de Tablas:** 31  
 > **Script DDL Oficial:** [`../sql/schema_pintuclic.sql`](../sql/schema_pintuclic.sql)  
 > **Walkthrough Detallado de Migraciones:** [`./WALKTHROUGH_DATABASE.md`](./WALKTHROUGH_DATABASE.md)
 
@@ -12,6 +12,7 @@
 
 | Versión | Fecha | Tablas Nuevas | Tablas Deprecadas | Cambios Destacados | Detalle Completo |
 | :---: | :---: | :--- | :--- | :--- | :---: |
+| **v2.3** | 2026-09-05 | `aviso_privacidad`, `consentimiento_usuario`, `solicitud_supresion` (3) | Ninguna | Protección de datos personales, términos legales y Habeas Data (M20 HU-SEG-05). Trazabilidad de consentimiento inmutable y radicación de supresión de datos. Preserva `sesion` (v2.2). | [Ver v2.3](./WALKTHROUGH_DATABASE.md#-versión-23-2026-09-05) |
 | **v2.2** | 2026-09-05 | `sesion` (1) | Ninguna | Estado de sesión persistido para M20: cierre manual, caducidad por inactividad e invalidación en bloque. PK `UUID` no enumerable y 3 ENUMs nuevos. Cambio puramente aditivo. | [Ver v2.2](./WALKTHROUGH_DATABASE.md#-versión-22-2026-09-05) |
 | **v2.1** | 2026-09-04 | `linea_carrito`, `cotizacion`, `orden`, `linea_orden` (4) | `pedido`, `detalle_carrito` (2) | Patrón de órdenes inmutables con snapshot de compra, cotizaciones B2B/B2C, carrito vivo desacoplado con soporte de visitantes anónimos (`token_visitante`) y variantes, y clasificación `enum_tipo_usuario`. | [Ver v2.1](./WALKTHROUGH_DATABASE.md#-versión-21-2026-09-04) |
 | **v2.0** | 2026-09-03 | `categoria`, `subcategorias`, `sub_subcategorias`, `linea`, `color`, `tonos`, `variante`, `caracteristica`, `combo`, `variante_combo` (10) | `descripcion`, `nesesidad`, `presentacion`, `producto_descripcion`, `producto_presentacion` (5) | Catálogo multinivel de 4 capas, variantes por color/tono, combos, 8 ENUMs nativos y `UNIQUE(id_usuario)` en `usuario_rol`. | [Ver v2.0](./WALKTHROUGH_DATABASE.md#-versión-20-2026-09-03) |
@@ -56,6 +57,9 @@ erDiagram
     usuario ||--|| usuario_rol : "posee (1:1)"
     rol ||--o{ usuario_rol : "asignado a"
     usuario ||--o{ sesion : "mantiene abiertas"
+    usuario ||--o{ consentimiento_usuario : "otorga"
+    aviso_privacidad ||--o{ consentimiento_usuario : "recibe"
+    usuario ||--o{ solicitud_supresion : "radica"
 
     usuario ||--o{ carrito : "crea (opcional)"
     carrito ||--o{ linea_carrito : "contiene"
@@ -87,7 +91,7 @@ erDiagram
 
 ---
 
-## 🏛️ 3. Módulos del Sistema y Diccionario de Datos (28 Tablas)
+## 🏛️ 3. Módulos del Sistema y Diccionario de Datos (31 Tablas)
 
 ### Módulo 1: Seguridad, Roles y Descuentos (5 Tablas)
 | Tabla | PK | FKs | Descripción |
@@ -145,11 +149,18 @@ erDiagram
 | :--- | :--- | :--- | :--- |
 | **`reservaciones`** | `id_reservacion` | `id_producto`, `id_usuario` | Citas de asesoría técnica o aplicación con fecha, hora y estado. |
 
+### Módulo 8: Privacidad, Consentimiento y Habeas Data (3 Tablas)
+| Tabla | PK | FKs | Descripción |
+| :--- | :--- | :--- | :--- |
+| **`aviso_privacidad`** | `id_aviso_privacidad` | Ninguna | Versiones normativas y términos de tratamiento de datos personales (`version` UNIQUE, `es_vigente`). |
+| **`consentimiento_usuario`** | `id_consentimiento` | `id_usuario`, `id_aviso_privacidad` | Registro de consentimiento informado con fecha exacta de aceptación y restricción `UNIQUE(id_usuario, id_aviso_privacidad)`. |
+| **`solicitud_supresion`** | `id_solicitud_supresion` | `id_usuario` $\rightarrow$ `usuario` | Gestión de derechos ARCO y supresión de datos con estado de resolución (`enum_estado_solicitud_supresion`). |
+
 ---
 
 ## 🛡️ 4. Tipos Enumerados (ENUMs)
 
-Para asegurar la máxima robustez en PostgreSQL, el esquema utiliza 13 tipos enumerados nativos:
+Para asegurar la máxima robustez en PostgreSQL, el esquema utiliza 14 tipos enumerados nativos:
 
 ```sql
 enum_estado_general     -- ('activo', 'inactivo')
@@ -168,6 +179,9 @@ enum_estado_sesion        -- ('activa', 'cerrada', 'expirada', 'revocada')
 enum_tipo_sesion          -- ('admin', 'cliente')
 enum_motivo_cierre_sesion -- ('cierre_manual', 'inactividad', 'cambio_contrasena',
                           --  'cuenta_desactivada', 'permisos_retirados')
+
+-- Privacidad y Habeas Data (v2.3 - M20)
+enum_estado_solicitud_supresion -- ('pendiente', 'en_proceso', 'aprobada', 'rechazada')
 ```
 
 ---

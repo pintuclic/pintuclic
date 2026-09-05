@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 2.2 (v2.1 + sesiones de usuario con control de inactividad e invalidación - M20)
+-- VERSIÓN: 2.3 (v2.2 + módulo de privacidad, consentimiento y habeas data - HU-SEG-05)
 -- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 28
+-- TOTAL TABLAS: 31
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -82,6 +82,11 @@ BEGIN
             'cierre_manual', 'inactividad', 'cambio_contrasena',
             'cuenta_desactivada', 'permisos_retirados'
         );
+    END IF;
+
+    -- Estado de solicitudes de supresion de datos personales (Habeas Data - M20 / HU-SEG-05)
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_estado_solicitud_supresion') THEN
+        CREATE TYPE enum_estado_solicitud_supresion AS ENUM ('pendiente', 'en_proceso', 'aprobada', 'rechazada');
     END IF;
 END $$;
 
@@ -506,7 +511,58 @@ CREATE TABLE IF NOT EXISTS reservaciones (
 COMMENT ON TABLE reservaciones IS 'Agendamiento de citas y reservaciones de servicios';
 
 -- ==============================================================================
--- 8. ÍNDICES DE RENDIMIENTO (OPTIMIZACIÓN DE BÚSQUEDAS Y JOINS)
+-- 8. MÓDULO DE PRIVACIDAD, CONSENTIMIENTO Y HABEAS DATA (M20 - HU-SEG-05)
+-- ==============================================================================
+
+-- Tabla: aviso_privacidad
+-- Almacena las versiones legales de la política de tratamiento de datos y términos
+CREATE TABLE IF NOT EXISTS aviso_privacidad (
+    id_aviso_privacidad SERIAL PRIMARY KEY,
+    version VARCHAR(50) NOT NULL UNIQUE,
+    descripcion TEXT NOT NULL,
+    es_vigente BOOLEAN NOT NULL DEFAULT true
+);
+
+COMMENT ON TABLE aviso_privacidad IS 'Versiones de las políticas de privacidad y términos de tratamiento de datos personales (M20 HU-SEG-05)';
+COMMENT ON COLUMN aviso_privacidad.version IS 'Identificador semántico o código de la versión del aviso (ej: v1.0, 2026-A)';
+COMMENT ON COLUMN aviso_privacidad.descripcion IS 'Texto completo o enlace al documento legal vinculante';
+COMMENT ON COLUMN aviso_privacidad.es_vigente IS 'Indica si es la versión activa que los usuarios deben consentir';
+
+-- Tabla: consentimiento_usuario
+-- Registro auditable e inmutable de aceptación de políticas por parte de cada usuario
+CREATE TABLE IF NOT EXISTS consentimiento_usuario (
+    id_consentimiento SERIAL PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_aviso_privacidad INT NOT NULL,
+    fecha TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_consentimiento_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_consentimiento_aviso FOREIGN KEY (id_aviso_privacidad) 
+        REFERENCES aviso_privacidad (id_aviso_privacidad) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT uq_usuario_aviso UNIQUE (id_usuario, id_aviso_privacidad)
+);
+
+COMMENT ON TABLE consentimiento_usuario IS 'Registro histórico auditable del consentimiento de tratamiento de datos otorgado por los usuarios';
+COMMENT ON COLUMN consentimiento_usuario.fecha IS 'Marca temporal exacta en la que el titular aceptó la versión del aviso';
+
+-- Tabla: solicitud_supresion
+-- Registro y gestión de peticiones de supresión de datos personales / derecho al olvido (Habeas Data)
+CREATE TABLE IF NOT EXISTS solicitud_supresion (
+    id_solicitud_supresion SERIAL PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    fecha_solicitud TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_resolucion TIMESTAMPTZ,
+    estado enum_estado_solicitud_supresion NOT NULL DEFAULT 'pendiente',
+    CONSTRAINT fk_supresion_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+COMMENT ON TABLE solicitud_supresion IS 'Solicitudes de ejercicio de derechos ARCO / supresión de datos personales (Habeas Data)';
+COMMENT ON COLUMN solicitud_supresion.fecha_resolucion IS 'Fecha y hora en que la administración resuelve o dictamina la petición (nullable mientras esté en trámite)';
+COMMENT ON COLUMN solicitud_supresion.estado IS 'Ciclo de vida de la solicitud (pendiente, en_proceso, aprobada, rechazada)';
+
+-- ==============================================================================
+-- 9. ÍNDICES DE RENDIMIENTO (OPTIMIZACIÓN DE BÚSQUEDAS Y JOINS)
 -- ==============================================================================
 
 -- Índices en Roles, Permisos y Usuarios
@@ -560,6 +616,12 @@ CREATE INDEX IF NOT EXISTS idx_reservacion_fecha ON reservaciones(fecha);
 CREATE INDEX IF NOT EXISTS idx_sesion_usuario_estado ON sesion(id_usuario, estado);
 CREATE INDEX IF NOT EXISTS idx_sesion_estado_expiracion ON sesion(estado, fecha_expiracion);
 
+-- Índices en Privacidad, Consentimiento y Habeas Data
+CREATE INDEX IF NOT EXISTS idx_consentimiento_usuario ON consentimiento_usuario(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_consentimiento_aviso ON consentimiento_usuario(id_aviso_privacidad);
+CREATE INDEX IF NOT EXISTS idx_supresion_usuario ON solicitud_supresion(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_supresion_estado ON solicitud_supresion(estado);
+
 -- ==============================================================================
--- FIN DEL SCRIPT DDL (28 TABLAS - v2.2)
+-- FIN DEL SCRIPT DDL (31 TABLAS - v2.3)
 -- ==============================================================================
