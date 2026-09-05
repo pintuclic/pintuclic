@@ -36,6 +36,9 @@ export type EnumMotivoCierreSesion =
 
 export type EnumEstadoReservacion = 'pendiente' | 'confirmada' | 'cancelada' | 'finalizada';
 
+// M20 - HU-SEG-05: estado de solicitudes de supresión de datos personales (Habeas Data)
+export type EnumEstadoSolicitudSupresion = 'pendiente' | 'en_proceso' | 'aprobada' | 'rechazada';
+
 // ==============================================================================
 // 1. MÓDULO DE DESCUENTOS, ROLES Y PERMISOS
 // ==============================================================================
@@ -273,7 +276,33 @@ export interface ReservacionesTable {
 }
 
 // ==============================================================================
-// 8. INTERFAZ CENTRAL DATABASE (Única fuente de la verdad para Kysely)
+// 8. MÓDULO DE PRIVACIDAD, CONSENTIMIENTO Y HABEAS DATA (M20 - HU-SEG-05)
+// ==============================================================================
+
+export interface AvisoPrivacidadTable {
+  id_aviso_privacidad: Generated<number>;
+  version: string;
+  descripcion: string;
+  es_vigente: Generated<boolean>;
+}
+
+export interface ConsentimientoUsuarioTable {
+  id_consentimiento: Generated<number>;
+  id_usuario: number;
+  id_aviso_privacidad: number;
+  fecha: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+export interface SolicitudSupresionTable {
+  id_solicitud_supresion: Generated<number>;
+  id_usuario: number;
+  fecha_solicitud: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_resolucion: ColumnType<Date | null, string | Date | null | undefined, string | Date | null>;
+  estado: Generated<EnumEstadoSolicitudSupresion>;
+}
+
+// ==============================================================================
+// 9. INTERFAZ CENTRAL DATABASE (Única fuente de la verdad para Kysely)
 // ==============================================================================
 
 export interface Database {
@@ -318,10 +347,15 @@ export interface Database {
 
   // Servicios y reservaciones
   reservaciones: ReservacionesTable;
+
+  // Privacidad, consentimiento y habeas data (M20 - HU-SEG-05)
+  aviso_privacidad: AvisoPrivacidadTable;
+  consentimiento_usuario: ConsentimientoUsuarioTable;
+  solicitud_supresion: SolicitudSupresionTable;
 }
 
 // ==============================================================================
-// 9. TIPOS HELPERS EXPORTADOS PARA ENTIDADES
+// 10. TIPOS HELPERS EXPORTADOS PARA ENTIDADES
 // ==============================================================================
 
 export type Descuento = Selectable<DescuentoTable>;
@@ -435,3 +469,15 @@ export type FacturaUpdate = Updateable<FacturaTable>;
 export type Reservacion = Selectable<ReservacionesTable>;
 export type NewReservacion = Insertable<ReservacionesTable>;
 export type ReservacionUpdate = Updateable<ReservacionesTable>;
+
+export type AvisoPrivacidad = Selectable<AvisoPrivacidadTable>;
+export type NewAvisoPrivacidad = Insertable<AvisoPrivacidadTable>;
+export type AvisoPrivacidadUpdate = Updateable<AvisoPrivacidadTable>;
+
+export type ConsentimientoUsuario = Selectable<ConsentimientoUsuarioTable>;
+export type NewConsentimientoUsuario = Insertable<ConsentimientoUsuarioTable>;
+export type ConsentimientoUsuarioUpdate = Updateable<ConsentimientoUsuarioTable>;
+
+export type SolicitudSupresion = Selectable<SolicitudSupresionTable>;
+export type NewSolicitudSupresion = Insertable<SolicitudSupresionTable>;
+export type SolicitudSupresionUpdate = Updateable<SolicitudSupresionTable>;

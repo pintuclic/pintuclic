@@ -4,6 +4,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.5.3] - 2026-09-05
+### Módulo: BD (Base de Datos v2.3) y Privacidad (Habeas Data - M20 / HU-SEG-05)
+- **Alcance:** Actualización a la versión 2.3 del esquema relacional (31 tablas) con la incorporación de entidades de aviso de privacidad, consentimiento auditable y radicación de solicitudes de supresión de datos personales (Habeas Data). Sincronización completa de tipos Kysely en `backend/src/core/db/types.ts` preservando intacta la tabla `sesion` (v2.2).
+- **Hitos Clave:**
+  - Nuevas tablas: `aviso_privacidad`, `consentimiento_usuario` y `solicitud_supresion`.
+  - Nuevo enumerado nativo: `enum_estado_solicitud_supresion`.
+  - Índices optimizados para auditoría de consentimientos y tramitación de supresiones.
+- **Estado:** ✅ Compilación limpia con `npx tsc --noEmit` y linter sin errores.
+- 🔗 **Walkthrough Técnico BD v2.3:** [WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md#-versión-23-2026-09-05)
+
+---
+
 ## [v1.5.2] - 2026-09-05
 ### Módulo: Especificación Funcional de Negocio (M01, M02, M05, M08)
 - **Alcance:** Especificación funcional formal, historias de usuario y diagramas de arquitectura de flujo para Catálogo, Búsqueda, Carrito y Órdenes de venta.

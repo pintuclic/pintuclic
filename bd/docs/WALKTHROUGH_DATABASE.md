@@ -5,10 +5,115 @@ Este documento registra la evolución histórica del modelo de base de datos de 
 ---
 
 ## 📑 Índice de Versiones
+- [Versión 2.3 (Módulo de Privacidad, Consentimiento y Habeas Data - HU-SEG-05)](#-versión-23-2026-09-05)
 - [Versión 2.2 (Sesiones de Usuario con Control de Inactividad e Invalidación)](#-versión-22-2026-09-05)
 - [Versión 2.1 (E-Commerce Inmutable, Cotizaciones y Carrito con Variantes)](#-versión-21-2026-09-04)
 - [Versión 2.0 (Página FINAL del ER) - Reestructuración de Catálogo, Variantes y Combos](#-versión-20-2026-09-03)
 - [Versión 1.0 (Esquema Inicial Pre-Final) - Base de 21 Tablas](#-versión-10-2026-09-02)
+
+---
+
+## 📦 Versión 2.3 (2026-09-05)
+
+### 🎯 Resumen Ejecutivo
+Evolución aditiva del modelo de datos impulsada por la incorporación del diagrama Entidad-Relación actualizado (`ER Pintuclic.drawio.xml` y `ER Pintuclic-Final 1.2.drawio.png`). Se incorporan 3 nuevas entidades orientadas al cumplimiento de normativas de protección de datos personales, Habeas Data y consentimiento informado, desbloqueando los requerimientos funcionales de la historia **HU-SEG-05** del módulo transversal **M20 (Seguridad, Auditoría y Protección de Datos)**.
+- **Total Tablas:** Pasa de 28 a **31 tablas**.
+- **Foco de la versión:** Privacidad, auditoría de consentimiento y ciclo de vida de peticiones de supresión de datos (derecho al olvido).
+- **Preservación de Estado:** La tabla **`sesion`** (incorporada en la v2.2 para el control de sesiones en servidor) se mantiene 100% intacta e integrada en el ecosistema de seguridad.
+
+---
+
+### 🛑 1. Tablas Deprecadas / Eliminadas
+Ninguna en esta versión. El cambio es estrictamente aditivo y no altera estructuras previas.
+
+---
+
+### ✨ 2. Tablas Nuevas Creadas (3 Tablas)
+
+| Nueva Tabla (v2.3) | Clave Primaria (PK) | Claves Foráneas (FK) | Propósito Funcional |
+| :--- | :--- | :--- | :--- |
+| **`aviso_privacidad`** | `id_aviso_privacidad SERIAL` | Ninguna | Registro y control de versiones legales vigentes e históricas de los términos y políticas de tratamiento de datos personales (`version` UNIQUE, `es_vigente`). |
+| **`consentimiento_usuario`** | `id_consentimiento SERIAL` | `id_usuario` $\rightarrow$ `usuario` (CASCADE)<br>`id_aviso_privacidad` $\rightarrow$ `aviso_privacidad` (RESTRICT) | Trazabilidad inmutable de la aceptación de la política de datos por parte de cada usuario con marca temporal (`fecha`). Restricción `UNIQUE(id_usuario, id_aviso_privacidad)`. |
+| **`solicitud_supresion`** | `id_solicitud_supresion SERIAL` | `id_usuario` $\rightarrow$ `usuario` (CASCADE) | Gestión y seguimiento de peticiones formales de supresión de datos personales / derecho al olvido (Habeas Data) con fechas de radicación, dictamen y estado de resolución. |
+
+**Columnas detalladas de las nuevas tablas:**
+
+#### `aviso_privacidad`:
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id_aviso_privacidad` | `SERIAL PRIMARY KEY` | Identificador interno único del aviso. |
+| `version` | `VARCHAR(50) NOT NULL UNIQUE` | Código o identificador semántico de versión (ej: `v1.0`, `2026-A`). |
+| `descripcion` | `TEXT NOT NULL` | Cuerpo íntegro del aviso de privacidad o enlace al instrumento legal vinculante. |
+| `es_vigente` | `BOOLEAN NOT NULL DEFAULT true` | Flag booleano que indica si la versión es la actualmente exigible a los usuarios. |
+
+#### `consentimiento_usuario`:
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id_consentimiento` | `SERIAL PRIMARY KEY` | Identificador único del registro de consentimiento. |
+| `id_usuario` | `INT NOT NULL` | Titular del dato personal que otorga la autorización. |
+| `id_aviso_privacidad` | `INT NOT NULL` | Versión específica del aviso de privacidad aceptada. |
+| `fecha` | `TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP` | Momento exacto de aceptación para efectos probatorios legales. |
+
+#### `solicitud_supresion`:
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id_solicitud_supresion` | `SERIAL PRIMARY KEY` | Identificador único del radicado de supresión. |
+| `id_usuario` | `INT NOT NULL` | Usuario solicitante de la supresión o bloqueo de sus datos personales. |
+| `fecha_solicitud` | `TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP` | Fecha y hora de radicación de la petición. |
+| `fecha_resolucion` | `TIMESTAMPTZ` | Fecha y hora en que la administración resuelve la petición (nullable mientras esté en trámite). |
+| `estado` | `enum_estado_solicitud_supresion` | Estado del trámite: `'pendiente'`, `'en_proceso'`, `'aprobada'`, `'rechazada'`. Por defecto `'pendiente'`. |
+
+---
+
+### 🔄 3. Tablas Modificadas y Nuevas Relaciones
+- **Ninguna tabla existente fue alterada ni recortada.**
+- **`sesion`:** Se preserva intacta con su clave primaria `UUID` y ciclo de vida de tokens M20.
+- **Nuevas Relaciones:**
+  1. `usuario` (1) $\rightarrow$ `consentimiento_usuario` (N): `ON UPDATE CASCADE ON DELETE CASCADE`.
+  2. `aviso_privacidad` (1) $\rightarrow$ `consentimiento_usuario` (N): `ON UPDATE CASCADE ON DELETE RESTRICT` (impide borrar avisos que ya cuentan con consentimientos auditados).
+  3. `usuario` (1) $\rightarrow$ `solicitud_supresion` (N): `ON UPDATE CASCADE ON DELETE CASCADE`.
+
+---
+
+### 🔒 4. Restricciones (`CONSTRAINTS`) y Tipos `ENUM` Agregados
+
+#### Nuevo Tipo ENUM Nativo:
+```sql
+enum_estado_solicitud_supresion -- ('pendiente', 'en_proceso', 'aprobada', 'rechazada')
+```
+
+#### Nuevas Reglas de Validación (`CHECK` y `UNIQUE`):
+- `uq_usuario_aviso`: `UNIQUE(id_usuario, id_aviso_privacidad)` para garantizar que un usuario registre a lo sumo una aceptación por versión de aviso.
+- `aviso_privacidad(version)` UNIQUE: impide colisión de códigos de versión.
+
+---
+
+### ⚡ 5. Nuevos Índices de Rendimiento
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_consentimiento_usuario ON consentimiento_usuario(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_consentimiento_aviso ON consentimiento_usuario(id_aviso_privacidad);
+CREATE INDEX IF NOT EXISTS idx_supresion_usuario ON solicitud_supresion(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_supresion_estado ON solicitud_supresion(estado);
+```
+
+- **`idx_consentimiento_usuario`** y **`idx_consentimiento_aviso`**: optimizan la validación en tiempo de login y registro para constatar si el usuario ha aceptado el aviso vigente.
+- **`idx_supresion_usuario`** y **`idx_supresion_estado`**: aceleran la consulta de radicados abiertos por estado para la mesa de ayuda y auditoría legal.
+
+---
+
+### 💻 6. Impacto y Acciones Requeridas en Backend y Frontend
+
+#### Backend (TypeScript / Kysely / Express):
+- **`backend/src/core/db/types.ts`**: incorporadas las interfaces `AvisoPrivacidadTable`, `ConsentimientoUsuarioTable`, `SolicitudSupresionTable`, el tipo `EnumEstadoSolicitudSupresion`, registros en la interfaz raíz `Database` y helpers exportados (`AvisoPrivacidad`, `ConsentimientoUsuario`, `SolicitudSupresion`).
+- **Módulo M20 (HU-SEG-05 Desbloqueada):** Habilita la creación de repositorios y controladores para registrar consentimientos en el registro/login y tramitar solicitudes de supresión de datos con trazabilidad de auditoría.
+- **Módulo M04 (Cuentas):** En el flujo de registro (`HU-CUE-01`), vincular la aceptación de términos guardando una fila en `consentimiento_usuario` referenciando el `id_aviso_privacidad` con `es_vigente = true`.
+
+#### Frontend (UI / Vistas / Componentes):
+- Modal/Checkbox obligatorio de aceptación de política de privacidad y tratamiento de datos en el checkout y registro de usuarios.
+- Vista de configuración de privacidad en el perfil de usuario para consultar las versiones aceptadas y radicar solicitudes de supresión de datos personales (Habeas Data).
+
+---
 
 ---
 
