@@ -22,6 +22,18 @@ export type EnumEstadoPago = 'pendiente' | 'completado' | 'fallido' | 'reembolsa
 
 export type EnumEstadoFactura = 'emitida' | 'pagada' | 'anulada';
 
+// M20 - HU-SEG-02: ciclo de vida de la sesión
+export type EnumEstadoSesion = 'activa' | 'cerrada' | 'expirada' | 'revocada';
+
+export type EnumTipoSesion = 'admin' | 'cliente';
+
+export type EnumMotivoCierreSesion =
+  | 'cierre_manual'
+  | 'inactividad'
+  | 'cambio_contrasena'
+  | 'cuenta_desactivada'
+  | 'permisos_retirados';
+
 export type EnumEstadoReservacion = 'pendiente' | 'confirmada' | 'cancelada' | 'finalizada';
 
 // ==============================================================================
@@ -81,6 +93,21 @@ export interface UsuarioRolTable {
   id_usuario_rol: Generated<number>;
   id_usuario: number;
   id_rol: number;
+}
+
+/**
+ * Sesiones de usuario (M20 - HU-SEG-02).
+ * `id_sesion` es UUID y viaja como claim `sid` dentro del JWT.
+ */
+export interface SesionTable {
+  id_sesion: Generated<string>;
+  id_usuario: number;
+  tipo_sesion: EnumTipoSesion;
+  fecha_inicio: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_ultimo_acceso: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_expiracion: ColumnType<Date, string | Date, string | Date>;
+  estado: Generated<EnumEstadoSesion>;
+  motivo_cierre: EnumMotivoCierreSesion | null;
 }
 
 // ==============================================================================
@@ -260,6 +287,7 @@ export interface Database {
   // Cuentas y control de acceso
   usuario: UsuarioTable;
   usuario_rol: UsuarioRolTable;
+  sesion: SesionTable;
 
   // Catálogo multinivel y variantes
   categoria: CategoriaTable;
@@ -307,6 +335,10 @@ export type SubRolEmpresaUpdate = Updateable<SubRolEmpresaTable>;
 export type Rol = Selectable<RolTable>;
 export type NewRol = Insertable<RolTable>;
 export type RolUpdate = Updateable<RolTable>;
+
+export type Sesion = Selectable<SesionTable>;
+export type NewSesion = Insertable<SesionTable>;
+export type SesionUpdate = Updateable<SesionTable>;
 
 export type Permiso = Selectable<PermisosTable>;
 export type NewPermiso = Insertable<PermisosTable>;

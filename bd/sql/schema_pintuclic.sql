@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 2.1 (Actualización: Patrón E-Commerce Inmutable, Órdenes, Cotizaciones y Carrito con Variantes)
+-- VERSIÓN: 2.2 (v2.1 + sesiones de usuario con control de inactividad e invalidación - M20)
 -- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 27
+-- TOTAL TABLAS: 28
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -64,6 +64,24 @@ BEGIN
     -- Estado del ciclo de vida de una reservación
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_estado_reservacion') THEN
         CREATE TYPE enum_estado_reservacion AS ENUM ('pendiente', 'confirmada', 'cancelada', 'finalizada');
+    END IF;
+
+    -- Ciclo de vida de una sesion de usuario (M20 - HU-SEG-02)
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_estado_sesion') THEN
+        CREATE TYPE enum_estado_sesion AS ENUM ('activa', 'cerrada', 'expirada', 'revocada');
+    END IF;
+
+    -- Tipo de sesion, determina la ventana de inactividad aplicable (RF-SEG-02-02)
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_tipo_sesion') THEN
+        CREATE TYPE enum_tipo_sesion AS ENUM ('admin', 'cliente');
+    END IF;
+
+    -- Causa por la que una sesion dejo de estar activa (RF-SEG-02-06)
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_motivo_cierre_sesion') THEN
+        CREATE TYPE enum_motivo_cierre_sesion AS ENUM (
+            'cierre_manual', 'inactividad', 'cambio_contrasena',
+            'cuenta_desactivada', 'permisos_retirados'
+        );
     END IF;
 END $$;
 
@@ -171,6 +189,30 @@ CREATE TABLE IF NOT EXISTS usuario_rol (
 );
 
 COMMENT ON TABLE usuario_rol IS 'Asignación de roles a usuarios con restricción UNIQUE(id_usuario)';
+
+-- Tabla: sesion
+-- Sesiones activas de los usuarios (M20 - HU-SEG-02). Permite cerrar una sesión concreta,
+-- invalidar todas las de un usuario y aplicar la caducidad por inactividad en servidor.
+-- La clave es UUID y no SERIAL a propósito: el identificador viaja dentro del token y un
+-- entero secuencial sería enumerable por un tercero.
+CREATE TABLE IF NOT EXISTS sesion (
+    id_sesion UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id_usuario INT NOT NULL,
+    tipo_sesion enum_tipo_sesion NOT NULL,
+    fecha_inicio TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_ultimo_acceso TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_expiracion TIMESTAMPTZ NOT NULL,
+    estado enum_estado_sesion NOT NULL DEFAULT 'activa',
+    motivo_cierre enum_motivo_cierre_sesion,
+    CONSTRAINT fk_sesion_usuario FOREIGN KEY (id_usuario)
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+COMMENT ON TABLE sesion IS 'Sesiones de usuario con control de inactividad e invalidación (M20 HU-SEG-02)';
+COMMENT ON COLUMN sesion.id_sesion IS 'UUID no enumerable; viaja como claim sid dentro del JWT';
+COMMENT ON COLUMN sesion.fecha_ultimo_acceso IS 'Se renueva en cada operación del usuario (RF-SEG-02-03)';
+COMMENT ON COLUMN sesion.fecha_expiracion IS 'Último acceso + ventana de inactividad del tipo de sesión (RF-SEG-02-02)';
+COMMENT ON COLUMN sesion.motivo_cierre IS 'Causa del cierre; nulo mientras la sesión sigue activa';
 
 -- ==============================================================================
 -- 3. MÓDULO DE CATÁLOGO Y JERARQUÍA DE PRODUCTOS
@@ -514,6 +556,10 @@ CREATE INDEX IF NOT EXISTS idx_reservacion_usuario ON reservaciones(id_usuario);
 CREATE INDEX IF NOT EXISTS idx_reservacion_producto ON reservaciones(id_producto);
 CREATE INDEX IF NOT EXISTS idx_reservacion_fecha ON reservaciones(fecha);
 
+-- Sesiones (M20): búsqueda de sesiones vigentes por usuario y barrido de caducadas.
+CREATE INDEX IF NOT EXISTS idx_sesion_usuario_estado ON sesion(id_usuario, estado);
+CREATE INDEX IF NOT EXISTS idx_sesion_estado_expiracion ON sesion(estado, fecha_expiracion);
+
 -- ==============================================================================
--- FIN DEL SCRIPT DDL (27 TABLAS - v2.1)
+-- FIN DEL SCRIPT DDL (28 TABLAS - v2.2)
 -- ==============================================================================
