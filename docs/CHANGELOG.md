@@ -4,6 +4,20 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.8.1] - 2026-09-05
+### Módulos: M18 (Notificaciones) ↔ M17 (Permisos y Administración) ↔ M20 (Seguridad) - Integración Fullstack
+- **Alcance General:** Implementación de ajustes de integración, resolución de contratos inter-módulo y coherencia global derivados de la auditoría arquitectural.
+- **Hitos Clave de Integración:**
+  - **Principio DRY en Criptografía (`HU-SEG-01`):** `EmpleadosService` (`M17`) ahora delega la derivación de contraseñas seguras a `CredencialesService.derivarContrasena` de `M20`, eliminando el uso redundante de `bcrypt` y centralizando políticas criptográficas.
+  - **Despacho Automático de Credenciales (`CA-ADM-01-01` / `HU-NOT-01`):** Al crear una cuenta de empleado, `M17` dispara el evento `ALTA_EMPLEADO_CREDENCIAL` vía `servicioNotificaciones` (`M18`), enviando un correo formateado con plantilla oficial y credencial temporal.
+  - **Catálogo y Contratos en M18:** Adición de la plantilla `alta_empleado_credencial` con variables obligatorias `['nombre', 'credencial_temporal']` y tipado exhaustivo en la SSOT inmutable `TIPOS_EVENTOS_NOTIFICACION`.
+  - **Fachadas Públicas de M17:** Exportación de `serviciosEmpleados` y `serviciosPermisos` en `m17.routes.ts` para habilitar inyecciones directas en el backend.
+  - **Sincronización Fullstack en Frontend:** Alineación de los permisos en los perfiles mock de `useAuth.ts` con el catálogo maestro de PostgreSQL (`seed_pintuclic.sql`) y las guardas del backend (`personal.ver`, `personal.editar`, `personal.desactivar`, `seguridad.gestionar_permisos`).
+  - 🔗 **Walkthrough Técnico de Integración:** [walkthrough_v1.8.1_M18_M17_integracion_backend.md](./walkthroughs/M18/walkthrough_v1.8.1_M18_M17_integracion_backend.md)
+- **Estado:** ✅ Compilación limpia con `tsc --noEmit` y `npm run build` en frontend; 22 pruebas de integración automatizadas superadas con 0 errores.
+
+---
+
 ## [v1.8.0] - 2026-09-05
 ### Módulo: M18 (Notificaciones y Comunicaciones Transaccionales - Backend)
 - **Alcance General:** Implementación completa de la infraestructura y lógica de backend para el módulo transversal M18 (HU-NOT-01 a HU-NOT-04), permitiendo el despacho asíncrono de correos transaccionales por SMTP, gestión de plantillas administrables y trazabilidad auditable sin datos sensibles.

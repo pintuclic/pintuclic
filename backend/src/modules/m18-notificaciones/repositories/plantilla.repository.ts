@@ -150,6 +150,17 @@ export class PlantillaRepository {
         fechaActualizacion: new Date().toISOString(),
       },
       {
+        codigo: 'alta_empleado_credencial',
+        nombre: 'Credencial Inicial de Empleado',
+        descripcion: 'Despacho de credencial temporal para nuevo colaborador (M17 / CA-ADM-01-01)',
+        asunto: 'Tus credenciales de acceso a Pintu Clic',
+        cuerpoHtml: '<div style="font-family:sans-serif;max-width:600px;margin:auto;"><h2>Bienvenido al equipo, {{nombre}}</h2><p>Se ha creado tu cuenta de colaborador en Pintu Clic.</p><p>Tu contraseña temporal de primer acceso es: <code>{{credencial_temporal}}</code></p><p>Por seguridad, el sistema te solicitará cambiarla en tu primer inicio de sesión.</p></div>',
+        cuerpoTexto: 'Bienvenido {{nombre}}. Tu contraseña temporal de colaborador en Pintu Clic es: {{credencial_temporal}}. Debes cambiarla en tu primer inicio de sesión.',
+        variablesDisponibles: ['nombre', 'credencial_temporal'],
+        variablesObligatorias: ['nombre', 'credencial_temporal'],
+        fechaActualizacion: new Date().toISOString(),
+      },
+      {
         codigo: 'prueba_sistema',
         nombre: 'Mensaje de Verificación de Conectividad',
         descripcion: 'Envío de prueba para verificar entregabilidad y conexión SMTP',

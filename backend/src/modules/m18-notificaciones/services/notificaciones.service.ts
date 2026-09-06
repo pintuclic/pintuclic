@@ -40,6 +40,7 @@ export class NotificacionesService {
     COTIZACION_RESPONDIDA: 'cotizacion_evento',
     COTIZACION_RECHAZADA: 'cotizacion_evento',
     COTIZACION_PROXIMA_VENCER: 'cotizacion_evento',
+    ALTA_EMPLEADO_CREDENCIAL: 'alta_empleado_credencial',
     PRUEBA_SISTEMA: 'prueba_sistema',
   };
 
