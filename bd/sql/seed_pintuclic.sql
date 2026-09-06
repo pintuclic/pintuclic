@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script de Seed y Mocks de Prueba Inicial para Desarrollo y Testing
--- VERSIÓN: 2.3 (Cubre las 31 tablas del esquema relacional oficial)
+-- VERSIÓN: 2.4 (Cubre las 36 tablas del esquema relacional oficial)
 -- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
 -- PROPIEDAD: Totalmente idempotente (ON CONFLICT DO NOTHING + setval)
@@ -270,7 +270,39 @@ INSERT INTO solicitud_supresion (id_solicitud_supresion, id_usuario, fecha_solic
 ON CONFLICT (id_solicitud_supresion) DO NOTHING;
 
 -- ==============================================================================
--- 9. ACTUALIZACIÓN AUTOMÁTICA DE SECUENCIAS (EVITA COLISIONES DE IDs)
+-- 9. MÓDULO DE CUENTAS, DIRECCIONES Y SOLICITUDES EMPRESA (5 Tablas - M04)
+-- ==============================================================================
+
+-- 9.1 Direcciones de Cliente (HU-CUE-07)
+INSERT INTO direccion_cliente (id_direccion, id_usuario, direccion, barrio, apartamento_casa, nombre_apellido, telefono, es_predeterminada, latitud, longitud) VALUES
+    ('d0000000-0000-0000-0000-000000000001', 2, 'Carrera 7 # 45-23', 'Chapinero', 'Apto 402', 'Cliente Activo', '3001234567', true, 4.6300000, -74.0650000),
+    ('d0000000-0000-0000-0000-000000000002', 2, 'Calle 100 # 15-20', 'Chicó', 'Oficina 501', 'Cliente Activo', '3001234567', false, 4.6850000, -74.0500000),
+    ('d0000000-0000-0000-0000-000000000003', 4, 'Zona Industrial Acopi Cl 15 # 22-10', 'Acopi', 'Bodega 3', 'Pinturas del Valle S.A.S.', '3157778899', true, 3.5100000, -76.5100000)
+ON CONFLICT (id_direccion) DO NOTHING;
+
+-- 9.2 Solicitudes de Empresa (B2B - HU-CUE-03 / HU-CUE-09)
+INSERT INTO solicitud_empresa (id_solicitud, id_usuario, nombre_empresa, nombre_representante, correo_empresarial, telefono, nit, tipo_solicitud, estado, motivo_rechazo, id_admin_revisor, fecha_solicitud, fecha_revision) VALUES
+    ('e0000000-0000-0000-0000-000000000001', 4, 'Pinturas del Valle S.A.S.', 'Carlos Echeverry', 'contacto@pinturasvalle.co', '3157778899', '900555666-1', 'registro', 'aprobada', NULL, 1, now() - interval '15 days', now() - interval '14 days'),
+    ('e0000000-0000-0000-0000-000000000002', 2, 'Ferretería El Progreso', 'Cliente Activo', 'progreso@ferreteria.com', '3001234567', '800111222-3', 'ascenso_particular', 'pendiente', NULL, NULL, now() - interval '1 day', NULL)
+ON CONFLICT (id_solicitud) DO NOTHING;
+
+-- 9.3 Solicitudes de Actualización de NIT (HU-CUE-09)
+INSERT INTO solicitud_actualizacion_nit (id_solicitud, id_usuario, nit_anterior, nit_nuevo, documento_adjunto_url, estado, motivo_rechazo, id_admin_revisor, fecha_solicitud, fecha_revision) VALUES
+    ('b0000000-0000-0000-0000-000000000001', 4, '900555666-1', '900555666-2', 'https://storage.pintuclic.co/ruts/rut_actualizado_valle.pdf', 'pendiente', NULL, NULL, now() - interval '2 days', NULL)
+ON CONFLICT (id_solicitud) DO NOTHING;
+
+-- 9.4 Identidad Externa OAuth (HU-CUE-02)
+INSERT INTO usuario_identidad_externa (id_identidad, id_usuario, proveedor, id_proveedor, correo_proveedor, fecha_vinculacion) VALUES
+    (1, 2, 'google', 'google-oauth2|102938475610293847561', 'cliente@pintuclic.co', now() - interval '5 days')
+ON CONFLICT (id_identidad) DO NOTHING;
+
+-- 9.5 Códigos de Verificación OTP Efímeros (HU-CUE-01, 05, 06)
+INSERT INTO codigo_verificacion (id_codigo, correo, codigo, tipo, expiracion, intentos, max_intentos, datos_temporales) VALUES
+    ('c0000000-0000-0000-0000-000000000001', 'baja@pintuclic.co', '123456', 'registro', now() + interval '15 minutes', 0, 3, '{"id_usuario": 3}'::jsonb)
+ON CONFLICT (id_codigo) DO NOTHING;
+
+-- ==============================================================================
+-- 10. ACTUALIZACIÓN AUTOMÁTICA DE SECUENCIAS (EVITA COLISIONES DE IDs)
 -- ==============================================================================
 
 SELECT setval('descuento_id_descuento_seq',                      COALESCE((SELECT MAX(id_descuento) FROM descuento), 1));
@@ -303,5 +335,6 @@ SELECT setval('reservaciones_id_reservacion_seq',                COALESCE((SELEC
 SELECT setval('aviso_privacidad_id_aviso_privacidad_seq',        COALESCE((SELECT MAX(id_aviso_privacidad) FROM aviso_privacidad), 1));
 SELECT setval('consentimiento_usuario_id_consentimiento_seq',    COALESCE((SELECT MAX(id_consentimiento) FROM consentimiento_usuario), 1));
 SELECT setval('solicitud_supresion_id_solicitud_supresion_seq',  COALESCE((SELECT MAX(id_solicitud_supresion) FROM solicitud_supresion), 1));
+SELECT setval('usuario_identidad_externa_id_identidad_seq',      COALESCE((SELECT MAX(id_identidad) FROM usuario_identidad_externa), 1));
 
 COMMIT;

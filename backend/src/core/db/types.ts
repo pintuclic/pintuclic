@@ -39,6 +39,15 @@ export type EnumEstadoReservacion = 'pendiente' | 'confirmada' | 'cancelada' | '
 // M20 - HU-SEG-05: estado de solicitudes de supresión de datos personales (Habeas Data)
 export type EnumEstadoSolicitudSupresion = 'pendiente' | 'en_proceso' | 'aprobada' | 'rechazada';
 
+// M04 - HU-CUE-03 / HU-CUE-06: tipo de solicitud empresarial
+export type EnumTipoSolicitudEmpresa = 'registro' | 'ascenso_particular';
+
+// M04 - HU-CUE-03 / HU-CUE-09: estado de solicitudes corporativas y de actualización de NIT
+export type EnumEstadoSolicitudEmpresa = 'pendiente' | 'aprobada' | 'rechazada';
+
+// M04 - HU-CUE-01, HU-CUE-05, HU-CUE-06: propósito del código OTP
+export type EnumTipoCodigoOtp = 'registro' | 'recuperacion_password' | 'cambio_correo';
+
 // ==============================================================================
 // 1. MÓDULO DE DESCUENTOS, ROLES Y PERMISOS
 // ==============================================================================
@@ -302,7 +311,95 @@ export interface SolicitudSupresionTable {
 }
 
 // ==============================================================================
-// 9. INTERFAZ CENTRAL DATABASE (Única fuente de la verdad para Kysely)
+// 9. MÓDULO DE CUENTAS, DIRECCIONES Y SOLICITUDES EMPRESA (M04)
+// ==============================================================================
+
+/**
+ * Libreta de direcciones guardadas por el cliente (HU-CUE-07).
+ */
+export interface DireccionClienteTable {
+  id_direccion: Generated<string>;
+  id_usuario: number;
+  direccion: string;
+  barrio: string;
+  apartamento_casa: string | null;
+  nombre_apellido: string;
+  telefono: string;
+  es_predeterminada: Generated<boolean>;
+  latitud: ColumnType<string | number | null, string | number | null | undefined, string | number | null>;
+  longitud: ColumnType<string | number | null, string | number | null | undefined, string | number | null>;
+  fecha_creacion: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_actualizacion: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+/**
+ * Solicitudes de registro y ascenso corporativo B2B sujetas a dictamen (HU-CUE-03, HU-CUE-09).
+ */
+export interface SolicitudEmpresaTable {
+  id_solicitud: Generated<string>;
+  id_usuario: number;
+  nombre_empresa: string;
+  nombre_representante: string;
+  correo_empresarial: string;
+  telefono: string;
+  nit: string;
+  tipo_solicitud: Generated<EnumTipoSolicitudEmpresa>;
+  estado: Generated<EnumEstadoSolicitudEmpresa>;
+  motivo_rechazo: string | null;
+  id_admin_revisor: number | null;
+  fecha_solicitud: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_revision: ColumnType<Date | null, string | Date | null | undefined, string | Date | null>;
+}
+
+/**
+ * Solicitudes de cambio de NIT con soporte documental (HU-CUE-09 / RF-CUE-09-07).
+ */
+export interface SolicitudActualizacionNitTable {
+  id_solicitud: Generated<string>;
+  id_usuario: number;
+  nit_anterior: string;
+  nit_nuevo: string;
+  documento_adjunto_url: string;
+  estado: Generated<EnumEstadoSolicitudEmpresa>;
+  motivo_rechazo: string | null;
+  id_admin_revisor: number | null;
+  fecha_solicitud: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_revision: ColumnType<Date | null, string | Date | null | undefined, string | Date | null>;
+}
+
+/**
+ * Identidades federadas OAuth vinculadas a la cuenta (Google Identity - HU-CUE-02).
+ */
+export interface UsuarioIdentidadExternaTable {
+  id_identidad: Generated<number>;
+  id_usuario: number;
+  proveedor: string;
+  id_proveedor: string;
+  correo_proveedor: string | null;
+  fecha_vinculacion: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+/**
+ * Códigos de verificación OTP efímeros con expiración y reintentos (HU-CUE-01, 05, 06).
+ */
+export interface CodigoVerificacionTable {
+  id_codigo: Generated<string>;
+  correo: string;
+  codigo: string;
+  tipo: EnumTipoCodigoOtp;
+  expiracion: ColumnType<Date, string | Date, string | Date>;
+  intentos: Generated<number>;
+  max_intentos: Generated<number>;
+  datos_temporales: ColumnType<
+    Record<string, unknown> | null,
+    string | Record<string, unknown> | null | undefined,
+    string | Record<string, unknown> | null
+  >;
+  fecha_creacion: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+// ==============================================================================
+// 10. INTERFAZ CENTRAL DATABASE (Única fuente de la verdad para Kysely)
 // ==============================================================================
 
 export interface Database {
@@ -352,10 +449,17 @@ export interface Database {
   aviso_privacidad: AvisoPrivacidadTable;
   consentimiento_usuario: ConsentimientoUsuarioTable;
   solicitud_supresion: SolicitudSupresionTable;
+
+  // Cuentas, direcciones, identidades externas y verificación (M04)
+  direccion_cliente: DireccionClienteTable;
+  solicitud_empresa: SolicitudEmpresaTable;
+  solicitud_actualizacion_nit: SolicitudActualizacionNitTable;
+  usuario_identidad_externa: UsuarioIdentidadExternaTable;
+  codigo_verificacion: CodigoVerificacionTable;
 }
 
 // ==============================================================================
-// 10. TIPOS HELPERS EXPORTADOS PARA ENTIDADES
+// 11. TIPOS HELPERS EXPORTADOS PARA ENTIDADES
 // ==============================================================================
 
 export type Descuento = Selectable<DescuentoTable>;
@@ -481,3 +585,25 @@ export type ConsentimientoUsuarioUpdate = Updateable<ConsentimientoUsuarioTable>
 export type SolicitudSupresion = Selectable<SolicitudSupresionTable>;
 export type NewSolicitudSupresion = Insertable<SolicitudSupresionTable>;
 export type SolicitudSupresionUpdate = Updateable<SolicitudSupresionTable>;
+
+// M04 - Cuentas, direcciones, identidades externas y verificación
+export type DireccionCliente = Selectable<DireccionClienteTable>;
+export type NewDireccionCliente = Insertable<DireccionClienteTable>;
+export type DireccionClienteUpdate = Updateable<DireccionClienteTable>;
+
+export type SolicitudEmpresa = Selectable<SolicitudEmpresaTable>;
+export type NewSolicitudEmpresa = Insertable<SolicitudEmpresaTable>;
+export type SolicitudEmpresaUpdate = Updateable<SolicitudEmpresaTable>;
+
+export type SolicitudActualizacionNit = Selectable<SolicitudActualizacionNitTable>;
+export type NewSolicitudActualizacionNit = Insertable<SolicitudActualizacionNitTable>;
+export type SolicitudActualizacionNitUpdate = Updateable<SolicitudActualizacionNitTable>;
+
+export type UsuarioIdentidadExterna = Selectable<UsuarioIdentidadExternaTable>;
+export type NewUsuarioIdentidadExterna = Insertable<UsuarioIdentidadExternaTable>;
+export type UsuarioIdentidadExternaUpdate = Updateable<UsuarioIdentidadExternaTable>;
+
+export type CodigoVerificacion = Selectable<CodigoVerificacionTable>;
+export type NewCodigoVerificacion = Insertable<CodigoVerificacionTable>;
+export type CodigoVerificacionUpdate = Updateable<CodigoVerificacionTable>;
+

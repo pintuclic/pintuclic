@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 2.3 (v2.2 + módulo de privacidad, consentimiento y habeas data - HU-SEG-05)
+-- VERSIÓN: 2.4 (v2.3 + módulo de cuentas, direcciones, solicitudes corporativas y OTP - M04)
 -- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 31
+-- TOTAL TABLAS: 36
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -87,6 +87,21 @@ BEGIN
     -- Estado de solicitudes de supresion de datos personales (Habeas Data - M20 / HU-SEG-05)
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_estado_solicitud_supresion') THEN
         CREATE TYPE enum_estado_solicitud_supresion AS ENUM ('pendiente', 'en_proceso', 'aprobada', 'rechazada');
+    END IF;
+
+    -- Tipo de solicitud de cuenta corporativa (M04 - HU-CUE-03 / HU-CUE-06)
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_tipo_solicitud_empresa') THEN
+        CREATE TYPE enum_tipo_solicitud_empresa AS ENUM ('registro', 'ascenso_particular');
+    END IF;
+
+    -- Estado del trámite de una solicitud de empresa o NIT (M04 - HU-CUE-03 / HU-CUE-09)
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_estado_solicitud_empresa') THEN
+        CREATE TYPE enum_estado_solicitud_empresa AS ENUM ('pendiente', 'aprobada', 'rechazada');
+    END IF;
+
+    -- Propósito transaccional del código OTP efímero (M04 - HU-CUE-01, 05, 06)
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_tipo_codigo_otp') THEN
+        CREATE TYPE enum_tipo_codigo_otp AS ENUM ('registro', 'recuperacion_password', 'cambio_correo');
     END IF;
 END $$;
 
@@ -562,7 +577,122 @@ COMMENT ON COLUMN solicitud_supresion.fecha_resolucion IS 'Fecha y hora en que l
 COMMENT ON COLUMN solicitud_supresion.estado IS 'Ciclo de vida de la solicitud (pendiente, en_proceso, aprobada, rechazada)';
 
 -- ==============================================================================
--- 9. ÍNDICES DE RENDIMIENTO (OPTIMIZACIÓN DE BÚSQUEDAS Y JOINS)
+-- 9. MÓDULO DE CUENTAS, DIRECCIONES Y SOLICITUDES EMPRESA (M04)
+-- ==============================================================================
+
+-- Tabla: direccion_cliente
+-- Libreta de direcciones de entrega de los clientes con designación de predeterminada y geolocalización (HU-CUE-07)
+CREATE TABLE IF NOT EXISTS direccion_cliente (
+    id_direccion UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id_usuario INT NOT NULL,
+    direccion VARCHAR(255) NOT NULL,
+    barrio VARCHAR(100) NOT NULL,
+    apartamento_casa VARCHAR(100),
+    nombre_apellido VARCHAR(150) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    es_predeterminada BOOLEAN NOT NULL DEFAULT false,
+    latitud NUMERIC(10, 7),
+    longitud NUMERIC(10, 7),
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT fk_direccion_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+COMMENT ON TABLE direccion_cliente IS 'Libreta de direcciones de entrega guardadas por cada cliente (HU-CUE-07)';
+COMMENT ON COLUMN direccion_cliente.id_direccion IS 'UUID único de la dirección; referenciado en órdenes de despacho';
+COMMENT ON COLUMN direccion_cliente.es_predeterminada IS 'Bandera de dirección principal seleccionada para compras rápidas';
+COMMENT ON COLUMN direccion_cliente.latitud IS 'Coordenada geográfica de latitud para geolocalización precisa';
+COMMENT ON COLUMN direccion_cliente.longitud IS 'Coordenada geográfica de longitud para geolocalización precisa';
+
+-- Tabla: solicitud_empresa
+-- Solicitudes de registro de cuenta empresarial B2B y solicitudes de ascenso (HU-CUE-03 / HU-CUE-09)
+CREATE TABLE IF NOT EXISTS solicitud_empresa (
+    id_solicitud UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id_usuario INT NOT NULL,
+    nombre_empresa VARCHAR(150) NOT NULL,
+    nombre_representante VARCHAR(150) NOT NULL,
+    correo_empresarial VARCHAR(150) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    nit VARCHAR(30) NOT NULL,
+    tipo_solicitud enum_tipo_solicitud_empresa NOT NULL DEFAULT 'registro',
+    estado enum_estado_solicitud_empresa NOT NULL DEFAULT 'pendiente',
+    motivo_rechazo TEXT,
+    id_admin_revisor INT,
+    fecha_solicitud TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_revision TIMESTAMPTZ,
+    CONSTRAINT fk_solicitud_empresa_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_solicitud_empresa_admin FOREIGN KEY (id_admin_revisor) 
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+COMMENT ON TABLE solicitud_empresa IS 'Trazabilidad y dictamen administrativo de cuentas corporativas B2B (HU-CUE-03, HU-CUE-09)';
+COMMENT ON COLUMN solicitud_empresa.nit IS 'Número de Identificación Tributaria o RUT de la empresa solicitante';
+COMMENT ON COLUMN solicitud_empresa.motivo_rechazo IS 'Justificación obligatoria registrada por el administrador en caso de rechazo';
+COMMENT ON COLUMN solicitud_empresa.id_admin_revisor IS 'Administrador que dictaminó la solicitud (RF-CUE-09-03)';
+
+-- Tabla: solicitud_actualizacion_nit
+-- Solicitudes formales de cambio o corrección de NIT con soporte documental adjunto (RF-CUE-09-07)
+CREATE TABLE IF NOT EXISTS solicitud_actualizacion_nit (
+    id_solicitud UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id_usuario INT NOT NULL,
+    nit_anterior VARCHAR(30) NOT NULL,
+    nit_nuevo VARCHAR(30) NOT NULL,
+    documento_adjunto_url TEXT NOT NULL,
+    estado enum_estado_solicitud_empresa NOT NULL DEFAULT 'pendiente',
+    motivo_rechazo TEXT,
+    id_admin_revisor INT,
+    fecha_solicitud TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_revision TIMESTAMPTZ,
+    CONSTRAINT fk_solicitud_nit_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_solicitud_nit_admin FOREIGN KEY (id_admin_revisor) 
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+COMMENT ON TABLE solicitud_actualizacion_nit IS 'Solicitudes de actualización de NIT empresarial con soporte RUT adjunto (RF-CUE-09-07)';
+COMMENT ON COLUMN solicitud_actualizacion_nit.documento_adjunto_url IS 'Enlace o ruta del documento soporte (RUT/Cámara de Comercio) adjunto';
+
+-- Tabla: usuario_identidad_externa
+-- Cuentas federadas y vinculaciones OAuth (Google Identity, etc.) (HU-CUE-02)
+CREATE TABLE IF NOT EXISTS usuario_identidad_externa (
+    id_identidad SERIAL PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    proveedor VARCHAR(50) NOT NULL,
+    id_proveedor VARCHAR(255) NOT NULL,
+    correo_proveedor VARCHAR(150),
+    fecha_vinculacion TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT fk_identidad_usuario FOREIGN KEY (id_usuario) 
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT uq_identidad_proveedor UNIQUE (proveedor, id_proveedor),
+    CONSTRAINT uq_usuario_proveedor UNIQUE (id_usuario, proveedor)
+);
+
+COMMENT ON TABLE usuario_identidad_externa IS 'Identidades federadas OAuth vinculadas a la cuenta de usuario (HU-CUE-02)';
+COMMENT ON COLUMN usuario_identidad_externa.proveedor IS 'Proveedor de identidad (ej. google)';
+COMMENT ON COLUMN usuario_identidad_externa.id_proveedor IS 'Identificador federado único del usuario en el proveedor (sub)';
+
+-- Tabla: codigo_verificacion
+-- Códigos OTP efímeros con control de intentos y expiración para activación, reseteo y cambio de correo (M04)
+CREATE TABLE IF NOT EXISTS codigo_verificacion (
+    id_codigo UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    correo VARCHAR(150) NOT NULL,
+    codigo VARCHAR(10) NOT NULL,
+    tipo enum_tipo_codigo_otp NOT NULL,
+    expiracion TIMESTAMPTZ NOT NULL,
+    intentos INT NOT NULL DEFAULT 0,
+    max_intentos INT NOT NULL DEFAULT 3,
+    datos_temporales JSONB,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE codigo_verificacion IS 'Almacén de códigos OTP transaccionales efímeros (HU-CUE-01, HU-CUE-05, HU-CUE-06)';
+COMMENT ON COLUMN codigo_verificacion.intentos IS 'Contador de intentos fallidos antes de invalidar el código';
+COMMENT ON COLUMN codigo_verificacion.datos_temporales IS 'Metadatos adicionales asociados al trámite (ej. nuevo_correo, id_usuario)';
+
+-- ==============================================================================
+-- 10. ÍNDICES DE RENDIMIENTO (OPTIMIZACIÓN DE BÚSQUEDAS Y JOINS)
 -- ==============================================================================
 
 -- Índices en Roles, Permisos y Usuarios
@@ -622,6 +752,19 @@ CREATE INDEX IF NOT EXISTS idx_consentimiento_aviso ON consentimiento_usuario(id
 CREATE INDEX IF NOT EXISTS idx_supresion_usuario ON solicitud_supresion(id_usuario);
 CREATE INDEX IF NOT EXISTS idx_supresion_estado ON solicitud_supresion(estado);
 
+-- Índices en Cuentas, Direcciones y Solicitudes Empresa (M04)
+CREATE INDEX IF NOT EXISTS idx_direccion_usuario ON direccion_cliente(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_direccion_predeterminada ON direccion_cliente(id_usuario, es_predeterminada);
+CREATE INDEX IF NOT EXISTS idx_solicitud_empresa_nit ON solicitud_empresa(nit);
+CREATE INDEX IF NOT EXISTS idx_solicitud_empresa_usuario ON solicitud_empresa(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_solicitud_empresa_estado ON solicitud_empresa(estado);
+CREATE INDEX IF NOT EXISTS idx_solicitud_nit_usuario ON solicitud_actualizacion_nit(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_solicitud_nit_estado ON solicitud_actualizacion_nit(estado);
+CREATE INDEX IF NOT EXISTS idx_identidad_proveedor ON usuario_identidad_externa(proveedor, id_proveedor);
+CREATE INDEX IF NOT EXISTS idx_identidad_usuario ON usuario_identidad_externa(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_codigo_correo_tipo ON codigo_verificacion(correo, tipo);
+CREATE INDEX IF NOT EXISTS idx_codigo_expiracion ON codigo_verificacion(expiracion);
+
 -- ==============================================================================
--- FIN DEL SCRIPT DDL (31 TABLAS - v2.3)
+-- FIN DEL SCRIPT DDL (36 TABLAS - v2.4)
 -- ==============================================================================
