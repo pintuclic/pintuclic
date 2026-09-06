@@ -4,6 +4,20 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.4] - 2026-09-05
+### Base de Datos: Esquema Relacional Oficial v2.4 (36 Tablas) - PostgreSQL + Kysely
+- **Alcance General:** Evolución aditiva y oficial del modelo relacional de base de datos para soportar los requerimientos de datos del módulo **M04 (Cuentas, Autenticación y Perfil)**:
+  - **Múltiples Direcciones (`HU-CUE-07`):** Creación de la tabla `direccion_cliente` (UUID) con soporte de coordenadas, barrio, predeterminada y clave foránea `id_usuario`.
+  - **Trámites Corporativos B2B y Dictamen (`HU-CUE-03 / HU-CUE-09`):** Creación de la tabla `solicitud_empresa` (UUID) con tipos ENUM `enum_tipo_solicitud_empresa` y `enum_estado_solicitud_empresa`, capturando NIT, razón social, representante, correo empresarial, dictamen y motivo de rechazo.
+  - **Actualización Formal de NIT (`RF-CUE-09-07`):** Creación de la tabla `solicitud_actualizacion_nit` (UUID) con soporte de URL de RUT adjunto y trazabilidad por administrador revisor.
+  - **Federación Google Identity OAuth2 (`HU-CUE-02`):** Creación de la tabla `usuario_identidad_externa` con unicidad compuesta `UNIQUE(proveedor, proveedor_usuario_id)`.
+  - **Almacén OTP Efímero con TTL (`HU-CUE-01 / HU-CUE-05`):** Creación de la tabla `codigo_verificacion` (UUID) con ENUM `enum_tipo_codigo_otp`, límite de intentos y fecha de expiración.
+  - **Infraestructura Kysely (`types.ts` & `setup.ts`):** Centralización de contratos tipados Kysely (`Database`, `DireccionClienteTable`, `SolicitudEmpresaTable`, `SolicitudActualizacionNitTable`, `UsuarioIdentidadExternaTable`, `CodigoVerificacionTable`), script de verificación con `npm run db` y mocks en `seed_pintuclic.sql` gestionados con `npm run db:seed`.
+  - 🔗 **Documentación de Base de Datos:** [DOCUMENTACION_BASE_DATOS.md](../bd/docs/DOCUMENTACION_BASE_DATOS.md)
+  - 🔗 **Walkthrough de Migración BD:** [WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md#-versión-24-2026-09-05)
+
+---
+
 ## [v1.9.0] - 2026-09-05
 ### Módulo: M04 (Cuentas, Autenticación y Perfil - Backend)
 - **Alcance General:** Implementación completa del backend para el módulo M04 (HU-CUE-01 a HU-CUE-09), abarcando registro particular y empresa, autenticación por formulario y Google Identity, ciclo de vida de sesiones seguras con JWT portando `sid`, recuperación de contraseña, administración de perfiles, gestión de direcciones y panel administrativo de revisión de empresas.
@@ -18,7 +32,8 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Unicidad de Cuentas (`HU-CUE-08`):** Garantía de correo único en minúsculas en todo el sistema sin distinción de rol.
   - **Aprobación Administrativa de Empresas (`HU-CUE-09`):** Bandeja protegida por permisos `personal.ver` y `personal.editar` para aprobar (activando cuenta y rol `empresa_vip`) o rechazar solicitudes corporativas y actualizaciones de NIT con motivo y notificación.
   - 🔗 **Walkthrough Técnico M04 Backend:** [walkthrough_v1.9.0_M04_cuentas_auth_perfil_backend.md](./walkthroughs/M04/walkthrough_v1.9.0_M04_cuentas_auth_perfil_backend.md)
-- **Estado:** ✅ Validado con 30 pruebas automatizadas superadas al 100%; compilación TypeScript limpia (`tsc --noEmit`) con 0 errores.
+  - 🔗 **Reporte de Revisión Técnica M04 Backend:** [review_v1.9.0_M04_cuentas_auth_perfil.md](./reviews/backend/review_v1.9.0_M04_cuentas_auth_perfil.md)
+- **Estado:** ✅ Validado con 30 pruebas automatizadas superadas al 100%; compilación TypeScript limpia (`tsc --noEmit`) con 0 errores y linter con 0 advertencias tras refactorización del Tech Lead.
 
 ---
 

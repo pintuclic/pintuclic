@@ -50,23 +50,25 @@ export class CuentasRepository {
    * Asigna un rol al usuario en la tabla `usuario_rol`.
    */
   async asignarRolUsuario(idUsuario: number, idRol: number): Promise<void> {
-    await this.db
-      .insertInto('usuario_rol')
-      .values({
-        id_usuario: idUsuario,
-        id_rol: idRol,
-      })
-      .onConflict((oc) =>
-        oc.column('id_usuario').doUpdateSet({ id_rol: idRol })
-      )
-      .execute();
+    await this.db.transaction().execute(async (trx) => {
+      await trx
+        .insertInto('usuario_rol')
+        .values({
+          id_usuario: idUsuario,
+          id_rol: idRol,
+        })
+        .onConflict((oc) =>
+          oc.column('id_usuario').doUpdateSet({ id_rol: idRol })
+        )
+        .execute();
 
-    // Sincronizar también rol directo en tabla usuario
-    await this.db
-      .updateTable('usuario')
-      .set({ id_rol: idRol })
-      .where('id_usuario', '=', idUsuario)
-      .execute();
+      // Sincronizar también rol directo en tabla usuario
+      await trx
+        .updateTable('usuario')
+        .set({ id_rol: idRol })
+        .where('id_usuario', '=', idUsuario)
+        .execute();
+    });
   }
 
   /**

@@ -1,5 +1,6 @@
 import { randomInt } from 'crypto';
 import { AppError } from '../../../core/middlewares/errorHandler';
+import { EnumEstadoUsuario, EnumTipoUsuario } from '../../../core/db/types';
 import { CuentasRepository } from '../repositories/cuentas.repository';
 import { VerificacionRepository } from '../repositories/verificacion.repository';
 import { EmpresaRepository } from '../repositories/empresa.repository';
@@ -42,8 +43,8 @@ export class CuentasService {
     nombre: string;
     telefono: string | null;
     correo: string;
-    estado: any;
-    tipo: any;
+    estado: EnumEstadoUsuario;
+    tipo: EnumTipoUsuario;
     id_rol: number | null;
     rol_nombre?: string | null;
   }): UsuarioSeguro {

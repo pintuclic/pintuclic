@@ -25,11 +25,11 @@ import { EmpresaAdminController } from './controllers/empresa-admin.controller';
 // Raíz de composición con inyección de dependencias (Principio D de SOLID)
 // ==============================================================================
 
-// 1. Instanciación de Repositorios
+// 1. Instanciación de Repositorios (Conectados a PostgreSQL Kysely)
 const cuentasRepo = new CuentasRepository(db);
-const verificacionRepo = new VerificacionRepository();
-const direccionRepo = new DireccionRepository();
-const empresaRepo = new EmpresaRepository();
+const verificacionRepo = new VerificacionRepository(db);
+const direccionRepo = new DireccionRepository(db);
+const empresaRepo = new EmpresaRepository(db);
 
 // 2. Instanciación de Servicios
 const cuentasService = new CuentasService(cuentasRepo, verificacionRepo, empresaRepo);

@@ -24,7 +24,7 @@ export class PerfilController {
   ) {}
 
   private obtenerIdUsuarioAutenticado(req: Request): number {
-    const idUsuario = (req.user as any)?.id;
+    const idUsuario = req.user?.id;
     if (!idUsuario) {
       throw new AppError('No se identificó el usuario autenticado', 401, 'UNAUTHORIZED');
     }

@@ -13,7 +13,7 @@ export class EmpresaAdminController {
   constructor(private readonly empresaAdminService: EmpresaAdminService) {}
 
   private obtenerIdAdmin(req: Request): number {
-    const idAdmin = (req.user as any)?.id;
+    const idAdmin = req.user?.id;
     if (!idAdmin) {
       throw new AppError('Administrador no identificado', 401, 'UNAUTHORIZED');
     }
