@@ -26,23 +26,30 @@ export class NotificacionesService {
   ) {}
 
   /**
+   * Mapeo estático e inmutable entre eventos de negocio y códigos de plantillas (RF-NOT-01-02).
+   * Exhaustivo contra TipoEventoNotificacion (SSOT): si se agrega un evento en DTOs,
+   * el compilador de TypeScript obligará a asociar su plantilla correspondiente.
+   */
+  private static readonly MAPEO_PLANTILLAS: Readonly<Record<TipoEventoNotificacion, string>> = {
+    REGISTRO_CLIENTE: 'registro_cliente',
+    RECUPERACION_PASSWORD: 'recuperacion_password',
+    SOLICITUD_EMPRESA_RECIBIDA: 'solicitud_empresa_recibida',
+    SOLICITUD_EMPRESA_DECISION: 'solicitud_empresa_decision',
+    CAMBIO_ESTADO_ORDEN: 'cambio_estado_orden',
+    DEMORA_ORDEN_STOCK: 'demora_orden_stock',
+    COTIZACION_RESPONDIDA: 'cotizacion_evento',
+    COTIZACION_RECHAZADA: 'cotizacion_evento',
+    COTIZACION_PROXIMA_VENCER: 'cotizacion_evento',
+    PRUEBA_SISTEMA: 'prueba_sistema',
+  };
+
+  /**
    * Mapeo entre eventos de negocio y códigos de plantillas (RF-NOT-01-02).
    */
   private resolverCodigoPlantilla(evento: TipoEventoNotificacion): string {
-    const mapeo: Record<TipoEventoNotificacion, string> = {
-      REGISTRO_CLIENTE: 'registro_cliente',
-      RECUPERACION_PASSWORD: 'recuperacion_password',
-      SOLICITUD_EMPRESA_RECIBIDA: 'solicitud_empresa_recibida',
-      SOLICITUD_EMPRESA_DECISION: 'solicitud_empresa_decision',
-      CAMBIO_ESTADO_ORDEN: 'cambio_estado_orden',
-      DEMORA_ORDEN_STOCK: 'demora_orden_stock',
-      COTIZACION_RESPONDIDA: 'cotizacion_evento',
-      COTIZACION_RECHAZADA: 'cotizacion_evento',
-      COTIZACION_PROXIMA_VENCER: 'cotizacion_evento',
-      PRUEBA_SISTEMA: 'prueba_sistema',
-    };
-    return mapeo[evento] ?? 'prueba_sistema';
+    return NotificacionesService.MAPEO_PLANTILLAS[evento] ?? 'prueba_sistema';
   }
+
 
   /**
    * Procesa un evento de notificación siguiendo el Diagrama HU-NOT-01:
