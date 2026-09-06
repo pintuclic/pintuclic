@@ -13,8 +13,11 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Plantillas Administrables e Inviolabilidad de Variables (`HU-NOT-03`):** Endpoints administrativos protegidos para listar, previsualizar en vivo con datos mock y actualizar plantillas, aplicando la regla de negocio crítica que bloquea con `422` cualquier intento de eliminar variables obligatorias (ej. enlaces o códigos de verificación).
   - **Entregabilidad y Diagnóstico de Bitácora (`HU-NOT-04`):** Historial paginado de despachos, detección de rebotes y cálculo automático de métricas de entregabilidad cumpliendo la política de confidencialidad `HU-SEG-06`.
   - **Seguridad en Servidor:** Rutas de administración protegidas con guardas `sesionVigente` y `requierePermiso` de `M20`/`M17`.
+  - **Arquitectura SSOT en Contratos y Eventos:** Catálogo inmutable de eventos y estados unificado en `dtos/envio.dto.ts` con inferencia estática en interfaces (`0 bytes runtime`) y protección en tiempo de compilación para el mapeo exhaustivo de plantillas en el servicio.
   - 🔗 **Walkthrough Técnico M18 Backend:** [walkthrough_v1.8.0_M18_notificaciones_backend.md](./walkthroughs/M18/walkthrough_v1.8.0_M18_notificaciones_backend.md)
+  - 🔗 **Reporte de Revisión Técnica M18 Backend:** [review_v1.8.0_M18_notificaciones.md](./reviews/backend/review_v1.8.0_M18_notificaciones.md)
 - **Estado:** ✅ Validado con 22 pruebas de integración automatizadas; compilación limpia con `tsc --noEmit` y linters con 0 errores.
+
 
 ---
 

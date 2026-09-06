@@ -3,25 +3,20 @@
 // Contratos de dominio TypeScript estáticos (0 bytes en runtime, Directiva 10)
 // ==============================================================================
 
+import type { TIPOS_EVENTOS_NOTIFICACION, ESTADOS_ENVIO_NOTIFICACION } from '../dtos/envio.dto';
+
 /**
  * Catálogo de tipos de eventos de negocio que disparan notificaciones (RF-NOT-01-02).
+ * Derivado estáticamente de la tupla inmutable SSOT en DTOs (Directiva 10: 0 bytes en runtime).
  */
-export type TipoEventoNotificacion =
-  | 'REGISTRO_CLIENTE'
-  | 'RECUPERACION_PASSWORD'
-  | 'SOLICITUD_EMPRESA_RECIBIDA'
-  | 'SOLICITUD_EMPRESA_DECISION'
-  | 'CAMBIO_ESTADO_ORDEN'
-  | 'DEMORA_ORDEN_STOCK'
-  | 'COTIZACION_RESPONDIDA'
-  | 'COTIZACION_RECHAZADA'
-  | 'COTIZACION_PROXIMA_VENCER'
-  | 'PRUEBA_SISTEMA';
+export type TipoEventoNotificacion = (typeof TIPOS_EVENTOS_NOTIFICACION)[number];
 
 /**
  * Estados del ciclo de vida de un envío en la bitácora (RF-NOT-01-04).
+ * Derivado estáticamente de la tupla inmutable SSOT en DTOs (Directiva 10: 0 bytes en runtime).
  */
-export type EstadoEnvioNotificacion = 'pendiente' | 'enviado' | 'reintentando' | 'fallido';
+export type EstadoEnvioNotificacion = (typeof ESTADOS_ENVIO_NOTIFICACION)[number];
+
 
 /**
  * Plantilla de comunicación transaccional administrable (HU-NOT-03).
