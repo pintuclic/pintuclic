@@ -4,6 +4,24 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.9.0] - 2026-09-05
+### Módulo: M04 (Cuentas, Autenticación y Perfil - Backend)
+- **Alcance General:** Implementación completa del backend para el módulo M04 (HU-CUE-01 a HU-CUE-09), abarcando registro particular y empresa, autenticación por formulario y Google Identity, ciclo de vida de sesiones seguras con JWT portando `sid`, recuperación de contraseña, administración de perfiles, gestión de direcciones y panel administrativo de revisión de empresas.
+- **Hitos Clave Backend (HU-CUE-01 a HU-CUE-09):**
+  - **Registro de Particular y OTP (`HU-CUE-01`):** Alta de clientes particulares en estado `pendiente`, emisión de código OTP criptográfico de 6 dígitos con vigencia de 15 minutos, verificación, expiración y reenvío con notificación SMTP.
+  - **Identidad y Acceso con Google (`HU-CUE-02`):** Autenticación mediante Google Identity con sugerencia de vinculación cuando el correo coincide con una cuenta previa, e incorporación de contraseña propia obligatoria para doble vía de acceso.
+  - **Registro de Empresas B2B (`HU-CUE-03`):** Registro corporativo con NIT/RUT y representante legal en estado `pendiente`, prevención de NIT duplicado y consulta del estado de trámite.
+  - **Inicio y Cierre de Sesión Seguro (`HU-CUE-04`):** Login con mitigación contra fuerza bruta, verificación de credenciales en tiempo constante (`HU-SEG-06`), emisión de JWT portando claim `sid` persistido en PostgreSQL (`HU-SEG-02`) y logout explícito.
+  - **Recuperación de Contraseña (`HU-CUE-05`):** Solicitud uniforme para evitar enumeración de correos, reseteo mediante código OTP e invalidación inmediata de todas las sesiones activas del usuario.
+  - **Gestión de Perfil (`HU-CUE-06`):** Consulta segura sin datos sensibles (`HU-SEG-06`), actualización de datos personales, cambio de correo protegido con código enviado al correo actual y solicitud de ascenso a cuenta empresa.
+  - **Gestión de Direcciones (`HU-CUE-07`):** CRUD completo de direcciones con soporte de geolocalización, designación automática de predeterminada y comprobación estricta de titularidad en backend (`HU-SEG-03`).
+  - **Unicidad de Cuentas (`HU-CUE-08`):** Garantía de correo único en minúsculas en todo el sistema sin distinción de rol.
+  - **Aprobación Administrativa de Empresas (`HU-CUE-09`):** Bandeja protegida por permisos `personal.ver` y `personal.editar` para aprobar (activando cuenta y rol `empresa_vip`) o rechazar solicitudes corporativas y actualizaciones de NIT con motivo y notificación.
+  - 🔗 **Walkthrough Técnico M04 Backend:** [walkthrough_v1.9.0_M04_cuentas_auth_perfil_backend.md](./walkthroughs/M04/walkthrough_v1.9.0_M04_cuentas_auth_perfil_backend.md)
+- **Estado:** ✅ Validado con 30 pruebas automatizadas superadas al 100%; compilación TypeScript limpia (`tsc --noEmit`) con 0 errores.
+
+---
+
 ## [v1.8.1] - 2026-09-05
 ### Módulos: M18 (Notificaciones) ↔ M17 (Permisos y Administración) ↔ M20 (Seguridad) - Integración Fullstack
 - **Alcance General:** Implementación de ajustes de integración, resolución de contratos inter-módulo y coherencia global derivados de la auditoría arquitectural.
