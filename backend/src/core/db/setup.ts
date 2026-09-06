@@ -69,22 +69,43 @@ async function setupDatabase(): Promise<void> {
       console.log(`   ${(i + 1).toString().padStart(2, ' ')}. ${t}`);
     });
 
-    // Comprobaciones clave
+    // Comprobaciones clave (M20 y M04)
     const hasSesion = tables.includes('sesion');
     const hasAviso = tables.includes('aviso_privacidad');
     const hasConsentimiento = tables.includes('consentimiento_usuario');
     const hasSupresion = tables.includes('solicitud_supresion');
+    const hasDireccion = tables.includes('direccion_cliente');
+    const hasSolicitudEmpresa = tables.includes('solicitud_empresa');
+    const hasSolicitudNit = tables.includes('solicitud_actualizacion_nit');
+    const hasIdentidadExterna = tables.includes('usuario_identidad_externa');
+    const hasCodigoVerificacion = tables.includes('codigo_verificacion');
 
     console.log('\n🔍 Verificación de integridad:');
     console.log(`   ${hasSesion ? '✅' : '❌'} Tabla sesion (M20 - HU-SEG-02)`);
     console.log(`   ${hasAviso ? '✅' : '❌'} Tabla aviso_privacidad (M20 - HU-SEG-05)`);
     console.log(`   ${hasConsentimiento ? '✅' : '❌'} Tabla consentimiento_usuario (M20 - HU-SEG-05)`);
     console.log(`   ${hasSupresion ? '✅' : '❌'} Tabla solicitud_supresion (M20 - HU-SEG-05)`);
+    console.log(`   ${hasDireccion ? '✅' : '❌'} Tabla direccion_cliente (M04 - HU-CUE-07)`);
+    console.log(`   ${hasSolicitudEmpresa ? '✅' : '❌'} Tabla solicitud_empresa (M04 - HU-CUE-03 / HU-CUE-09)`);
+    console.log(`   ${hasSolicitudNit ? '✅' : '❌'} Tabla solicitud_actualizacion_nit (M04 - HU-CUE-09)`);
+    console.log(`   ${hasIdentidadExterna ? '✅' : '❌'} Tabla usuario_identidad_externa (M04 - HU-CUE-02)`);
+    console.log(`   ${hasCodigoVerificacion ? '✅' : '❌'} Tabla codigo_verificacion (M04 - HU-CUE-01, 05, 06)`);
 
-    if (tables.length === 31 && hasSesion && hasAviso && hasConsentimiento && hasSupresion) {
-      console.log('\n🎉 ¡Esquema v2.3 desplegado al 100% con éxito! Total: 31 tablas operativas.');
+    const todasValidadas =
+      hasSesion &&
+      hasAviso &&
+      hasConsentimiento &&
+      hasSupresion &&
+      hasDireccion &&
+      hasSolicitudEmpresa &&
+      hasSolicitudNit &&
+      hasIdentidadExterna &&
+      hasCodigoVerificacion;
+
+    if (tables.length === 36 && todasValidadas) {
+      console.log('\n🎉 ¡Esquema v2.4 desplegado al 100% con éxito! Total: 36 tablas operativas.');
     } else {
-      console.warn(`\n⚠️ Advertencia: Se esperaban 31 tablas, se detectaron ${tables.length}.`);
+      console.warn(`\n⚠️ Advertencia: Se esperaban 36 tablas, se detectaron ${tables.length}.`);
     }
   } catch (err: unknown) {
     const error = err as Error;

@@ -5,11 +5,43 @@ Este documento registra la evolución histórica del modelo de base de datos de 
 ---
 
 ## 📑 Índice de Versiones
+- [Versión 2.4 (Módulo de Cuentas, Autenticación y Perfil - M04)](#-versión-24-2026-09-05)
 - [Versión 2.3 (Módulo de Privacidad, Consentimiento y Habeas Data - HU-SEG-05)](#-versión-23-2026-09-05)
 - [Versión 2.2 (Sesiones de Usuario con Control de Inactividad e Invalidación)](#-versión-22-2026-09-05)
 - [Versión 2.1 (E-Commerce Inmutable, Cotizaciones y Carrito con Variantes)](#-versión-21-2026-09-04)
 - [Versión 2.0 (Página FINAL del ER) - Reestructuración de Catálogo, Variantes y Combos](#-versión-20-2026-09-03)
 - [Versión 1.0 (Esquema Inicial Pre-Final) - Base de 21 Tablas](#-versión-10-2026-09-02)
+
+---
+
+## 📦 Versión 2.4 (2026-09-05)
+
+### 🎯 Resumen Ejecutivo
+Evolución aditiva oficial del modelo relacional requerida para soportar al 100% las Historias de Usuario del módulo **M04 (Cuentas, Autenticación y Perfil)**:
+- **Total Tablas:** Pasa de 31 a **36 tablas**.
+- **Foco de la versión:** Soporte integral a direcciones físicas de despacho (`HU-CUE-07`), solicitudes corporativas de empresa y actualización de NIT con trazabilidad administrativa (`HU-CUE-03 / HU-CUE-09`), federación de cuentas Google Identity OAuth2 (`HU-CUE-02`) y almacén seguro de códigos OTP con TTL y límite de intentos (`HU-CUE-01 / HU-CUE-05`).
+- **Tipos ENUM Agregados (3):**
+  - `enum_tipo_solicitud_empresa`: `'registro'`, `'ascenso_particular'`.
+  - `enum_estado_solicitud_empresa`: `'pendiente'`, `'aprobada'`, `'rechazada'`.
+  - `enum_tipo_codigo_otp`: `'registro'`, `'recuperacion_password'`, `'cambio_correo'`.
+- **Integración Backend:** Tipado Kysely centralizado en `backend/src/core/db/types.ts` (`Database`, `DireccionClienteTable`, `SolicitudEmpresaTable`, `SolicitudActualizacionNitTable`, `UsuarioIdentidadExternaTable`, `CodigoVerificacionTable`), script de verificación `setup.ts` (`npm run db`) y datos semilla `seed_pintuclic.sql` (`npm run db:seed`).
+
+---
+
+### 🛑 1. Tablas Deprecadas / Eliminadas
+Ninguna en esta versión. Todos los cambios son 100% aditivos y compatibles hacia atrás.
+
+---
+
+### ✨ 2. Tablas Nuevas Creadas (5 Tablas)
+
+| Nueva Tabla (v2.4) | Clave Primaria (PK) | Claves Foráneas (FK) | Propósito Funcional |
+| :--- | :--- | :--- | :--- |
+| **`direccion_cliente`** | `id_direccion UUID` | `id_usuario` $\rightarrow$ `usuario` (CASCADE) | Almacenamiento de múltiples direcciones físicas de despacho por usuario (`HU-CUE-07`), soporte de coordenadas geográficas (`latitud`, `longitud`), barrio, teléfono y designación de dirección predeterminada. |
+| **`solicitud_empresa`** | `id_solicitud UUID` | `id_usuario` $\rightarrow$ `usuario` (CASCADE)<br>`id_admin_revisor` $\rightarrow$ `usuario` (SET NULL) | Gestión del flujo de aprobación corporativa B2B (`HU-CUE-03 / HU-CUE-09`). Permite el registro y ascenso particular a empresa con captura de NIT, razón social, representante, correo empresarial, dictamen y motivo de rechazo. |
+| **`solicitud_actualizacion_nit`** | `id_solicitud UUID` | `id_usuario` $\rightarrow$ `usuario` (CASCADE)<br>`id_admin_revisor` $\rightarrow$ `usuario` (SET NULL) | Trámite formal de modificación de NIT empresarial (`RF-CUE-09-07`), con registro de NIT anterior, nuevo NIT y URL del RUT adjunto verificado por un administrador. |
+| **`usuario_identidad_externa`** | `id_identidad SERIAL` | `id_usuario` $\rightarrow$ `usuario` (CASCADE) | Federación de identidades con proveedores OAuth2 externos (`HU-CUE-02`), vinculando `proveedor` ('google') y `proveedor_usuario_id` con restricción de unicidad compuesta `UNIQUE(proveedor, proveedor_usuario_id)`. |
+| **`codigo_verificacion`** | `id_codigo UUID` | Ninguna (FK desacoplada por correo/TTL) | Almacén transaccional seguro para códigos OTP efímeros (`HU-CUE-01 / HU-CUE-05`), con expiración por TTL, conteo y límite de reintentos, datos payload temporales y restricción `UNIQUE(correo, tipo)`. |
 
 ---
 

@@ -81,7 +81,7 @@ async function seedDatabase(): Promise<void> {
     console.log(`\n📈 Total de registros sembrados: ${totalRecords} en ${tablesQuery.rows.length} tablas.`);
 
     if (emptyTables === 0) {
-      console.log('🎉 ¡Todas las 31 tablas cuentan con al menos un registro de prueba válido!');
+      console.log(`🎉 ¡Todas las ${tablesQuery.rows.length} tablas cuentan con al menos un registro de prueba válido!`);
     } else {
       console.warn(`⚠️ Atención: Hay ${emptyTables} tablas con 0 registros.`);
     }
