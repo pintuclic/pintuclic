@@ -1,8 +1,9 @@
-﻿import bcrypt from 'bcrypt';
 import { EmpleadosRepository } from '../repositories/empleados.repository';
 import { PermisosRepository } from '../repositories/permisos.repository';
 import { EmpleadoResumen, EmpleadoDetalle, EmpleadoCreadoRespuesta } from '../interfaces/m17.interfaces';
 import { SesionService } from '../../m20-seguridad/services/sesion.service';
+import { CredencialesService } from '../../m20-seguridad/services/credenciales.service';
+import { NotificacionesService } from '../../m18-notificaciones/services/notificaciones.service';
 
 // ==============================================================================
 // M17 - SERVICIO DE EMPLEADOS
@@ -12,45 +13,57 @@ import { SesionService } from '../../m20-seguridad/services/sesion.service';
 /** ID protegido del Administrador raiz del sistema (RF-ADM-01-14, RF-ADM-06-06). */
 const ID_ADMIN_RAIZ = 1;
 
-/** Costo de BCrypt para la credencial temporal (RF-SEG-01-01, HU-SEG-01). */
-const BCRYPT_COST = 12;
-
 /** Longitud de la credencial temporal generada (suficientemente entrópica). */
 const LONGITUD_CREDENCIAL_TEMPORAL = 16;
-
-/** Caracteres admitidos en la credencial temporal. */
-const CHARS_CREDENCIAL = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
 
 export class EmpleadosService {
   constructor(
     private readonly empleadosRepo: EmpleadosRepository,
     private readonly permisosRepo: PermisosRepository,
     private readonly sesionService: SesionService,
+    private readonly credencialesService: CredencialesService,
+    private readonly notificacionesService?: NotificacionesService,
   ) {}
 
   /**
    * Genera una credencial temporal segura de un solo uso (HU-SEG-01).
-   * Solo se entrega al administrador en la respuesta de creacion.
+   * Garantiza cumplimiento de la política de contraseñas de M20 (contrasenaSchema).
+   * Solo se entrega al administrador en la respuesta de creación y por correo al empleado.
    */
   private generarCredencialTemporal(): string {
-    let resultado = '';
-    for (let i = 0; i < LONGITUD_CREDENCIAL_TEMPORAL; i++) {
-      resultado += CHARS_CREDENCIAL[Math.floor(Math.random() * CHARS_CREDENCIAL.length)];
+    const mayus = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const minus = 'abcdefghijkmnpqrstuvwxyz';
+    const digitos = '23456789';
+    const especiales = '!@#$%';
+    const todos = mayus + minus + digitos + especiales;
+
+    // Asegurar al menos un caracter de cada clase exigida por la politica M20
+    const partes = [
+      mayus[Math.floor(Math.random() * mayus.length)] as string,
+      minus[Math.floor(Math.random() * minus.length)] as string,
+      digitos[Math.floor(Math.random() * digitos.length)] as string,
+      especiales[Math.floor(Math.random() * especiales.length)] as string,
+    ];
+
+    for (let i = partes.length; i < LONGITUD_CREDENCIAL_TEMPORAL; i++) {
+      partes.push(todos[Math.floor(Math.random() * todos.length)] as string);
     }
-    return resultado;
+
+    return partes.sort(() => Math.random() - 0.5).join('');
   }
 
   /**
-   * Alta de empleado (RF-ADM-01-02, RF-ADM-01-03, RF-ADM-01-04).
+   * Alta de empleado (RF-ADM-01-02, RF-ADM-01-03, RF-ADM-01-04, CA-ADM-01-01).
    *
    * Flujo:
    * 1. Valida unicidad global de correo (HU-CUE-08).
-   * 2. Genera credencial temporal y la hashea con BCrypt costo 12 (HU-SEG-01).
+   * 2. Genera credencial temporal y la deriva con BCrypt costo 12 reutilizando M20 (HU-SEG-01 / DRY).
    * 3. Crea el usuario con tipo='normal', estado='activo'.
    * 4. Crea rol individual `empleado_{id}` (Opcion A de arquitectura de permisos).
    * 5. Asigna el rol al usuario en usuario_rol.
    * 6. El empleado inicia con CERO permisos (RF-ADM-01-04).
-   * 7. Retorna la credencial temporal EN TEXTO PLANO una unica vez (RF-ADM-01-04).
+   * 7. Despacha la credencial por correo transaccional vía M18 (CA-ADM-01-01).
+   * 8. Retorna la credencial temporal EN TEXTO PLANO una unica vez (RF-ADM-01-04).
    */
   async crearEmpleado(datos: {
     nombre: string;
@@ -63,9 +76,9 @@ export class EmpleadosService {
       return { error: 'El correo ya está registrado en el sistema (HU-CUE-08)' };
     }
 
-    // 2. Credencial temporal
+    // 2. Credencial temporal y derivación segura DRY delegada a M20
     const credencialTemporal = this.generarCredencialTemporal();
-    const hashCredencial = await bcrypt.hash(credencialTemporal, BCRYPT_COST);
+    const hashCredencial = await this.credencialesService.derivarContrasena(credencialTemporal);
 
     // 3. Crear usuario (con id_rol nulo inicialmente)
     const idUsuario = await this.empleadosRepo.crearEmpleado({
@@ -84,6 +97,21 @@ export class EmpleadosService {
     await this.empleadosRepo.actualizarRolDirecto(idUsuario, idRol);
 
     // 6. El empleado inicia con cero permisos (no se asigna nada al rol)
+
+    // 7. Notificación transaccional asíncrona vía M18 (CA-ADM-01-01)
+    if (this.notificacionesService) {
+      void this.notificacionesService.procesarEvento(
+        'ALTA_EMPLEADO_CREDENCIAL',
+        datos.correo,
+        {
+          nombre: datos.nombre,
+          credencial_temporal: credencialTemporal,
+        },
+        idUsuario
+      ).catch((err) => {
+        console.error(`[M17->M18] Error al despachar credencial inicial a ${datos.correo}:`, err);
+      });
+    }
 
     return {
       id_usuario: idUsuario,

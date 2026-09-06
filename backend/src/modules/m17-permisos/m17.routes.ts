@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { db } from '../../core/db/connection';
 import { guardas, serviciosSeguridad } from '../m20-seguridad/seguridad.routes';
+import { servicioNotificaciones } from '../m18-notificaciones/notificaciones.routes';
 
 import { EmpleadosRepository } from './repositories/empleados.repository';
 import { PermisosRepository } from './repositories/permisos.repository';
@@ -31,7 +32,13 @@ const permisosRepo = new PermisosRepository(db);
 const clientesRepo = new ClientesRepository(db);
 const parametrosRepo = new ParametrosRepository(db);
 
-const empleadosService = new EmpleadosService(empleadosRepo, permisosRepo, serviciosSeguridad.sesion);
+const empleadosService = new EmpleadosService(
+  empleadosRepo,
+  permisosRepo,
+  serviciosSeguridad.sesion,
+  serviciosSeguridad.credenciales,
+  servicioNotificaciones
+);
 const permisosService = new PermisosService(permisosRepo, empleadosRepo);
 const clientesService = new ClientesService(clientesRepo);
 const parametrosService = new ParametrosService(parametrosRepo);
@@ -160,5 +167,9 @@ adminRoutes.put(
   guardas.requierePermiso('configuracion.editar'),
   (req, res, next) => { void parametrosCtrl.actualizarParametro(req, res).catch(next); }
 );
+
+// Fachadas públicas exportadas por M17 para consumo inter-módulo (Principio DRY 2.A)
+export const serviciosEmpleados = empleadosService;
+export const serviciosPermisos = permisosService;
 
 export { adminRoutes };
