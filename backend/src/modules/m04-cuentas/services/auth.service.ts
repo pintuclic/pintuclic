@@ -1,5 +1,6 @@
 import { randomInt } from 'crypto';
 import { AppError } from '../../../core/middlewares/errorHandler';
+import { Usuario } from '../../../core/db/types';
 import { CuentasRepository } from '../repositories/cuentas.repository';
 import { VerificacionRepository } from '../repositories/verificacion.repository';
 import { serviciosSeguridad } from '../../m20-seguridad/seguridad.routes';
@@ -41,7 +42,7 @@ export class AuthService {
     private readonly sesion = serviciosSeguridad.sesion
   ) {}
 
-  private sanitizarUsuario(usuario: any, rolNombre?: string | null): UsuarioSeguro {
+  private sanitizarUsuario(usuario: Usuario, rolNombre?: string | null): UsuarioSeguro {
     return {
       id_usuario: usuario.id_usuario,
       nombre: usuario.nombre,

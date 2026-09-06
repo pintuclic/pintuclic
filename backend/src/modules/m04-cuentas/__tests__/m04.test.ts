@@ -7,7 +7,9 @@ import { AuthService } from '../services/auth.service';
 import { PerfilService } from '../services/perfil.service';
 import { DireccionService } from '../services/direccion.service';
 import { EmpresaAdminService } from '../services/empresa-admin.service';
-import { Usuario } from '../../../core/db/types';
+import { Usuario, NewUsuario, UsuarioUpdate, EnumEstadoUsuario } from '../../../core/db/types';
+import { CredencialesService } from '../../m20-seguridad/services/credenciales.service';
+import { SesionService } from '../../m20-seguridad/services/sesion.service';
 
 // ==============================================================================
 // M04 - SUITE DE VALIDACIÓN DE CRITERIOS DE ACEPTACIÓN (HU-CUE-01 a HU-CUE-09)
@@ -45,7 +47,7 @@ async function ejecutarPruebasM04(): Promise<void> {
       const u = tablaUsuarios.get(id);
       return u ? { ...u } : undefined;
     },
-    crearUsuario: async (datos: any) => {
+    crearUsuario: async (datos: NewUsuario) => {
       secuenciaUsuario++;
       const nuevo: Usuario = {
         id_usuario: secuenciaUsuario,
@@ -74,11 +76,11 @@ async function ejecutarPruebasM04(): Promise<void> {
         rolNombre: u.id_rol === 1 ? 'administrador' : u.id_rol === 3 ? 'empresa_vip' : 'cliente',
       };
     },
-    actualizarEstado: async (idUsuario: number, estado: any) => {
+    actualizarEstado: async (idUsuario: number, estado: EnumEstadoUsuario) => {
       const u = tablaUsuarios.get(idUsuario);
       if (u) u.estado = estado;
     },
-    actualizarUsuario: async (idUsuario: number, cambios: any) => {
+    actualizarUsuario: async (idUsuario: number, cambios: UsuarioUpdate) => {
       const u = tablaUsuarios.get(idUsuario);
       if (u) Object.assign(u, cambios);
     },
@@ -111,11 +113,11 @@ async function ejecutarPruebasM04(): Promise<void> {
       const coincide = ('$2b$12$' + Buffer.from(plana).toString('base64').padEnd(53, 'x')) === u.contrasena;
       return coincide ? { id_usuario: u.id_usuario, correo: u.correo } : null;
     },
-  } as any;
+  } as unknown as CredencialesService;
 
   const mockSesion = {
     clasificarSesion: (idRol: number | null) => (idRol === 1 ? 'admin' : 'cliente'),
-    abrirSesion: async (_payload: any, _tipo: any) => ({
+    abrirSesion: async (_payload: unknown, _tipo: unknown) => ({
       idSesion: 'a0000000-0000-0000-0000-000000000001',
       accessToken: 'sample.jwt.token.simulado',
       refreshToken: 'sample.refresh.token.simulado',
@@ -124,7 +126,7 @@ async function ejecutarPruebasM04(): Promise<void> {
     }),
     cerrarSesion: async (_id: string) => true,
     invalidarSesionesDeUsuario: async (_id: number, _motivo: string) => 1,
-  } as any;
+  } as unknown as SesionService;
 
   const cuentasService = new CuentasService(mockCuentasRepo, verificacionRepo, empresaRepo, mockCredenciales);
   const authService = new AuthService(mockCuentasRepo, verificacionRepo, mockCredenciales, mockSesion);

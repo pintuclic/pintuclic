@@ -89,7 +89,7 @@ export class CuentasController {
    * POST /api/cuentas/logout (HU-CUE-04 / RF-CUE-04-02)
    */
   logout = async (req: Request, res: Response): Promise<Response> => {
-    const idSesion = (req.user as any)?.sid ?? (req.body.idSesion as string | undefined);
+    const idSesion = req.user?.sid ?? (req.body.idSesion as string | undefined);
     if (!idSesion) {
       throw new AppError('No hay sesión activa para cerrar', 400, 'BAD_REQUEST');
     }

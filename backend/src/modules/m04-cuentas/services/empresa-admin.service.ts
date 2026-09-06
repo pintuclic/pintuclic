@@ -60,6 +60,15 @@ export class EmpresaAdminService {
       );
     }
 
+    // Protección de cuenta raíz (RF-ADM-01-14 / RF-ADM-02-10): Administrador ID=1 no puede ser alterado a empresa
+    if (solicitud.id_usuario === 1) {
+      throw new AppError(
+        'Operación no permitida: La cuenta del Administrador raíz no puede ser convertida a cuenta empresa',
+        403,
+        'ROOT_ADMIN_PROTECTED'
+      );
+    }
+
     const nuevoEstado = datos.decision === 'aprobar' ? 'aprobada' : 'rechazada';
     const motivo = datos.decision === 'rechazar' ? datos.motivoRechazo : null;
 
