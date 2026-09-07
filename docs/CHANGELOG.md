@@ -4,6 +4,19 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.2.0] - 2026-09-07
+### Arquitectura Global: Estandarización de DTOs en Frontend (Globales vs Locales y Erradicación Inline)
+- **Alcance General:** Salto a versión **MINOR (v2.2.0)** que formaliza la arquitectura de **DTOs (Data Transfer Objects) en el Frontend**, documentándola en `frontend/infraestructura.md` y `AGENTS.md` (Directiva 12). Se define la separación estricta entre **DTOs Globales (`src/core/dtos/`)**, **DTOs Locales de Módulo (`src/modules/m[xx]/dtos/`)** y **Contratos Estáticos (`interfaces/`)**, eliminando al 100% las declaraciones de esquemas Zod inline en componentes `.vue`.
+- **Hitos Clave de Arquitectura e Implementación:**
+  - **Documentación y Normativa Oficial:** Actualización de `frontend/infraestructura.md` (Sección 5: Gestión de DTOs y Validación de Formularios) y de `AGENTS.md` (Directiva 12 y Paso 5) prohibiendo validaciones inline en vistas.
+  - **Capa Global de DTOs (`src/core/dtos/`):** Creación de `seguridad.dto.ts` centralizando `contrasenaSchema` (`HU-SEG-01`), `contrasenaConConfirmacionSchema`, `telefonoSchema`, `correoSchema` y utilidades de validación atómica (`validarContrasena`, `validarContrasenaConConfirmacion`).
+  - **Capa de DTOs Locales M04 (`src/modules/m04-cuentas/dtos/`):** Estructuración de `login.dto.ts` (`loginSchema`), `registro.dto.ts` (`registroNaturalSchema`, `registroEmpresaSchema`) y `password.dto.ts` mediante composición limpia.
+  - **Introspección y Limpieza de Componentes Vue:** Refactorización de `ModalLogin.vue` y `PasoDatos.vue`, removiendo todos los esquemas `z.object` del cuerpo del componente y delegando exclusivamente en `toTypedSchema(dtoImportado)`.
+  - 🔗 **Walkthrough Técnico:** [walkthrough_v2.2.0_M04_arquitectura_dtos_frontend.md](./walkthroughs/M04/walkthrough_v2.2.0_M04_arquitectura_dtos_frontend.md)
+- **Estado:** ✅ Validado con compilación TypeScript limpia en frontend (`vue-tsc -b`), linter en 0 advertencias (`npm run lint`), build de producción generado con éxito y backend en 0 errores.
+
+---
+
 ## [v2.1.3] - 2026-09-07
 ### Módulo: M04 (Cuentas, Autenticación y Perfil - DTO Centralizado y Validador DRY de Contraseñas Frontend)
 - **Alcance General:** Incremento **PATCH (v2.1.3)** que unifica y centraliza la validación de contraseñas en el frontend bajo el principio DRY mediante un nuevo módulo de DTOs (`dtos/password.dto.ts`). Aplica idénticas reglas de seguridad y robustez criptográfica (`HU-SEG-01`) tanto en el registro de particulares y empresas (`HU-CUE-01`, `HU-CUE-03`), como en el establecimiento de contraseñas federadas (`HU-CUE-02`) en modales y wizards.
