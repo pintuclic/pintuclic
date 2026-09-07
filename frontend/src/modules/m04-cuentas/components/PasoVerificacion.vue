@@ -9,7 +9,7 @@
     </p>
   </div>
 
-  <form @submit.prevent="verificarCodigo" class="flex flex-col gap-6 items-center">
+  <form @submit.prevent="onVerificarSubmit" class="flex flex-col gap-6 items-center">
     <div class="flex gap-2 justify-center w-full">
       <input
         v-for="(_, index) in otp"
@@ -24,8 +24,8 @@
     </div>
 
     <!-- Error con tokens oficiales de diseño -->
-    <div v-if="error" class="w-full text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
-      {{ error }}
+    <div v-if="errorMensaje" class="w-full text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
+      {{ errorMensaje }}
     </div>
 
     <!-- Franja informativa oficial con tokens de conversión -->
@@ -34,15 +34,15 @@
     </div>
 
     <div class="w-full">
-      <Boton type="submit" variant="primary" size="full" :disabled="!otpCompleto || isLoading">
-        {{ isLoading ? 'Verificando...' : 'Verificar y crear cuenta' }}
+      <Boton type="submit" variant="primary" size="full" :disabled="!otpCompleto || cargando">
+        {{ cargando ? 'Verificando...' : 'Verificar y crear cuenta' }}
       </Boton>
     </div>
   </form>
 
   <div class="mt-6 text-center text-sm">
     <p class="text-neutral-medium mb-1">¿No te llegó?</p>
-    <button type="button" class="font-semibold text-action hover:underline cursor-pointer" :disabled="isLoading || tiempoRestante > 0" @click="reenviarCodigo">
+    <button type="button" class="font-semibold text-action hover:underline cursor-pointer" :disabled="cargando || tiempoRestante > 0" @click="onReenviarSubmit">
       {{ tiempoRestante > 0 ? `Reenviar código en ${tiempoRestante}s` : 'Reenviar código' }}
     </button>
   </div>
@@ -56,11 +56,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
-import axios from 'axios';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
 import Boton from '@/core/components/Boton.vue';
-import { CuentasService } from '../services/cuentas.service';
+import { useCuentas } from '../composables/useCuentas';
 
 const props = defineProps<{
   correo: string;
@@ -71,10 +70,16 @@ const emit = defineEmits<{
   (e: 'volver'): void;
 }>();
 
+const {
+  cargando,
+  errorMensaje,
+  verificarCodigoActivacion,
+  reenviarCodigoActivacion,
+  limpiarErrores,
+} = useCuentas();
+
 const otp = ref(['', '', '', '', '', '']);
 const otpCompleto = computed(() => otp.value.every((valor) => valor !== ''));
-const error = ref('');
-const isLoading = ref(false);
 const tiempoRestante = ref(0);
 let timerId: ReturnType<typeof setInterval> | null = null;
 
@@ -99,37 +104,30 @@ function focusPrev(index: number, event: Event) {
   }
 }
 
-async function verificarCodigo() {
+async function onVerificarSubmit() {
   if (!otpCompleto.value) return;
 
   const codigoStr = otp.value.join('');
-  
-  try {
-    isLoading.value = true;
-    error.value = '';
-    await CuentasService.verificarCodigo(props.correo, codigoStr);
+  limpiarErrores();
+
+  const resultado = await verificarCodigoActivacion({
+    correo: props.correo,
+    codigo: codigoStr,
+  });
+
+  if (resultado) {
     emit('verificado');
-  } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const data = err.response?.data as { mensaje?: string } | undefined;
-      error.value = data?.mensaje || 'Código incorrecto. Intenta de nuevo.';
-    } else {
-      error.value = 'Código incorrecto. Intenta de nuevo.';
-    }
-  } finally {
-    isLoading.value = false;
   }
 }
 
-async function reenviarCodigo() {
+async function onReenviarSubmit() {
   if (tiempoRestante.value > 0) return;
-  
-  try {
-    isLoading.value = true;
-    error.value = '';
-    await CuentasService.reenviarCodigo(props.correo);
-    tiempoRestante.value = 60;
-    
+  limpiarErrores();
+
+  const resultado = await reenviarCodigoActivacion(props.correo);
+  if (resultado) {
+    tiempoRestante.value = resultado.tiempoEsperaSegundos ?? 60;
+
     if (timerId) clearInterval(timerId);
     timerId = setInterval(() => {
       if (tiempoRestante.value > 0) {
@@ -139,15 +137,6 @@ async function reenviarCodigo() {
         timerId = null;
       }
     }, 1000);
-  } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      const data = err.response?.data as { mensaje?: string } | undefined;
-      error.value = data?.mensaje || 'Error al reenviar el código';
-    } else {
-      error.value = 'Error al reenviar el código';
-    }
-  } finally {
-    isLoading.value = false;
   }
 }
 </script>

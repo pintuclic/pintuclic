@@ -42,12 +42,12 @@
       </label>
     </div>
 
-    <div v-if="errorMessage" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
-      {{ errorMessage }}
+    <div v-if="errorMensaje" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
+      {{ errorMensaje }}
     </div>
 
-    <Boton type="submit" variant="primary" size="full" class="mt-2" :disabled="isLoading">
-      {{ isLoading ? 'Cargando...' : 'Continuar' }}
+    <Boton type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
+      {{ cargando ? 'Cargando...' : 'Continuar' }}
     </Boton>
   </form>
 
@@ -68,12 +68,12 @@
       </label>
     </div>
 
-    <div v-if="errorMessage" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
-      {{ errorMessage }}
+    <div v-if="errorMensaje" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
+      {{ errorMensaje }}
     </div>
 
-    <Boton type="submit" variant="primary" size="full" class="mt-2" :disabled="isLoading">
-      {{ isLoading ? 'Cargando...' : 'Continuar' }}
+    <Boton type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
+      {{ cargando ? 'Cargando...' : 'Continuar' }}
     </Boton>
   </form>
 
@@ -90,7 +90,6 @@ import { ref, computed } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import * as z from 'zod';
-import axios from 'axios';
 import { Mail as MailIcon, Lock as LockIcon, Phone as PhoneIcon } from 'lucide-vue-next';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
@@ -101,7 +100,7 @@ import type {
   RegistroNaturalPayload,
   RegistroEmpresaPayload,
 } from '../interfaces/registro.interface';
-import { CuentasService } from '../services/cuentas.service';
+import { useCuentas } from '../composables/useCuentas';
 
 const emit = defineEmits<{
   irALogin: [];
@@ -109,8 +108,9 @@ const emit = defineEmits<{
 }>();
 
 const activeTab = ref<TipoCuentaRegistro>('natural');
+const { cargando, errorMensaje, registrarParticular, registrarEmpresa, limpiarErrores } = useCuentas();
 
-// Regla de contraseña real
+// Regla de contraseña simétrica con el backend
 const passwordRule = z
   .string({ required_error: 'La contraseña es obligatoria' })
   .min(8, 'La contraseña debe tener al menos 8 caracteres')
@@ -151,44 +151,33 @@ const currentSchema = computed(() => {
 // useForm unificado
 const { handleSubmit } = useForm({ validationSchema: currentSchema });
 
-const errorMessage = ref('');
-const isLoading = ref(false);
-
 const onSubmit = handleSubmit(async (values) => {
-  try {
-    isLoading.value = true;
-    errorMessage.value = '';
-    
-    if (activeTab.value === 'natural' && 'correo' in values) {
-      const payload: RegistroNaturalPayload = {
-        nombre: values.nombre,
-        correo: values.correo,
-        telefono: values.telefono,
-        contrasena: values.contrasena,
-      };
-      await CuentasService.registrarParticular(payload);
+  limpiarErrores();
+
+  if (activeTab.value === 'natural' && 'correo' in values) {
+    const payload: RegistroNaturalPayload = {
+      nombre: values.nombre,
+      correo: values.correo,
+      telefono: values.telefono,
+      contrasena: values.contrasena,
+    };
+    const res = await registrarParticular(payload);
+    if (res) {
       emit('datosListos', 'natural', payload.correo);
-    } else if ('correo_empresarial' in values) {
-      const payload: RegistroEmpresaPayload = {
-        nombre_empresa: values.nombre_empresa,
-        nombre_representante: values.nombre_representante,
-        correo_empresarial: values.correo_empresarial,
-        telefono: values.telefono,
-        nit: values.nit,
-        contrasena: values.contrasena,
-      };
-      await CuentasService.registrarEmpresa(payload);
+    }
+  } else if ('correo_empresarial' in values) {
+    const payload: RegistroEmpresaPayload = {
+      nombre_empresa: values.nombre_empresa,
+      nombre_representante: values.nombre_representante,
+      correo_empresarial: values.correo_empresarial,
+      telefono: values.telefono,
+      nit: values.nit,
+      contrasena: values.contrasena,
+    };
+    const res = await registrarEmpresa(payload);
+    if (res) {
       emit('datosListos', 'empresa', payload.correo_empresarial);
     }
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      const data = error.response?.data as { mensaje?: string } | undefined;
-      errorMessage.value = data?.mensaje || 'Error en el registro. Verifica los datos.';
-    } else {
-      errorMessage.value = 'Ocurrió un error inesperado al procesar el registro.';
-    }
-  } finally {
-    isLoading.value = false;
   }
 });
 </script>

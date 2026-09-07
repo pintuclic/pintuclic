@@ -1,8 +1,48 @@
 /**
- * Contrato de datos del registro y autenticación, alineado 1:1 con los DTOs y respuestas
- * de backend (backend/src/modules/m04-cuentas/dtos/registro.dto.ts y auth.service.ts).
- * Pureza estricta de compilación: 0 bytes runtime.
+ * ==============================================================================
+ * M04 - CONTRATOS DE DATOS Y TIPOS DE INTEGRACIÓN END-TO-END
+ * Sincronizado 1:1 con backend (dtos/registro.dto.ts, dtos/login.dto.ts,
+ * services/cuentas.service.ts y services/auth.service.ts).
+ * Pureza estricta de compilación TypeScript: 0 bytes de runtime.
+ * ==============================================================================
  */
+
+// ==============================================================================
+// 1. ENVOLTORIO ESTÁNDAR DE RESPUESTA API (UNIVERSAL API ENVELOPE)
+// ==============================================================================
+
+export interface ApiResponse<T = unknown> {
+  success: true;
+  data: T;
+  message?: string;
+  meta?: {
+    page?: number;
+    limit?: number;
+    totalRecords?: number;
+    totalPages?: number;
+    [key: string]: unknown;
+  };
+}
+
+export interface ApiErrorDetail {
+  field?: string;
+  issue?: string;
+  message?: string;
+  code?: string;
+}
+
+export interface ApiErrorResponse {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    details?: ApiErrorDetail[];
+  };
+}
+
+// ==============================================================================
+// 2. DTOs DE PETICIÓN (PAYLOADS)
+// ==============================================================================
 
 export interface RegistroNaturalPayload {
   nombre: string;
@@ -20,26 +60,74 @@ export interface RegistroEmpresaPayload {
   contrasena: string;
 }
 
+export interface VerificarCodigoPayload {
+  correo: string;
+  codigo: string;
+}
+
+export interface ReenviarCodigoPayload {
+  correo: string;
+}
+
+export interface LoginPayload {
+  correo: string;
+  contrasena: string;
+}
+
 export type TipoCuentaRegistro = 'natural' | 'empresa';
 
-export interface UsuarioSesion {
+// ==============================================================================
+// 3. MODELOS DE IDENTIDAD Y SESIÓN
+// ==============================================================================
+
+export interface UsuarioSeguro {
   id_usuario: number;
   nombre: string;
+  telefono: string | null;
   correo: string;
-  telefono?: string | null;
-  rol?: string;
-  tipo_usuario?: string;
+  estado: string;
+  tipo: string;
+  id_rol: number | null;
+  rol_nombre: string | null;
 }
 
-export interface RespuestaLogin {
-  token: string;
-  usuario: UsuarioSesion;
-  sid?: string;
+export interface SesionEmitida {
+  idSesion: string;
+  accessToken: string;
+  refreshToken: string;
+  expiraEnSegundos: number;
+  expiraEn: string;
 }
 
-export interface RespuestaApi<T = unknown> {
-  exito: boolean;
-  mensaje?: string;
-  datos?: T;
-  data?: T;
+// ==============================================================================
+// 4. PAYLOADS DE RESPUESTA DE SERVICIOS
+// ==============================================================================
+
+export interface ResultadoLogin {
+  usuario: UsuarioSeguro;
+  sesion: SesionEmitida;
+}
+
+export interface ResultadoRegistroParticular {
+  mensaje: string;
+  id_usuario: number;
+  correo: string;
+}
+
+export interface ResultadoRegistroEmpresa {
+  mensaje: string;
+  id_usuario: number;
+  id_empresa: number;
+  estado: string;
+}
+
+export interface ResultadoVerificacion {
+  mensaje: string;
+  activado: boolean;
+  usuario?: UsuarioSeguro;
+}
+
+export interface ResultadoReenvio {
+  mensaje: string;
+  tiempoEsperaSegundos?: number;
 }
