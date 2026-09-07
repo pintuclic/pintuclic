@@ -27,9 +27,7 @@
     </button>
   </div>
 
-  <!-- Formulario Natural: nombre / correo / teléfono / contraseña — sin
-       nombres/apellidos separados ni documento, tal como pide el documento
-       de HU y confirma registroParticularSchema en backend. -->
+  <!-- Formulario Natural -->
   <form v-if="activeTab === 'natural'" @submit="onSubmit" class="flex flex-col gap-4">
     <Entrada name="nombre" label="Nombre completo" placeholder="Ej. Juan Pérez" />
     <Entrada name="correo" label="Correo electrónico" type="email" placeholder="correo@ejemplo.com" :icon="MailIcon" />
@@ -44,7 +42,7 @@
       </label>
     </div>
 
-    <div v-if="errorMessage" class="text-sm text-center text-[#E63946] bg-[#E63946]/10 p-2 rounded-md">
+    <div v-if="errorMessage" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
       {{ errorMessage }}
     </div>
 
@@ -53,8 +51,7 @@
     </Boton>
   </form>
 
-  <!-- Formulario Empresa: campos DISTINTOS a los de Natural (no los mismos con
-       prefijo), alineados a registroEmpresaSchema en backend. -->
+  <!-- Formulario Empresa -->
   <form v-else @submit="onSubmit" class="flex flex-col gap-4">
     <Entrada name="nombre_empresa" label="Nombre Empresa" placeholder="Ej. Pinturas S.A.S" />
     <Entrada name="nombre_representante" label="Nombre del representante legal" placeholder="Ej. María Gómez" />
@@ -71,7 +68,7 @@
       </label>
     </div>
 
-    <div v-if="errorMessage" class="text-sm text-center text-[#E63946] bg-[#E63946]/10 p-2 rounded-md">
+    <div v-if="errorMessage" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
       {{ errorMessage }}
     </div>
 
@@ -89,18 +86,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import * as z from 'zod';
+import axios from 'axios';
 import { Mail as MailIcon, Lock as LockIcon, Phone as PhoneIcon } from 'lucide-vue-next';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
 import Entrada from '@/core/components/Entrada.vue';
 import Boton from '@/core/components/Boton.vue';
-import type { TipoCuentaRegistro } from '../interfaces/registro.interface';
-
-import { computed } from 'vue';
+import type {
+  TipoCuentaRegistro,
+  RegistroNaturalPayload,
+  RegistroEmpresaPayload,
+} from '../interfaces/registro.interface';
 import { CuentasService } from '../services/cuentas.service';
 
 const emit = defineEmits<{
@@ -148,7 +148,7 @@ const currentSchema = computed(() => {
   return toTypedSchema(activeTab.value === 'natural' ? naturalZod : empresaZod);
 });
 
-// ¡SOLO UN useForm! Evita colisiones de contexto en Vue.
+// useForm unificado
 const { handleSubmit } = useForm({ validationSchema: currentSchema });
 
 const errorMessage = ref('');
@@ -159,18 +159,36 @@ const onSubmit = handleSubmit(async (values) => {
     isLoading.value = true;
     errorMessage.value = '';
     
-    if (activeTab.value === 'natural') {
-      await CuentasService.registrarParticular(values);
-      emit('datosListos', 'natural', values.correo);
-    } else {
-      await CuentasService.registrarEmpresa(values);
-      emit('datosListos', 'empresa', values.correo_empresarial);
+    if (activeTab.value === 'natural' && 'correo' in values) {
+      const payload: RegistroNaturalPayload = {
+        nombre: values.nombre,
+        correo: values.correo,
+        telefono: values.telefono,
+        contrasena: values.contrasena,
+      };
+      await CuentasService.registrarParticular(payload);
+      emit('datosListos', 'natural', payload.correo);
+    } else if ('correo_empresarial' in values) {
+      const payload: RegistroEmpresaPayload = {
+        nombre_empresa: values.nombre_empresa,
+        nombre_representante: values.nombre_representante,
+        correo_empresarial: values.correo_empresarial,
+        telefono: values.telefono,
+        nit: values.nit,
+        contrasena: values.contrasena,
+      };
+      await CuentasService.registrarEmpresa(payload);
+      emit('datosListos', 'empresa', payload.correo_empresarial);
     }
-  } catch (error: any) {
-    errorMessage.value = error.response?.data?.mensaje || 'Error en el registro. Verifica los datos.';
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const data = error.response?.data as { mensaje?: string } | undefined;
+      errorMessage.value = data?.mensaje || 'Error en el registro. Verifica los datos.';
+    } else {
+      errorMessage.value = 'Ocurrió un error inesperado al procesar el registro.';
+    }
   } finally {
     isLoading.value = false;
   }
 });
 </script>
-

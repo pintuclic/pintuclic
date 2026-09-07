@@ -31,7 +31,7 @@
         </div>
       </div>
 
-      <div v-if="errorMessage" class="text-sm text-center text-[#E63946] bg-[#E63946]/10 p-2 rounded-md">
+      <div v-if="errorMessage" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
         {{ errorMessage }}
       </div>
 
@@ -77,6 +77,7 @@ import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import * as z from 'zod';
 import { ref } from 'vue';
+import axios from 'axios';
 import { useAuthStore } from '../store/auth.store';
 import { Mail as MailIcon, Lock as LockIcon } from 'lucide-vue-next';
 import ModalBase from '@/core/components/ModalBase.vue';
@@ -84,20 +85,20 @@ import EncabezadoModal from './EncabezadoModal.vue';
 import Entrada from '@/core/components/Entrada.vue';
 import Boton from '@/core/components/Boton.vue';
 
-defineProps({
-  modelValue: {
-    type: Boolean,
-    required: true
-  }
-});
+defineProps<{
+  modelValue: boolean;
+}>();
 
-const emit = defineEmits(['update:modelValue', 'goToRegister', 'success']);
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: boolean): void;
+  (e: 'goToRegister'): void;
+  (e: 'success'): void;
+}>();
+
 const authStore = useAuthStore();
 const errorMessage = ref('');
 const isLoading = ref(false);
 
-// Nombres de campo alineados 1:1 con el DTO real de backend (POST /cuentas/login:
-// { correo, contrasena }), para que la conexión con Axios sea un mapeo directo.
 const schema = toTypedSchema(
   z.object({
     correo: z.string().min(1, 'El correo es obligatorio').email('Correo electrónico inválido'),
@@ -115,16 +116,19 @@ const onSubmit = handleSubmit(async (values) => {
     errorMessage.value = '';
     await authStore.login(values.correo, values.contrasena);
     emit('success');
-  } catch (error: any) {
-    errorMessage.value = error.response?.data?.mensaje || 'Error al iniciar sesión. Verifica tus credenciales.';
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const data = error.response?.data as { mensaje?: string } | undefined;
+      errorMessage.value = data?.mensaje || 'Error al iniciar sesión. Verifica tus credenciales.';
+    } else {
+      errorMessage.value = 'Error al iniciar sesión. Verifica tus credenciales.';
+    }
   } finally {
     isLoading.value = false;
   }
 });
 
 const loginWithGoogle = () => {
-  console.log('Google login clicked');
-  // Handle Google Auth integration
+  // Integración pendiente con Google Identity OAuth2 (HU-CUE-02)
 };
 </script>
-

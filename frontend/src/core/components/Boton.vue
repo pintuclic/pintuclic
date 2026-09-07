@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps({
+defineProps({
   variant: {
     type: String,
     default: 'primary',

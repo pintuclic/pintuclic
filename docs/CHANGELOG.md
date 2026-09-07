@@ -4,6 +4,21 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.10.1] - 2026-09-07
+### Módulo: M04 (Cuentas, Autenticación y Perfil - Frontend Tech Lead Fixes)
+- **Alcance General:** Subsanación técnica integral de la capa frontend de M04 tras auditoría de Tech Lead, alcanzando 100% de cumplimiento en compilación TypeScript limpia (`vue-tsc`), linter en cero errores/advertencias (`npm run lint`), erradicación absoluta de tipos laxos (`any`) y alineación total con los tokens semánticos oficiales del Design System Pintuclic (Directiva 8).
+- **Hitos Clave Frontend:**
+  - **Resolución de Error Crítico TS2339:** Type narrowing estricto en el submit reactivo de `PasoDatos.vue` para uniones de esquemas Vee-Validate/Zod (`RegistroNaturalPayload` vs `RegistroEmpresaPayload`).
+  - **Alineación con Design System (Directiva 8):** Purga total de colores hexadecimales arbitrarios (`#E63946`) en `ModalLogin.vue`, `PasoDatos.vue` y `PasoVerificacion.vue`, reemplazados por tokens institucionales (`bg-subaction`, `text-corporate`, `border-action/30`).
+  - **Calidad de Tipos (Zero-Any):** Tipado fuerte de argumentos y retornos en `CuentasService` y en el almacén de Pinia (`useAuthStore`) con la nueva interfaz `UsuarioSesion` sin runtime en `registro.interface.ts`.
+  - **Gestión Segura de Ciclo de Vida:** Prevención de fugas de memoria en `PasoVerificacion.vue` mediante `onUnmounted` con `clearInterval` sobre el cooldown de 60s de reenvío OTP.
+  - **Limpieza de Linter:** Corrección de globals en `eslint.config.js` y remoción de `props` no utilizados en `Boton.vue`.
+  - 🔗 **Walkthrough Técnico M04 Frontend:** [walkthrough_v1.10.1_M04_cuentas_auth_perfil_frontend.md](./walkthroughs/M04/walkthrough_v1.10.1_M04_cuentas_auth_perfil_frontend.md)
+  - 🔗 **Reporte de Revisión Técnica M04 Frontend:** [review_v1.10.0_M04_cuentas_auth_perfil.md](./reviews/frontend/review_v1.10.0_M04_cuentas_auth_perfil.md)
+- **Estado:** ✅ Compilación limpia con `npx vue-tsc -b` (código 0), linter con 0 errores y 0 advertencias (`npm run lint`), y build de producción generado con éxito (`npm run build`).
+
+---
+
 ## [v1.10.0] - 2026-09-07
 ### Módulo: M04 (Cuentas, Autenticación y Perfil - Frontend)
 - **Alcance General:** Integración funcional, estructuración arquitectónica y conexión de la interfaz de usuario (Vue) con la API REST del backend para las funcionalidades de autenticación (Login y Registro B2C/B2B).
@@ -15,20 +30,6 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Identidad Externa (HU-CUE-02):** Preparación del framework e interfaz para Google Identity (`vue3-google-login`), a la espera de credenciales Cloud por parte de DevOps.
   - 🔗 **Walkthrough Técnico M04 Frontend:** [walkthrough_v1.10.0_M04_cuentas_auth_perfil_frontend.md](./walkthroughs/M04/walkthrough_v1.10.0_M04_cuentas_auth_perfil_frontend.md)
 - **Estado:** ✅ Validado con compilación limpia (`npm run build`).
-
----
-
-## [v2.4] - 2026-09-05
-### Base de Datos: Esquema Relacional Oficial v2.4 (36 Tablas) - PostgreSQL + Kysely
-- **Alcance General:** Evolución aditiva y oficial del modelo relacional de base de datos para soportar los requerimientos de datos del módulo **M04 (Cuentas, Autenticación y Perfil)**:
-  - **Múltiples Direcciones (`HU-CUE-07`):** Creación de la tabla `direccion_cliente` (UUID) con soporte de coordenadas, barrio, predeterminada y clave foránea `id_usuario`.
-  - **Trámites Corporativos B2B y Dictamen (`HU-CUE-03 / HU-CUE-09`):** Creación de la tabla `solicitud_empresa` (UUID) con tipos ENUM `enum_tipo_solicitud_empresa` y `enum_estado_solicitud_empresa`, capturando NIT, razón social, representante, correo empresarial, dictamen y motivo de rechazo.
-  - **Actualización Formal de NIT (`RF-CUE-09-07`):** Creación de la tabla `solicitud_actualizacion_nit` (UUID) con soporte de URL de RUT adjunto y trazabilidad por administrador revisor.
-  - **Federación Google Identity OAuth2 (`HU-CUE-02`):** Creación de la tabla `usuario_identidad_externa` con unicidad compuesta `UNIQUE(proveedor, proveedor_usuario_id)`.
-  - **Almacén OTP Efímero con TTL (`HU-CUE-01 / HU-CUE-05`):** Creación de la tabla `codigo_verificacion` (UUID) con ENUM `enum_tipo_codigo_otp`, límite de intentos y fecha de expiración.
-  - **Infraestructura Kysely (`types.ts` & `setup.ts`):** Centralización de contratos tipados Kysely (`Database`, `DireccionClienteTable`, `SolicitudEmpresaTable`, `SolicitudActualizacionNitTable`, `UsuarioIdentidadExternaTable`, `CodigoVerificacionTable`), script de verificación con `npm run db` y mocks en `seed_pintuclic.sql` gestionados con `npm run db:seed`.
-  - 🔗 **Documentación de Base de Datos:** [DOCUMENTACION_BASE_DATOS.md](../bd/docs/DOCUMENTACION_BASE_DATOS.md)
-  - 🔗 **Walkthrough de Migración BD:** [WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md#-versión-24-2026-09-05)
 
 ---
 

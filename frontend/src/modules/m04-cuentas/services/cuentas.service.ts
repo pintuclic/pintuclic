@@ -1,32 +1,38 @@
 import { apiClient } from '@/core/api/axios';
+import type {
+  RegistroNaturalPayload,
+  RegistroEmpresaPayload,
+  RespuestaLogin,
+  RespuestaApi,
+} from '../interfaces/registro.interface';
 
 /**
  * Servicio encargado de la comunicación con los endpoints del módulo de Cuentas (M04).
- * Aísla a los componentes Vue de la lógica de red (Axios).
+ * Aísla a los componentes Vue de la lógica de transporte de red (Axios).
  */
 export const CuentasService = {
-  async login(correo: string, contrasena: string) {
-    const response = await apiClient.post('/cuentas/login', { correo, contrasena });
+  async login(correo: string, contrasena: string): Promise<RespuestaLogin> {
+    const response = await apiClient.post<RespuestaLogin>('/cuentas/login', { correo, contrasena });
     return response.data;
   },
   
-  async registrarParticular(data: any) {
-    const response = await apiClient.post('/cuentas/registro/particular', data);
+  async registrarParticular(data: RegistroNaturalPayload): Promise<RespuestaApi> {
+    const response = await apiClient.post<RespuestaApi>('/cuentas/registro/particular', data);
     return response.data;
   },
   
-  async registrarEmpresa(data: any) {
-    const response = await apiClient.post('/cuentas/registro/empresa', data);
+  async registrarEmpresa(data: RegistroEmpresaPayload): Promise<RespuestaApi> {
+    const response = await apiClient.post<RespuestaApi>('/cuentas/registro/empresa', data);
     return response.data;
   },
 
-  async verificarCodigo(correo: string, codigo: string) {
-    const response = await apiClient.post('/cuentas/verificar-codigo', { correo, codigo });
+  async verificarCodigo(correo: string, codigo: string): Promise<RespuestaApi> {
+    const response = await apiClient.post<RespuestaApi>('/cuentas/verificar-codigo', { correo, codigo });
     return response.data;
   },
 
-  async reenviarCodigo(correo: string) {
-    const response = await apiClient.post('/cuentas/reenviar-codigo', { correo });
+  async reenviarCodigo(correo: string): Promise<RespuestaApi> {
+    const response = await apiClient.post<RespuestaApi>('/cuentas/reenviar-codigo', { correo });
     return response.data;
   }
 };
