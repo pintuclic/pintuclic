@@ -16,6 +16,22 @@ export default tseslint.config(
         sourceType: 'module',
         extraFileExtensions: ['.vue'],
       },
+      globals: {
+        document: 'readonly',
+        window: 'readonly',
+        console: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        Event: 'readonly',
+        KeyboardEvent: 'readonly',
+        HTMLInputElement: 'readonly',
+        HTMLElement: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        fetch: 'readonly',
+      },
     },
     rules: {
       // 🔒 PROHIBICIÓN ESTRICTA DE TIPOS ANY EN FRONTEND (TS y VUE)
