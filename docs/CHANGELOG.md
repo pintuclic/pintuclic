@@ -4,6 +4,20 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v1.10.0] - 2026-09-07
+### Módulo: M04 (Cuentas, Autenticación y Perfil - Frontend)
+- **Alcance General:** Integración funcional, estructuración arquitectónica y conexión de la interfaz de usuario (Vue) con la API REST del backend para las funcionalidades de autenticación (Login y Registro B2C/B2B).
+- **Hitos Clave Frontend (HU-CUE-01 a HU-CUE-03):**
+  - **Refactorización Arquitectónica:** Migración estricta de componentes modales específicos (Login, Stepper) de la carpeta global `core` hacia `modules/m04-cuentas/components/`.
+  - **Single Source of Truth (Zod):** Unificación de reglas de validación en cliente (VeeValidate + Zod) para coincidir 1:1 con las restricciones del backend. Resolución de colisión de contextos de formulario en Vue.
+  - **Estado y Persistencia:** Inyección global de Pinia (`main.ts`) y creación del store de autenticación (`auth.store.ts`) conectado al JWT de localStorage.
+  - **Comunicación HTTP y Manejo de Errores:** Implementación de `cuentas.service.ts` con Axios. Inserción de UI responsiva (Loading States) y renderizado de errores directos desde el servidor.
+  - **Identidad Externa (HU-CUE-02):** Preparación del framework e interfaz para Google Identity (`vue3-google-login`), a la espera de credenciales Cloud por parte de DevOps.
+  - 🔗 **Walkthrough Técnico M04 Frontend:** [walkthrough_v1.10.0_M04_cuentas_auth_perfil_frontend.md](./walkthroughs/M04/walkthrough_v1.10.0_M04_cuentas_auth_perfil_frontend.md)
+- **Estado:** ✅ Validado con compilación limpia (`npm run build`).
+
+---
+
 ## [v2.4] - 2026-09-05
 ### Base de Datos: Esquema Relacional Oficial v2.4 (36 Tablas) - PostgreSQL + Kysely
 - **Alcance General:** Evolución aditiva y oficial del modelo relacional de base de datos para soportar los requerimientos de datos del módulo **M04 (Cuentas, Autenticación y Perfil)**:
