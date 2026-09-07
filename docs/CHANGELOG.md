@@ -4,6 +4,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.1.1] - 2026-09-07
+### Módulo: M04 (Cuentas, Autenticación y Perfil - Registro con Google en Wizard de Creación de Cuenta)
+- **Alcance General:** Incremento **PATCH (v2.1.1)** que extiende la autenticación federada con Google Identity Services (`HU-CUE-02`) directamente al wizard de registro de clientes (`RegistroWizard.vue` / `PasoDatos.vue`), permitiendo a nuevos usuarios registrarse con un solo clic con Google en el tab Natural, ingresar su contraseña de respaldo y avanzar directamente al estado de bienvenida sin requerir verificación por OTP por correo.
+- **Hitos Clave Frontend (HU-CUE-02 / HU-CUE-01):**
+  - **Botón y Flujo de Google en Wizard:** Integración de Google Identity en el tab de cliente particular de `PasoDatos.vue` con separador de diseño `"O con tu correo"`.
+  - **Soporte de Flujos de Negocio:** Manejo nativo de sugerencia de vinculación si el correo ya existe, y captura inmediata de la contraseña de respaldo (`RF-CUE-02-04`).
+  - **Transición Fluida en Wizard:** Conexión del evento `registroGoogleExitoso` en `RegistroWizard.vue` para avanzar directamente al paso 3 (`PasoListo.vue`), conservando la franja de marca y consistencia del Design System (Directiva 8).
+  - 🔗 **Walkthrough Técnico:** [walkthrough_v2.1.1_M04_google_identity_registro_wizard_frontend.md](./walkthroughs/M04/walkthrough_v2.1.1_M04_google_identity_registro_wizard_frontend.md)
+- **Estado:** ✅ Validado con compilación TypeScript limpia (`npx tsc --noEmit` y `vue-tsc -b`), linter en 0 advertencias (`npm run lint`) y build de producción en frontend generado con éxito.
+
+---
+
 ## [v2.1.0] - 2026-09-07
 ### Módulo: M04 (Cuentas, Autenticación y Perfil - Google Identity OAuth2 Fullstack)
 - **Alcance General:** Incremento **MINOR (v2.1.0)** con la implementación e integración de extremo a extremo (E2E) de **Google Identity Services (HU-CUE-02)**. Se conecta la autenticación federada con validación criptográfica en backend (`google-auth-library`), persistencia nativa en PostgreSQL (`usuario_identidad_externa`), y flujo reactivo en frontend con gestión de sugerencia de vinculación y registro de contraseña de respaldo, protegiendo al 100% las credenciales mediante variables de entorno en el host.

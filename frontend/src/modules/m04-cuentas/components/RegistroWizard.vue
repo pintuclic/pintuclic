@@ -4,6 +4,7 @@
       v-if="paso === 1"
       @ir-a-login="$emit('irALogin')"
       @datos-listos="onDatosListos"
+      @registro-google-exitoso="onRegistroGoogleExitoso"
     />
     <PasoVerificacion
       v-else-if="paso === 2"
@@ -63,6 +64,12 @@ function onDatosListos(tipo: TipoCuentaRegistro, correo: string) {
   tipoCuenta.value = tipo;
   correoRegistro.value = correo;
   paso.value = 2;
+}
+
+function onRegistroGoogleExitoso(correo: string) {
+  tipoCuenta.value = 'natural';
+  correoRegistro.value = correo;
+  paso.value = 3;
 }
 
 function onFinalizar() {
