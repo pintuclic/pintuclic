@@ -4,6 +4,19 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.1.3] - 2026-09-07
+### Módulo: M04 (Cuentas, Autenticación y Perfil - DTO Centralizado y Validador DRY de Contraseñas Frontend)
+- **Alcance General:** Incremento **PATCH (v2.1.3)** que unifica y centraliza la validación de contraseñas en el frontend bajo el principio DRY mediante un nuevo módulo de DTOs (`dtos/password.dto.ts`). Aplica idénticas reglas de seguridad y robustez criptográfica (`HU-SEG-01`) tanto en el registro de particulares y empresas (`HU-CUE-01`, `HU-CUE-03`), como en el establecimiento de contraseñas federadas (`HU-CUE-02`) en modales y wizards.
+- **Hitos Clave Frontend (HU-SEG-01 / HU-CUE-01 / HU-CUE-02 / HU-CUE-03):**
+  - **Nuevo Módulo DTO Frontend (`password.dto.ts`):** Definición de `contrasenaSchema`, `contrasenaConConfirmacionSchema`, y funciones utilitarias puras `validarContrasena` y `validarContrasenaConConfirmacion` como única fuente de la verdad para reglas de seguridad de contraseñas.
+  - **Erradicación de Duplicidad (Principio DRY):** Reemplazo de expresiones regulares y bloques repetitivos de comprobación en `ModalLogin.vue` y `PasoDatos.vue` por llamadas atómicas al DTO centralizado.
+  - **Validación Homogénea en Registros Natural y Empresa:** Integración directa de `contrasenaSchema` en los esquemas Zod/Vee-Validate `naturalZod` y `empresaZod` de `PasoDatos.vue`, garantizando que ningún usuario cree una cuenta con una contraseña débil.
+  - **Guía Visual y Usabilidad:** Adición de textos explicativos de asistencia debajo del campo de contraseña en ambos formularios de registro indicando los requisitos de seguridad antes del envío.
+  - 🔗 **Walkthrough Técnico:** [walkthrough_v2.1.3_M04_dto_validador_contrasena_dry_frontend.md](./walkthroughs/M04/walkthrough_v2.1.3_M04_dto_validador_contrasena_dry_frontend.md)
+- **Estado:** ✅ Validado con compilación TypeScript limpia en frontend (`vue-tsc -b`), linter en 0 advertencias (`npm run lint`), build de producción exitoso y backend sin afectaciones.
+
+---
+
 ## [v2.1.2] - 2026-09-07
 ### Módulo: M04 (Cuentas, Autenticación y Perfil - Corrección Validación Contraseña Propia con Google)
 - **Alcance General:** Incremento **PATCH (v2.1.2)** que soluciona el fallo de validación de seguridad al registrarse con Google e intentar establecer la contraseña propia (`RF-CUE-02-04` / `CA-CUE-02-04`), corrigiendo la exigencia innecesaria de un `tokenTemporal` en el DTO de backend y sincronizando las reglas de complejidad de contraseña (`HU-SEG-01`) y detalle de mensajes de error en los componentes frontend.

@@ -58,7 +58,10 @@
         <Entrada name="nombre" label="Nombre completo" placeholder="Ej. Juan Pérez" />
         <Entrada name="correo" label="Correo electrónico" type="email" placeholder="correo@ejemplo.com" :icon="MailIcon" />
         <Entrada name="telefono" label="Teléfono (WhatsApp)" placeholder="300 000 0000" :icon="PhoneIcon" />
-        <Entrada name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
+        <div class="flex flex-col gap-1">
+          <Entrada name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
+          <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
+        </div>
 
         <div class="flex items-start gap-2 mt-1">
           <input type="checkbox" id="termsNatural" class="mt-1 rounded border-neutral-light text-corporate focus:ring-corporate" required />
@@ -85,7 +88,10 @@
       <Entrada name="correo_empresarial" label="Correo corporativo" type="email" placeholder="contacto@empresa.com" :icon="MailIcon" />
       <Entrada name="telefono" label="Teléfono (WhatsApp)" placeholder="300 000 0000" :icon="PhoneIcon" />
       <Entrada name="nit" label="NIT" placeholder="900.000.000-1" />
-      <Entrada name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
+      <div class="flex flex-col gap-1">
+        <Entrada name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
+        <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
+      </div>
 
       <div class="flex items-start gap-2 mt-1">
         <input type="checkbox" id="termsEmpresa" class="mt-1 rounded border-neutral-light text-corporate focus:ring-corporate" required />
@@ -206,6 +212,7 @@ import type {
   RegistroEmpresaPayload,
 } from '../interfaces/registro.interface';
 import { useCuentas } from '../composables/useCuentas';
+import { contrasenaSchema, validarContrasenaConConfirmacion } from '../dtos/password.dto';
 
 const emit = defineEmits<{
   irALogin: [];
@@ -251,15 +258,6 @@ const {
   limpiarErrores,
 } = useCuentas();
 
-// Regla de contraseña simétrica con el backend
-const passwordRule = z
-  .string({ required_error: 'La contraseña es obligatoria' })
-  .min(8, 'La contraseña debe tener al menos 8 caracteres')
-  .max(128, 'La contraseña no puede superar los 128 caracteres')
-  .regex(/[a-z]/, 'Debe incluir al menos una minúscula')
-  .regex(/[A-Z]/, 'Debe incluir al menos una mayúscula')
-  .regex(/[0-9]/, 'Debe incluir al menos un número');
-
 const telefonoRule = z
   .string({ required_error: 'El teléfono es obligatorio' })
   .trim()
@@ -267,12 +265,12 @@ const telefonoRule = z
   .max(20, 'El teléfono no puede exceder 20 caracteres')
   .regex(/^[0-9+\s\-()]+$/, 'El formato de teléfono es inválido');
 
-// Validaciones alineadas 1:1 con backend
+// Validaciones alineadas 1:1 con backend mediante contrasenaSchema centralizado (DRY)
 const naturalZod = z.object({
   nombre: z.string({ required_error: 'El nombre es obligatorio' }).trim().min(2, 'El nombre debe tener al menos 2 caracteres').max(150, 'Máximo 150 caracteres'),
   correo: z.string({ required_error: 'El correo es obligatorio' }).trim().email('Correo electrónico inválido').max(150, 'Máximo 150 caracteres'),
   telefono: telefonoRule,
-  contrasena: passwordRule,
+  contrasena: contrasenaSchema,
 });
 
 const empresaZod = z.object({
@@ -282,7 +280,7 @@ const empresaZod = z.object({
   telefono: telefonoRule,
   nit: z.string({ required_error: 'El NIT es obligatorio' }).trim().min(5, 'El NIT o RUT debe tener al menos 5 caracteres').max(30, 'Máximo 30 caracteres')
     .regex(/^[0-9\-kK]+$/, 'El NIT debe contener dígitos y guion de verificación'),
-  contrasena: passwordRule,
+  contrasena: contrasenaSchema,
 });
 
 const currentSchema = computed(() => {
@@ -441,30 +439,12 @@ const cancelarVinculacion = () => {
 };
 
 const guardarPasswordInicial = async () => {
-  errorPasswordLocal.value = null;
+  errorPasswordLocal.value = validarContrasenaConConfirmacion(
+    nuevaPassword.value,
+    confirmarPassword.value
+  );
 
-  if (!nuevaPassword.value || nuevaPassword.value.length < 8) {
-    errorPasswordLocal.value = 'La contraseña debe tener al menos 8 caracteres.';
-    return;
-  }
-
-  if (!/[a-z]/.test(nuevaPassword.value)) {
-    errorPasswordLocal.value = 'La contraseña debe incluir al menos una letra minúscula.';
-    return;
-  }
-
-  if (!/[A-Z]/.test(nuevaPassword.value)) {
-    errorPasswordLocal.value = 'La contraseña debe incluir al menos una letra mayúscula.';
-    return;
-  }
-
-  if (!/[0-9]/.test(nuevaPassword.value)) {
-    errorPasswordLocal.value = 'La contraseña debe incluir al menos un número.';
-    return;
-  }
-
-  if (nuevaPassword.value !== confirmarPassword.value) {
-    errorPasswordLocal.value = 'Las contraseñas no coinciden.';
+  if (errorPasswordLocal.value) {
     return;
   }
 
