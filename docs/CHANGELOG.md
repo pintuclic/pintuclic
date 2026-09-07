@@ -4,6 +4,19 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.0.0] - 2026-09-07
+### Módulo: M04 (Cuentas, Autenticación y Perfil - Integración Fullstack E2E)
+- **Alcance General:** Salto a versión **MAJOR (v2.0.0)** con la primera integración simétrica y desacoplada de extremo a extremo (E2E) entre el backend (Express + Kysely) y frontend (Vue 3 + Pinia + Composables), resolviendo el contrato de datos del Universal API Envelope y orquestando el manejo reactivo de errores y estados de carga.
+- **Hitos Clave Fullstack (HU-CUE-01, HU-CUE-03, HU-CUE-04):**
+  - **Universal API Envelope (`ApiResponse<T>` y `ApiErrorResponse`):** Estandarización de contratos de respuesta HTTP alineando el cliente de frontend para interpretar respuestas con `success: true` / `data` y capturar errores estructurados (`error.code`, `error.message`, `error.details`).
+  - **Capa de Composables Reactivos (`useCuentas`):** Desacoplamiento de la lógica de red y estado (`cargando`, `errorMensaje`, `codigoError`, `erroresValidacion`) fuera de los componentes Vue (`ModalLogin.vue`, `PasoDatos.vue`, `PasoVerificacion.vue`).
+  - **Sincronización de Sesión Segura (M20):** Actualización de `auth.store.ts` para persistir `accessToken`, `idSesion` y el usuario sanitizado sin exposición de datos sensibles.
+  - **Limpieza de Tipos (Zero Any):** Interfaces TypeScript de integración pura en `registro.interface.ts` con 0 bytes de runtime y 100% simétricas con los DTOs de backend.
+  - 🔗 **Walkthrough Técnico M04 Fullstack:** [walkthrough_v2.0.0_M04_integracion_fullstack.md](./walkthroughs/M04/walkthrough_v2.0.0_M04_integracion_fullstack.md)
+- **Estado:** ✅ Validado con compilación limpia en backend (`npx tsc --noEmit`), linter backend en 0 advertencias (`npm run lint`) y build de producción en frontend (`vue-tsc -b && vite build`) con 0 errores.
+
+---
+
 ## [v1.10.1] - 2026-09-07
 ### Módulo: M04 (Cuentas, Autenticación y Perfil - Frontend Tech Lead Fixes)
 - **Alcance General:** Subsanación técnica integral de la capa frontend de M04 tras auditoría de Tech Lead, alcanzando 100% de cumplimiento en compilación TypeScript limpia (`vue-tsc`), linter en cero errores/advertencias (`npm run lint`), erradicación absoluta de tipos laxos (`any`) y alineación total con los tokens semánticos oficiales del Design System Pintuclic (Directiva 8).

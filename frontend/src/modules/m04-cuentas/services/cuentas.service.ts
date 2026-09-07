@@ -2,37 +2,90 @@ import { apiClient } from '@/core/api/axios';
 import type {
   RegistroNaturalPayload,
   RegistroEmpresaPayload,
-  RespuestaLogin,
-  RespuestaApi,
+  VerificarCodigoPayload,
+  ReenviarCodigoPayload,
+  LoginPayload,
+  ApiResponse,
+  ResultadoLogin,
+  ResultadoRegistroParticular,
+  ResultadoRegistroEmpresa,
+  ResultadoVerificacion,
+  ResultadoReenvio,
 } from '../interfaces/registro.interface';
 
 /**
- * Servicio encargado de la comunicación con los endpoints del módulo de Cuentas (M04).
- * Aísla a los componentes Vue de la lógica de transporte de red (Axios).
+ * ==============================================================================
+ * M04 - SERVICIO HTTP CLIENTE (CUENTAS Y AUTENTICACIÓN)
+ * Conexión tipada con los endpoints de Express Kysely.
+ * Desempaqueta y tipa las respuestas mediante ApiResponse<T>.
+ * ==============================================================================
  */
 export const CuentasService = {
-  async login(correo: string, contrasena: string): Promise<RespuestaLogin> {
-    const response = await apiClient.post<RespuestaLogin>('/cuentas/login', { correo, contrasena });
-    return response.data;
-  },
-  
-  async registrarParticular(data: RegistroNaturalPayload): Promise<RespuestaApi> {
-    const response = await apiClient.post<RespuestaApi>('/cuentas/registro/particular', data);
-    return response.data;
-  },
-  
-  async registrarEmpresa(data: RegistroEmpresaPayload): Promise<RespuestaApi> {
-    const response = await apiClient.post<RespuestaApi>('/cuentas/registro/empresa', data);
-    return response.data;
+  /**
+   * POST /api/cuentas/login (HU-CUE-04)
+   */
+  async login(payload: LoginPayload): Promise<ApiResponse<ResultadoLogin>> {
+    const { data } = await apiClient.post<ApiResponse<ResultadoLogin>>('/cuentas/login', payload);
+    return data;
   },
 
-  async verificarCodigo(correo: string, codigo: string): Promise<RespuestaApi> {
-    const response = await apiClient.post<RespuestaApi>('/cuentas/verificar-codigo', { correo, codigo });
-    return response.data;
+  /**
+   * POST /api/cuentas/registro/particular (HU-CUE-01)
+   */
+  async registrarParticular(
+    payload: RegistroNaturalPayload
+  ): Promise<ApiResponse<ResultadoRegistroParticular>> {
+    const { data } = await apiClient.post<ApiResponse<ResultadoRegistroParticular>>(
+      '/cuentas/registro/particular',
+      payload
+    );
+    return data;
   },
 
-  async reenviarCodigo(correo: string): Promise<RespuestaApi> {
-    const response = await apiClient.post<RespuestaApi>('/cuentas/reenviar-codigo', { correo });
-    return response.data;
-  }
+  /**
+   * POST /api/cuentas/registro/empresa (HU-CUE-03)
+   */
+  async registrarEmpresa(
+    payload: RegistroEmpresaPayload
+  ): Promise<ApiResponse<ResultadoRegistroEmpresa>> {
+    const { data } = await apiClient.post<ApiResponse<ResultadoRegistroEmpresa>>(
+      '/cuentas/registro/empresa',
+      payload
+    );
+    return data;
+  },
+
+  /**
+   * POST /api/cuentas/verificar-codigo (HU-CUE-01 / CA-CUE-01-02)
+   */
+  async verificarCodigo(
+    payload: VerificarCodigoPayload
+  ): Promise<ApiResponse<ResultadoVerificacion>> {
+    const { data } = await apiClient.post<ApiResponse<ResultadoVerificacion>>(
+      '/cuentas/verificar-codigo',
+      payload
+    );
+    return data;
+  },
+
+  /**
+   * POST /api/cuentas/reenviar-codigo (HU-CUE-01 / RF-CUE-01-04)
+   */
+  async reenviarCodigo(
+    payload: ReenviarCodigoPayload
+  ): Promise<ApiResponse<ResultadoReenvio>> {
+    const { data } = await apiClient.post<ApiResponse<ResultadoReenvio>>(
+      '/cuentas/reenviar-codigo',
+      payload
+    );
+    return data;
+  },
+
+  /**
+   * POST /api/cuentas/logout (HU-CUE-04)
+   */
+  async logout(): Promise<ApiResponse<{ mensaje: string }>> {
+    const { data } = await apiClient.post<ApiResponse<{ mensaje: string }>>('/cuentas/logout');
+    return data;
+  },
 };
