@@ -15,6 +15,7 @@ frontend/
  │    ├── core/              # 🌍 ZONA GLOBAL (Transversal y compartida)
  │    │    ├── api/          # Instancia global de Axios configurada (baseURL, interceptores JWT)
  │    │    ├── components/   # UI Design System base reutilizable con Tailwind (Botones, Modales, Inputs, Badges)
+ │    │    ├── dtos/         # 🛡️ DTOs Globales: Esquemas Zod y validadores transversales (seguridad, contraseñas, etc.)
  │    │    ├── theme/        # 🎨 Paleta de colores oficial, tokens y guía de diseño (colors.ts, GUIA_COLORES.md)
  │    │    ├── router/       # Enrutador principal de Vue e integración de rutas por módulo
  │    │    └── utils/        # Funciones utilitarias globales (formateo de moneda COP, fechas, etc.)
@@ -25,7 +26,8 @@ frontend/
  │    │    │    ├── views/   # Páginas orquestadoras (ej. ProductGalleryView.vue)
  │    │    │    ├── services/# Peticiones HTTP exclusivas del módulo (.ts)
  │    │    │    ├── store/   # Estado local con Pinia (ej. filtros seleccionados activos)
- │    │    │    ├── interfaces/# Modelos y contratos TypeScript del módulo
+ │    │    │    ├── dtos/    # 📋 DTOs Locales: Esquemas Zod de validación de formularios y payloads del módulo
+ │    │    │    ├── interfaces/# Modelos y contratos TypeScript del módulo (0 runtime)
  │    │    │    └── productos.routes.ts # Definición de rutas hijas del módulo
  │    │    │
  │    │    └── m07-carrito/  # Ej: Módulo M07 Carrito de Compras (Gestión de orden con Pinia)
@@ -159,8 +161,45 @@ Cualquier agente de IA o desarrollador que construya código para el frontend de
 
 ---
 
-## 5. Convención de Módulos y Aislamiento
+## 5. Gestión de DTOs y Validación de Formularios (Globales vs Locales - Principio DRY)
+
+Para garantizar la coherencia de datos, prevenir inconsistencias entre capas y erradicar la duplicación de código de validación, el frontend de Pintuclic implementa una arquitectura estructurada de **DTOs (Data Transfer Objects) con Zod y Vee-Validate**.
+
+### 5.1. Distinción Estricta entre `interfaces/` y `dtos/`
+
+| Característica | `interfaces/` | `dtos/` |
+| :--- | :--- | :--- |
+| **Naturaleza** | Tipado estático puro en tiempo de compilación. | Esquemas ejecutables en tiempo de ejecución (Runtime). |
+| **Tecnología** | TypeScript nativo (`interface`, `type`). | **Zod** (`z.object`, `z.string`, `z.infer`, etc.). |
+| **Impacto en Bundle** | **0 bytes** (desaparece al compilar a JavaScript). | Código ejecutable que evalúa datos y genera errores. |
+| **Responsabilidad** | Contratos de comunicación API, tipos de stores y props. | Validación de formularios en UI y payloads antes de enviar a Axios. |
+| **Restricción** | **CERO runtime, CERO imports de librerías de validación.** | **Fuente única de la verdad para reglas de validación.** |
+
+### 5.2. Clasificación de DTOs: Globales vs. Locales
+
+#### A. DTOs Globales (`src/core/dtos/`)
+Residen en la raíz compartida del cliente y encapsulan esquemas y validadores asociados a **políticas transversales** o formatos comunes requeridos por dos o más módulos:
+- **Seguridad y Contraseñas (M20 / `HU-SEG-01`):** `contrasenaSchema`, `contrasenaConConfirmacionSchema`, `validarContrasena`, `validarContrasenaConConfirmacion`.
+- **Campos Estándar de Contacto:** `correoSchema`, `telefonoSchema` (formato Colombia / WhatsApp).
+- **Paginación y Filtros Universales:** Esquemas de ordenamiento, límites y cursores.
+
+#### B. DTOs Locales de Módulo (`src/modules/m[xx]-[nombre]/dtos/`)
+Residen exclusivamente dentro de la carpeta del módulo respectivo y definen los esquemas de validación propios del dominio:
+- En `m04-cuentas/dtos/`: `registro.dto.ts` (`registroNaturalSchema`, `registroEmpresaSchema`), `login.dto.ts` (`loginSchema`), etc.
+- En `m02-productos/dtos/`: `filtro-catalogo.dto.ts`, etc.
+- **Regla de Composición DRY:** Los DTOs locales componen y reutilizan los esquemas de `src/core/dtos/` (por ejemplo, `registroNaturalSchema` usa `contrasenaSchema` y `correoSchema` de `@/core/dtos`).
+
+### 5.3. Prohibición Absoluta de DTOs Inline en Vistas y Componentes (`.vue`)
+
+> ⛔ **DIRECTIVA OBLIGATORIA (TOLERANCIA CERO):**  
+> Queda terminantemente PROHIBIDO para cualquier desarrollador o Agente de IA declarar esquemas Zod inline (`z.object({...})`), reglas complejas de validación o expresiones regulares sueltas dentro de componentes o vistas Vue (`.vue`).  
+> **Todo esquema de formulario DEBE residir en su archivo `.dto.ts` correspondiente dentro de `dtos/` e importarse en el componente mediante `toTypedSchema(miSchemaDto)`.**
+
+---
+
+## 6. Convención de Módulos y Aislamiento
 
 1. Cada módulo debe ubicarse en `src/modules/m[xx]-[nombre-modulo]` respetando la nomenclatura estándar (`m20-seguridad`, `m04-cuentas`, `m02-productos`, `m07-carrito`).
 2. Los componentes propios de una funcionalidad de negocio viven dentro de la carpeta `components/` de ese módulo.
 3. El módulo nunca debe modificar la configuración global de Tailwind ni tocar archivos pertenecientes a otros módulos.
+4. Todo formulario o acción que reciba entradas de usuario debe validar contra un DTO tipado antes de delegar en el servicio HTTP o composable.

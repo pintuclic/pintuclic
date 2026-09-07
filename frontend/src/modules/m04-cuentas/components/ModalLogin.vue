@@ -157,9 +157,8 @@
 import { ref, watch, nextTick } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
-import * as z from 'zod';
 import { useCuentas } from '../composables/useCuentas';
-import { validarContrasenaConConfirmacion } from '../dtos/password.dto';
+import { loginSchema, validarContrasenaConConfirmacion } from '../dtos';
 import { Mail as MailIcon, Lock as LockIcon, ShieldCheck } from 'lucide-vue-next';
 import ModalBase from '@/core/components/ModalBase.vue';
 import EncabezadoModal from './EncabezadoModal.vue';
@@ -222,12 +221,7 @@ function cerrarModal(valor: boolean): void {
   }
 }
 
-const schema = toTypedSchema(
-  z.object({
-    correo: z.string().min(1, 'El correo es obligatorio').email('Correo electrónico inválido'),
-    contrasena: z.string().min(1, 'La contraseña es obligatoria')
-  })
-);
+const schema = toTypedSchema(loginSchema);
 
 const { handleSubmit } = useForm({
   validationSchema: schema,

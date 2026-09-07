@@ -200,7 +200,6 @@
 import { ref, computed, watch, nextTick } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
-import * as z from 'zod';
 import { Mail as MailIcon, Lock as LockIcon, Phone as PhoneIcon, ShieldCheck } from 'lucide-vue-next';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
@@ -212,7 +211,11 @@ import type {
   RegistroEmpresaPayload,
 } from '../interfaces/registro.interface';
 import { useCuentas } from '../composables/useCuentas';
-import { contrasenaSchema, validarContrasenaConConfirmacion } from '../dtos/password.dto';
+import {
+  registroNaturalSchema,
+  registroEmpresaSchema,
+  validarContrasenaConConfirmacion,
+} from '../dtos';
 
 const emit = defineEmits<{
   irALogin: [];
@@ -258,33 +261,8 @@ const {
   limpiarErrores,
 } = useCuentas();
 
-const telefonoRule = z
-  .string({ required_error: 'El teléfono es obligatorio' })
-  .trim()
-  .min(7, 'El teléfono debe tener al menos 7 dígitos')
-  .max(20, 'El teléfono no puede exceder 20 caracteres')
-  .regex(/^[0-9+\s\-()]+$/, 'El formato de teléfono es inválido');
-
-// Validaciones alineadas 1:1 con backend mediante contrasenaSchema centralizado (DRY)
-const naturalZod = z.object({
-  nombre: z.string({ required_error: 'El nombre es obligatorio' }).trim().min(2, 'El nombre debe tener al menos 2 caracteres').max(150, 'Máximo 150 caracteres'),
-  correo: z.string({ required_error: 'El correo es obligatorio' }).trim().email('Correo electrónico inválido').max(150, 'Máximo 150 caracteres'),
-  telefono: telefonoRule,
-  contrasena: contrasenaSchema,
-});
-
-const empresaZod = z.object({
-  nombre_empresa: z.string({ required_error: 'El nombre de empresa es obligatorio' }).trim().min(2, 'Debe tener al menos 2 caracteres').max(150, 'Máximo 150 caracteres'),
-  nombre_representante: z.string({ required_error: 'El representante es obligatorio' }).trim().min(2, 'Debe tener al menos 2 caracteres').max(150, 'Máximo 150 caracteres'),
-  correo_empresarial: z.string({ required_error: 'El correo es obligatorio' }).trim().email('Correo electrónico inválido').max(150, 'Máximo 150 caracteres'),
-  telefono: telefonoRule,
-  nit: z.string({ required_error: 'El NIT es obligatorio' }).trim().min(5, 'El NIT o RUT debe tener al menos 5 caracteres').max(30, 'Máximo 30 caracteres')
-    .regex(/^[0-9\-kK]+$/, 'El NIT debe contener dígitos y guion de verificación'),
-  contrasena: contrasenaSchema,
-});
-
 const currentSchema = computed(() => {
-  return toTypedSchema(activeTab.value === 'natural' ? naturalZod : empresaZod);
+  return toTypedSchema(activeTab.value === 'natural' ? registroNaturalSchema : registroEmpresaSchema);
 });
 
 // useForm unificado
