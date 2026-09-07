@@ -71,6 +71,25 @@ Esta versión subsana de raíz todas las observaciones de la auditoría técnica
 - **M02 Catálogo (`VistaInicio.vue`):** Habilita el inicio de sesión y registro de compradores directamente desde el header y acciones de compra.
 - **M07 Carrito:** Provee el estado reactivo de usuario (`useAuthStore`) para determinar tarifas especiales y checkout.
 
+### C. Dependencias y Librerías de Software Instaladas (NPM)
+Para el desarrollo y operación de la interfaz de usuario de M04, se consolidaron las siguientes dependencias oficiales en `frontend/package.json`:
+
+| Paquete NPM | Versión | Tipo | Propósito en el Módulo M04 |
+| :--- | :---: | :---: | :--- |
+| **`vee-validate`** | `^4.15.1` | `dependencies` | Orquestación declarativa de formularios reactivos multi-paso (`useForm`, submit reactivo). |
+| **`@vee-validate/zod`** | `^4.15.1` | `dependencies` | Adaptador para vincular validaciones Zod con Vee-Validate (`toTypedSchema`). |
+| **`zod`** | `^3.25.76` | `dependencies` | Esquemas estrictos de validación en cliente (contraseñas, formato de correo, NIT) simétricos a los DTOs de backend. |
+| **`pinia`** | `^4.0.3` | `dependencies` | Gestión de estado reactivo y persistencia de credenciales / sesión del usuario (`auth.store.ts`). |
+| **`axios`** | `^1.19.0` | `dependencies` | Cliente HTTP con interceptores JWT Bearer automáticos y tipado de respuestas (`apiClient`). |
+| **`vue3-google-login`** | `^2.1.4` | `dependencies` | SDK e infraestructura OAuth2 para federación con Google Identity (`HU-CUE-02`). |
+| **`lucide-vue-next`** | `^1.0.0` | `dependencies` | Iconografía SVG para campos de texto y estados de éxito (`Mail`, `Lock`, `Phone`, `Check`). |
+
+*Comando de instalación:*
+```bash
+npm install vee-validate @vee-validate/zod zod pinia axios vue3-google-login lucide-vue-next
+```
+
+
 ---
 
 ## 6. ARCHIVOS CREADOS Y MODIFICADOS

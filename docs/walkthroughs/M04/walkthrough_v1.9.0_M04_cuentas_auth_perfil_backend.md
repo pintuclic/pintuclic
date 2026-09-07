@@ -98,6 +98,17 @@ Esta versión entrega la totalidad de la capa lógica y de datos del módulo **M
 - **Módulo M05/M07/M08 (Carrito, Checkout y Órdenes):** Permite a los clientes autenticados recuperar sus direcciones de despacho guardadas (`HU-CUE-07`) para asociarlas directamente al checkout inmutable.
 - **Módulo M02 (Catálogo):** Permite identificar clientes corporativos aprobados (rol `empresa_vip`) para aplicarles automáticamente las políticas de descuento mayorista.
 
+### C. Dependencias y Librerías de Software Backend (Stack Kysely / Express)
+El backend de M04 se apoya en las siguientes librerías del entorno Node.js/TypeScript:
+
+| Paquete NPM | Propósito en el Módulo M04 |
+| :--- | :--- |
+| **`kysely`** | Query builder con tipado estricto en PostgreSQL para consultas sobre `usuario`, `direccion_cliente`, `solicitud_empresa`, etc. |
+| **`zod`** | Validación estricta en runtime de todos los DTOs de entrada (`req.body`, `req.params`, `req.query`). |
+| **`bcrypt`** | Delegado a través de M20 para hashing y comparación en tiempo constante (factor de coste 12). |
+| **`jsonwebtoken`** | Emisión y validación de tokens JWT con claim `sid` vinculado a sesiones activas. |
+| **`nodemailer`** | Despacho SMTP desacoplado a través del bus de eventos de M18. |
+
 ---
 
 ## 6. REGISTRO DE ARCHIVOS CREADOS Y MODIFICADOS
