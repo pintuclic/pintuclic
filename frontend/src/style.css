@@ -1,33 +1,63 @@
 @import "tailwindcss";
-@config "../tailwind.config.ts";
 
 @theme {
+  /* Colors based on GUIA_COLORES.md */
   --color-corporate: #002855;
   --color-corporate-dark: #002855;
+  
   --color-action: #0877E8;
   --color-action-hover: #0661BF;
+  
   --color-subaction: #DAEEFC;
+  
   --color-conversion: #41BF5A;
   --color-conversion-hover: #1B6D24;
   --color-conversion-accent: #3CB148;
+  
   --color-highlight: #FFC107;
+  
   --color-neutral-white: #FFFFFF;
   --color-neutral-lightest: #F7F8FA;
   --color-neutral-light: #E5E7EB;
   --color-neutral-medium: #6B7280;
   --color-neutral-dark: #374151;
   --color-neutral-black: #111827;
+
+  /* Typography */
+  --font-poppins: 'Poppins', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+
+  /*
+   * Radios de borde oficiales (Guía UI, sección 2.5).
+   * Un solo valor por elemento, elegido dentro del rango permitido,
+   * para que todo el equipo use el mismo número en vez de adivinar
+   * un punto distinto del rango cada vez.
+   */
+  --radius-input: 6px;    /* rango oficial: 4–6px */
+  --radius-button: 6px;   /* rango oficial: 5–7px */
+  --radius-card: 8px;     /* rango oficial: 6–10px */
+  --radius-modal: 16px;   /* rango oficial: 12–16px */
 }
 
-/* Directivas y configuraciones base para Pintuclic */
 @layer base {
-  html,
   body {
-    margin: 0;
-    padding: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    color: var(--color-neutral-dark);
+    font-family: var(--font-inter);
     background-color: var(--color-neutral-lightest);
-    min-height: 100vh;
+    color: var(--color-neutral-dark);
+  }
+
+  /*
+   * Poppins para títulos y elementos de jerarquía (Guía UI, sección 2.2).
+   * H1: Bold (precios actuales y títulos H1).
+   * H2: SemiBold (nombres de producto, títulos de filtro, títulos de modal).
+   */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-poppins);
+  }
+  h1 {
+    font-weight: 700;
+  }
+  h2, h3, h4, h5, h6 {
+    font-weight: 600;
   }
 }
