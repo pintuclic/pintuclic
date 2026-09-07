@@ -159,6 +159,7 @@ import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import * as z from 'zod';
 import { useCuentas } from '../composables/useCuentas';
+import { validarContrasenaConConfirmacion } from '../dtos/password.dto';
 import { Mail as MailIcon, Lock as LockIcon, ShieldCheck } from 'lucide-vue-next';
 import ModalBase from '@/core/components/ModalBase.vue';
 import EncabezadoModal from './EncabezadoModal.vue';
@@ -371,30 +372,12 @@ const cancelarVinculacion = () => {
  * Registro de contraseña inicial tras alta con Google (HU-CUE-02 / RF-CUE-02-04)
  */
 const guardarPasswordInicial = async () => {
-  errorPasswordLocal.value = null;
+  errorPasswordLocal.value = validarContrasenaConConfirmacion(
+    nuevaPassword.value,
+    confirmarPassword.value
+  );
 
-  if (!nuevaPassword.value || nuevaPassword.value.length < 8) {
-    errorPasswordLocal.value = 'La contraseña debe tener al menos 8 caracteres.';
-    return;
-  }
-
-  if (!/[a-z]/.test(nuevaPassword.value)) {
-    errorPasswordLocal.value = 'La contraseña debe incluir al menos una letra minúscula.';
-    return;
-  }
-
-  if (!/[A-Z]/.test(nuevaPassword.value)) {
-    errorPasswordLocal.value = 'La contraseña debe incluir al menos una letra mayúscula.';
-    return;
-  }
-
-  if (!/[0-9]/.test(nuevaPassword.value)) {
-    errorPasswordLocal.value = 'La contraseña debe incluir al menos un número.';
-    return;
-  }
-
-  if (nuevaPassword.value !== confirmarPassword.value) {
-    errorPasswordLocal.value = 'Las contraseñas no coinciden.';
+  if (errorPasswordLocal.value) {
     return;
   }
 
