@@ -4,6 +4,19 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.1.2] - 2026-09-07
+### Módulo: M04 (Cuentas, Autenticación y Perfil - Corrección Validación Contraseña Propia con Google)
+- **Alcance General:** Incremento **PATCH (v2.1.2)** que soluciona el fallo de validación de seguridad al registrarse con Google e intentar establecer la contraseña propia (`RF-CUE-02-04` / `CA-CUE-02-04`), corrigiendo la exigencia innecesaria de un `tokenTemporal` en el DTO de backend y sincronizando las reglas de complejidad de contraseña (`HU-SEG-01`) y detalle de mensajes de error en los componentes frontend.
+- **Hitos Clave Fullstack (HU-CUE-02 / HU-SEG-01):**
+  - **Backend DTO Desacoplado:** Marcado de `tokenTemporal` como opcional (`z.string().optional()`) en `completarPasswordGoogleSchema` de `login.dto.ts`, evitando rechazos 400 Bad Request en peticiones estándar `{ correo, contrasena }`.
+  - **Frontend Validación Pre-Envío:** Implementación de validaciones explícitas de robustez (`/[a-z]/`, `/[A-Z]/`, `/[0-9]/`, longitud mínima de 8) en `guardarPasswordInicial` tanto en `ModalLogin.vue` como en `PasoDatos.vue`.
+  - **Claridad de Requisitos y Textos de Ayuda:** Actualización de placeholders y textos de ayuda en pantalla informando al usuario la necesidad de mayúsculas, minúsculas y números antes de someter el formulario.
+  - **Propagación Precisa de Errores de Validación:** Mejora en el parser reactivo `procesarErrorApi` de `useCuentas.ts` para extraer y proyectar directamente el mensaje específico reportado por el backend en `error.details`.
+  - 🔗 **Walkthrough Técnico:** [walkthrough_v2.1.2_M04_fix_password_google_validation.md](./walkthroughs/M04/walkthrough_v2.1.2_M04_fix_password_google_validation.md)
+- **Estado:** ✅ Validado con compilación TypeScript limpia en backend (`npx tsc --noEmit`) y frontend (`vue-tsc -b`), linter en 0 advertencias (`npm run lint`) en ambos entornos y build de producción generado con éxito.
+
+---
+
 ## [v2.1.1] - 2026-09-07
 ### Módulo: M04 (Cuentas, Autenticación y Perfil - Registro con Google en Wizard de Creación de Cuenta)
 - **Alcance General:** Incremento **PATCH (v2.1.1)** que extiende la autenticación federada con Google Identity Services (`HU-CUE-02`) directamente al wizard de registro de clientes (`RegistroWizard.vue` / `PasoDatos.vue`), permitiendo a nuevos usuarios registrarse con un solo clic con Google en el tab Natural, ingresar su contraseña de respaldo y avanzar directamente al estado de bienvenida sin requerir verificación por OTP por correo.
