@@ -42,24 +42,41 @@ graph LR
 
 ---
 
-## 3. Registro Central: `CHANGELOG.md`
+## 3. Registro Central: `CHANGELOG.md` (Principio DRY y Regla de Punteros)
 
-Todo incremento debe registrarse cronológicamente en la raíz del proyecto (`CHANGELOG.md`) siguiendo el formato:
+El archivo central `docs/CHANGELOG.md` es el **resumen ejecutivo de producto** para toda la organización (gerencia, tech leads, frontend, backend y QA).
+
+> 🚫 **PROHIBICIÓN DE DUPLICACIÓN (PRINCIPIO DRY):**  
+> Queda terminantemente **prohibido transcribir DDL SQL, tablas completas, esquemas extensos o código duplicado** en `CHANGELOG.md`.  
+> La **fuente única de la verdad técnica** es el **Walkthrough de Implementación**. El Changelog debe actuar como un **puntero de alto nivel**:
+> 1. Resumir en 2 a 4 líneas el alcance funcional y módulos afectados.
+> 2. Listar únicamente los hitos clave o cambios breaking.
+> 3. Incluir obligatoriamente el **enlace directo (puntero)** hacia el Walkthrough técnico detallado (`docs/walkthroughs/M[XX]/...` o `bd/docs/WALKTHROUGH_DATABASE.md`).
+
+### Formato Estándar Oficial:
 
 ```markdown
-## [v1.1.0] - 2026-09-01
-### Módulo: M04 Cuentas, Autenticación y Perfil
-- **Historias de Usuario:** HU-CUE-01 (Registro con confirmación de correo).
-- **Añadido:** Endpoint `POST /api/v1/auth/register` con validación Zod y hash BCrypt.
-- **Seguridad:** Cumplimiento de `HU-SEG-01` (Salt 12) y `HU-SEG-06` (No retorno de hash).
-- **Walkthrough:** `walkthroughs/M04/walkthrough_v1.1.0_HU-CUE-01.md`
+## [vX.Y.Z] - AAAA-MM-DD
+### Módulo: M[XX] [Nombre del Módulo]
+- **Alcance:** Resumen conciso de 1 a 2 líneas de la funcionalidad entregada o corregida.
+- **Hitos Clave:** Breve lista de 2 a 3 puntos principales (endpoints nuevos, tablas clave o políticas).
+- **Estado de Calidad:** Resultado de `tsc --noEmit`, linters y pruebas.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M[XX]/walkthrough_vX.Y.Z.md](./walkthroughs/M[XX]/walkthrough_vX.Y.Z.md)
 ```
 
 ---
 
-## 4. Estructura Obligatoria del Walkthrough de Implementación
+## 4. Estructura y Nomenclatura Obligatoria del Walkthrough de Implementación
 
-Cada implementación debe acompañarse de un archivo de Walkthrough detallado guardado en `walkthroughs/M[XX]/walkthrough_v[X.X.X]_[descripcion].md` (o documentado formalmente en el reporte de entrega).
+Cada implementación debe acompañarse de un archivo de Walkthrough detallado guardado en:
+`docs/walkthroughs/M[XX]/walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_[backend|frontend].md`
+
+> 🏷️ **SUFIJO OBLIGATORIO DE CAPA (`_backend` o `_frontend`):**  
+> Para evitar colisiones, sobreescrituras y ambigüedades cuando frontend y backend se desarrollan de forma desacoplada dentro del mismo módulo funcional, el nombre de CADA archivo de Walkthrough **DEBE terminar obligatoriamente con el sufijo de su capa técnica al final del nombre**:
+> - **Entregas de Backend:** `walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_backend.md`  
+>   *(Ejemplo: `docs/walkthroughs/M20/walkthrough_v1.5.0_M20_seguridad_backend.md`)*
+> - **Entregas de Frontend:** `walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_frontend.md`  
+>   *(Ejemplo: `docs/walkthroughs/M17/walkthrough_v1.6.0_M17_auth_simulation_frontend.md`)*
 
 El Walkthrough debe contener obligatoriamente las siguientes 6 secciones:
 

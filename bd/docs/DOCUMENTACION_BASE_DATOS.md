@@ -1,9 +1,11 @@
 # 📘 Arquitectura y Documentación del Esquema de Base de Datos - PINTUCLIC
 
-> **Versión Actual:** 2.1 (Actualizada con el diagrama Draw.io v1.1 / Patrón E-Commerce Inmutable)  
-> **Motor de Base de Datos:** PostgreSQL 12+ (Compatible con PostgreSQL 18)  
-> **Total de Tablas:** 27  
+> **Versión Actual:** 2.4 (Módulo de Cuentas, Autenticación y Perfil - M04)  
+> **Motor de Base de Datos:** PostgreSQL 13+ (`gen_random_uuid()` nativo; compatible con PostgreSQL 18)  
+> **Total de Tablas:** 36  
 > **Script DDL Oficial:** [`../sql/schema_pintuclic.sql`](../sql/schema_pintuclic.sql)  
+> **Script de Mocks / Seed Oficial:** [`../sql/seed_pintuclic.sql`](../sql/seed_pintuclic.sql)  
+> **Guía Oficial de Mocks y Datos de Prueba:** [`./GUIA_MOCKS_Y_DATOS_PRUEBA.md`](./GUIA_MOCKS_Y_DATOS_PRUEBA.md)  
 > **Walkthrough Detallado de Migraciones:** [`./WALKTHROUGH_DATABASE.md`](./WALKTHROUGH_DATABASE.md)
 
 ---
@@ -11,7 +13,10 @@
 ## 📜 Historial Resumido de Versiones (Changelog)
 
 | Versión | Fecha | Tablas Nuevas | Tablas Deprecadas | Cambios Destacados | Detalle Completo |
-| :---: | :---: | :--- | :--- | :--- | :---: |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| **v2.4** | 2026-09-05 | `direccion_cliente`, `solicitud_empresa`, `solicitud_actualizacion_nit`, `usuario_identidad_externa`, `codigo_verificacion` (5) | Ninguna | Módulo Cuentas y Perfil (M04). Múltiples direcciones (`HU-CUE-07`), flujo B2B corporativo con aprobación admin (`HU-CUE-03/09`), federación Google Identity (`HU-CUE-02`) y almacén OTP efímero con TTL (`HU-CUE-01/05`). Total 36 tablas. | [Ver v2.4](./WALKTHROUGH_DATABASE.md#-versión-24-2026-09-05) |
+| **v2.3** | 2026-09-05 | `aviso_privacidad`, `consentimiento_usuario`, `solicitud_supresion` (3) | Ninguna | Protección de datos personales, términos legales y Habeas Data (M20 HU-SEG-05). Trazabilidad de consentimiento inmutable y radicación de supresión de datos. Preserva `sesion` (v2.2). | [Ver v2.3](./WALKTHROUGH_DATABASE.md#-versión-23-2026-09-05) |
+| **v2.2** | 2026-09-05 | `sesion` (1) | Ninguna | Estado de sesión persistido para M20: cierre manual, caducidad por inactividad e invalidación en bloque. PK `UUID` no enumerable y 3 ENUMs nuevos. Cambio puramente aditivo. | [Ver v2.2](./WALKTHROUGH_DATABASE.md#-versión-22-2026-09-05) |
 | **v2.1** | 2026-09-04 | `linea_carrito`, `cotizacion`, `orden`, `linea_orden` (4) | `pedido`, `detalle_carrito` (2) | Patrón de órdenes inmutables con snapshot de compra, cotizaciones B2B/B2C, carrito vivo desacoplado con soporte de visitantes anónimos (`token_visitante`) y variantes, y clasificación `enum_tipo_usuario`. | [Ver v2.1](./WALKTHROUGH_DATABASE.md#-versión-21-2026-09-04) |
 | **v2.0** | 2026-09-03 | `categoria`, `subcategorias`, `sub_subcategorias`, `linea`, `color`, `tonos`, `variante`, `caracteristica`, `combo`, `variante_combo` (10) | `descripcion`, `nesesidad`, `presentacion`, `producto_descripcion`, `producto_presentacion` (5) | Catálogo multinivel de 4 capas, variantes por color/tono, combos, 8 ENUMs nativos y `UNIQUE(id_usuario)` en `usuario_rol`. | [Ver v2.0](./WALKTHROUGH_DATABASE.md#-versión-20-2026-09-03) |
 | **v1.0** | 2026-09-02 | 21 tablas iniciales | Ninguna | Esquema fundacional derivado del diagrama `Pre-Final`. | [Ver v1.0](./WALKTHROUGH_DATABASE.md#-versión-10-2026-09-02) |
@@ -54,6 +59,10 @@ erDiagram
     rol ||--o{ usuario : "define perfil"
     usuario ||--|| usuario_rol : "posee (1:1)"
     rol ||--o{ usuario_rol : "asignado a"
+    usuario ||--o{ sesion : "mantiene abiertas"
+    usuario ||--o{ consentimiento_usuario : "otorga"
+    aviso_privacidad ||--o{ consentimiento_usuario : "recibe"
+    usuario ||--o{ solicitud_supresion : "radica"
 
     usuario ||--o{ carrito : "crea (opcional)"
     carrito ||--o{ linea_carrito : "contiene"
@@ -85,7 +94,7 @@ erDiagram
 
 ---
 
-## 🏛️ 3. Módulos del Sistema y Diccionario de Datos (27 Tablas)
+## 🏛️ 3. Módulos del Sistema y Diccionario de Datos (31 Tablas)
 
 ### Módulo 1: Seguridad, Roles y Descuentos (5 Tablas)
 | Tabla | PK | FKs | Descripción |
@@ -96,11 +105,12 @@ erDiagram
 | **`permisos`** | `id_permiso` | Ninguna | Permisos atómicos del sistema (`nombre` UNIQUE). |
 | **`asignacion_permiso`** | `id_asignacion_permiso` | `id_rol`, `id_permiso` | Matriz N:M con restricción `UNIQUE(id_rol, id_permiso)`. |
 
-### Módulo 2: Cuentas de Usuario y Control de Acceso (2 Tablas)
+### Módulo 2: Cuentas de Usuario y Control de Acceso (3 Tablas)
 | Tabla | PK | FKs | Descripción |
 | :--- | :--- | :--- | :--- |
 | **`usuario`** | `id_usuario` | `id_rol` $\rightarrow$ `rol` | Cuentas con `correo` UNIQUE, hash BCrypt en `contrasena`, tipo (`normal`/`empresa`) y estado. |
 | **`usuario_rol`** | `id_usuario_rol` | `id_usuario`, `id_rol` | Asignación con restricción `UNIQUE(id_usuario)` (máximo 1 rol por usuario). |
+| **`sesion`** | `id_sesion` (**UUID**) | `id_usuario` $ightarrow$ `usuario` (CASCADE) | Sesiones abiertas por dispositivo (M20 / HU-SEG-02). Guarda último acceso y expiración para aplicar la caducidad por inactividad en servidor, y estado más motivo de cierre para poder revocar un token ya emitido. Admite varias filas activas por usuario (sesiones simultáneas). PK `UUID` por seguridad: el identificador viaja en el JWT y no debe ser enumerable. |
 
 ### Módulo 3: Catálogo Multinivel, Colores y Variantes (11 Tablas)
 | Tabla | PK | FKs | Descripción |
@@ -142,11 +152,18 @@ erDiagram
 | :--- | :--- | :--- | :--- |
 | **`reservaciones`** | `id_reservacion` | `id_producto`, `id_usuario` | Citas de asesoría técnica o aplicación con fecha, hora y estado. |
 
+### Módulo 8: Privacidad, Consentimiento y Habeas Data (3 Tablas)
+| Tabla | PK | FKs | Descripción |
+| :--- | :--- | :--- | :--- |
+| **`aviso_privacidad`** | `id_aviso_privacidad` | Ninguna | Versiones normativas y términos de tratamiento de datos personales (`version` UNIQUE, `es_vigente`). |
+| **`consentimiento_usuario`** | `id_consentimiento` | `id_usuario`, `id_aviso_privacidad` | Registro de consentimiento informado con fecha exacta de aceptación y restricción `UNIQUE(id_usuario, id_aviso_privacidad)`. |
+| **`solicitud_supresion`** | `id_solicitud_supresion` | `id_usuario` $\rightarrow$ `usuario` | Gestión de derechos ARCO y supresión de datos con estado de resolución (`enum_estado_solicitud_supresion`). |
+
 ---
 
 ## 🛡️ 4. Tipos Enumerados (ENUMs)
 
-Para asegurar la máxima robustez en PostgreSQL, el esquema utiliza 10 tipos enumerados nativos:
+Para asegurar la máxima robustez en PostgreSQL, el esquema utiliza 14 tipos enumerados nativos:
 
 ```sql
 enum_estado_general     -- ('activo', 'inactivo')
@@ -159,6 +176,15 @@ enum_estado_cotizacion  -- ('borrador', 'enviada', 'aprobada', 'rechazada', 'ven
 enum_estado_pago        -- ('pendiente', 'completado', 'fallido', 'reembolsado')
 enum_estado_factura     -- ('emitida', 'pagada', 'anulada')
 enum_estado_reservacion -- ('pendiente', 'confirmada', 'cancelada', 'finalizada')
+
+-- Sesiones de usuario (v2.2 - M20)
+enum_estado_sesion        -- ('activa', 'cerrada', 'expirada', 'revocada')
+enum_tipo_sesion          -- ('admin', 'cliente')
+enum_motivo_cierre_sesion -- ('cierre_manual', 'inactividad', 'cambio_contrasena',
+                          --  'cuenta_desactivada', 'permisos_retirados')
+
+-- Privacidad y Habeas Data (v2.3 - M20)
+enum_estado_solicitud_supresion -- ('pendiente', 'en_proceso', 'aprobada', 'rechazada')
 ```
 
 ---
