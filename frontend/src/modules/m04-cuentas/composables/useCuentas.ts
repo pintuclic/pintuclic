@@ -52,7 +52,11 @@ export function useCuentas() {
         codigoError.value = apiError.error.code || 'UNKNOWN_ERROR';
         errorMensaje.value = apiError.error.message || fallback;
 
-        if (Array.isArray(apiError.error.details)) {
+        if (Array.isArray(apiError.error.details) && apiError.error.details.length > 0) {
+          const primerDetalle = apiError.error.details[0]?.message || apiError.error.details[0]?.issue;
+          if (primerDetalle) {
+            errorMensaje.value = primerDetalle;
+          }
           for (const item of apiError.error.details) {
             if (item.field) {
               erroresValidacion.value[item.field] = item.issue || item.message || '';

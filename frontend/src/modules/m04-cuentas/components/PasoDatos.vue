@@ -163,9 +163,10 @@
         <input
           v-model="nuevaPassword"
           type="password"
-          placeholder="Mínimo 8 caracteres"
+          placeholder="Mín. 8 caracteres, 1 mayúscula, 1 minúscula y 1 número"
           class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-light focus:outline-none focus:ring-2 focus:ring-action text-sm"
         />
+        <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
       </div>
 
       <div class="flex flex-col gap-1.5">
@@ -444,6 +445,21 @@ const guardarPasswordInicial = async () => {
 
   if (!nuevaPassword.value || nuevaPassword.value.length < 8) {
     errorPasswordLocal.value = 'La contraseña debe tener al menos 8 caracteres.';
+    return;
+  }
+
+  if (!/[a-z]/.test(nuevaPassword.value)) {
+    errorPasswordLocal.value = 'La contraseña debe incluir al menos una letra minúscula.';
+    return;
+  }
+
+  if (!/[A-Z]/.test(nuevaPassword.value)) {
+    errorPasswordLocal.value = 'La contraseña debe incluir al menos una letra mayúscula.';
+    return;
+  }
+
+  if (!/[0-9]/.test(nuevaPassword.value)) {
+    errorPasswordLocal.value = 'La contraseña debe incluir al menos un número.';
     return;
   }
 

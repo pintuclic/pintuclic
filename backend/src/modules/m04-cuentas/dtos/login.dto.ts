@@ -61,7 +61,7 @@ export const completarPasswordGoogleSchema = z.object({
     .email('Debe indicar un correo válido')
     .transform((val) => val.toLowerCase()),
   contrasena: contrasenaSchema,
-  tokenTemporal: z.string().min(1, 'Token de sesión temporal requerido'),
+  tokenTemporal: z.string().optional(),
 });
 
 export type CompletarPasswordGoogleDTO = z.infer<typeof completarPasswordGoogleSchema>;
