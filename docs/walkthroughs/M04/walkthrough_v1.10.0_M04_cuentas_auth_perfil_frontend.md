@@ -68,6 +68,25 @@ Implementación arquitectónica e integración 100% funcional de la interfaz de 
 ### B. Dependencias Hacia Adelante (¿A qué otros módulos habilita este desarrollo?)
 - Habilita que futuros módulos de compras requieran Sesión Activa inyectada mediante `useAuthStore()`.
 
+### C. Dependencias y Librerías de Software Instaladas (NPM)
+Para soportar la reactividad, validaciones, gestión de estado y federación de cuentas de M04, se incorporaron las siguientes dependencias en `frontend/package.json`:
+
+| Paquete NPM | Versión | Tipo | Propósito en el Módulo M04 |
+| :--- | :---: | :---: | :--- |
+| **`vee-validate`** | `^4.15.1` | `dependencies` | Orquestador de formularios reactivos multi-paso en Vue 3 (`useForm`, submit handlers asíncronos). |
+| **`@vee-validate/zod`** | `^4.15.1` | `dependencies` | Adaptador para vincular esquemas Zod con los formularios reactivos de Vee-Validate (`toTypedSchema`). |
+| **`zod`** | `^3.25.76` | `dependencies` | Validación estricta y declarativa de reglas de negocio en cliente (contraseñas complejas, correos, NIT) simétrica a los DTOs de backend. |
+| **`pinia`** | `^4.0.3` | `dependencies` | Almacén reactivo global para sesión y token de autenticación (`auth.store.ts`). |
+| **`axios`** | `^1.19.0` | `dependencies` | Cliente HTTP con soporte de promesas tipadas e interceptores Bearer JWT (`apiClient`). |
+| **`vue3-google-login`** | `^2.1.4` | `dependencies` | SDK e infraestructura de federación OAuth2 para Google Identity (`HU-CUE-02`). |
+| **`lucide-vue-next`** | `^1.0.0` | `dependencies` | Iconografía SVG reactiva utilizada en inputs y modales (`Mail`, `Lock`, `Phone`, `Check`). |
+
+*Comando de instalación:*
+```bash
+npm install vee-validate @vee-validate/zod zod pinia axios vue3-google-login lucide-vue-next
+```
+
+
 ---
 
 ## 6. REGISTRO DE ARCHIVOS MODIFICADOS Y CREADOS
