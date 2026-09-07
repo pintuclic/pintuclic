@@ -5,9 +5,239 @@ Este documento registra la evolución histórica del modelo de base de datos de 
 ---
 
 ## 📑 Índice de Versiones
+- [Versión 2.4 (Módulo de Cuentas, Autenticación y Perfil - M04)](#-versión-24-2026-09-05)
+- [Versión 2.3 (Módulo de Privacidad, Consentimiento y Habeas Data - HU-SEG-05)](#-versión-23-2026-09-05)
+- [Versión 2.2 (Sesiones de Usuario con Control de Inactividad e Invalidación)](#-versión-22-2026-09-05)
 - [Versión 2.1 (E-Commerce Inmutable, Cotizaciones y Carrito con Variantes)](#-versión-21-2026-09-04)
 - [Versión 2.0 (Página FINAL del ER) - Reestructuración de Catálogo, Variantes y Combos](#-versión-20-2026-09-03)
 - [Versión 1.0 (Esquema Inicial Pre-Final) - Base de 21 Tablas](#-versión-10-2026-09-02)
+
+---
+
+## 📦 Versión 2.4 (2026-09-05)
+
+### 🎯 Resumen Ejecutivo
+Evolución aditiva oficial del modelo relacional requerida para soportar al 100% las Historias de Usuario del módulo **M04 (Cuentas, Autenticación y Perfil)**:
+- **Total Tablas:** Pasa de 31 a **36 tablas**.
+- **Foco de la versión:** Soporte integral a direcciones físicas de despacho (`HU-CUE-07`), solicitudes corporativas de empresa y actualización de NIT con trazabilidad administrativa (`HU-CUE-03 / HU-CUE-09`), federación de cuentas Google Identity OAuth2 (`HU-CUE-02`) y almacén seguro de códigos OTP con TTL y límite de intentos (`HU-CUE-01 / HU-CUE-05`).
+- **Tipos ENUM Agregados (3):**
+  - `enum_tipo_solicitud_empresa`: `'registro'`, `'ascenso_particular'`.
+  - `enum_estado_solicitud_empresa`: `'pendiente'`, `'aprobada'`, `'rechazada'`.
+  - `enum_tipo_codigo_otp`: `'registro'`, `'recuperacion_password'`, `'cambio_correo'`.
+- **Integración Backend:** Tipado Kysely centralizado en `backend/src/core/db/types.ts` (`Database`, `DireccionClienteTable`, `SolicitudEmpresaTable`, `SolicitudActualizacionNitTable`, `UsuarioIdentidadExternaTable`, `CodigoVerificacionTable`), script de verificación `setup.ts` (`npm run db`) y datos semilla `seed_pintuclic.sql` (`npm run db:seed`).
+
+---
+
+### 🛑 1. Tablas Deprecadas / Eliminadas
+Ninguna en esta versión. Todos los cambios son 100% aditivos y compatibles hacia atrás.
+
+---
+
+### ✨ 2. Tablas Nuevas Creadas (5 Tablas)
+
+| Nueva Tabla (v2.4) | Clave Primaria (PK) | Claves Foráneas (FK) | Propósito Funcional |
+| :--- | :--- | :--- | :--- |
+| **`direccion_cliente`** | `id_direccion UUID` | `id_usuario` $\rightarrow$ `usuario` (CASCADE) | Almacenamiento de múltiples direcciones físicas de despacho por usuario (`HU-CUE-07`), soporte de coordenadas geográficas (`latitud`, `longitud`), barrio, teléfono y designación de dirección predeterminada. |
+| **`solicitud_empresa`** | `id_solicitud UUID` | `id_usuario` $\rightarrow$ `usuario` (CASCADE)<br>`id_admin_revisor` $\rightarrow$ `usuario` (SET NULL) | Gestión del flujo de aprobación corporativa B2B (`HU-CUE-03 / HU-CUE-09`). Permite el registro y ascenso particular a empresa con captura de NIT, razón social, representante, correo empresarial, dictamen y motivo de rechazo. |
+| **`solicitud_actualizacion_nit`** | `id_solicitud UUID` | `id_usuario` $\rightarrow$ `usuario` (CASCADE)<br>`id_admin_revisor` $\rightarrow$ `usuario` (SET NULL) | Trámite formal de modificación de NIT empresarial (`RF-CUE-09-07`), con registro de NIT anterior, nuevo NIT y URL del RUT adjunto verificado por un administrador. |
+| **`usuario_identidad_externa`** | `id_identidad SERIAL` | `id_usuario` $\rightarrow$ `usuario` (CASCADE) | Federación de identidades con proveedores OAuth2 externos (`HU-CUE-02`), vinculando `proveedor` ('google') y `proveedor_usuario_id` con restricción de unicidad compuesta `UNIQUE(proveedor, proveedor_usuario_id)`. |
+| **`codigo_verificacion`** | `id_codigo UUID` | Ninguna (FK desacoplada por correo/TTL) | Almacén transaccional seguro para códigos OTP efímeros (`HU-CUE-01 / HU-CUE-05`), con expiración por TTL, conteo y límite de reintentos, datos payload temporales y restricción `UNIQUE(correo, tipo)`. |
+
+---
+
+## 📦 Versión 2.3 (2026-09-05)
+
+### 🎯 Resumen Ejecutivo
+Evolución aditiva del modelo de datos impulsada por la incorporación del diagrama Entidad-Relación actualizado (`ER Pintuclic.drawio.xml` y `ER Pintuclic-Final 1.2.drawio.png`). Se incorporan 3 nuevas entidades orientadas al cumplimiento de normativas de protección de datos personales, Habeas Data y consentimiento informado, desbloqueando los requerimientos funcionales de la historia **HU-SEG-05** del módulo transversal **M20 (Seguridad, Auditoría y Protección de Datos)**.
+- **Total Tablas:** Pasa de 28 a **31 tablas**.
+- **Foco de la versión:** Privacidad, auditoría de consentimiento y ciclo de vida de peticiones de supresión de datos (derecho al olvido).
+- **Preservación de Estado:** La tabla **`sesion`** (incorporada en la v2.2 para el control de sesiones en servidor) se mantiene 100% intacta e integrada en el ecosistema de seguridad.
+
+---
+
+### 🛑 1. Tablas Deprecadas / Eliminadas
+Ninguna en esta versión. El cambio es estrictamente aditivo y no altera estructuras previas.
+
+---
+
+### ✨ 2. Tablas Nuevas Creadas (3 Tablas)
+
+| Nueva Tabla (v2.3) | Clave Primaria (PK) | Claves Foráneas (FK) | Propósito Funcional |
+| :--- | :--- | :--- | :--- |
+| **`aviso_privacidad`** | `id_aviso_privacidad SERIAL` | Ninguna | Registro y control de versiones legales vigentes e históricas de los términos y políticas de tratamiento de datos personales (`version` UNIQUE, `es_vigente`). |
+| **`consentimiento_usuario`** | `id_consentimiento SERIAL` | `id_usuario` $\rightarrow$ `usuario` (CASCADE)<br>`id_aviso_privacidad` $\rightarrow$ `aviso_privacidad` (RESTRICT) | Trazabilidad inmutable de la aceptación de la política de datos por parte de cada usuario con marca temporal (`fecha`). Restricción `UNIQUE(id_usuario, id_aviso_privacidad)`. |
+| **`solicitud_supresion`** | `id_solicitud_supresion SERIAL` | `id_usuario` $\rightarrow$ `usuario` (CASCADE) | Gestión y seguimiento de peticiones formales de supresión de datos personales / derecho al olvido (Habeas Data) con fechas de radicación, dictamen y estado de resolución. |
+
+**Columnas detalladas de las nuevas tablas:**
+
+#### `aviso_privacidad`:
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id_aviso_privacidad` | `SERIAL PRIMARY KEY` | Identificador interno único del aviso. |
+| `version` | `VARCHAR(50) NOT NULL UNIQUE` | Código o identificador semántico de versión (ej: `v1.0`, `2026-A`). |
+| `descripcion` | `TEXT NOT NULL` | Cuerpo íntegro del aviso de privacidad o enlace al instrumento legal vinculante. |
+| `es_vigente` | `BOOLEAN NOT NULL DEFAULT true` | Flag booleano que indica si la versión es la actualmente exigible a los usuarios. |
+
+#### `consentimiento_usuario`:
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id_consentimiento` | `SERIAL PRIMARY KEY` | Identificador único del registro de consentimiento. |
+| `id_usuario` | `INT NOT NULL` | Titular del dato personal que otorga la autorización. |
+| `id_aviso_privacidad` | `INT NOT NULL` | Versión específica del aviso de privacidad aceptada. |
+| `fecha` | `TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP` | Momento exacto de aceptación para efectos probatorios legales. |
+
+#### `solicitud_supresion`:
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id_solicitud_supresion` | `SERIAL PRIMARY KEY` | Identificador único del radicado de supresión. |
+| `id_usuario` | `INT NOT NULL` | Usuario solicitante de la supresión o bloqueo de sus datos personales. |
+| `fecha_solicitud` | `TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP` | Fecha y hora de radicación de la petición. |
+| `fecha_resolucion` | `TIMESTAMPTZ` | Fecha y hora en que la administración resuelve la petición (nullable mientras esté en trámite). |
+| `estado` | `enum_estado_solicitud_supresion` | Estado del trámite: `'pendiente'`, `'en_proceso'`, `'aprobada'`, `'rechazada'`. Por defecto `'pendiente'`. |
+
+---
+
+### 🔄 3. Tablas Modificadas y Nuevas Relaciones
+- **Ninguna tabla existente fue alterada ni recortada.**
+- **`sesion`:** Se preserva intacta con su clave primaria `UUID` y ciclo de vida de tokens M20.
+- **Nuevas Relaciones:**
+  1. `usuario` (1) $\rightarrow$ `consentimiento_usuario` (N): `ON UPDATE CASCADE ON DELETE CASCADE`.
+  2. `aviso_privacidad` (1) $\rightarrow$ `consentimiento_usuario` (N): `ON UPDATE CASCADE ON DELETE RESTRICT` (impide borrar avisos que ya cuentan con consentimientos auditados).
+  3. `usuario` (1) $\rightarrow$ `solicitud_supresion` (N): `ON UPDATE CASCADE ON DELETE CASCADE`.
+
+---
+
+### 🔒 4. Restricciones (`CONSTRAINTS`) y Tipos `ENUM` Agregados
+
+#### Nuevo Tipo ENUM Nativo:
+```sql
+enum_estado_solicitud_supresion -- ('pendiente', 'en_proceso', 'aprobada', 'rechazada')
+```
+
+#### Nuevas Reglas de Validación (`CHECK` y `UNIQUE`):
+- `uq_usuario_aviso`: `UNIQUE(id_usuario, id_aviso_privacidad)` para garantizar que un usuario registre a lo sumo una aceptación por versión de aviso.
+- `aviso_privacidad(version)` UNIQUE: impide colisión de códigos de versión.
+
+---
+
+### ⚡ 5. Nuevos Índices de Rendimiento
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_consentimiento_usuario ON consentimiento_usuario(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_consentimiento_aviso ON consentimiento_usuario(id_aviso_privacidad);
+CREATE INDEX IF NOT EXISTS idx_supresion_usuario ON solicitud_supresion(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_supresion_estado ON solicitud_supresion(estado);
+```
+
+- **`idx_consentimiento_usuario`** y **`idx_consentimiento_aviso`**: optimizan la validación en tiempo de login y registro para constatar si el usuario ha aceptado el aviso vigente.
+- **`idx_supresion_usuario`** y **`idx_supresion_estado`**: aceleran la consulta de radicados abiertos por estado para la mesa de ayuda y auditoría legal.
+
+---
+
+### 💻 6. Impacto y Acciones Requeridas en Backend y Frontend
+
+#### Backend (TypeScript / Kysely / Express):
+- **`backend/src/core/db/types.ts`**: incorporadas las interfaces `AvisoPrivacidadTable`, `ConsentimientoUsuarioTable`, `SolicitudSupresionTable`, el tipo `EnumEstadoSolicitudSupresion`, registros en la interfaz raíz `Database` y helpers exportados (`AvisoPrivacidad`, `ConsentimientoUsuario`, `SolicitudSupresion`).
+- **Módulo M20 (HU-SEG-05 Desbloqueada):** Habilita la creación de repositorios y controladores para registrar consentimientos en el registro/login y tramitar solicitudes de supresión de datos con trazabilidad de auditoría.
+- **Módulo M04 (Cuentas):** En el flujo de registro (`HU-CUE-01`), vincular la aceptación de términos guardando una fila en `consentimiento_usuario` referenciando el `id_aviso_privacidad` con `es_vigente = true`.
+
+#### Frontend (UI / Vistas / Componentes):
+- Modal/Checkbox obligatorio de aceptación de política de privacidad y tratamiento de datos en el checkout y registro de usuarios.
+- Vista de configuración de privacidad en el perfil de usuario para consultar las versiones aceptadas y radicar solicitudes de supresión de datos personales (Habeas Data).
+
+---
+
+---
+
+## 📦 Versión 2.2 (2026-09-05)
+
+### 🎯 Resumen Ejecutivo
+Incorporación del estado de sesión de usuario, exigido por la historia **HU-SEG-02** del módulo transversal **M20 (Seguridad, Auditoría y Protección de Datos)**. Hasta esta versión las sesiones eran completamente sin estado (JWT autocontenido), lo que hacía **imposible retirar un token ya emitido**: cerrar sesión, invalidar los accesos tras un cambio de contraseña o expulsar a una cuenta desactivada no tenían soporte en el modelo de datos.
+- **Total Tablas:** Pasa de 27 a **28 tablas**.
+- **Foco de la versión:** Seguridad y control de acceso.
+
+---
+
+### 🛑 1. Tablas Deprecadas / Eliminadas
+Ninguna en esta versión. El cambio es puramente aditivo y no altera ninguna estructura previa.
+
+---
+
+### ✨ 2. Tablas Nuevas Creadas (1 Tabla)
+
+| Nueva Tabla (v2.2) | Clave Primaria (PK) | Claves Foráneas (FK) | Propósito Funcional |
+| :--- | :--- | :--- | :--- |
+| **`sesion`** | `id_sesion UUID` | `id_usuario` $ightarrow$ `usuario` (CASCADE) | Sesión activa de un usuario en un dispositivo. Permite cerrar una sesión concreta, invalidar todas las de un usuario y aplicar la caducidad por inactividad verificada en servidor. Varias filas por usuario dan soporte a sesiones simultáneas (RF-SEG-02-05). |
+
+> **⚠️ Excepción justificada a la convención de PK.** La guía establece `SERIAL PRIMARY KEY` para toda tabla. `sesion` usa **`UUID` con `gen_random_uuid()`** de forma deliberada: el identificador viaja dentro del JWT como el claim `sid` y llega al navegador, de modo que un entero secuencial permitiría a un tercero enumerar las sesiones del sistema. Es la única tabla del esquema con esta excepción, y responde a un requisito de seguridad (RNF-SEG-02-01), no a una preferencia de estilo.
+
+**Columnas de `sesion`:**
+
+| Columna | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `id_sesion` | `UUID` | PK no enumerable, generada con `gen_random_uuid()`. |
+| `id_usuario` | `INT` | Titular de la sesión. |
+| `tipo_sesion` | `enum_tipo_sesion` | Determina la ventana de inactividad aplicable (RF-SEG-02-02). |
+| `fecha_inicio` | `TIMESTAMPTZ` | Momento de apertura. Por defecto `now()`. |
+| `fecha_ultimo_acceso` | `TIMESTAMPTZ` | Se renueva en cada operación del usuario (RF-SEG-02-03). |
+| `fecha_expiracion` | `TIMESTAMPTZ` | Último acceso más la ventana de inactividad del tipo de sesión. |
+| `estado` | `enum_estado_sesion` | Ciclo de vida. Por defecto `activa`. |
+| `motivo_cierre` | `enum_motivo_cierre_sesion` | Causa del cierre; nulo mientras sigue activa. |
+
+---
+
+### 🔄 3. Tablas Modificadas y Nuevas Relaciones
+- **Ninguna tabla existente fue modificada.** `usuario` conserva íntegras todas sus columnas de la v2.1, incluida `tipo`.
+- **Nueva Relación:** `sesion.id_usuario` $ightarrow$ `usuario.id_usuario` con política `ON UPDATE CASCADE ON DELETE CASCADE`. Al eliminar una cuenta, sus sesiones desaparecen con ella; no tiene sentido conservar la sesión de un usuario inexistente.
+
+---
+
+### 🔒 4. Restricciones (`CONSTRAINTS`) y Tipos `ENUM` Agregados
+
+#### Nuevos Tipos ENUM Nativos (3):
+```sql
+enum_estado_sesion        -- ('activa', 'cerrada', 'expirada', 'revocada')
+enum_tipo_sesion          -- ('admin', 'cliente')
+enum_motivo_cierre_sesion -- ('cierre_manual', 'inactividad', 'cambio_contrasena',
+                          --  'cuenta_desactivada', 'permisos_retirados')
+```
+
+Los cuatro estados **no son intercambiables** y su distinción es funcional, no decorativa:
+- `cerrada` — el usuario pulsó cerrar sesión.
+- `expirada` — venció la ventana de inactividad.
+- `revocada` — un tercero la invalidó: cambio de contraseña, cuenta desactivada o permisos retirados.
+
+El `motivo_cierre` conserva la causa exacta para diagnóstico posterior. Al navegador le llega la misma respuesta en los cuatro casos: revelar si una sesión fue revocada o si simplemente venció también es información.
+
+#### Nuevas Reglas de Validación:
+- Ninguna restricción `CHECK` ni `UNIQUE` adicional. Un mismo usuario **debe** poder tener varias filas activas: es lo que permite sesiones simultáneas en distintos dispositivos.
+
+---
+
+### ⚡ 5. Nuevos Índices de Rendimiento
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_sesion_usuario_estado ON sesion(id_usuario, estado);
+CREATE INDEX IF NOT EXISTS idx_sesion_estado_expiracion ON sesion(estado, fecha_expiracion);
+```
+
+- **`idx_sesion_usuario_estado`** cubre la FK `id_usuario` (obligatorio por la Regla de Oro 5) y resuelve las dos consultas más frecuentes: listar las sesiones vigentes de un usuario e invalidarlas en bloque.
+- **`idx_sesion_estado_expiracion`** prepara el barrido periódico de sesiones caducadas. Hoy las filas se marcan como `expirada` al intentar usarlas; cuando el volumen lo justifique, una tarea de fondo podrá recorrerlas con este índice.
+
+---
+
+### 💻 6. Impacto y Acciones Requeridas en Backend y Frontend
+
+#### Backend (TypeScript / Kysely / Express):
+- **`src/core/db/types.ts`**: añadida la interfaz `SesionTable`, los tipos `EnumEstadoSesion`, `EnumTipoSesion` y `EnumMotivoCierreSesion`, el registro `sesion` en la interfaz raíz `Database` y los helpers `Sesion` / `NewSesion` / `SesionUpdate`. Compilación verificada con `npx tsc --noEmit` sin errores.
+- **`src/core/utils/jwt.ts`**: `TokenPayload` incorpora el claim opcional `sid`.
+- **Módulo afectado: `M20`** — consume la tabla desde `m20-seguridad/repositories/sesion.repository.ts`. Un token **sin `sid` es rechazado** por el guarda de sesión.
+- **Módulo pendiente: `M04`** — su flujo de login debe consumir `serviciosSeguridad.sesion.abrirSesion()` en lugar de firmar JWT por su cuenta, o los tokens que emita no serán aceptados.
+- **Módulo pendiente: `M17`** — al revocar permisos debe invocar `invalidarSesionesDeUsuario(id, 'permisos_retirados')`. El motivo ya existe en el ENUM; no se dispara automáticamente, porque una petición denegada no equivale a una revocación.
+
+#### Frontend (UI / Vistas / Componentes):
+- El código de error `SESSION_EXPIRED` debe conducir al usuario a autenticarse de nuevo, conservando el destino que pretendía alcanzar (RF-SEG-02-08).
+- `GET /api/seguridad/sesiones` habilita una futura pantalla de **"tus dispositivos conectados"**. No expone IP ni `user-agent`: son datos personales y su tratamiento entra en HU-SEG-05, todavía bloqueada.
 
 ---
 
