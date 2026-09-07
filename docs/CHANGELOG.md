@@ -4,6 +4,23 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.1.0] - 2026-09-07
+### Módulo: M04 (Cuentas, Autenticación y Perfil - Google Identity OAuth2 Fullstack)
+- **Alcance General:** Incremento **MINOR (v2.1.0)** con la implementación e integración de extremo a extremo (E2E) de **Google Identity Services (HU-CUE-02)**. Se conecta la autenticación federada con validación criptográfica en backend (`google-auth-library`), persistencia nativa en PostgreSQL (`usuario_identidad_externa`), y flujo reactivo en frontend con gestión de sugerencia de vinculación y registro de contraseña de respaldo, protegiendo al 100% las credenciales mediante variables de entorno en el host.
+- **Hitos Clave Fullstack (HU-CUE-02):**
+  - **Verificación Criptográfica en Backend:** Incorporación de `OAuth2Client.verifyIdToken()` para comprobar la firma, expiración y audiencia (`GOOGLE_CLIENT_ID`) del ID Token emitido por Google.
+  - **Persistencia en Base de Datos (PostgreSQL):** Conexión de la tabla `usuario_identidad_externa` mediante Kysely en `CuentasRepository` para almacenamiento duradero de vinculaciones federadas (`google`, `id_proveedor`, `correo_proveedor`).
+  - **Flujo Completo de Negocio (HU-CUE-02):**
+    - *Login Directo (CA-CUE-02-05):* Emisión de sesión JWT y tokens cuando la cuenta ya está vinculada.
+    - *Sugerencia de Vinculación (RF-CUE-02-03 / CA-CUE-02-02):* Presentación de diálogo al usuario cuando el correo coincide con una cuenta previa creada por formulario, requiriendo confirmación explícita antes de vincular.
+    - *Contraseña Propia de Respaldo (RF-CUE-02-04 / CA-CUE-02-04):* Solicitud de contraseña propia tras registro con Google para garantizar acceso indistinto por ambas vías.
+  - **Frontend Reactivo y Design System (Directiva 8):** Integración de Google Identity Services en `ModalLogin.vue`, `useCuentas.ts` y `cuentas.service.ts` utilizando exclusivamente tokens oficiales (`corporate`, `action`, `subaction`, `neutral-*`).
+  - **Protección de Credenciales (Cero Secretos en Git):** Lectura desacoplada de `GOOGLE_CLIENT_ID` y `VITE_GOOGLE_CLIENT_ID` desde `.env` en el host, inyectadas mediante `env_file` y build args en Docker.
+  - 🔗 **Walkthrough Técnico M04 Google Identity:** [walkthrough_v2.1.0_M04_google_identity_oauth_fullstack.md](./walkthroughs/M04/walkthrough_v2.1.0_M04_google_identity_oauth_fullstack.md)
+- **Estado:** ✅ Validado con compilación limpia en backend (`npx tsc --noEmit`), linter backend en 0 advertencias (`npm run lint`), 30/30 tests aprobados (`m04.test.ts`) y build de producción en frontend (`vue-tsc -b && vite build`) con 0 errores.
+
+---
+
 ## [v2.0.0] - 2026-09-07
 ### Módulo: M04 (Cuentas, Autenticación y Perfil - Integración Fullstack E2E)
 - **Alcance General:** Salto a versión **MAJOR (v2.0.0)** con la primera integración simétrica y desacoplada de extremo a extremo (E2E) entre el backend (Express + Kysely) y frontend (Vue 3 + Pinia + Composables), resolviendo el contrato de datos del Universal API Envelope y orquestando el manejo reactivo de errores y estados de carga.

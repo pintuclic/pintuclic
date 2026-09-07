@@ -12,6 +12,7 @@ import type {
   ResultadoRegistroEmpresa,
   ResultadoVerificacion,
   ResultadoReenvio,
+  ResultadoGoogleAuth,
   ApiErrorResponse,
 } from '../interfaces/registro.interface';
 
@@ -183,6 +184,101 @@ export function useCuentas() {
     }
   }
 
+  /**
+   * Autenticación o registro mediante Google Identity (HU-CUE-02).
+   */
+  async function loginConGoogle(idToken: string): Promise<ResultadoGoogleAuth | null> {
+    try {
+      cargando.value = true;
+      limpiarErrores();
+
+      const response = await CuentasService.loginConGoogle({ idToken });
+      const resultado = response.data;
+
+      // Si fue login directo exitoso, persistir credenciales de sesión en Pinia
+      if (resultado.tipo === 'login_exitoso' && resultado.login) {
+        authStore.setAuthData(
+          resultado.login.sesion.accessToken,
+          resultado.login.usuario,
+          resultado.login.sesion.idSesion
+        );
+      }
+
+      return resultado;
+    } catch (error) {
+      procesarErrorApi(error, 'Fallo en la autenticación con cuenta de Google.');
+      return null;
+    } finally {
+      cargando.value = false;
+    }
+  }
+
+  /**
+   * Confirma la vinculación de cuenta existente con Google (HU-CUE-02 / CA-CUE-02-02).
+   */
+  async function confirmarVinculacionGoogle(
+    correo: string,
+    googleId: string,
+    confirmar: boolean = true
+  ): Promise<ResultadoLogin | null> {
+    try {
+      cargando.value = true;
+      limpiarErrores();
+
+      const response = await CuentasService.confirmarVinculacionGoogle({
+        correo,
+        googleId,
+        confirmar,
+      });
+      const resultado = response.data;
+
+      authStore.setAuthData(
+        resultado.sesion.accessToken,
+        resultado.usuario,
+        resultado.sesion.idSesion
+      );
+
+      return resultado;
+    } catch (error) {
+      procesarErrorApi(error, 'No fue posible vincular la cuenta con Google.');
+      return null;
+    } finally {
+      cargando.value = false;
+    }
+  }
+
+  /**
+   * Registra contraseña inicial tras registro mediante Google (HU-CUE-02 / RF-CUE-02-04).
+   */
+  async function completarPasswordGoogle(
+    correo: string,
+    contrasena: string
+  ): Promise<ResultadoLogin | null> {
+    try {
+      cargando.value = true;
+      limpiarErrores();
+
+      const response = await CuentasService.completarPasswordGoogle({
+        correo,
+        contrasena,
+      });
+      const resultado = response.data;
+
+      authStore.setAuthData(
+        resultado.sesion.accessToken,
+        resultado.usuario,
+        resultado.sesion.idSesion
+      );
+
+      return resultado;
+    } catch (error) {
+      procesarErrorApi(error, 'No fue posible registrar la contraseña propia.');
+      return null;
+    } finally {
+      cargando.value = false;
+    }
+  }
+
   return {
     cargando,
     errorMensaje,
@@ -195,5 +291,8 @@ export function useCuentas() {
     verificarCodigoActivacion,
     reenviarCodigoActivacion,
     cerrarSesion,
+    loginConGoogle,
+    confirmarVinculacionGoogle,
+    completarPasswordGoogle,
   };
 }
