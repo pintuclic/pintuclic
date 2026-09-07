@@ -3,7 +3,7 @@
   <PasosProgreso :pasos="['Datos', 'Verificación', 'Listo']" :paso-actual="2" />
 
   <div class="text-center mb-8">
-    <h2 class="text-2xl text-corporate mb-2">Verifica tu correo</h2>
+    <h2 class="text-2xl font-bold text-corporate mb-2">Verifica tu correo</h2>
     <p class="text-neutral-medium text-sm px-4">
       Escribe el código de 6 dígitos que enviamos a <strong>{{ correo }}</strong>.
     </p>
@@ -23,12 +23,12 @@
       />
     </div>
 
-    <!-- Error manual -->
-    <div v-if="error" class="w-full text-sm text-center text-[#E63946] bg-[#E63946]/10 p-2 rounded-md">
+    <!-- Error con tokens oficiales de diseño -->
+    <div v-if="error" class="w-full text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
       {{ error }}
     </div>
 
-    <!-- Franja informativa (Guía UI 4.2): 15 minutos es el valor real de backend -->
+    <!-- Franja informativa oficial con tokens de conversión -->
     <div class="w-full rounded-input bg-conversion/10 border border-conversion/30 px-4 py-3 text-sm text-neutral-dark text-center">
       El código expira en 15 minutos. Tu cuenta se activa al confirmarlo.
     </div>
@@ -42,20 +42,21 @@
 
   <div class="mt-6 text-center text-sm">
     <p class="text-neutral-medium mb-1">¿No te llegó?</p>
-    <button type="button" class="font-semibold text-action hover:underline" :disabled="isLoading || tiempoRestante > 0" @click="reenviarCodigo">
+    <button type="button" class="font-semibold text-action hover:underline cursor-pointer" :disabled="isLoading || tiempoRestante > 0" @click="reenviarCodigo">
       {{ tiempoRestante > 0 ? `Reenviar código en ${tiempoRestante}s` : 'Reenviar código' }}
     </button>
   </div>
 
   <div class="mt-4 text-center">
-    <button type="button" class="text-sm text-neutral-medium hover:text-neutral-dark hover:underline" @click="$emit('volver')">
+    <button type="button" class="text-sm text-neutral-medium hover:text-neutral-dark hover:underline cursor-pointer" @click="$emit('volver')">
       ← Volver
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
+import axios from 'axios';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
 import Boton from '@/core/components/Boton.vue';
@@ -66,8 +67,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  verificado: [];
-  volver: [];
+  (e: 'verificado'): void;
+  (e: 'volver'): void;
 }>();
 
 const otp = ref(['', '', '', '', '', '']);
@@ -75,18 +76,26 @@ const otpCompleto = computed(() => otp.value.every((valor) => valor !== ''));
 const error = ref('');
 const isLoading = ref(false);
 const tiempoRestante = ref(0);
+let timerId: ReturnType<typeof setInterval> | null = null;
+
+onUnmounted(() => {
+  if (timerId) {
+    clearInterval(timerId);
+    timerId = null;
+  }
+});
 
 function focusNext(index: number, event: Event) {
-  const target = event.target as HTMLInputElement;
-  if (target.value && index < 5) {
+  const target = event.target as HTMLInputElement | null;
+  if (target?.value && index < 5) {
     (target.nextElementSibling as HTMLInputElement | null)?.focus();
   }
 }
 
-function focusPrev(index: number, event: KeyboardEvent) {
-  const target = event.target as HTMLInputElement;
-  if (!target.value && index > 0) {
-    (target.previousElementSibling as HTMLInputElement | null)?.focus();
+function focusPrev(index: number, event: Event) {
+  const target = event.target as HTMLInputElement | null;
+  if (!target?.value && index > 0) {
+    (target?.previousElementSibling as HTMLInputElement | null)?.focus();
   }
 }
 
@@ -100,8 +109,13 @@ async function verificarCodigo() {
     error.value = '';
     await CuentasService.verificarCodigo(props.correo, codigoStr);
     emit('verificado');
-  } catch (err: any) {
-    error.value = err.response?.data?.mensaje || 'Código incorrecto. Intenta de nuevo.';
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      const data = err.response?.data as { mensaje?: string } | undefined;
+      error.value = data?.mensaje || 'Código incorrecto. Intenta de nuevo.';
+    } else {
+      error.value = 'Código incorrecto. Intenta de nuevo.';
+    }
   } finally {
     isLoading.value = false;
   }
@@ -115,15 +129,23 @@ async function reenviarCodigo() {
     error.value = '';
     await CuentasService.reenviarCodigo(props.correo);
     tiempoRestante.value = 60;
-    const interval = setInterval(() => {
+    
+    if (timerId) clearInterval(timerId);
+    timerId = setInterval(() => {
       if (tiempoRestante.value > 0) {
         tiempoRestante.value--;
       } else {
-        clearInterval(interval);
+        if (timerId) clearInterval(timerId);
+        timerId = null;
       }
     }, 1000);
-  } catch (err: any) {
-    error.value = err.response?.data?.mensaje || 'Error al reenviar el código';
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      const data = err.response?.data as { mensaje?: string } | undefined;
+      error.value = data?.mensaje || 'Error al reenviar el código';
+    } else {
+      error.value = 'Error al reenviar el código';
+    }
   } finally {
     isLoading.value = false;
   }
