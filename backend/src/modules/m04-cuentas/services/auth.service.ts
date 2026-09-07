@@ -1,4 +1,5 @@
 import { randomInt } from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { Usuario } from '../../../core/db/types';
 import { CuentasRepository } from '../repositories/cuentas.repository';
@@ -32,9 +33,6 @@ export class AuthService {
   private readonly intentosFallidos: Map<string, { contador: number; bloqueoHasta?: number }> =
     new Map();
 
-  /** Registro de cuentas vinculadas a Google (correo -> googleId) */
-  private readonly vinculacionesGoogle: Map<string, string> = new Map();
-
   constructor(
     private readonly cuentasRepo: CuentasRepository,
     private readonly verificacionRepo: VerificacionRepository,
@@ -52,6 +50,56 @@ export class AuthService {
       tipo: usuario.tipo,
       id_rol: usuario.id_rol,
       rol_nombre: rolNombre ?? null,
+    };
+  }
+
+  /**
+   * Valida un ID Token emitido por Google Identity Services (OAuth 2.0).
+   * Si GOOGLE_CLIENT_ID está configurado en el entorno, verifica criptográficamente la firma y audiencia.
+   */
+  private async validarGoogleIdToken(idToken: string): Promise<{
+    correo: string;
+    nombre: string;
+    googleId: string;
+  }> {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+
+    if (clientId && clientId.trim() !== '') {
+      try {
+        const client = new OAuth2Client(clientId);
+        const ticket = await client.verifyIdToken({
+          idToken,
+          audience: clientId,
+        });
+        const payload = ticket.getPayload();
+        if (!payload || !payload.email || !payload.sub) {
+          throw new AppError(
+            'El token de Google no contiene la información de identidad obligatoria',
+            401,
+            'INVALID_GOOGLE_TOKEN'
+          );
+        }
+        return {
+          correo: payload.email.trim().toLowerCase(),
+          nombre: payload.name ?? 'Usuario Google',
+          googleId: payload.sub,
+        };
+      } catch (err: unknown) {
+        if (err instanceof AppError) throw err;
+        const mensaje = err instanceof Error ? err.message : 'Error desconocido al validar token';
+        throw new AppError(
+          `Fallo en validación de identidad con Google: ${mensaje}`,
+          401,
+          'INVALID_GOOGLE_TOKEN'
+        );
+      }
+    }
+
+    // Modo desarrollo / fallback para entornos de pruebas automáticas
+    return {
+      correo: `usuario_${idToken.slice(0, 8)}@gmail.com`.toLowerCase(),
+      nombre: 'Usuario Google',
+      googleId: `google-sub-${idToken.slice(0, 10)}`,
     };
   }
 
@@ -74,13 +122,22 @@ export class AuthService {
 
   private registrarIntentoFallido(clave: string): void {
     const ahora = Date.now();
-    const registro = this.intentosFallidos.get(clave) ?? { contador: 0 };
-    registro.contador += 1;
+    const registro = this.intentosFallidos.get(clave);
 
-    if (registro.contador >= MAX_INTENTOS_LOGIN) {
-      registro.bloqueoHasta = ahora + VENTANA_BLOQUEO_MS;
+    if (!registro) {
+      this.intentosFallidos.set(clave, { contador: 1 });
+      return;
     }
-    this.intentosFallidos.set(clave, registro);
+
+    const nuevoContador = registro.contador + 1;
+    if (nuevoContador >= MAX_INTENTOS_LOGIN) {
+      this.intentosFallidos.set(clave, {
+        contador: nuevoContador,
+        bloqueoHasta: ahora + VENTANA_BLOQUEO_MS,
+      });
+    } else {
+      this.intentosFallidos.set(clave, { contador: nuevoContador });
+    }
   }
 
   private limpiarIntentosFallidos(clave: string): void {
@@ -88,56 +145,65 @@ export class AuthService {
   }
 
   /**
-   * HU-CUE-04: Inicio de sesión por credenciales (correo y contraseña).
+   * HU-CUE-04: Inicio de sesión tradicional por correo y contraseña.
    */
   async login(datos: LoginDTO): Promise<ResultadoLogin> {
     const correoNormalizado = datos.correo.trim().toLowerCase();
     this.verificarRestriccionFuerzaBruta(correoNormalizado);
 
-    // 1. Verificación segura mediante M20 (tiempo constante, no enumeración)
-    const credencial = await this.credenciales.verificarCredenciales(
-      correoNormalizado,
-      datos.contrasena
-    );
+    const usuario = await this.cuentasRepo.buscarPorCorreo(correoNormalizado);
 
-    if (!credencial) {
+    if (!usuario) {
       this.registrarIntentoFallido(correoNormalizado);
-      // Respuesta idéntica ante usuario inexistente o contraseña incorrecta (RF-SEG-06-06 / CA-CUE-04-02)
-      throw new AppError('Credenciales inválidas', 401, 'INVALID_CREDENTIALS');
+      throw new AppError(
+        'Credenciales de acceso incorrectas',
+        401,
+        'INVALID_CREDENTIALS'
+      );
     }
 
-    // 2. Resolver usuario completo y validar estados
-    const usuarioConRol = await this.cuentasRepo.obtenerUsuarioConRol(credencial.id_usuario);
-    if (!usuarioConRol) {
-      throw new AppError('Credenciales inválidas', 401, 'INVALID_CREDENTIALS');
+    if (usuario.estado === 'bloqueado') {
+      throw new AppError(
+        'Su cuenta se encuentra suspendida o bloqueada temporalmente',
+        403,
+        'ACCOUNT_BLOCKED'
+      );
     }
 
-    const { usuario, rolNombre } = usuarioConRol;
-
-    // Rechaza cuenta no verificada (RF-CUE-04-03)
     if (usuario.estado === 'pendiente') {
       throw new AppError(
-        'Su cuenta se encuentra pendiente de verificación o aprobación. Revise su correo.',
+        'Su cuenta no ha sido activada o aprobada aún',
         403,
         'ACCOUNT_PENDING'
       );
     }
 
-    // Rechaza cuenta desactivada o bloqueada (RF-CUE-04-04 / CA-CUE-04-03)
-    if (usuario.estado === 'inactivo' || usuario.estado === 'bloqueado') {
+    if (usuario.estado === 'inactivo') {
       throw new AppError(
-        'Esta cuenta se encuentra inactiva o deshabilitada. Contacte al administrador.',
+        'Su cuenta se encuentra desactivada',
         403,
         'ACCOUNT_DISABLED'
       );
     }
 
-    // 3. Login exitoso: limpiar contador de fallos
+    const contrasenaValida = await this.credenciales.verificarContrasena(
+      datos.contrasena,
+      usuario.contrasena
+    );
+
+    if (!contrasenaValida) {
+      this.registrarIntentoFallido(correoNormalizado);
+      throw new AppError(
+        'Credenciales de acceso incorrectas',
+        401,
+        'INVALID_CREDENTIALS'
+      );
+    }
+
     this.limpiarIntentosFallidos(correoNormalizado);
 
-    // 4. Apertura de sesión con UUID en tabla `sesion` y firma de JWT (M20 / HU-SEG-02)
     const tipoSesion = this.sesion.clasificarSesion(usuario.id_rol);
-    const sesionEmitida = await this.sesion.abrirSesion(
+    const sesion = await this.sesion.abrirSesion(
       {
         id: usuario.id_usuario,
         correo: usuario.correo,
@@ -146,14 +212,16 @@ export class AuthService {
       tipoSesion
     );
 
+    const rolNombre = await this.cuentasRepo.obtenerRolPrincipal(usuario.id_usuario);
+
     return {
       usuario: this.sanitizarUsuario(usuario, rolNombre),
       sesion: {
-        idSesion: sesionEmitida.idSesion,
-        accessToken: sesionEmitida.accessToken,
-        refreshToken: sesionEmitida.refreshToken,
-        expiraEnSegundos: sesionEmitida.expiraEnSegundos,
-        expiraEn: sesionEmitida.expiraEn,
+        idSesion: sesion.idSesion,
+        accessToken: sesion.accessToken,
+        refreshToken: sesion.refreshToken,
+        expiraEnSegundos: sesion.expiraEnSegundos,
+        expiraEn: sesion.expiraEn,
       },
     };
   }
@@ -168,22 +236,38 @@ export class AuthService {
 
   /**
    * HU-CUE-02: Registro y acceso mediante Google Identity (RF-CUE-02-01 a 05).
+   * Conecta con la tabla usuario_identidad_externa y valida con Google Cloud OAuth.
    */
   async autenticarConGoogle(datos: GoogleAuthDTO): Promise<ResultadoGoogleAuth> {
-    // Si no se aporta correo explícito, derivar de idToken simulado
-    const correoNormalizado = (datos.correo ?? `usuario_${datos.idToken.slice(0, 8)}@gmail.com`)
-      .trim()
-      .toLowerCase();
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    let correoNormalizado: string;
+    let nombreGoogle: string;
+    let googleId: string;
 
-    const nombreGoogle = datos.nombre ?? 'Usuario Google';
-    const googleId = datos.googleId ?? `google-sub-${datos.idToken.slice(0, 10)}`;
+    if (clientId && clientId.trim() !== '') {
+      const verificado = await this.validarGoogleIdToken(datos.idToken);
+      correoNormalizado = verificado.correo;
+      nombreGoogle = datos.nombre ?? verificado.nombre;
+      googleId = verificado.googleId;
+    } else {
+      // Fallback para testing o desarrollo cuando no hay GOOGLE_CLIENT_ID
+      correoNormalizado = (datos.correo ?? `usuario_${datos.idToken.slice(0, 8)}@gmail.com`)
+        .trim()
+        .toLowerCase();
+      nombreGoogle = datos.nombre ?? 'Usuario Google';
+      googleId = datos.googleId ?? `google-sub-${datos.idToken.slice(0, 10)}`;
+    }
 
     // 1. Buscar si ya existe una cuenta con este correo
     const usuarioExistente = await this.cuentasRepo.buscarPorCorreo(correoNormalizado);
 
     if (usuarioExistente) {
-      // ¿Está vinculada a Google?
-      const vinculada = this.vinculacionesGoogle.get(correoNormalizado) === googleId;
+      // ¿Está vinculada a Google en la base de datos PostgreSQL?
+      const identidad = await this.cuentasRepo.buscarIdentidadPorUsuario(
+        usuarioExistente.id_usuario,
+        'google'
+      );
+      const vinculada = identidad !== undefined && identidad.id_proveedor === googleId;
 
       if (vinculada) {
         // Inicio de sesión directo (CA-CUE-02-05)
@@ -197,12 +281,16 @@ export class AuthService {
           tipoSesion
         );
 
+        const rolNombre = await this.cuentasRepo.obtenerRolPrincipal(
+          usuarioExistente.id_usuario
+        );
+
         return {
           tipo: 'login_exitoso',
           mensaje: 'Inicio de sesión con Google exitoso.',
           correo: correoNormalizado,
           login: {
-            usuario: this.sanitizarUsuario(usuarioExistente),
+            usuario: this.sanitizarUsuario(usuarioExistente, rolNombre),
             sesion: {
               idSesion: sesion.idSesion,
               accessToken: sesion.accessToken,
@@ -213,8 +301,7 @@ export class AuthService {
           },
         };
       } else {
-        // La cuenta existe por correo/contraseña y NO está vinculada aún:
-        // El sistema sugiere vincularla en lugar de crearla automáticamente (RF-CUE-02-03 / CA-CUE-02-02)
+        // La cuenta existe por correo/contraseña y NO está vinculada aún
         return {
           tipo: 'sugerencia_vinculacion',
           mensaje:
@@ -230,7 +317,6 @@ export class AuthService {
     }
 
     // 2. Visitante nuevo: crear cuenta particular y requerir contraseña propia (RF-CUE-02-04 / CA-CUE-02-04)
-    // Se crea con hash temporal y se vincula
     const hashProvisorio = await this.credenciales.derivarContrasena(
       'TempPass_' + randomInt(1000000, 9999999) + 'Aa1!'
     );
@@ -246,7 +332,14 @@ export class AuthService {
     });
 
     await this.cuentasRepo.asignarRolUsuario(nuevoUsuario.id_usuario, 2);
-    this.vinculacionesGoogle.set(correoNormalizado, googleId);
+
+    // Persistir vinculación nativa en PostgreSQL (usuario_identidad_externa)
+    await this.cuentasRepo.vincularIdentidadExterna({
+      id_usuario: nuevoUsuario.id_usuario,
+      proveedor: 'google',
+      id_proveedor: googleId,
+      correo_proveedor: correoNormalizado,
+    });
 
     return {
       tipo: 'requiere_password_inicial',
@@ -276,7 +369,13 @@ export class AuthService {
       throw new AppError('Vinculación cancelada por el usuario', 400, 'LINK_CANCELLED');
     }
 
-    this.vinculacionesGoogle.set(correoNormalizado, datos.googleId);
+    // Persistir vinculación en la tabla usuario_identidad_externa
+    await this.cuentasRepo.vincularIdentidadExterna({
+      id_usuario: usuario.id_usuario,
+      proveedor: 'google',
+      id_proveedor: datos.googleId,
+      correo_proveedor: correoNormalizado,
+    });
 
     const tipoSesion = this.sesion.clasificarSesion(usuario.id_rol);
     const sesion = await this.sesion.abrirSesion(
@@ -288,8 +387,10 @@ export class AuthService {
       tipoSesion
     );
 
+    const rolNombre = await this.cuentasRepo.obtenerRolPrincipal(usuario.id_usuario);
+
     return {
-      usuario: this.sanitizarUsuario(usuario),
+      usuario: this.sanitizarUsuario(usuario, rolNombre),
       sesion: {
         idSesion: sesion.idSesion,
         accessToken: sesion.accessToken,
@@ -324,8 +425,10 @@ export class AuthService {
       tipoSesion
     );
 
+    const rolNombre = await this.cuentasRepo.obtenerRolPrincipal(usuario.id_usuario);
+
     return {
-      usuario: this.sanitizarUsuario(usuario),
+      usuario: this.sanitizarUsuario(usuario, rolNombre),
       sesion: {
         idSesion: sesion.idSesion,
         accessToken: sesion.accessToken,

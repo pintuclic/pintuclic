@@ -131,3 +131,34 @@ export interface ResultadoReenvio {
   mensaje: string;
   tiempoEsperaSegundos?: number;
 }
+
+// ==============================================================================
+// 5. GOOGLE IDENTITY SERVICES (HU-CUE-02)
+// ==============================================================================
+
+export interface GoogleAuthPayload {
+  idToken: string;
+}
+
+export interface GoogleVincularPayload {
+  correo: string;
+  confirmar: boolean;
+  googleId: string;
+}
+
+export interface CompletarPasswordGooglePayload {
+  correo: string;
+  contrasena: string;
+}
+
+export interface ResultadoGoogleAuth {
+  tipo: 'login_exitoso' | 'sugerencia_vinculacion' | 'requiere_password_inicial';
+  mensaje: string;
+  correo: string;
+  login?: ResultadoLogin;
+  datos_google?: {
+    nombre: string;
+    correo: string;
+    googleId: string;
+  };
+}

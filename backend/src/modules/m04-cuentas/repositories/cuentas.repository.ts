@@ -1,5 +1,13 @@
 import { Kysely } from 'kysely';
-import { Database, Usuario, NewUsuario, UsuarioUpdate, EnumEstadoUsuario } from '../../../core/db/types';
+import {
+  Database,
+  Usuario,
+  NewUsuario,
+  UsuarioUpdate,
+  EnumEstadoUsuario,
+  UsuarioIdentidadExterna,
+  NewUsuarioIdentidadExterna,
+} from '../../../core/db/types';
 
 // ==============================================================================
 // M04 - REPOSITORIO DE CUENTAS (Kysely + PostgreSQL)
@@ -33,7 +41,7 @@ export class CuentasRepository {
   }
 
   /**
-   * Inserta un nuevo usuario en la base de datos PostgreSQL.
+   * Crea un nuevo registro de usuario en la base de datos PostgreSQL.
    */
   async crearUsuario(datos: NewUsuario): Promise<Usuario> {
     return this.db
@@ -47,7 +55,7 @@ export class CuentasRepository {
   }
 
   /**
-   * Asigna un rol al usuario en la tabla `usuario_rol`.
+   * Asigna un rol a un usuario en la tabla relacional usuario_rol.
    */
   async asignarRolUsuario(idUsuario: number, idRol: number): Promise<void> {
     await this.db.transaction().execute(async (trx) => {
@@ -62,7 +70,6 @@ export class CuentasRepository {
         )
         .execute();
 
-      // Sincronizar también rol directo en tabla usuario
       await trx
         .updateTable('usuario')
         .set({ id_rol: idRol })
@@ -72,38 +79,33 @@ export class CuentasRepository {
   }
 
   /**
+   * Obtiene el nombre del rol principal asociado al usuario.
+   */
+  async obtenerRolPrincipal(idUsuario: number): Promise<string | null> {
+    const resultado = await this.db
+      .selectFrom('usuario_rol')
+      .innerJoin('rol', 'rol.id_rol', 'usuario_rol.id_rol')
+      .select('rol.nombre')
+      .where('usuario_rol.id_usuario', '=', idUsuario)
+      .executeTakeFirst();
+
+    return resultado?.nombre ?? null;
+  }
+
+  /**
    * Obtiene un usuario con el nombre de su rol asociado.
    */
   async obtenerUsuarioConRol(idUsuario: number): Promise<{
     usuario: Usuario;
     rolNombre: string | null;
   } | null> {
-    const fila = await this.db
-      .selectFrom('usuario as u')
-      .leftJoin('usuario_rol as ur', 'ur.id_usuario', 'u.id_usuario')
-      .leftJoin('rol as r', 'r.id_rol', 'ur.id_rol')
-      .select([
-        'u.id_usuario',
-        'u.nombre',
-        'u.telefono',
-        'u.correo',
-        'u.contrasena',
-        'u.id_rol',
-        'u.estado',
-        'u.tipo',
-        'r.nombre as rol_nombre',
-      ])
-      .where('u.id_usuario', '=', idUsuario)
-      .executeTakeFirst();
+    const usuario = await this.buscarPorId(idUsuario);
+    if (!usuario) return null;
 
-    if (!fila) {
-      return null;
-    }
-
-    const { rol_nombre, ...usuarioData } = fila;
+    const rolNombre = await this.obtenerRolPrincipal(idUsuario);
     return {
-      usuario: usuarioData as Usuario,
-      rolNombre: rol_nombre ?? null,
+      usuario,
+      rolNombre,
     };
   }
 
@@ -148,6 +150,67 @@ export class CuentasRepository {
       .updateTable('usuario')
       .set({ correo: nuevoCorreo.trim().toLowerCase() })
       .where('id_usuario', '=', idUsuario)
+      .execute();
+  }
+
+  /**
+   * Busca una vinculación federada externa por proveedor e identificador de proveedor (HU-CUE-02).
+   */
+  async buscarIdentidadExterna(
+    proveedor: string,
+    idProveedor: string
+  ): Promise<UsuarioIdentidadExterna | undefined> {
+    return this.db
+      .selectFrom('usuario_identidad_externa')
+      .selectAll()
+      .where('proveedor', '=', proveedor)
+      .where('id_proveedor', '=', idProveedor)
+      .executeTakeFirst();
+  }
+
+  /**
+   * Busca la vinculación federada de un usuario por su ID y proveedor (HU-CUE-02).
+   */
+  async buscarIdentidadPorUsuario(
+    idUsuario: number,
+    proveedor: string
+  ): Promise<UsuarioIdentidadExterna | undefined> {
+    return this.db
+      .selectFrom('usuario_identidad_externa')
+      .selectAll()
+      .where('id_usuario', '=', idUsuario)
+      .where('proveedor', '=', proveedor)
+      .executeTakeFirst();
+  }
+
+  /**
+   * Registra una vinculación de identidad federada (Google Identity) en PostgreSQL (HU-CUE-02).
+   */
+  async vincularIdentidadExterna(
+    datos: NewUsuarioIdentidadExterna
+  ): Promise<UsuarioIdentidadExterna> {
+    return this.db
+      .insertInto('usuario_identidad_externa')
+      .values(datos)
+      .onConflict((oc) =>
+        oc.columns(['id_usuario', 'proveedor']).doUpdateSet({
+          id_proveedor: datos.id_proveedor,
+          correo_proveedor: datos.correo_proveedor,
+          fecha_vinculacion: new Date(),
+        })
+      )
+      .returningAll()
+      .executeTakeFirstOrThrow();
+  }
+
+  /**
+   * Elimina la vinculación federada de un usuario con un proveedor.
+   */
+  async desvincularIdentidadExterna(idUsuario: number, proveedor: string): Promise<void> {
+    await this.db
+      .deleteFrom('usuario_identidad_externa')
+      .where('id_usuario', '=', idUsuario)
+      .where('proveedor', '=', proveedor)
       .execute();
   }
 }

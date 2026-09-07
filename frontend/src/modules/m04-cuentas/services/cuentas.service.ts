@@ -11,6 +11,10 @@ import type {
   ResultadoRegistroEmpresa,
   ResultadoVerificacion,
   ResultadoReenvio,
+  GoogleAuthPayload,
+  GoogleVincularPayload,
+  CompletarPasswordGooglePayload,
+  ResultadoGoogleAuth,
 } from '../interfaces/registro.interface';
 
 /**
@@ -86,6 +90,45 @@ export const CuentasService = {
    */
   async logout(): Promise<ApiResponse<{ mensaje: string }>> {
     const { data } = await apiClient.post<ApiResponse<{ mensaje: string }>>('/cuentas/logout');
+    return data;
+  },
+
+  /**
+   * POST /api/cuentas/google (HU-CUE-02 / RF-CUE-02-01)
+   */
+  async loginConGoogle(
+    payload: GoogleAuthPayload
+  ): Promise<ApiResponse<ResultadoGoogleAuth>> {
+    const { data } = await apiClient.post<ApiResponse<ResultadoGoogleAuth>>(
+      '/cuentas/google',
+      payload
+    );
+    return data;
+  },
+
+  /**
+   * POST /api/cuentas/google/vincular (HU-CUE-02 / RF-CUE-02-03)
+   */
+  async confirmarVinculacionGoogle(
+    payload: GoogleVincularPayload
+  ): Promise<ApiResponse<ResultadoLogin>> {
+    const { data } = await apiClient.post<ApiResponse<ResultadoLogin>>(
+      '/cuentas/google/vincular',
+      payload
+    );
+    return data;
+  },
+
+  /**
+   * POST /api/cuentas/google/completar-password (HU-CUE-02 / RF-CUE-02-04)
+   */
+  async completarPasswordGoogle(
+    payload: CompletarPasswordGooglePayload
+  ): Promise<ApiResponse<ResultadoLogin>> {
+    const { data } = await apiClient.post<ApiResponse<ResultadoLogin>>(
+      '/cuentas/google/completar-password',
+      payload
+    );
     return data;
   },
 };

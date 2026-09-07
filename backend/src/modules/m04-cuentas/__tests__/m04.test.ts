@@ -33,6 +33,17 @@ async function ejecutarPruebasM04(): Promise<void> {
 
   // Repositorio en memoria mockeando Kysely para pruebas unitarias limpias
   const tablaUsuarios: Map<number, Usuario> = new Map();
+  const tablaIdentidades: Map<
+    string,
+    {
+      id_identidad: number;
+      id_usuario: number;
+      proveedor: string;
+      id_proveedor: string;
+      correo_proveedor: string | null;
+      fecha_vinculacion: Date;
+    }
+  > = new Map();
   let secuenciaUsuario = 100;
 
   const mockCuentasRepo = {
@@ -68,6 +79,11 @@ async function ejecutarPruebasM04(): Promise<void> {
         u.id_rol = idRol;
       }
     },
+    obtenerRolPrincipal: async (idUsuario: number) => {
+      const u = tablaUsuarios.get(idUsuario);
+      if (!u) return null;
+      return u.id_rol === 1 ? 'administrador' : u.id_rol === 3 ? 'empresa_vip' : 'cliente';
+    },
     obtenerUsuarioConRol: async (idUsuario: number) => {
       const u = tablaUsuarios.get(idUsuario);
       if (!u) return null;
@@ -75,6 +91,43 @@ async function ejecutarPruebasM04(): Promise<void> {
         usuario: { ...u },
         rolNombre: u.id_rol === 1 ? 'administrador' : u.id_rol === 3 ? 'empresa_vip' : 'cliente',
       };
+    },
+    buscarIdentidadPorUsuario: async (idUsuario: number, proveedor: string) => {
+      for (const identidad of tablaIdentidades.values()) {
+        if (identidad.id_usuario === idUsuario && identidad.proveedor === proveedor) {
+          return { ...identidad };
+        }
+      }
+      return undefined;
+    },
+    buscarIdentidadExterna: async (proveedor: string, idProveedor: string) => {
+      for (const identidad of tablaIdentidades.values()) {
+        if (identidad.proveedor === proveedor && identidad.id_proveedor === idProveedor) {
+          return { ...identidad };
+        }
+      }
+      return undefined;
+    },
+    vincularIdentidadExterna: async (datos: {
+      id_usuario: number;
+      proveedor: string;
+      id_proveedor: string;
+      correo_proveedor?: string | null;
+    }) => {
+      const id = tablaIdentidades.size + 1;
+      const registro = {
+        id_identidad: id,
+        id_usuario: datos.id_usuario,
+        proveedor: datos.proveedor,
+        id_proveedor: datos.id_proveedor,
+        correo_proveedor: datos.correo_proveedor ?? null,
+        fecha_vinculacion: new Date(),
+      };
+      tablaIdentidades.set(`${datos.id_usuario}_${datos.proveedor}`, registro);
+      return registro;
+    },
+    desvincularIdentidadExterna: async (idUsuario: number, proveedor: string) => {
+      tablaIdentidades.delete(`${idUsuario}_${proveedor}`);
     },
     actualizarEstado: async (idUsuario: number, estado: EnumEstadoUsuario) => {
       const u = tablaUsuarios.get(idUsuario);
