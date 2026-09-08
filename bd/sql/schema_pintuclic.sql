@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 2.8 (v2.7 + marca.logotipo/logotipo_mime_type obligatorios - M01)
+-- VERSIÓN: 2.9 (v2.8 + tabla base - M01)
 -- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 37
+-- TOTAL TABLAS: 38
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -308,6 +308,20 @@ COMMENT ON TABLE linea IS 'Línea comercial de una marca (HU-CAT-11). `id_sub_su
 COMMENT ON COLUMN linea.id_marca IS 'Marca dueña de la línea (RF-CAT-11-01, RF-CAT-11-02)';
 COMMENT ON COLUMN linea.gama_comercial IS 'Dato descriptivo opcional de la línea (RF-CAT-11-01)';
 COMMENT ON CONSTRAINT uq_linea_nombre_marca ON linea IS 'Impide nombres de línea duplicados dentro de la misma marca; permite el mismo nombre entre marcas distintas (RF-CAT-11-02, CA-CAT-11-03)';
+
+-- Tabla: base
+CREATE TABLE IF NOT EXISTS base (
+    id_base SERIAL PRIMARY KEY,
+    id_marca INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    estado enum_estado_general NOT NULL DEFAULT 'activo',
+    CONSTRAINT fk_base_marca FOREIGN KEY (id_marca)
+        REFERENCES marca (id_marca) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT uq_base_nombre_marca UNIQUE (id_marca, nombre)
+);
+
+COMMENT ON TABLE base IS 'Base sobre la que se prepara cada color de un producto entonable (HU-CAT-12). El tipo de resina que pide RF-CAT-12-01 se excluyó a petición explícita del Product Owner. La asignación de bases a productos entonables (RF-CAT-12-02/03) y la asociación color↔base (RF-CAT-12-04) quedan pendientes: dependen de que existan producto (HU-CAT-02) y color (HU-CAT-05), y esta última regla además está marcada como no definida en la especificación (RF-CAT-12-12).';
+COMMENT ON CONSTRAINT uq_base_nombre_marca ON base IS 'Impide nombres de base duplicados dentro de la misma marca (RF-CAT-12-01)';
 
 -- Tabla: producto
 CREATE TABLE IF NOT EXISTS producto (

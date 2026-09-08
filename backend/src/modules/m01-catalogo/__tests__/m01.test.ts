@@ -2,6 +2,7 @@ import { CategoriasService } from '../services/categorias.service';
 import { SubcategoriasService } from '../services/subcategorias.service';
 import { LineasService } from '../services/lineas.service';
 import { MarcasService } from '../services/marcas.service';
+import { BasesService } from '../services/bases.service';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
 import { CrearMarcaDto } from '../dtos/marcas.dto';
 import { MarcaResumen } from '../interfaces/m01.interfaces';
@@ -15,6 +16,9 @@ import {
   Linea,
   NewLinea,
   LineaUpdate,
+  Base,
+  NewBase,
+  BaseUpdate,
 } from '../../../core/db/types';
 
 // ==============================================================================
@@ -213,6 +217,40 @@ async function ejecutarPruebasM01(): Promise<void> {
     },
   };
 
+  // ----------------------------------------------------------------------------
+  // Estado en memoria: bases (HU-CAT-12)
+  // ----------------------------------------------------------------------------
+  const bases: Map<number, Base> = new Map();
+  let seqBase = 1;
+
+  const mockBasesRepo = {
+    crear: async (data: NewBase): Promise<Base> => {
+      const base: Base = { id_base: seqBase++, id_marca: data.id_marca, nombre: data.nombre, estado: 'activo' };
+      bases.set(base.id_base, base);
+      return base;
+    },
+    listarPorMarca: async (idMarca: number) => Array.from(bases.values()).filter((b) => b.id_marca === idMarca),
+    obtenerPorId: async (id: number) => bases.get(id),
+    obtenerPorNombreYMarca: async (nombre: string, idMarca: number, excluirId?: number) =>
+      Array.from(bases.values()).find((b) => b.nombre === nombre && b.id_marca === idMarca && b.id_base !== excluirId),
+    actualizar: async (id: number, data: BaseUpdate) => {
+      const actual = bases.get(id);
+      if (!actual) return undefined;
+      const actualizada = { ...actual, ...data } as Base;
+      bases.set(id, actualizada);
+      return actualizada;
+    },
+    cambiarEstado: async (id: number, estado: 'activo' | 'inactivo') => {
+      const b = bases.get(id);
+      if (b) bases.set(id, { ...b, estado });
+    },
+    desactivarBasesDeMarca: async (idMarca: number) => {
+      for (const b of bases.values()) {
+        if (b.id_marca === idMarca) bases.set(b.id_base, { ...b, estado: 'inactivo' });
+      }
+    },
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const categoriasService = new CategoriasService(mockCategoriasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -220,7 +258,9 @@ async function ejecutarPruebasM01(): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lineasService = new LineasService(mockLineasRepo as any, mockMarcasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const marcasService = new MarcasService(mockMarcasRepo as any, mockLineasRepo as any);
+  const marcasService = new MarcasService(mockMarcasRepo as any, mockLineasRepo as any, mockBasesRepo as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const basesService = new BasesService(mockBasesRepo as any, mockMarcasRepo as any);
 
   try {
     // --------------------------------------------------------------------------
@@ -405,6 +445,50 @@ async function ejecutarPruebasM01(): Promise<void> {
 
     const reactivacionMarca = await marcasService.reactivar(sika.id_marca);
     assert('reactivado' in reactivacionMarca, 'La marca se reactiva correctamente');
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-12: Gestión de bases (solo el registro de bases; sin tipo de
+    // resina —excluido a petición del PO— y sin asignación a productos/colores
+    // —depende de HU-CAT-02/HU-CAT-05, aún no implementadas—).
+    // --------------------------------------------------------------------------
+    const comex = await marcasService.crear({
+      nombre: 'Comex',
+      logotipo: CrearMarcaDto.parse({ nombre: 'Comex', logotipo: LOGO_PNG_1X1 }).logotipo,
+    });
+
+    await assertLanza(
+      () => basesService.crear({ nombre: 'Base A', id_marca: 9999 }),
+      'RF-CAT-12-01: rechaza base con marca inexistente'
+    );
+
+    const baseA = await basesService.crear({ nombre: 'Base A', id_marca: sika.id_marca });
+    assert(baseA.id_marca === sika.id_marca && baseA.estado === 'activo', 'RF-CAT-12-01: base creada activa y asociada a su marca');
+
+    await assertLanza(
+      () => basesService.crear({ nombre: 'Base A', id_marca: sika.id_marca }),
+      'RF-CAT-12-01: rechaza base duplicada dentro de la misma marca'
+    );
+
+    const baseAotraMarca = await basesService.crear({ nombre: 'Base A', id_marca: comex.id_marca });
+    assert(baseAotraMarca.id_base !== baseA.id_base, 'RF-CAT-12-01: admite el mismo nombre de base en una marca distinta');
+
+    const desactivacionBase = await basesService.desactivar(baseA.id_base);
+    assert('desactivado' in desactivacionBase, 'Desactiva la base sin pedir confirmación (según el diagrama)');
+
+    const reactivacionBase = await basesService.reactivar(baseA.id_base);
+    assert('reactivado' in reactivacionBase, 'Reactiva la base cuando su marca está activa');
+
+    await marcasService.desactivar(sika.id_marca);
+    const baseTrasDesactivarMarca = await basesService.obtenerPorId(baseA.id_base);
+    assert(
+      baseTrasDesactivarMarca.estado === 'inactivo',
+      'RF-CAT-04-03: desactivar la marca también desactiva en cascada sus bases'
+    );
+
+    await assertLanza(
+      () => basesService.reactivar(baseA.id_base),
+      'RF-CAT-09-04: rechaza reactivar base con marca inactiva'
+    );
 
     console.log(`\n======================================================`);
     console.log(`🎯 RESULTADOS: Superadas: ${superadas} | Fallidas: ${fallidas}`);

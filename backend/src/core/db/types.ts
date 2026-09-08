@@ -164,6 +164,13 @@ export interface LineaTable {
   estado: Generated<EnumEstadoGeneral>;
 }
 
+export interface BaseTable {
+  id_base: Generated<number>;
+  id_marca: number;
+  nombre: string;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
 export interface ProductoTable {
   id_producto: Generated<number>;
   id_linea: number;
@@ -436,6 +443,7 @@ export interface Database {
   sub_subcategorias: SubSubcategoriasTable;
   marca: MarcaTable;
   linea: LineaTable;
+  base: BaseTable;
   producto: ProductoTable;
   color: ColorTable;
   tonos: TonosTable;
@@ -529,6 +537,10 @@ export type MarcaUpdate = Updateable<MarcaTable>;
 export type Linea = Selectable<LineaTable>;
 export type NewLinea = Insertable<LineaTable>;
 export type LineaUpdate = Updateable<LineaTable>;
+
+export type Base = Selectable<BaseTable>;
+export type NewBase = Insertable<BaseTable>;
+export type BaseUpdate = Updateable<BaseTable>;
 
 export type Producto = Selectable<ProductoTable>;
 export type NewProducto = Insertable<ProductoTable>;

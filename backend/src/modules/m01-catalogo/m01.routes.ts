@@ -6,16 +6,19 @@ import { CategoriasRepository } from './repositories/categorias.repository';
 import { SubcategoriasRepository } from './repositories/subcategorias.repository';
 import { MarcasRepository } from './repositories/marcas.repository';
 import { LineasRepository } from './repositories/lineas.repository';
+import { BasesRepository } from './repositories/bases.repository';
 
 import { CategoriasService } from './services/categorias.service';
 import { SubcategoriasService } from './services/subcategorias.service';
 import { LineasService } from './services/lineas.service';
 import { MarcasService } from './services/marcas.service';
+import { BasesService } from './services/bases.service';
 
 import { CategoriasController } from './controllers/categorias.controller';
 import { SubcategoriasController } from './controllers/subcategorias.controller';
 import { LineasController } from './controllers/lineas.controller';
 import { MarcasController } from './controllers/marcas.controller';
+import { BasesController } from './controllers/bases.controller';
 
 // ==============================================================================
 // M01 - ENRUTADOR PRINCIPAL: CATÁLOGO DE PRODUCTOS
@@ -28,16 +31,19 @@ const categoriasRepo = new CategoriasRepository(db);
 const subcategoriasRepo = new SubcategoriasRepository(db);
 const marcasRepo = new MarcasRepository(db);
 const lineasRepo = new LineasRepository(db);
+const basesRepo = new BasesRepository(db);
 
 const categoriasService = new CategoriasService(categoriasRepo);
 const subcategoriasService = new SubcategoriasService(subcategoriasRepo, categoriasRepo);
 const lineasService = new LineasService(lineasRepo, marcasRepo);
-const marcasService = new MarcasService(marcasRepo, lineasRepo);
+const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo);
+const basesService = new BasesService(basesRepo, marcasRepo);
 
 const categoriasCtrl = new CategoriasController(categoriasService);
 const subcategoriasCtrl = new SubcategoriasController(subcategoriasService);
 const lineasCtrl = new LineasController(lineasService);
 const marcasCtrl = new MarcasController(marcasService);
+const basesCtrl = new BasesController(basesService);
 
 const catalogoRoutes = Router();
 
@@ -203,7 +209,46 @@ catalogoRoutes.patch(
   (req, res, next) => { void marcasCtrl.reactivar(req, res).catch(next); }
 );
 
+// -----------------------------------------------------------------------------
+// Rutas: Bases (HU-CAT-12, solo el registro de bases)
+// -----------------------------------------------------------------------------
+catalogoRoutes.post(
+  '/bases',
+  ...guardas.protegido('catalogo.crear'),
+  (req, res, next) => { void basesCtrl.crear(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/marcas/:idMarca/bases',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void basesCtrl.listarPorMarca(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/bases/:id',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void basesCtrl.obtener(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/bases/:id',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void basesCtrl.actualizar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/bases/:id/desactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void basesCtrl.desactivar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/bases/:id/reactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void basesCtrl.reactivar(req, res).catch(next); }
+);
+
 // Fachadas públicas exportadas por M01 para consumo inter-módulo (HU-CAT-02 en adelante)
-export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService };
+export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService };
 
 export { catalogoRoutes };

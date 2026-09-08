@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.6.0] - 2026-09-08
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Cuarta entrega del módulo M01: registro de bases (HU-CAT-12), la entidad sobre la que se preparan los colores de un producto entonable. Solo cubre el flujo 1 del diagrama oficial (registrar/editar/consultar/desactivar bases); los otros 3 flujos (asignar bases a un producto, asociar colores a bases, retirar colores al desactivar una base) quedan documentados como pendientes por depender de HU-CAT-02/HU-CAT-05, que aún no existen.
+- **Hitos Clave:** Nueva tabla `base` (marca + nombre/código, sin tipo de resina — excluido a petición explícita del Product Owner). Endpoints `POST/GET/PATCH /api/catalogo/bases` (+`/desactivar`, `/reactivar`) y `GET /api/catalogo/marcas/:idMarca/bases`. Se corrigió además un hueco real encontrado en la cascada de HU-CAT-04: `MarcasService.desactivar` no tocaba bases (bases no existía cuando se implementó); ahora la desactivación de una marca cascada correctamente a líneas **y** bases.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 43/43 pruebas superadas. Probado end-to-end contra PostgreSQL real (crear, duplicado, cascada de desactivación de marca verificada en `base`, reactivar).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.6.0_M01_bases_backend.md](./walkthroughs/M01/walkthrough_v2.6.0_M01_bases_backend.md)
+
+---
+
 ## [v2.5.0] - 2026-09-08
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Tercera entrega del módulo M01: gestión administrativa de marcas (HU-CAT-04), con logotipo almacenado en base de datos y desactivación en cascada hacia líneas.
