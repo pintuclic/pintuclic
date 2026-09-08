@@ -129,12 +129,16 @@ export interface SesionTable {
 export interface CategoriaTable {
   id_categoria: Generated<number>;
   nombre: string;
+  orden: Generated<number>;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface SubcategoriasTable {
   id_subcategoria: Generated<number>;
   id_categoria: number;
   nombre: string;
+  orden: Generated<number>;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface SubSubcategoriasTable {

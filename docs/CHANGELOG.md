@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.3.0] - 2026-09-08
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Primera entrega del módulo M01: gestión administrativa de categorías y subcategorías (HU-CAT-01), con baja lógica en cascada y advertencia previa de productos afectados.
+- **Hitos Clave:** Nuevo módulo `backend/src/modules/m01-catalogo/` con endpoints `POST/GET/PATCH /api/catalogo/categorias` y `/api/catalogo/subcategorias`, protegidos por el permiso «Gestión del catálogo» (M17). Se agregaron las columnas `estado` y `orden` a `categoria` y `subcategorias` (BD v2.5), requisito bloqueante detectado y aprobado por el Product Owner antes de codificar (RF-CAT-01-04, CA-CAT-01-04).
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 17/17 pruebas superadas.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.3.0_M01_categorias_subcategorias_backend.md](./walkthroughs/M01/walkthrough_v2.3.0_M01_categorias_subcategorias_backend.md)
+
+---
+
 ## [v2.2.0] - 2026-09-07
 ### Arquitectura Global: Estandarización de DTOs en Frontend (Globales vs Locales y Erradicación Inline)
 - **Alcance General:** Salto a versión **MINOR (v2.2.0)** que formaliza la arquitectura de **DTOs (Data Transfer Objects) en el Frontend**, documentándola en `frontend/infraestructura.md` y `AGENTS.md` (Directiva 12). Se define la separación estricta entre **DTOs Globales (`src/core/dtos/`)**, **DTOs Locales de Módulo (`src/modules/m[xx]/dtos/`)** y **Contratos Estáticos (`interfaces/`)**, eliminando al 100% las declaraciones de esquemas Zod inline en componentes `.vue`.
