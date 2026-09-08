@@ -4,12 +4,16 @@ import { guardas } from '../m20-seguridad/seguridad.routes';
 
 import { CategoriasRepository } from './repositories/categorias.repository';
 import { SubcategoriasRepository } from './repositories/subcategorias.repository';
+import { MarcasRepository } from './repositories/marcas.repository';
+import { LineasRepository } from './repositories/lineas.repository';
 
 import { CategoriasService } from './services/categorias.service';
 import { SubcategoriasService } from './services/subcategorias.service';
+import { LineasService } from './services/lineas.service';
 
 import { CategoriasController } from './controllers/categorias.controller';
 import { SubcategoriasController } from './controllers/subcategorias.controller';
+import { LineasController } from './controllers/lineas.controller';
 
 // ==============================================================================
 // M01 - ENRUTADOR PRINCIPAL: CATÁLOGO DE PRODUCTOS
@@ -20,12 +24,16 @@ import { SubcategoriasController } from './controllers/subcategorias.controller'
 
 const categoriasRepo = new CategoriasRepository(db);
 const subcategoriasRepo = new SubcategoriasRepository(db);
+const marcasRepo = new MarcasRepository(db);
+const lineasRepo = new LineasRepository(db);
 
 const categoriasService = new CategoriasService(categoriasRepo);
 const subcategoriasService = new SubcategoriasService(subcategoriasRepo, categoriasRepo);
+const lineasService = new LineasService(lineasRepo, marcasRepo);
 
 const categoriasCtrl = new CategoriasController(categoriasService);
 const subcategoriasCtrl = new SubcategoriasController(subcategoriasService);
+const lineasCtrl = new LineasController(lineasService);
 
 const catalogoRoutes = Router();
 
@@ -107,7 +115,46 @@ catalogoRoutes.patch(
   (req, res, next) => { void subcategoriasCtrl.reactivar(req, res).catch(next); }
 );
 
+// -----------------------------------------------------------------------------
+// Rutas: Líneas comerciales (HU-CAT-11)
+// -----------------------------------------------------------------------------
+catalogoRoutes.post(
+  '/lineas',
+  ...guardas.protegido('catalogo.crear'),
+  (req, res, next) => { void lineasCtrl.crear(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/marcas/:idMarca/lineas',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void lineasCtrl.listarPorMarca(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/lineas/:id',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void lineasCtrl.obtener(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/lineas/:id',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void lineasCtrl.actualizar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/lineas/:id/desactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void lineasCtrl.desactivar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/lineas/:id/reactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void lineasCtrl.reactivar(req, res).catch(next); }
+);
+
 // Fachadas públicas exportadas por M01 para consumo inter-módulo (HU-CAT-02 en adelante)
-export const serviciosCatalogo = { categoriasService, subcategoriasService };
+export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService };
 
 export { catalogoRoutes };

@@ -35,6 +35,8 @@ export interface ImpactoDesactivacion {
   readonly requiere_confirmacion: true;
   readonly productos_afectados: number;
   readonly subcategorias_afectadas?: number;
+  /** Reglas comerciales vigentes de M06 que dependen del elemento (RF-CAT-11-03). */
+  readonly reglas_afectadas?: number;
 }
 
 /** Confirmación de que la desactivación (o reactivación) se aplicó. */
@@ -44,4 +46,17 @@ export interface ResultadoDesactivacion {
 
 export interface ResultadoReactivacion {
   readonly reactivado: true;
+}
+
+// ------------------------------------------------------------------------------
+// LÍNEAS COMERCIALES (HU-CAT-11)
+// ------------------------------------------------------------------------------
+
+/** Ficha de una línea comercial, siempre atada a una única marca (RF-CAT-11-02). */
+export interface LineaDetalle {
+  readonly id_linea: number;
+  readonly id_marca: number;
+  readonly nombre: string;
+  readonly gama_comercial: string | null;
+  readonly estado: EnumEstadoGeneral;
 }
