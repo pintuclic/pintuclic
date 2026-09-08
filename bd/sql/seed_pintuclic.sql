@@ -99,7 +99,7 @@ INSERT INTO sesion (id_sesion, id_usuario, tipo_sesion, fecha_inicio, fecha_ulti
 ON CONFLICT (id_sesion) DO NOTHING;
 
 -- ==============================================================================
--- 3. MÓDULO DE CATÁLOGO, VARIANTES Y COMBOS (12 Tablas)
+-- 3. MÓDULO DE CATÁLOGO, VARIANTES Y COMBOS (13 Tablas)
 -- ==============================================================================
 
 -- 3.1 Categoría
@@ -132,34 +132,40 @@ INSERT INTO linea (id_linea, id_sub_subcategoria, id_marca, nombre) VALUES
     (2, 2, 2, 'Pintulux Anticorrosivo')
 ON CONFLICT (id_linea) DO NOTHING;
 
--- 3.6 Producto
+-- 3.6 Base
+INSERT INTO base (id_base, id_marca, nombre) VALUES
+    (1, 1, 'Base A'),
+    (2, 1, 'Base B')
+ON CONFLICT (id_base) DO NOTHING;
+
+-- 3.7 Producto
 INSERT INTO producto (id_producto, id_linea, nombre) VALUES
     (1, 1, 'Viniltex Máxima Protección Antibacterial'),
     (2, 1, 'Kit Renovación Hogar Premium'),
     (3, 2, 'Esmalte Anticorrosivo Secado Rápido')
 ON CONFLICT (id_producto) DO NOTHING;
 
--- 3.7 Colores Maestros
+-- 3.8 Colores Maestros
 INSERT INTO color (id_color, nombre) VALUES
     (1, 'Blanco Puro'),
     (2, 'Azul Océano'),
     (3, 'Gris Titanio')
 ON CONFLICT (id_color) DO NOTHING;
 
--- 3.8 Tonos Derivados con recargo de precio
+-- 3.9 Tonos Derivados con recargo de precio
 INSERT INTO tonos (id_tono, id_color, precio) VALUES
     (1, 2, 15000.00),
     (2, 3, 12000.00)
 ON CONFLICT (id_tono) DO NOTHING;
 
--- 3.9 Variantes Vendibles (SKU)
+-- 3.10 Variantes Vendibles (SKU)
 INSERT INTO variante (id_variante, id_producto, precio_vigente, estado, id_color) VALUES
     (1, 1, 85900.00,  'activo', 1),
     (2, 1, 95900.00,  'activo', 2),
     (3, 3, 115000.00, 'activo', 3)
 ON CONFLICT (id_variante) DO NOTHING;
 
--- 3.10 Características Técnicas
+-- 3.11 Características Técnicas
 INSERT INTO caracteristica (id_caracteristica, id_variante, nombre) VALUES
     (1, 1, 'Rendimiento: 40-45 m2 por galón a dos manos'),
     (2, 1, 'Acabado: Mate de alta lavabilidad sin olor'),
@@ -167,12 +173,12 @@ INSERT INTO caracteristica (id_caracteristica, id_variante, nombre) VALUES
     (4, 3, 'Protección catódica contra óxido para metales')
 ON CONFLICT (id_caracteristica) DO NOTHING;
 
--- 3.11 Combo Cabecera
+-- 3.12 Combo Cabecera
 INSERT INTO combo (id_combo, id_producto) VALUES
     (1, 2)
 ON CONFLICT (id_combo) DO NOTHING;
 
--- 3.12 Detalle de Variantes en Combo
+-- 3.13 Detalle de Variantes en Combo
 INSERT INTO variante_combo (id_variante_combo, id_variante, id_combo, cantidad) VALUES
     (1, 1, 1, 2),
     (2, 2, 1, 1)
@@ -323,6 +329,7 @@ SELECT setval('subcategorias_id_subcategoria_seq',              COALESCE((SELECT
 SELECT setval('sub_subcategorias_id_sub_subcategoria_seq',       COALESCE((SELECT MAX(id_sub_subcategoria) FROM sub_subcategorias), 1));
 SELECT setval('marca_id_marca_seq',                              COALESCE((SELECT MAX(id_marca) FROM marca), 1));
 SELECT setval('linea_id_linea_seq',                              COALESCE((SELECT MAX(id_linea) FROM linea), 1));
+SELECT setval('base_id_base_seq',                                COALESCE((SELECT MAX(id_base) FROM base), 1));
 SELECT setval('producto_id_producto_seq',                        COALESCE((SELECT MAX(id_producto) FROM producto), 1));
 SELECT setval('color_id_color_seq',                              COALESCE((SELECT MAX(id_color) FROM color), 1));
 SELECT setval('tonos_id_tono_seq',                               COALESCE((SELECT MAX(id_tono) FROM tonos), 1));

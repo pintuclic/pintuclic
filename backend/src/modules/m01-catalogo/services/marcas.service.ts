@@ -1,5 +1,6 @@
 import { MarcasRepository } from '../repositories/marcas.repository';
 import { LineasRepository } from '../repositories/lineas.repository';
+import { BasesRepository } from '../repositories/bases.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { CrearMarcaDto, ActualizarMarcaDto } from '../dtos/marcas.dto';
 import { MarcaResumen, MarcaLogotipo, ResultadoDesactivacion, ResultadoReactivacion } from '../interfaces/m01.interfaces';
@@ -14,7 +15,8 @@ import { MarcaResumen, MarcaLogotipo, ResultadoDesactivacion, ResultadoReactivac
 export class MarcasService {
   constructor(
     private readonly repo: MarcasRepository,
-    private readonly lineasRepo: LineasRepository
+    private readonly lineasRepo: LineasRepository,
+    private readonly basesRepo: BasesRepository
   ) {}
 
   /** RF-CAT-04-01, RF-CAT-04-02, CA-CAT-04-01, CA-CAT-04-02. */
@@ -78,11 +80,11 @@ export class MarcasService {
    * categoría/línea): se desactiva directamente.
    *
    * LIMITACIÓN CONOCIDA Y APROBADA: la cascada del RF también exige ocultar
-   * productos, colores, bases y campañas de la marca, pero ninguna de esas
-   * entidades tiene todavía una relación con `marca` en el sistema (colores,
-   * bases y campañas ni siquiera existen como tablas). Se cascada solo a
-   * `linea`, que es la única relación real hoy. Pendiente de completar cuando
-   * se implementen HU-CAT-02/05/12 y el módulo de campañas.
+   * productos y campañas de la marca, pero esas entidades todavía no tienen
+   * relación con `marca` en el sistema (producto no tiene `id_marca`, y
+   * campañas no existe como tabla). Se cascada a `linea` y `base`, que son
+   * las relaciones reales hoy. Pendiente de completar cuando se implementen
+   * HU-CAT-02 y el módulo de campañas.
    */
   async desactivar(id: number): Promise<ResultadoDesactivacion> {
     const marca = await this.obtenerPorId(id);
@@ -92,6 +94,7 @@ export class MarcasService {
 
     await this.repo.cambiarEstado(id, 'inactivo');
     await this.lineasRepo.desactivarLineasDeMarca(id);
+    await this.basesRepo.desactivarBasesDeMarca(id);
     return { desactivado: true };
   }
 
