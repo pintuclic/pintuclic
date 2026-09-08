@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 2.5 (v2.4 + estado y orden de presentación en categoria/subcategorias - M01)
+-- VERSIÓN: 2.7 (v2.6 + linea.id_marca/gama_comercial/estado, id_sub_subcategoria nullable - M01)
 -- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 36
+-- TOTAL TABLAS: 37
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -276,16 +276,34 @@ CREATE TABLE IF NOT EXISTS sub_subcategorias (
 
 COMMENT ON TABLE sub_subcategorias IS 'Nivel 3 de la jerarquía de catálogo: Sub-subcategorías';
 
+-- Tabla: marca
+CREATE TABLE IF NOT EXISTS marca (
+    id_marca SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    estado enum_estado_general NOT NULL DEFAULT 'activo'
+);
+
+COMMENT ON TABLE marca IS 'Catálogo maestro de marcas (HU-CAT-04). Versión mínima para desbloquear HU-CAT-11; logotipo y cascada de desactivación completa se agregan al implementar HU-CAT-04.';
+
 -- Tabla: linea
 CREATE TABLE IF NOT EXISTS linea (
     id_linea SERIAL PRIMARY KEY,
-    id_sub_subcategoria INT NOT NULL,
+    id_sub_subcategoria INT,
+    id_marca INT NOT NULL,
     nombre VARCHAR(100) NOT NULL,
-    CONSTRAINT fk_linea_subsubcat FOREIGN KEY (id_sub_subcategoria) 
-        REFERENCES sub_subcategorias (id_sub_subcategoria) ON UPDATE CASCADE ON DELETE CASCADE
+    gama_comercial VARCHAR(100),
+    estado enum_estado_general NOT NULL DEFAULT 'activo',
+    CONSTRAINT fk_linea_subsubcat FOREIGN KEY (id_sub_subcategoria)
+        REFERENCES sub_subcategorias (id_sub_subcategoria) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_linea_marca FOREIGN KEY (id_marca)
+        REFERENCES marca (id_marca) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT uq_linea_nombre_marca UNIQUE (id_marca, nombre)
 );
 
-COMMENT ON TABLE linea IS 'Nivel 4 de la jerarquía de catálogo: Línea de producto';
+COMMENT ON TABLE linea IS 'Línea comercial de una marca (HU-CAT-11). `id_sub_subcategoria` es un remanente del árbol de categorías previo a esta HU: pendiente de retirar cuando HU-CAT-02 defina la relación real producto↔subcategoría.';
+COMMENT ON COLUMN linea.id_marca IS 'Marca dueña de la línea (RF-CAT-11-01, RF-CAT-11-02)';
+COMMENT ON COLUMN linea.gama_comercial IS 'Dato descriptivo opcional de la línea (RF-CAT-11-01)';
+COMMENT ON CONSTRAINT uq_linea_nombre_marca ON linea IS 'Impide nombres de línea duplicados dentro de la misma marca; permite el mismo nombre entre marcas distintas (RF-CAT-11-02, CA-CAT-11-03)';
 
 -- Tabla: producto
 CREATE TABLE IF NOT EXISTS producto (

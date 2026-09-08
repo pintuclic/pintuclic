@@ -147,10 +147,19 @@ export interface SubSubcategoriasTable {
   nombre: string;
 }
 
+export interface MarcaTable {
+  id_marca: Generated<number>;
+  nombre: string;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
 export interface LineaTable {
   id_linea: Generated<number>;
-  id_sub_subcategoria: number;
+  id_sub_subcategoria: number | null;
+  id_marca: number;
   nombre: string;
+  gama_comercial: string | null;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface ProductoTable {
@@ -423,6 +432,7 @@ export interface Database {
   categoria: CategoriaTable;
   subcategorias: SubcategoriasTable;
   sub_subcategorias: SubSubcategoriasTable;
+  marca: MarcaTable;
   linea: LineaTable;
   producto: ProductoTable;
   color: ColorTable;
@@ -509,6 +519,10 @@ export type SubcategoriaUpdate = Updateable<SubcategoriasTable>;
 export type SubSubcategoria = Selectable<SubSubcategoriasTable>;
 export type NewSubSubcategoria = Insertable<SubSubcategoriasTable>;
 export type SubSubcategoriaUpdate = Updateable<SubSubcategoriasTable>;
+
+export type Marca = Selectable<MarcaTable>;
+export type NewMarca = Insertable<MarcaTable>;
+export type MarcaUpdate = Updateable<MarcaTable>;
 
 export type Linea = Selectable<LineaTable>;
 export type NewLinea = Insertable<LineaTable>;

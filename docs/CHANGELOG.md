@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.4.0] - 2026-09-08
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Segunda entrega del módulo M01: gestión administrativa de líneas comerciales (HU-CAT-11), asociadas a una marca.
+- **Hitos Clave:** Nueva tabla `marca` (mínima: nombre, estado) y endpoints `POST/GET/PATCH /api/catalogo/lineas` y `/api/catalogo/marcas/:idMarca/lineas`, protegidos por el permiso «Gestión del catálogo». `linea` ahora referencia `marca` (`id_marca`); `id_sub_subcategoria` se volvió opcional (columna remanente, no se usa en esta HU).
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 27/27 pruebas superadas.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.4.0_M01_lineas_comerciales_backend.md](./walkthroughs/M01/walkthrough_v2.4.0_M01_lineas_comerciales_backend.md)
+
+---
+
 ## [v2.3.0] - 2026-09-08
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Primera entrega del módulo M01: gestión administrativa de categorías y subcategorías (HU-CAT-01), con baja lógica en cascada y advertencia previa de productos afectados.

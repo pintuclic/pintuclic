@@ -1,7 +1,19 @@
 import { CategoriasService } from '../services/categorias.service';
 import { SubcategoriasService } from '../services/subcategorias.service';
+import { LineasService } from '../services/lineas.service';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
-import { Categoria, Subcategoria, NewCategoria, CategoriaUpdate, NewSubcategoria, SubcategoriaUpdate } from '../../../core/db/types';
+import {
+  Categoria,
+  Subcategoria,
+  NewCategoria,
+  CategoriaUpdate,
+  NewSubcategoria,
+  SubcategoriaUpdate,
+  Marca,
+  Linea,
+  NewLinea,
+  LineaUpdate,
+} from '../../../core/db/types';
 
 // ==============================================================================
 // M01 - SUITE DE VALIDACIÓN DE CRITERIOS DE ACEPTACIÓN (HU-CAT-01)
@@ -114,10 +126,62 @@ async function ejecutarPruebasM01(): Promise<void> {
     contarProductosAfectados: async (idSubcategoria: number) => productosAfectadosPorSubcategoria.get(idSubcategoria) ?? 0,
   };
 
+  // ----------------------------------------------------------------------------
+  // Estado en memoria: marcas y líneas (HU-CAT-11)
+  // ----------------------------------------------------------------------------
+  const marcas: Map<number, Marca> = new Map();
+  const lineas: Map<number, Linea> = new Map();
+  const productosAfectadosPorLinea: Map<number, number> = new Map();
+  let seqMarca = 1;
+  let seqLinea = 1;
+
+  function crearMarcaDirecto(nombre: string): Marca {
+    const marca: Marca = { id_marca: seqMarca++, nombre, estado: 'activo' };
+    marcas.set(marca.id_marca, marca);
+    return marca;
+  }
+
+  const mockMarcasRepo = {
+    obtenerPorId: async (id: number) => marcas.get(id),
+  };
+
+  const mockLineasRepo = {
+    crear: async (data: NewLinea): Promise<Linea> => {
+      const linea: Linea = {
+        id_linea: seqLinea++,
+        id_marca: data.id_marca,
+        id_sub_subcategoria: data.id_sub_subcategoria ?? null,
+        nombre: data.nombre,
+        gama_comercial: data.gama_comercial ?? null,
+        estado: 'activo',
+      };
+      lineas.set(linea.id_linea, linea);
+      return linea;
+    },
+    listarPorMarca: async (idMarca: number) => Array.from(lineas.values()).filter((l) => l.id_marca === idMarca),
+    obtenerPorId: async (id: number) => lineas.get(id),
+    obtenerPorNombreYMarca: async (nombre: string, idMarca: number, excluirId?: number) =>
+      Array.from(lineas.values()).find((l) => l.nombre === nombre && l.id_marca === idMarca && l.id_linea !== excluirId),
+    actualizar: async (id: number, data: LineaUpdate) => {
+      const actual = lineas.get(id);
+      if (!actual) return undefined;
+      const actualizada = { ...actual, ...data } as Linea;
+      lineas.set(id, actualizada);
+      return actualizada;
+    },
+    cambiarEstado: async (id: number, estado: 'activo' | 'inactivo') => {
+      const l = lineas.get(id);
+      if (l) lineas.set(id, { ...l, estado });
+    },
+    contarProductosAfectados: async (idLinea: number) => productosAfectadosPorLinea.get(idLinea) ?? 0,
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const categoriasService = new CategoriasService(mockCategoriasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const subcategoriasService = new SubcategoriasService(mockSubcategoriasRepo as any, mockCategoriasRepo as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lineasService = new LineasService(mockLineasRepo as any, mockMarcasRepo as any);
 
   try {
     // --------------------------------------------------------------------------
@@ -207,6 +271,62 @@ async function ejecutarPruebasM01(): Promise<void> {
       'reactivado' in reactivacionSubcategoria,
       'RF-CAT-09-04: reactiva la subcategoría una vez su categoría padre está activa'
     );
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-11: Gestión de líneas
+    // --------------------------------------------------------------------------
+    const pintuco = crearMarcaDirecto('Pintuco');
+    const interpinturas = crearMarcaDirecto('Interpinturas');
+
+    await assertLanza(
+      () => lineasService.crear({ nombre: 'Viniltex', id_marca: 9999 }),
+      'RF-CAT-11-01: rechaza línea con marca inexistente'
+    );
+
+    const viniltex = await lineasService.crear({ nombre: 'Viniltex', id_marca: pintuco.id_marca });
+    assert(
+      viniltex.id_marca === pintuco.id_marca && viniltex.estado === 'activo',
+      'CA-CAT-11-01: línea creada activa y asociada a su marca'
+    );
+
+    await assertLanza(
+      () => lineasService.crear({ nombre: 'Viniltex', id_marca: pintuco.id_marca }),
+      'CA-CAT-11-03: rechaza línea duplicada dentro de la misma marca'
+    );
+
+    const viniltexOtraMarca = await lineasService.crear({ nombre: 'Viniltex', id_marca: interpinturas.id_marca });
+    assert(
+      viniltexOtraMarca.id_linea !== viniltex.id_linea,
+      'CA-CAT-11-03: admite el mismo nombre de línea en una marca distinta'
+    );
+
+    await assertLanza(
+      () => lineasService.actualizar(99999, { nombre: 'x' }),
+      'Rechaza actualizar una línea con un id inexistente'
+    );
+
+    productosAfectadosPorLinea.set(viniltex.id_linea, 4);
+    const impactoLinea = await lineasService.solicitarDesactivacion(viniltex.id_linea, false);
+    assert(
+      'requiere_confirmacion' in impactoLinea && impactoLinea.productos_afectados === 4 && impactoLinea.reglas_afectadas === 0,
+      'RF-CAT-11-03: informa productos y reglas M06 afectadas antes de confirmar (M06 aún no existe, reporta 0)'
+    );
+
+    const lineaTrasImpacto = await lineasService.obtenerPorId(viniltex.id_linea);
+    assert(lineaTrasImpacto.estado === 'activo', 'No desactiva la línea sin confirmación');
+
+    const desactivacionLinea = await lineasService.solicitarDesactivacion(viniltex.id_linea, true);
+    assert('desactivado' in desactivacionLinea, 'RF-CAT-11-03: confirma y desactiva la línea');
+
+    marcas.set(pintuco.id_marca, { ...pintuco, estado: 'inactivo' });
+    await assertLanza(
+      () => lineasService.reactivar(viniltex.id_linea),
+      'RF-CAT-09-04: rechaza reactivar línea con marca inactiva'
+    );
+
+    marcas.set(pintuco.id_marca, { ...pintuco, estado: 'activo' });
+    const reactivacionLinea = await lineasService.reactivar(viniltex.id_linea);
+    assert('reactivado' in reactivacionLinea, 'RF-CAT-09-04: reactiva la línea una vez su marca está activa');
 
     console.log(`\n======================================================`);
     console.log(`🎯 RESULTADOS: Superadas: ${superadas} | Fallidas: ${fallidas}`);
