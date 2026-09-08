@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 2.4 (v2.3 + módulo de cuentas, direcciones, solicitudes corporativas y OTP - M04)
+-- VERSIÓN: 2.5 (v2.4 + estado y orden de presentación en categoria/subcategorias - M01)
 -- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
 -- TOTAL TABLAS: 36
@@ -241,21 +241,29 @@ COMMENT ON COLUMN sesion.motivo_cierre IS 'Causa del cierre; nulo mientras la se
 -- Tabla: categoria
 CREATE TABLE IF NOT EXISTS categoria (
     id_categoria SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL UNIQUE
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    orden INT NOT NULL DEFAULT 0,
+    estado enum_estado_general NOT NULL DEFAULT 'activo'
 );
 
 COMMENT ON TABLE categoria IS 'Nivel 1 de la jerarquía de catálogo: Categoría principal';
+COMMENT ON COLUMN categoria.orden IS 'Orden de presentación en la navegación pública (HU-CAT-01, CA-CAT-01-04)';
+COMMENT ON COLUMN categoria.estado IS 'Baja lógica: una categoría inactiva desactiva en cascada sus subcategorías (RF-CAT-01-04)';
 
 -- Tabla: subcategorias
 CREATE TABLE IF NOT EXISTS subcategorias (
     id_subcategoria SERIAL PRIMARY KEY,
     id_categoria INT NOT NULL,
     nombre VARCHAR(100) NOT NULL,
-    CONSTRAINT fk_subcat_categoria FOREIGN KEY (id_categoria) 
-        REFERENCES categoria (id_categoria) ON UPDATE CASCADE ON DELETE CASCADE
+    orden INT NOT NULL DEFAULT 0,
+    estado enum_estado_general NOT NULL DEFAULT 'activo',
+    CONSTRAINT fk_subcat_categoria FOREIGN KEY (id_categoria)
+        REFERENCES categoria (id_categoria) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT uq_subcategoria_nombre_categoria UNIQUE (id_categoria, nombre)
 );
 
 COMMENT ON TABLE subcategorias IS 'Nivel 2 de la jerarquía de catálogo: Subcategorías';
+COMMENT ON CONSTRAINT uq_subcategoria_nombre_categoria ON subcategorias IS 'Impide nombres duplicados bajo la misma categoría padre; permite el mismo nombre bajo padres distintos (RF-CAT-01-03, CA-CAT-01-03)';
 
 -- Tabla: sub_subcategorias
 CREATE TABLE IF NOT EXISTS sub_subcategorias (
