@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.5.0] - 2026-09-08
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Tercera entrega del módulo M01: gestión administrativa de marcas (HU-CAT-04), con logotipo almacenado en base de datos y desactivación en cascada hacia líneas.
+- **Hitos Clave:** `marca` gana `logotipo` (BYTEA) y `logotipo_mime_type`, ambos obligatorios. Endpoints `POST/GET/PATCH /api/catalogo/marcas` (+`/desactivar`, `/reactivar`) y `GET /api/catalogo/marcas/:id/logotipo` (imagen cruda, fuera del listado JSON). El logotipo viaja como data URL base64 (sin dependencias nuevas de subida de archivos), formato jpeg/png/webp y máximo 5MB (supuesto aprobado por el Product Owner mientras no exista el "Anexo B de la Tanda 2" referenciado en la especificación).
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 35/35 pruebas superadas. Probado end-to-end contra PostgreSQL real (crear, duplicado, logotipo servido aparte, cascada de desactivación verificada en `linea`, reactivar).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.5.0_M01_marcas_backend.md](./walkthroughs/M01/walkthrough_v2.5.0_M01_marcas_backend.md)
+
+---
+
 ## [v2.4.0] - 2026-09-08
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Segunda entrega del módulo M01: gestión administrativa de líneas comerciales (HU-CAT-11), asociadas a una marca.

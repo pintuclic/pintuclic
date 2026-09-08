@@ -60,3 +60,25 @@ export interface LineaDetalle {
   readonly gama_comercial: string | null;
   readonly estado: EnumEstadoGeneral;
 }
+
+// ------------------------------------------------------------------------------
+// MARCAS (HU-CAT-04)
+// ------------------------------------------------------------------------------
+
+/**
+ * Ficha de una marca sin el binario del logotipo (nunca viaja en listados ni
+ * fichas, para no inflar las respuestas JSON). El logotipo se sirve aparte
+ * por `GET /catalogo/marcas/:id/logotipo`.
+ */
+export interface MarcaResumen {
+  readonly id_marca: number;
+  readonly nombre: string;
+  readonly logotipo_mime_type: string;
+  readonly estado: EnumEstadoGeneral;
+}
+
+/** Bytes crudos del logotipo, para el endpoint dedicado de servirlo. */
+export interface MarcaLogotipo {
+  readonly logotipo: Buffer;
+  readonly logotipo_mime_type: string;
+}

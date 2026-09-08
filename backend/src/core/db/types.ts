@@ -150,6 +150,8 @@ export interface SubSubcategoriasTable {
 export interface MarcaTable {
   id_marca: Generated<number>;
   nombre: string;
+  logotipo: Buffer;
+  logotipo_mime_type: string;
   estado: Generated<EnumEstadoGeneral>;
 }
 

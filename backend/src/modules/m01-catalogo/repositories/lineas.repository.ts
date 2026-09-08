@@ -73,4 +73,13 @@ export class LineasRepository {
       .executeTakeFirst();
     return Number(fila?.total ?? 0);
   }
+
+  /** RF-CAT-04-03: desactiva en cascada todas las líneas activas de una marca. */
+  async desactivarLineasDeMarca(idMarca: number): Promise<void> {
+    await this.db
+      .updateTable('linea')
+      .set({ estado: 'inactivo' })
+      .where('id_marca', '=', idMarca)
+      .execute();
+  }
 }
