@@ -121,9 +121,9 @@ INSERT INTO sub_subcategorias (id_sub_subcategoria, id_subcategoria, nombre) VAL
 ON CONFLICT (id_sub_subcategoria) DO NOTHING;
 
 -- 3.4 Marca (HU-CAT-04 / prerrequisito de HU-CAT-11)
-INSERT INTO marca (id_marca, nombre) VALUES
-    (1, 'Pintuco'),
-    (2, 'Interpinturas')
+INSERT INTO marca (id_marca, nombre, logotipo, logotipo_mime_type) VALUES
+    (1, 'Pintuco', decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'), 'image/png'),
+    (2, 'Interpinturas', decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'), 'image/png')
 ON CONFLICT (id_marca) DO NOTHING;
 
 -- 3.5 Línea

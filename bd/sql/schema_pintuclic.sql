@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 2.7 (v2.6 + linea.id_marca/gama_comercial/estado, id_sub_subcategoria nullable - M01)
+-- VERSIÓN: 2.8 (v2.7 + marca.logotipo/logotipo_mime_type obligatorios - M01)
 -- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
 -- TOTAL TABLAS: 37
@@ -280,10 +280,14 @@ COMMENT ON TABLE sub_subcategorias IS 'Nivel 3 de la jerarquía de catálogo: Su
 CREATE TABLE IF NOT EXISTS marca (
     id_marca SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
+    logotipo BYTEA NOT NULL,
+    logotipo_mime_type VARCHAR(50) NOT NULL,
     estado enum_estado_general NOT NULL DEFAULT 'activo'
 );
 
-COMMENT ON TABLE marca IS 'Catálogo maestro de marcas (HU-CAT-04). Versión mínima para desbloquear HU-CAT-11; logotipo y cascada de desactivación completa se agregan al implementar HU-CAT-04.';
+COMMENT ON TABLE marca IS 'Catálogo maestro de marcas (HU-CAT-04).';
+COMMENT ON COLUMN marca.logotipo IS 'Bytes crudos del logotipo (RF-CAT-04-01). Máximo 5MB y formatos jpeg/png/webp validados en el servicio; el límite exacto del "Anexo B de la Tanda 2" (RF-CAT-04-02) está pendiente de confirmar por el equipo, hoy se usa 5MB como supuesto aprobado por el Product Owner.';
+COMMENT ON COLUMN marca.logotipo_mime_type IS 'Tipo MIME del logotipo, para servirlo con el Content-Type correcto';
 
 -- Tabla: linea
 CREATE TABLE IF NOT EXISTS linea (

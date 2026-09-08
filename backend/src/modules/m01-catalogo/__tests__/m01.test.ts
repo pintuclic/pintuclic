@@ -1,7 +1,10 @@
 import { CategoriasService } from '../services/categorias.service';
 import { SubcategoriasService } from '../services/subcategorias.service';
 import { LineasService } from '../services/lineas.service';
+import { MarcasService } from '../services/marcas.service';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
+import { CrearMarcaDto } from '../dtos/marcas.dto';
+import { MarcaResumen } from '../interfaces/m01.interfaces';
 import {
   Categoria,
   Subcategoria,
@@ -9,7 +12,6 @@ import {
   CategoriaUpdate,
   NewSubcategoria,
   SubcategoriaUpdate,
-  Marca,
   Linea,
   NewLinea,
   LineaUpdate,
@@ -129,20 +131,50 @@ async function ejecutarPruebasM01(): Promise<void> {
   // ----------------------------------------------------------------------------
   // Estado en memoria: marcas y líneas (HU-CAT-11)
   // ----------------------------------------------------------------------------
-  const marcas: Map<number, Marca> = new Map();
+  const marcas: Map<number, MarcaResumen> = new Map();
   const lineas: Map<number, Linea> = new Map();
   const productosAfectadosPorLinea: Map<number, number> = new Map();
   let seqMarca = 1;
   let seqLinea = 1;
 
-  function crearMarcaDirecto(nombre: string): Marca {
-    const marca: Marca = { id_marca: seqMarca++, nombre, estado: 'activo' };
+  function crearMarcaDirecto(nombre: string): MarcaResumen {
+    const marca: MarcaResumen = { id_marca: seqMarca++, nombre, logotipo_mime_type: 'image/png', estado: 'activo' };
     marcas.set(marca.id_marca, marca);
     return marca;
   }
 
   const mockMarcasRepo = {
+    crear: async (data: { nombre: string; logotipo: Buffer; logotipo_mime_type: string }): Promise<MarcaResumen> => {
+      const marca: MarcaResumen = {
+        id_marca: seqMarca++,
+        nombre: data.nombre,
+        logotipo_mime_type: data.logotipo_mime_type,
+        estado: 'activo',
+      };
+      marcas.set(marca.id_marca, marca);
+      return marca;
+    },
+    listar: async () => Array.from(marcas.values()),
     obtenerPorId: async (id: number) => marcas.get(id),
+    obtenerPorNombre: async (nombre: string, excluirId?: number) =>
+      Array.from(marcas.values()).find((m) => m.nombre === nombre && m.id_marca !== excluirId),
+    obtenerLogotipo: async (id: number) =>
+      marcas.has(id) ? { logotipo: Buffer.from('fake'), logotipo_mime_type: marcas.get(id)!.logotipo_mime_type } : undefined,
+    actualizar: async (id: number, data: { nombre?: string; logotipo_mime_type?: string }) => {
+      const actual = marcas.get(id);
+      if (!actual) return undefined;
+      const actualizada: MarcaResumen = {
+        ...actual,
+        nombre: data.nombre ?? actual.nombre,
+        logotipo_mime_type: data.logotipo_mime_type ?? actual.logotipo_mime_type,
+      };
+      marcas.set(id, actualizada);
+      return actualizada;
+    },
+    cambiarEstado: async (id: number, estado: 'activo' | 'inactivo') => {
+      const m = marcas.get(id);
+      if (m) marcas.set(id, { ...m, estado });
+    },
   };
 
   const mockLineasRepo = {
@@ -174,6 +206,11 @@ async function ejecutarPruebasM01(): Promise<void> {
       if (l) lineas.set(id, { ...l, estado });
     },
     contarProductosAfectados: async (idLinea: number) => productosAfectadosPorLinea.get(idLinea) ?? 0,
+    desactivarLineasDeMarca: async (idMarca: number) => {
+      for (const l of lineas.values()) {
+        if (l.id_marca === idMarca) lineas.set(l.id_linea, { ...l, estado: 'inactivo' });
+      }
+    },
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -182,6 +219,8 @@ async function ejecutarPruebasM01(): Promise<void> {
   const subcategoriasService = new SubcategoriasService(mockSubcategoriasRepo as any, mockCategoriasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lineasService = new LineasService(mockLineasRepo as any, mockMarcasRepo as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const marcasService = new MarcasService(mockMarcasRepo as any, mockLineasRepo as any);
 
   try {
     // --------------------------------------------------------------------------
@@ -327,6 +366,45 @@ async function ejecutarPruebasM01(): Promise<void> {
     marcas.set(pintuco.id_marca, { ...pintuco, estado: 'activo' });
     const reactivacionLinea = await lineasService.reactivar(viniltex.id_linea);
     assert('reactivado' in reactivacionLinea, 'RF-CAT-09-04: reactiva la línea una vez su marca está activa');
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-04: Gestión de marcas
+    // --------------------------------------------------------------------------
+    const LOGO_PNG_1X1 =
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+
+    const nombreLogoInvalidoRechazado = !CrearMarcaDto.safeParse({ nombre: 'Sika', logotipo: 'no-es-una-data-url' }).success;
+    assert(nombreLogoInvalidoRechazado, 'RF-CAT-04-02: el DTO Zod rechaza un logotipo que no es una data URL de imagen válida');
+
+    const logoDemasiadoGrandeRechazado = !CrearMarcaDto.safeParse({
+      nombre: 'Sika',
+      logotipo: `data:image/png;base64,${'A'.repeat(7_000_000)}`,
+    }).success;
+    assert(logoDemasiadoGrandeRechazado, 'RF-CAT-04-02: el DTO Zod rechaza un logotipo de más de 5MB');
+
+    const sika = await marcasService.crear({ nombre: 'Sika', logotipo: CrearMarcaDto.parse({ nombre: 'Sika', logotipo: LOGO_PNG_1X1 }).logotipo });
+    assert(sika.id_marca > 0 && sika.estado === 'activo', 'CA-CAT-04-01: marca creada activa con nombre y logotipo válidos');
+
+    await assertLanza(
+      () => marcasService.crear({ nombre: 'Sika', logotipo: CrearMarcaDto.parse({ nombre: 'Sika', logotipo: LOGO_PNG_1X1 }).logotipo }),
+      'CA-CAT-04-02: rechaza marca duplicada'
+    );
+
+    const logotipoObtenido = await marcasService.obtenerLogotipo(sika.id_marca);
+    assert(logotipoObtenido.logotipo_mime_type === 'image/png', 'El logotipo se puede recuperar aparte del listado');
+
+    const lineaSika = await lineasService.crear({ nombre: 'SikaTop', id_marca: sika.id_marca });
+    const desactivacionMarca = await marcasService.desactivar(sika.id_marca);
+    assert('desactivado' in desactivacionMarca, 'RF-CAT-04-03: desactiva la marca sin pedir confirmación (según el diagrama)');
+
+    const lineaTrasDesactivarMarca = await lineasService.obtenerPorId(lineaSika.id_linea);
+    assert(
+      lineaTrasDesactivarMarca.estado === 'inactivo',
+      'RF-CAT-04-03: desactiva en cascada las líneas de la marca'
+    );
+
+    const reactivacionMarca = await marcasService.reactivar(sika.id_marca);
+    assert('reactivado' in reactivacionMarca, 'La marca se reactiva correctamente');
 
     console.log(`\n======================================================`);
     console.log(`🎯 RESULTADOS: Superadas: ${superadas} | Fallidas: ${fallidas}`);

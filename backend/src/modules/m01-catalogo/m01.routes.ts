@@ -10,10 +10,12 @@ import { LineasRepository } from './repositories/lineas.repository';
 import { CategoriasService } from './services/categorias.service';
 import { SubcategoriasService } from './services/subcategorias.service';
 import { LineasService } from './services/lineas.service';
+import { MarcasService } from './services/marcas.service';
 
 import { CategoriasController } from './controllers/categorias.controller';
 import { SubcategoriasController } from './controllers/subcategorias.controller';
 import { LineasController } from './controllers/lineas.controller';
+import { MarcasController } from './controllers/marcas.controller';
 
 // ==============================================================================
 // M01 - ENRUTADOR PRINCIPAL: CATÁLOGO DE PRODUCTOS
@@ -30,10 +32,12 @@ const lineasRepo = new LineasRepository(db);
 const categoriasService = new CategoriasService(categoriasRepo);
 const subcategoriasService = new SubcategoriasService(subcategoriasRepo, categoriasRepo);
 const lineasService = new LineasService(lineasRepo, marcasRepo);
+const marcasService = new MarcasService(marcasRepo, lineasRepo);
 
 const categoriasCtrl = new CategoriasController(categoriasService);
 const subcategoriasCtrl = new SubcategoriasController(subcategoriasService);
 const lineasCtrl = new LineasController(lineasService);
+const marcasCtrl = new MarcasController(marcasService);
 
 const catalogoRoutes = Router();
 
@@ -154,7 +158,52 @@ catalogoRoutes.patch(
   (req, res, next) => { void lineasCtrl.reactivar(req, res).catch(next); }
 );
 
+// -----------------------------------------------------------------------------
+// Rutas: Marcas (HU-CAT-04)
+// -----------------------------------------------------------------------------
+catalogoRoutes.post(
+  '/marcas',
+  ...guardas.protegido('catalogo.crear'),
+  (req, res, next) => { void marcasCtrl.crear(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/marcas',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void marcasCtrl.listar(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/marcas/:id',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void marcasCtrl.obtener(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/marcas/:id/logotipo',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void marcasCtrl.obtenerLogotipo(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/marcas/:id',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void marcasCtrl.actualizar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/marcas/:id/desactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void marcasCtrl.desactivar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/marcas/:id/reactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void marcasCtrl.reactivar(req, res).catch(next); }
+);
+
 // Fachadas públicas exportadas por M01 para consumo inter-módulo (HU-CAT-02 en adelante)
-export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService };
+export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService };
 
 export { catalogoRoutes };
