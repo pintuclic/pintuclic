@@ -396,6 +396,8 @@ async function ejecutarPruebasM01(): Promise<void> {
         publicado: false,
         rendimiento_min: null,
         rendimiento_max: null,
+        id_categoria_complementaria: data.id_categoria_complementaria ?? null,
+        patrocinado: typeof data.patrocinado === 'boolean' ? data.patrocinado : false,
       };
       productos.set(producto.id_producto, producto);
       productoSubcats.set(producto.id_producto, [...idSubcategorias]);
@@ -656,6 +658,19 @@ async function ejecutarPruebasM01(): Promise<void> {
       filtrarProductosPublicos(filtros).slice(filtros.offset, filtros.offset + filtros.limite),
     contarProductos: async (filtros: { idSubcategoria?: number; busqueda?: string }) => filtrarProductosPublicos(filtros).length,
     obtenerProductoPublico: async (id: number) => (esPublico(id) ? productos.get(id) : undefined),
+    complementariosPorCategoria: async (idCategoria: number, excluirId: number, limite: number) =>
+      Array.from(productos.values())
+        .filter((p) => esPublico(p.id_producto) && p.id_producto !== excluirId)
+        .filter((p) =>
+          (productoSubcats.get(p.id_producto) ?? []).some((subId) => subcategorias.get(subId)?.id_categoria === idCategoria)
+        )
+        .sort((a, b) => Number(b.patrocinado) - Number(a.patrocinado) || a.nombre.localeCompare(b.nombre))
+        .slice(0, limite),
+    patrocinados: async (excluirId: number, limite: number) =>
+      Array.from(productos.values())
+        .filter((p) => esPublico(p.id_producto) && p.patrocinado === true && p.id_producto !== excluirId)
+        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+        .slice(0, limite),
     listarVariantesPublicas: async (idProducto: number) =>
       Array.from(variantes.values())
         .filter((v) => v.id_producto === idProducto && v.estado === 'activo')
@@ -710,7 +725,9 @@ async function ejecutarPruebasM01(): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockResinasRepo as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockSubcategoriasRepo as any
+    mockSubcategoriasRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockCategoriasRepo as any
   );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const presentacionesService = new PresentacionesService(mockPresentacionesRepo as any);
@@ -1522,6 +1539,69 @@ async function ejecutarPruebasM01(): Promise<void> {
         ficha.variantes.some((v) => v.id_variante === varFijo.id_variante && v.presentacion === 'Galón' && typeof v.precio_vigente === 'number') &&
         ficha.imagenes.length > 0,
       'CA-CAT-06-02: la ficha pública trae variantes (con presentación y precio) e imágenes'
+    );
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-08: Productos complementarios
+    // --------------------------------------------------------------------------
+    const catComp = await categoriasService.crear({ nombre: 'Complementos' });
+    const subComp = await subcategoriasService.crear({ nombre: 'Accesorios', id_categoria: catComp.id_categoria });
+    const prodComp1 = await productosService.crear({
+      nombre: 'Rodillo Pro',
+      id_marca: comex.id_marca,
+      clase_color: 'sin_color',
+      id_subcategorias: [subComp.id_subcategoria],
+    });
+    const prodComp2 = await productosService.crear({
+      nombre: 'Bandeja Pro',
+      id_marca: comex.id_marca,
+      clase_color: 'sin_color',
+      id_subcategorias: [subComp.id_subcategoria],
+    });
+    varianteStats.set(prodComp1.id_producto, { total: 1, activas: 1 });
+    varianteStats.set(prodComp2.id_producto, { total: 1, activas: 1 });
+    await productosService.publicar(prodComp1.id_producto);
+    await productosService.publicar(prodComp2.id_producto);
+    await productosService.actualizar(prodComp2.id_producto, { patrocinado: true });
+
+    await assertLanza(
+      () => productosService.actualizar(prodFijo.id_producto, { id_categoria_complementaria: 99999 }),
+      'RF-CAT-08-01: rechaza una categoría complementaria inexistente'
+    );
+
+    const prodFijoConf = await productosService.actualizar(prodFijo.id_producto, {
+      id_categoria_complementaria: catComp.id_categoria,
+    });
+    assert(
+      prodFijoConf.id_categoria_complementaria === catComp.id_categoria,
+      'RF-CAT-08-01: configura la categoría complementaria del producto'
+    );
+
+    const comp = await catalogoPublicoService.complementarios(prodFijo.id_producto);
+    assert(
+      comp.length === 2 && comp[0]?.id_producto === prodComp2.id_producto,
+      'RF-CAT-08-02: hasta 4 complementarios con los patrocinados primero'
+    );
+
+    await productosService.actualizar(prodComp1.id_producto, { id_categoria_complementaria: catComp.id_categoria });
+    const compProp = await catalogoPublicoService.complementarios(prodComp1.id_producto);
+    assert(
+      !compProp.some((p) => p.id_producto === prodComp1.id_producto),
+      'CA-CAT-08-04: el propio producto no aparece entre sus complementarios'
+    );
+
+    const prodSinCat = await productosService.crear({
+      nombre: 'Espátula Pro',
+      id_marca: comex.id_marca,
+      clase_color: 'sin_color',
+      id_subcategorias: [interioresEsmaltes.id_subcategoria],
+    });
+    varianteStats.set(prodSinCat.id_producto, { total: 1, activas: 1 });
+    await productosService.publicar(prodSinCat.id_producto);
+    const compFallback = await catalogoPublicoService.complementarios(prodSinCat.id_producto);
+    assert(
+      compFallback.some((p) => p.id_producto === prodComp2.id_producto),
+      'RF-CAT-08-02: sin categoría configurada, cae a productos patrocinados'
     );
 
     console.log(`\n======================================================`);

@@ -146,10 +146,10 @@ ON CONFLICT (id_tipo_resina) DO NOTHING;
 
 -- 3.7 Producto (HU-CAT-02): marca obligatoria, clase de color, y línea/resina en pinturas
 -- rendimiento en m2 por galón (HU-CAT-10) solo aplica a pinturas
-INSERT INTO producto (id_producto, id_marca, id_linea, id_tipo_resina, nombre, clase_color, rendimiento_min, rendimiento_max) VALUES
-    (1, 1, 1, 1,    'Viniltex Máxima Protección Antibacterial', 'colores_fijos', 40.00, 45.00),
-    (2, 1, 1, NULL, 'Kit Renovación Hogar Premium',             'sin_color',     NULL,  NULL),
-    (3, 2, 2, 2,    'Esmalte Anticorrosivo Secado Rápido',      'colores_fijos', 15.00, 20.00)
+INSERT INTO producto (id_producto, id_marca, id_linea, id_tipo_resina, nombre, clase_color, rendimiento_min, rendimiento_max, id_categoria_complementaria, patrocinado) VALUES
+    (1, 1, 1, 1,    'Viniltex Máxima Protección Antibacterial', 'colores_fijos', 40.00, 45.00, 2,    false),
+    (2, 1, 1, NULL, 'Kit Renovación Hogar Premium',             'sin_color',     NULL,  NULL,  NULL, false),
+    (3, 2, 2, 2,    'Esmalte Anticorrosivo Secado Rápido',      'colores_fijos', 15.00, 20.00, NULL, true)
 ON CONFLICT (id_producto) DO NOTHING;
 
 -- 3.7b Producto ↔ Subcategoría (RF-CAT-02-02: al menos una subcategoría)

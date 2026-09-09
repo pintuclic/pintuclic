@@ -40,10 +40,12 @@ export const ActualizarProductoDto = z
     nombre: nombreProductoSchema.optional(),
     clase_color: claseColorSchema.optional(),
     id_subcategorias: subcategoriasSchema.optional(),
-    // `null` limpia la línea/resina; omitirlo la deja intacta.
+    // `null` limpia la línea/resina/categoría complementaria; omitirlo la deja intacta.
     id_linea: idPositivo.nullable().optional(),
     id_tipo_resina: idPositivo.nullable().optional(),
     descripcion: descripcionSchema.nullable().optional(),
+    id_categoria_complementaria: idPositivo.nullable().optional(),
+    patrocinado: z.boolean().optional(),
   })
   .refine(
     (d) =>
@@ -52,7 +54,9 @@ export const ActualizarProductoDto = z
       d.id_subcategorias !== undefined ||
       d.id_linea !== undefined ||
       d.id_tipo_resina !== undefined ||
-      d.descripcion !== undefined,
+      d.descripcion !== undefined ||
+      d.id_categoria_complementaria !== undefined ||
+      d.patrocinado !== undefined,
     { message: 'Debe indicar al menos un dato a actualizar' }
   );
 export type ActualizarProductoDto = z.infer<typeof ActualizarProductoDto>;

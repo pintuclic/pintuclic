@@ -185,6 +185,8 @@ export interface ProductoTable {
   // Rendimiento en m² por galón (HU-CAT-10). NUMERIC se devuelve como string.
   rendimiento_min: ColumnType<string | null, number | null, number | null>;
   rendimiento_max: ColumnType<string | null, number | null, number | null>;
+  id_categoria_complementaria: number | null;
+  patrocinado: Generated<boolean>;
 }
 
 export interface TipoResinaTable {

@@ -124,6 +124,8 @@ export interface ProductoDetalle {
   readonly id_subcategorias: number[];
   readonly rendimiento_min: number | null;
   readonly rendimiento_max: number | null;
+  readonly id_categoria_complementaria: number | null;
+  readonly patrocinado: boolean;
 }
 
 /** Rendimiento derivado para una presentación concreta (RF-CAT-10-03). */

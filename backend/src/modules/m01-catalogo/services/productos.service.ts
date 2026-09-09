@@ -3,6 +3,7 @@ import { MarcasRepository } from '../repositories/marcas.repository';
 import { LineasRepository } from '../repositories/lineas.repository';
 import { TipoResinasRepository } from '../repositories/resinas.repository';
 import { SubcategoriasRepository } from '../repositories/subcategorias.repository';
+import { CategoriasRepository } from '../repositories/categorias.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { Producto, ProductoUpdate, EnumClaseColor } from '../../../core/db/types';
 import { CrearProductoDto, ActualizarProductoDto } from '../dtos/productos.dto';
@@ -33,7 +34,8 @@ export class ProductosService {
     private readonly marcasRepo: MarcasRepository,
     private readonly lineasRepo: LineasRepository,
     private readonly resinasRepo: TipoResinasRepository,
-    private readonly subcategoriasRepo: SubcategoriasRepository
+    private readonly subcategoriasRepo: SubcategoriasRepository,
+    private readonly categoriasRepo: CategoriasRepository
   ) {}
 
   async crear(dto: CrearProductoDto): Promise<ProductoDetalle> {
@@ -92,12 +94,21 @@ export class ProductosService {
     }
     await this.validarLineaYResina(claseEfectiva, actual.id_marca, lineaEfectiva, resinaEfectiva);
 
+    if (dto.id_categoria_complementaria !== undefined && dto.id_categoria_complementaria !== null) {
+      const categoria = await this.categoriasRepo.obtenerPorId(dto.id_categoria_complementaria);
+      if (!categoria) {
+        throw new AppError('La categoría complementaria indicada no existe', 404, 'CATEGORIA_NO_ENCONTRADA');
+      }
+    }
+
     const data: ProductoUpdate = {};
     if (dto.nombre !== undefined) data.nombre = dto.nombre;
     if (dto.descripcion !== undefined) data.descripcion = dto.descripcion;
     if (dto.clase_color !== undefined) data.clase_color = dto.clase_color;
     if (dto.id_linea !== undefined) data.id_linea = dto.id_linea;
     if (dto.id_tipo_resina !== undefined) data.id_tipo_resina = dto.id_tipo_resina;
+    if (dto.id_categoria_complementaria !== undefined) data.id_categoria_complementaria = dto.id_categoria_complementaria;
+    if (dto.patrocinado !== undefined) data.patrocinado = dto.patrocinado;
 
     const actualizado = await this.repo.actualizar(id, data, dto.id_subcategorias);
     if (!actualizado) {
@@ -242,6 +253,8 @@ export class ProductosService {
       id_subcategorias,
       rendimiento_min: producto.rendimiento_min === null ? null : Number(producto.rendimiento_min),
       rendimiento_max: producto.rendimiento_max === null ? null : Number(producto.rendimiento_max),
+      id_categoria_complementaria: producto.id_categoria_complementaria,
+      patrocinado: producto.patrocinado,
     };
   }
 }
