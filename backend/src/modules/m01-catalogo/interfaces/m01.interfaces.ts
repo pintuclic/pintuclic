@@ -1,4 +1,4 @@
-import { EnumEstadoGeneral } from '../../../core/db/types';
+import { EnumEstadoGeneral, EnumClaseColor } from '../../../core/db/types';
 
 // ==============================================================================
 // M01 - CATÁLOGO DE PRODUCTOS
@@ -100,4 +100,26 @@ export interface ColorDetalle {
   readonly cielab: { readonly l: number; readonly a: number; readonly b: number };
   readonly muestra_hex: string;
   readonly estado: EnumEstadoGeneral;
+}
+
+// ------------------------------------------------------------------------------
+// PRODUCTOS (HU-CAT-02)
+// ------------------------------------------------------------------------------
+
+/**
+ * Ficha de un producto tal como se expone en el panel. La información es común e
+ * independiente de las variantes (RF-CAT-02-01). `id_subcategorias` es la lista
+ * de subcategorías a las que pertenece (RF-CAT-02-02, al menos una).
+ */
+export interface ProductoDetalle {
+  readonly id_producto: number;
+  readonly id_marca: number;
+  readonly id_linea: number | null;
+  readonly id_tipo_resina: number | null;
+  readonly nombre: string;
+  readonly descripcion: string | null;
+  readonly clase_color: EnumClaseColor;
+  readonly estado: EnumEstadoGeneral;
+  readonly publicado: boolean;
+  readonly id_subcategorias: number[];
 }

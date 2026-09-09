@@ -8,6 +8,8 @@ import { MarcasRepository } from './repositories/marcas.repository';
 import { LineasRepository } from './repositories/lineas.repository';
 import { BasesRepository } from './repositories/bases.repository';
 import { ColoresRepository } from './repositories/colores.repository';
+import { TipoResinasRepository } from './repositories/resinas.repository';
+import { ProductosRepository } from './repositories/productos.repository';
 
 import { CategoriasService } from './services/categorias.service';
 import { SubcategoriasService } from './services/subcategorias.service';
@@ -15,6 +17,8 @@ import { LineasService } from './services/lineas.service';
 import { MarcasService } from './services/marcas.service';
 import { BasesService } from './services/bases.service';
 import { ColoresService } from './services/colores.service';
+import { TipoResinasService } from './services/resinas.service';
+import { ProductosService } from './services/productos.service';
 
 import { CategoriasController } from './controllers/categorias.controller';
 import { SubcategoriasController } from './controllers/subcategorias.controller';
@@ -22,6 +26,8 @@ import { LineasController } from './controllers/lineas.controller';
 import { MarcasController } from './controllers/marcas.controller';
 import { BasesController } from './controllers/bases.controller';
 import { ColoresController } from './controllers/colores.controller';
+import { TipoResinasController } from './controllers/resinas.controller';
+import { ProductosController } from './controllers/productos.controller';
 
 // ==============================================================================
 // M01 - ENRUTADOR PRINCIPAL: CATÁLOGO DE PRODUCTOS
@@ -36,6 +42,8 @@ const marcasRepo = new MarcasRepository(db);
 const lineasRepo = new LineasRepository(db);
 const basesRepo = new BasesRepository(db);
 const coloresRepo = new ColoresRepository(db);
+const resinasRepo = new TipoResinasRepository(db);
+const productosRepo = new ProductosRepository(db);
 
 const categoriasService = new CategoriasService(categoriasRepo);
 const subcategoriasService = new SubcategoriasService(subcategoriasRepo, categoriasRepo);
@@ -43,6 +51,8 @@ const lineasService = new LineasService(lineasRepo, marcasRepo);
 const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo, coloresRepo);
 const basesService = new BasesService(basesRepo, marcasRepo);
 const coloresService = new ColoresService(coloresRepo, marcasRepo);
+const resinasService = new TipoResinasService(resinasRepo);
+const productosService = new ProductosService(productosRepo, marcasRepo, lineasRepo, resinasRepo, subcategoriasRepo);
 
 const categoriasCtrl = new CategoriasController(categoriasService);
 const subcategoriasCtrl = new SubcategoriasController(subcategoriasService);
@@ -50,6 +60,8 @@ const lineasCtrl = new LineasController(lineasService);
 const marcasCtrl = new MarcasController(marcasService);
 const basesCtrl = new BasesController(basesService);
 const coloresCtrl = new ColoresController(coloresService);
+const resinasCtrl = new TipoResinasController(resinasService);
+const productosCtrl = new ProductosController(productosService);
 
 const catalogoRoutes = Router();
 
@@ -293,7 +305,97 @@ catalogoRoutes.patch(
   (req, res, next) => { void coloresCtrl.reactivar(req, res).catch(next); }
 );
 
+// -----------------------------------------------------------------------------
+// Rutas: Tipos de resina (HU-CAT-02, RF-CAT-02-04)
+// -----------------------------------------------------------------------------
+catalogoRoutes.post(
+  '/tipos-resina',
+  ...guardas.protegido('catalogo.crear'),
+  (req, res, next) => { void resinasCtrl.crear(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/tipos-resina',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void resinasCtrl.listar(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/tipos-resina/:id',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void resinasCtrl.obtener(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/tipos-resina/:id',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void resinasCtrl.actualizar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/tipos-resina/:id/desactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void resinasCtrl.desactivar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/tipos-resina/:id/reactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void resinasCtrl.reactivar(req, res).catch(next); }
+);
+
+// -----------------------------------------------------------------------------
+// Rutas: Productos (HU-CAT-02) — permiso oficial «catalogo.*» (cubre productos y variantes)
+// -----------------------------------------------------------------------------
+catalogoRoutes.post(
+  '/productos',
+  ...guardas.protegido('catalogo.crear'),
+  (req, res, next) => { void productosCtrl.crear(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/productos',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void productosCtrl.listar(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/productos/:id',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void productosCtrl.obtener(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/productos/:id',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void productosCtrl.actualizar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/productos/:id/publicar',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void productosCtrl.publicar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/productos/:id/despublicar',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void productosCtrl.despublicar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/productos/:id/desactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void productosCtrl.desactivar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/productos/:id/reactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void productosCtrl.reactivar(req, res).catch(next); }
+);
+
 // Fachadas públicas exportadas por M01 para consumo inter-módulo (HU-CAT-02 en adelante)
-export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService };
+export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService, resinasService, productosService };
 
 export { catalogoRoutes };

@@ -138,12 +138,25 @@ INSERT INTO base (id_base, id_marca, nombre) VALUES
     (2, 1, 'Base B')
 ON CONFLICT (id_base) DO NOTHING;
 
--- 3.7 Producto
-INSERT INTO producto (id_producto, id_linea, nombre) VALUES
-    (1, 1, 'Viniltex Máxima Protección Antibacterial'),
-    (2, 1, 'Kit Renovación Hogar Premium'),
-    (3, 2, 'Esmalte Anticorrosivo Secado Rápido')
+-- 3.6b Tipo de resina (catálogo administrable - RF-CAT-02-04)
+INSERT INTO tipo_resina (id_tipo_resina, nombre) VALUES
+    (1, 'Base Agua'),
+    (2, 'Base Aceite')
+ON CONFLICT (id_tipo_resina) DO NOTHING;
+
+-- 3.7 Producto (HU-CAT-02): marca obligatoria, clase de color, y línea/resina en pinturas
+INSERT INTO producto (id_producto, id_marca, id_linea, id_tipo_resina, nombre, clase_color) VALUES
+    (1, 1, 1, 1,    'Viniltex Máxima Protección Antibacterial', 'colores_fijos'),
+    (2, 1, 1, NULL, 'Kit Renovación Hogar Premium',             'sin_color'),
+    (3, 2, 2, 2,    'Esmalte Anticorrosivo Secado Rápido',      'colores_fijos')
 ON CONFLICT (id_producto) DO NOTHING;
+
+-- 3.7b Producto ↔ Subcategoría (RF-CAT-02-02: al menos una subcategoría)
+INSERT INTO producto_subcategoria (id_producto, id_subcategoria) VALUES
+    (1, 1),
+    (2, 1),
+    (3, 2)
+ON CONFLICT (id_producto, id_subcategoria) DO NOTHING;
 
 -- 3.8 Colores por marca (HU-CAT-05): nombre + código opcional + valor CIELAB obligatorio
 INSERT INTO color (id_color, id_marca, nombre, codigo, cie_l, cie_a, cie_b) VALUES
@@ -331,6 +344,7 @@ SELECT setval('marca_id_marca_seq',                              COALESCE((SELEC
 SELECT setval('linea_id_linea_seq',                              COALESCE((SELECT MAX(id_linea) FROM linea), 1));
 SELECT setval('base_id_base_seq',                                COALESCE((SELECT MAX(id_base) FROM base), 1));
 SELECT setval('producto_id_producto_seq',                        COALESCE((SELECT MAX(id_producto) FROM producto), 1));
+SELECT setval('tipo_resina_id_tipo_resina_seq',                  COALESCE((SELECT MAX(id_tipo_resina) FROM tipo_resina), 1));
 SELECT setval('color_id_color_seq',                              COALESCE((SELECT MAX(id_color) FROM color), 1));
 SELECT setval('tonos_id_tono_seq',                               COALESCE((SELECT MAX(id_tono) FROM tonos), 1));
 SELECT setval('variante_id_variante_seq',                        COALESCE((SELECT MAX(id_variante) FROM variante), 1));

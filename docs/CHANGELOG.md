@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.8.0] - 2026-09-09
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Sexta entrega del módulo M01: gestión de productos (HU-CAT-02), con la información común independiente de las variantes, clase de color, catálogo administrable de tipos de resina y relación N:M con subcategorías. La publicación (RF-CAT-02-05) se implementa de forma parcial (valida ≥1 variante activa; la exigencia de imagen queda diferida a HU-CAT-07). Variantes en sí (HU-CAT-03) quedan fuera de esta entrega.
+- **Hitos Clave:** BD v3.1: nuevo `enum_clase_color` (`entonable | colores_fijos | sin_color`), nuevas tablas **`tipo_resina`** (catálogo administrable, RF-CAT-02-04) y **`producto_subcategoria`** (N:M, RF-CAT-02-02), y `producto` enriquecido (`id_marca` obligatoria, `id_linea`/`id_tipo_resina` opcionales, `clase_color`, `descripcion`, `estado`, `publicado`). Endpoints `POST/GET/PATCH /api/catalogo/productos` (+`/publicar`, `/despublicar`, `/desactivar`, `/reactivar`) con búsqueda `?q=&marca=`, y `POST/GET/PATCH /api/catalogo/tipos-resina` (+estado). Reglas: marca obligatoria y existente; ≥1 subcategoría; una pintura (clase ≠ `sin_color`) exige línea + resina y la línea debe ser de la marca del producto; la clase no puede cambiarse si el producto ya tiene variantes (RF-CAT-02-03, verificado contra `variante`).
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 72/72 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed en `pintuclic-db`): estructura de `producto` v3.1, `tipo_resina` y `producto_subcategoria`, FKs y datos semilla verificados; 40 tablas.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.8.0_M01_productos_backend.md](./walkthroughs/M01/walkthrough_v2.8.0_M01_productos_backend.md)
+
+---
+
 ## [v2.7.0] - 2026-09-08
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Quinta entrega del módulo M01: gestión administrativa de colores (HU-CAT-05), cada color asociado a la marca que efectivamente lo ofrece y con su valor cromático CIELAB obligatorio. **Alcance aprobado por el PO: sin familias cromáticas** (RF-CAT-05-03 diferido). El uso del color en carta/variantes (RF-CAT-05-04/05/06) y la asociación color↔base (RF-CAT-12-04, flujo 3 de CAT-12) quedan diferidos por depender de HU-CAT-02/03 y de la decisión de negocio RF-CAT-12-12.
