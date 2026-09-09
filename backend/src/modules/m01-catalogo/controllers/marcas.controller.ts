@@ -49,6 +49,12 @@ export class MarcasController {
     sendSuccess(res, marca, 'Marca actualizada exitosamente');
   };
 
+  /** RF-CAT-09-03: aviso previo de impacto en cascada antes de desactivar. */
+  impactoDesactivacion = async (req: Request, res: Response): Promise<void> => {
+    const impacto = await this.service.impactoDesactivacion(idDeParametro(req));
+    sendSuccess(res, impacto);
+  };
+
   desactivar = async (req: Request, res: Response): Promise<void> => {
     const resultado = await this.service.desactivar(idDeParametro(req));
     sendSuccess(res, resultado);

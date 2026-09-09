@@ -66,7 +66,7 @@ const imagenesRepo = new ImagenesRepository(db);
 const categoriasService = new CategoriasService(categoriasRepo);
 const subcategoriasService = new SubcategoriasService(subcategoriasRepo, categoriasRepo);
 const lineasService = new LineasService(lineasRepo, marcasRepo);
-const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo, coloresRepo);
+const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo, coloresRepo, productosRepo);
 const basesService = new BasesService(basesRepo, marcasRepo);
 const coloresService = new ColoresService(coloresRepo, marcasRepo);
 const resinasService = new TipoResinasService(resinasRepo);
@@ -243,6 +243,12 @@ catalogoRoutes.patch(
   (req, res, next) => { void marcasCtrl.actualizar(req, res).catch(next); }
 );
 
+catalogoRoutes.get(
+  '/marcas/:id/impacto-desactivacion',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void marcasCtrl.impactoDesactivacion(req, res).catch(next); }
+);
+
 catalogoRoutes.patch(
   '/marcas/:id/desactivar',
   ...guardas.protegido('catalogo.eliminar'),
@@ -409,6 +415,12 @@ catalogoRoutes.patch(
   '/productos/:id/despublicar',
   ...guardas.protegido('catalogo.editar'),
   (req, res, next) => { void productosCtrl.despublicar(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/productos/:id/impacto-desactivacion',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void productosCtrl.impactoDesactivacion(req, res).catch(next); }
 );
 
 catalogoRoutes.patch(
