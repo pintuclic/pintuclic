@@ -23,6 +23,7 @@ import { TipoResinasService } from './services/resinas.service';
 import { ProductosService } from './services/productos.service';
 import { PresentacionesService } from './services/presentaciones.service';
 import { VariantesService } from './services/variantes.service';
+import { RendimientoService } from './services/rendimiento.service';
 
 import { CategoriasController } from './controllers/categorias.controller';
 import { SubcategoriasController } from './controllers/subcategorias.controller';
@@ -34,6 +35,7 @@ import { TipoResinasController } from './controllers/resinas.controller';
 import { ProductosController } from './controllers/productos.controller';
 import { PresentacionesController } from './controllers/presentaciones.controller';
 import { VariantesController } from './controllers/variantes.controller';
+import { RendimientoController } from './controllers/rendimiento.controller';
 
 // ==============================================================================
 // M01 - ENRUTADOR PRINCIPAL: CATÁLOGO DE PRODUCTOS
@@ -63,6 +65,7 @@ const resinasService = new TipoResinasService(resinasRepo);
 const productosService = new ProductosService(productosRepo, marcasRepo, lineasRepo, resinasRepo, subcategoriasRepo);
 const presentacionesService = new PresentacionesService(presentacionesRepo);
 const variantesService = new VariantesService(variantesRepo, productosRepo, presentacionesRepo, basesRepo, coloresRepo);
+const rendimientoService = new RendimientoService(productosRepo, presentacionesRepo);
 
 const categoriasCtrl = new CategoriasController(categoriasService);
 const subcategoriasCtrl = new SubcategoriasController(subcategoriasService);
@@ -74,6 +77,7 @@ const resinasCtrl = new TipoResinasController(resinasService);
 const productosCtrl = new ProductosController(productosService);
 const presentacionesCtrl = new PresentacionesController(presentacionesService);
 const variantesCtrl = new VariantesController(variantesService);
+const rendimientoCtrl = new RendimientoController(rendimientoService);
 
 const catalogoRoutes = Router();
 
@@ -485,7 +489,22 @@ catalogoRoutes.patch(
   (req, res, next) => { void variantesCtrl.reactivar(req, res).catch(next); }
 );
 
+// -----------------------------------------------------------------------------
+// Rutas: Rendimiento del producto (HU-CAT-10, RF-CAT-10-02/03/05)
+// -----------------------------------------------------------------------------
+catalogoRoutes.get(
+  '/productos/:idProducto/rendimiento',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void rendimientoCtrl.obtener(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/productos/:idProducto/rendimiento',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void rendimientoCtrl.establecer(req, res).catch(next); }
+);
+
 // Fachadas públicas exportadas por M01 para consumo inter-módulo (HU-CAT-02 en adelante)
-export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService, resinasService, productosService, presentacionesService, variantesService };
+export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService, resinasService, productosService, presentacionesService, variantesService, rendimientoService };
 
 export { catalogoRoutes };

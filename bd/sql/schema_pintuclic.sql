@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 3.2 (v3.1 + tabla presentacion y variante enriquecida - M01 HU-CAT-03)
+-- VERSIÓN: 3.3 (v3.2 + rendimiento del producto - M01 HU-CAT-10)
 -- MOTOR: PostgreSQL 15+ (usa UNIQUE NULLS NOT DISTINCT; compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
 -- TOTAL TABLAS: 41
@@ -348,17 +348,26 @@ CREATE TABLE IF NOT EXISTS producto (
     clase_color enum_clase_color NOT NULL,
     estado enum_estado_general NOT NULL DEFAULT 'activo',
     publicado BOOLEAN NOT NULL DEFAULT false,
+    rendimiento_min NUMERIC(8, 2),
+    rendimiento_max NUMERIC(8, 2),
     CONSTRAINT fk_producto_marca FOREIGN KEY (id_marca)
         REFERENCES marca (id_marca) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_producto_linea FOREIGN KEY (id_linea)
         REFERENCES linea (id_linea) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_producto_resina FOREIGN KEY (id_tipo_resina)
-        REFERENCES tipo_resina (id_tipo_resina) ON UPDATE CASCADE ON DELETE RESTRICT
+        REFERENCES tipo_resina (id_tipo_resina) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT chk_producto_rendimiento CHECK (
+        (rendimiento_min IS NULL AND rendimiento_max IS NULL)
+        OR (rendimiento_min IS NOT NULL AND rendimiento_max IS NOT NULL
+            AND rendimiento_min > 0 AND rendimiento_min <= rendimiento_max)
+    )
 );
 
 COMMENT ON TABLE producto IS 'Producto del catálogo (HU-CAT-02). Información común independiente de sus variantes. Marca obligatoria; línea y tipo de resina obligatorios solo para pinturas (clase_color != sin_color); una brocha (sin_color) puede omitirlos (RF-CAT-02-02). La clase de color no puede cambiarse una vez el producto tiene variantes (RF-CAT-02-03).';
 COMMENT ON COLUMN producto.clase_color IS 'Clase del producto: entonable | colores_fijos | sin_color (RF-CAT-02-03)';
 COMMENT ON COLUMN producto.publicado IS 'Publicación en catálogo público (RF-CAT-02-05). Requiere >=1 variante activa y >=1 imagen; la exigencia de imagen queda pendiente de HU-CAT-07.';
+COMMENT ON COLUMN producto.rendimiento_min IS 'Rendimiento mínimo en m² por galón (HU-CAT-10, RF-CAT-10-02). El rendimiento por presentación se deriva de este valor y del volumen (RF-CAT-10-03).';
+COMMENT ON COLUMN producto.rendimiento_max IS 'Rendimiento máximo en m² por galón (HU-CAT-10, RF-CAT-10-02). Debe ser >= rendimiento_min (RF-CAT-10-05).';
 
 -- Tabla: producto_subcategoria (relación N:M - RF-CAT-02-02: al menos una subcategoría)
 CREATE TABLE IF NOT EXISTS producto_subcategoria (

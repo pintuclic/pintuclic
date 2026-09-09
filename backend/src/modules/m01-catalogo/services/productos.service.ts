@@ -225,6 +225,8 @@ export class ProductosService {
       estado: producto.estado,
       publicado: producto.publicado,
       id_subcategorias,
+      rendimiento_min: producto.rendimiento_min === null ? null : Number(producto.rendimiento_min),
+      rendimiento_max: producto.rendimiento_max === null ? null : Number(producto.rendimiento_max),
     };
   }
 }
