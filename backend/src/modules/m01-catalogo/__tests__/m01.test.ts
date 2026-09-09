@@ -6,10 +6,13 @@ import { BasesService } from '../services/bases.service';
 import { ColoresService, cielabAHex } from '../services/colores.service';
 import { TipoResinasService } from '../services/resinas.service';
 import { ProductosService } from '../services/productos.service';
+import { PresentacionesService } from '../services/presentaciones.service';
+import { VariantesService } from '../services/variantes.service';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
 import { CrearMarcaDto } from '../dtos/marcas.dto';
 import { CrearColorDto } from '../dtos/colores.dto';
 import { CrearProductoDto } from '../dtos/productos.dto';
+import { CrearVarianteDto } from '../dtos/variantes.dto';
 import { MarcaResumen } from '../interfaces/m01.interfaces';
 import {
   Categoria,
@@ -33,6 +36,12 @@ import {
   Producto,
   NewProducto,
   ProductoUpdate,
+  Presentacion,
+  NewPresentacion,
+  PresentacionUpdate,
+  Variante,
+  NewVariante,
+  VarianteUpdate,
 } from '../../../core/db/types';
 
 // ==============================================================================
@@ -403,6 +412,99 @@ async function ejecutarPruebasM01(): Promise<void> {
     contarVariantesActivas: async (id: number) => varianteStats.get(id)?.activas ?? 0,
   };
 
+  // ----------------------------------------------------------------------------
+  // Estado en memoria: presentaciones y variantes (HU-CAT-03)
+  // ----------------------------------------------------------------------------
+  const presentaciones: Map<number, Presentacion> = new Map();
+  let seqPresentacion = 1;
+
+  const mockPresentacionesRepo = {
+    crear: async (data: NewPresentacion): Promise<Presentacion> => {
+      const p: Presentacion = { id_presentacion: seqPresentacion++, nombre: data.nombre, volumen: String(data.volumen), estado: 'activo' };
+      presentaciones.set(p.id_presentacion, p);
+      return p;
+    },
+    listar: async () => Array.from(presentaciones.values()),
+    obtenerPorId: async (id: number) => presentaciones.get(id),
+    obtenerPorNombre: async (nombre: string, excluirId?: number) =>
+      Array.from(presentaciones.values()).find((p) => p.nombre === nombre && p.id_presentacion !== excluirId),
+    actualizar: async (id: number, data: PresentacionUpdate) => {
+      const actual = presentaciones.get(id);
+      if (!actual) return undefined;
+      const actualizada = {
+        ...actual,
+        ...(data.nombre !== undefined ? { nombre: data.nombre } : {}),
+        ...(data.volumen !== undefined ? { volumen: String(data.volumen) } : {}),
+      } as Presentacion;
+      presentaciones.set(id, actualizada);
+      return actualizada;
+    },
+    cambiarEstado: async (id: number, estado: 'activo' | 'inactivo') => {
+      const p = presentaciones.get(id);
+      if (p) presentaciones.set(id, { ...p, estado });
+    },
+  };
+
+  const variantes: Map<number, Variante> = new Map();
+  let seqVariante = 1;
+
+  const mockVariantesRepo = {
+    crear: async (data: NewVariante): Promise<Variante> => {
+      const v: Variante = {
+        id_variante: seqVariante++,
+        id_producto: data.id_producto,
+        id_presentacion: data.id_presentacion,
+        id_color: data.id_color ?? null,
+        id_base: data.id_base ?? null,
+        precio_vigente: String(data.precio_vigente),
+        existencia_referencial: typeof data.existencia_referencial === 'number' ? data.existencia_referencial : 0,
+        codigo_proveedor: data.codigo_proveedor ?? null,
+        estado: 'activo',
+      };
+      variantes.set(v.id_variante, v);
+      return v;
+    },
+    listarPorProducto: async (idProducto: number) =>
+      Array.from(variantes.values()).filter((v) => v.id_producto === idProducto),
+    obtenerPorId: async (id: number) => variantes.get(id),
+    obtenerPorCodigoProveedor: async (codigo: string, excluirId?: number) =>
+      Array.from(variantes.values()).find((v) => v.codigo_proveedor === codigo && v.id_variante !== excluirId),
+    existeForma: async (
+      idProducto: number,
+      idBase: number | null,
+      idColor: number | null,
+      idPresentacion: number,
+      excluirId?: number
+    ) =>
+      Array.from(variantes.values()).some(
+        (v) =>
+          v.id_producto === idProducto &&
+          v.id_presentacion === idPresentacion &&
+          v.id_base === idBase &&
+          v.id_color === idColor &&
+          v.id_variante !== excluirId
+      ),
+    actualizar: async (id: number, data: VarianteUpdate) => {
+      const actual = variantes.get(id);
+      if (!actual) return undefined;
+      const actualizada = {
+        ...actual,
+        ...(data.id_presentacion !== undefined ? { id_presentacion: data.id_presentacion } : {}),
+        ...(data.precio_vigente !== undefined ? { precio_vigente: String(data.precio_vigente) } : {}),
+        ...(data.existencia_referencial !== undefined ? { existencia_referencial: data.existencia_referencial as number } : {}),
+        ...(data.id_base !== undefined ? { id_base: data.id_base } : {}),
+        ...(data.id_color !== undefined ? { id_color: data.id_color } : {}),
+        ...(data.codigo_proveedor !== undefined ? { codigo_proveedor: data.codigo_proveedor } : {}),
+      } as Variante;
+      variantes.set(id, actualizada);
+      return actualizada;
+    },
+    cambiarEstado: async (id: number, estado: 'activo' | 'inactivo') => {
+      const v = variantes.get(id);
+      if (v) variantes.set(id, { ...v, estado });
+    },
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const categoriasService = new CategoriasService(mockCategoriasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -428,6 +530,20 @@ async function ejecutarPruebasM01(): Promise<void> {
     mockResinasRepo as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockSubcategoriasRepo as any
+  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const presentacionesService = new PresentacionesService(mockPresentacionesRepo as any);
+  const variantesService = new VariantesService(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockVariantesRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockProductosRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockPresentacionesRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockBasesRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockColoresRepo as any
   );
 
   try {
@@ -846,6 +962,149 @@ async function ejecutarPruebasM01(): Promise<void> {
     assert(
       encontrados.length === 1 && encontrados[0]?.nombre === 'Vinilo Premium',
       'RF-CAT-02-01: la búsqueda de productos filtra por nombre'
+    );
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-03: Gestión de variantes y presentaciones
+    // --------------------------------------------------------------------------
+    const galon = await presentacionesService.crear({ nombre: 'Galón', volumen: 3.785 });
+    assert(galon.volumen === 3.785 && galon.estado === 'activo', 'RF-CAT-03-05: presentación creada con volumen numérico');
+    await assertLanza(() => presentacionesService.crear({ nombre: 'Galón', volumen: 1 }), 'RF-CAT-03-05: rechaza presentación duplicada');
+
+    const baseComex = await basesService.crear({ nombre: 'Base Neutra', id_marca: comex.id_marca });
+    const baseInter = await basesService.crear({ nombre: 'Base Inter', id_marca: interpinturas.id_marca });
+
+    const prodEntonable = await productosService.crear({
+      nombre: 'Vinilo Tono',
+      id_marca: comex.id_marca,
+      clase_color: 'entonable',
+      id_subcategorias: [interioresEsmaltes.id_subcategoria],
+      id_linea: lineaComex.id_linea,
+      id_tipo_resina: resinaAgua.id_tipo_resina,
+    });
+    const prodFijo = await productosService.crear({
+      nombre: 'Esmalte Fijo',
+      id_marca: comex.id_marca,
+      clase_color: 'colores_fijos',
+      id_subcategorias: [interioresEsmaltes.id_subcategoria],
+      id_linea: lineaComex.id_linea,
+      id_tipo_resina: resinaAgua.id_tipo_resina,
+    });
+
+    const varEnt = await variantesService.crear({
+      id_producto: prodEntonable.id_producto,
+      id_presentacion: galon.id_presentacion,
+      id_base: baseComex.id_base,
+      precio_vigente: 90000,
+      existencia_referencial: 10,
+    });
+    assert(
+      varEnt.id_base === baseComex.id_base && varEnt.id_color === null && varEnt.estado === 'activo',
+      'RF-CAT-03-02: variante de producto entonable lleva base y no color'
+    );
+
+    await assertLanza(
+      () =>
+        variantesService.crear({
+          id_producto: prodEntonable.id_producto,
+          id_presentacion: galon.id_presentacion,
+          id_base: baseComex.id_base,
+          id_color: blanco.id_color,
+          precio_vigente: 1,
+        }),
+      'CA-CAT-03-03: rechaza asignar un color a una variante entonable'
+    );
+
+    await assertLanza(
+      () =>
+        variantesService.crear({
+          id_producto: prodEntonable.id_producto,
+          id_presentacion: galon.id_presentacion,
+          precio_vigente: 1,
+        }),
+      'RF-CAT-03-02: una variante entonable exige base'
+    );
+
+    await assertLanza(
+      () =>
+        variantesService.crear({
+          id_producto: prodEntonable.id_producto,
+          id_presentacion: galon.id_presentacion,
+          id_base: baseComex.id_base,
+          precio_vigente: 1,
+        }),
+      'CA-CAT-03-02: rechaza una variante idéntica del mismo producto'
+    );
+
+    await assertLanza(
+      () =>
+        variantesService.crear({
+          id_producto: prodEntonable.id_producto,
+          id_presentacion: galon.id_presentacion,
+          id_base: baseInter.id_base,
+          precio_vigente: 1,
+        }),
+      'CA-CAT-03-06: rechaza una base de otra marca'
+    );
+
+    const varFijo = await variantesService.crear({
+      id_producto: prodFijo.id_producto,
+      id_presentacion: galon.id_presentacion,
+      id_color: blanco.id_color,
+      precio_vigente: 50000,
+      codigo_proveedor: 'SAMIT-001',
+    });
+    assert(
+      varFijo.id_color === blanco.id_color && varFijo.id_base === null,
+      'RF-CAT-03-02: variante de colores fijos lleva color y no base'
+    );
+
+    await assertLanza(
+      () =>
+        variantesService.crear({
+          id_producto: prodFijo.id_producto,
+          id_presentacion: galon.id_presentacion,
+          id_color: sinCodigo.id_color,
+          precio_vigente: 1,
+          codigo_proveedor: 'SAMIT-001',
+        }),
+      'CA-CAT-03-08: rechaza un código de proveedor duplicado'
+    );
+
+    const existenciaNegativaRechazada = !CrearVarianteDto.safeParse({
+      id_producto: prodFijo.id_producto,
+      id_presentacion: galon.id_presentacion,
+      id_color: blanco.id_color,
+      precio_vigente: 1,
+      existencia_referencial: -5,
+    }).success;
+    assert(existenciaNegativaRechazada, 'CA-CAT-03-11: el DTO rechaza existencia referencial negativa');
+
+    await assertLanza(
+      () =>
+        variantesService.crear({
+          id_producto: brocha.id_producto,
+          id_presentacion: galon.id_presentacion,
+          id_base: baseComex.id_base,
+          precio_vigente: 1,
+        }),
+      'CA-CAT-03-04: un producto sin color no admite base en su variante'
+    );
+
+    const varBrocha = await variantesService.crear({
+      id_producto: brocha.id_producto,
+      id_presentacion: galon.id_presentacion,
+      precio_vigente: 12000,
+    });
+    assert(varBrocha.id_base === null && varBrocha.id_color === null, 'CA-CAT-03-04: variante de brocha sin base ni color se registra');
+
+    const desactivacionVariante = await variantesService.desactivar(varEnt.id_variante);
+    assert('desactivado' in desactivacionVariante, 'RF-CAT-03-01: desactiva la variante (sin borrado físico)');
+
+    await basesService.desactivar(baseComex.id_base);
+    await assertLanza(
+      () => variantesService.reactivar(varEnt.id_variante),
+      'RF-CAT-09-05: rechaza reactivar una variante entonable con la base inactiva'
     );
 
     console.log(`\n======================================================`);

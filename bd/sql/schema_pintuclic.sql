@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 3.1 (v3.0 + producto enriquecido, tipo_resina y producto_subcategoria - M01 HU-CAT-02)
--- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
+-- VERSIÓN: 3.2 (v3.1 + tabla presentacion y variante enriquecida - M01 HU-CAT-03)
+-- MOTOR: PostgreSQL 15+ (usa UNIQUE NULLS NOT DISTINCT; compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 40
+-- TOTAL TABLAS: 41
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -411,22 +411,47 @@ CREATE TABLE IF NOT EXISTS tonos (
 
 COMMENT ON TABLE tonos IS 'Tonos y matices derivados de un color con ajuste de precio';
 
+-- Tabla: presentacion (entidad propia - RF-CAT-03-05)
+CREATE TABLE IF NOT EXISTS presentacion (
+    id_presentacion SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    volumen NUMERIC(10, 3) NOT NULL,
+    estado enum_estado_general NOT NULL DEFAULT 'activo',
+    CONSTRAINT chk_presentacion_volumen CHECK (volumen > 0)
+);
+
+COMMENT ON TABLE presentacion IS 'Presentación comercial como entidad propia (RF-CAT-03-05): nombre y volumen numérico para permitir la comparación de precios entre productos. No se elimina físicamente si está referenciada por variantes; solo se desactiva (CA-CAT-03-10).';
+
 -- Tabla: variante
 CREATE TABLE IF NOT EXISTS variante (
     id_variante SERIAL PRIMARY KEY,
     id_producto INT NOT NULL,
-    precio_vigente NUMERIC(12, 2) NOT NULL,
-    estado enum_estado_producto NOT NULL DEFAULT 'activo',
+    id_presentacion INT NOT NULL,
     id_color INT,
-    CONSTRAINT fk_variante_producto FOREIGN KEY (id_producto) 
+    id_base INT,
+    precio_vigente NUMERIC(12, 2) NOT NULL,
+    existencia_referencial INT NOT NULL DEFAULT 0,
+    codigo_proveedor VARCHAR(100),
+    estado enum_estado_producto NOT NULL DEFAULT 'activo',
+    CONSTRAINT fk_variante_producto FOREIGN KEY (id_producto)
         REFERENCES producto (id_producto) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT fk_variante_color FOREIGN KEY (id_color) 
+    CONSTRAINT fk_variante_presentacion FOREIGN KEY (id_presentacion)
+        REFERENCES presentacion (id_presentacion) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_variante_color FOREIGN KEY (id_color)
         REFERENCES color (id_color) ON UPDATE CASCADE ON DELETE SET NULL,
-    CONSTRAINT chk_variante_precio CHECK (precio_vigente >= 0)
+    CONSTRAINT fk_variante_base FOREIGN KEY (id_base)
+        REFERENCES base (id_base) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT chk_variante_precio CHECK (precio_vigente >= 0),
+    CONSTRAINT chk_variante_existencia CHECK (existencia_referencial >= 0),
+    CONSTRAINT uq_variante_codigo_proveedor UNIQUE (codigo_proveedor),
+    CONSTRAINT uq_variante_forma UNIQUE NULLS NOT DISTINCT (id_producto, id_base, id_color, id_presentacion)
 );
 
-COMMENT ON TABLE variante IS 'SKU comercial vendible con precio vigente de catálogo';
+COMMENT ON TABLE variante IS 'SKU comercial vendible con precio y existencia sobre la variante física (RF-CAT-03-04). Su forma depende de la clase del producto (RF-CAT-03-02): entonable = producto+base+presentación; colores_fijos = producto+color+presentación; sin_color = producto+presentación.';
 COMMENT ON COLUMN variante.precio_vigente IS 'Precio actual de venta en catálogo antes de congelarse en órdenes';
+COMMENT ON COLUMN variante.existencia_referencial IS 'Existencia referencial (no negativa) sobre la variante física (RF-CAT-03-04, CA-CAT-03-11)';
+COMMENT ON COLUMN variante.codigo_proveedor IS 'Código de proveedor (SAMIT); único cuando existe (RF-CAT-03-06, CA-CAT-03-08)';
+COMMENT ON CONSTRAINT uq_variante_forma ON variante IS 'Impide dos variantes idénticas del mismo producto (RF-CAT-03-03, CA-CAT-03-02); NULLS NOT DISTINCT trata las combinaciones sin base/color como iguales.';
 
 -- Tabla: caracteristica
 CREATE TABLE IF NOT EXISTS caracteristica (
@@ -819,6 +844,8 @@ CREATE INDEX IF NOT EXISTS idx_combo_producto ON combo(id_producto);
 CREATE INDEX IF NOT EXISTS idx_tonos_color ON tonos(id_color);
 CREATE INDEX IF NOT EXISTS idx_variante_producto ON variante(id_producto);
 CREATE INDEX IF NOT EXISTS idx_variante_color ON variante(id_color);
+CREATE INDEX IF NOT EXISTS idx_variante_base ON variante(id_base);
+CREATE INDEX IF NOT EXISTS idx_variante_presentacion ON variante(id_presentacion);
 CREATE INDEX IF NOT EXISTS idx_variante_estado ON variante(estado);
 CREATE INDEX IF NOT EXISTS idx_caract_variante ON caracteristica(id_variante);
 CREATE INDEX IF NOT EXISTS idx_varcombo_variante ON variante_combo(id_variante);

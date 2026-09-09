@@ -214,12 +214,23 @@ export interface TonosTable {
   precio: ColumnType<string, string | number, string | number>;
 }
 
+export interface PresentacionTable {
+  id_presentacion: Generated<number>;
+  nombre: string;
+  volumen: ColumnType<string, number | string, number | string>;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
 export interface VarianteTable {
   id_variante: Generated<number>;
   id_producto: number;
-  precio_vigente: ColumnType<string, string | number, string | number>;
-  estado: Generated<EnumEstadoProducto>;
+  id_presentacion: number;
   id_color: number | null;
+  id_base: number | null;
+  precio_vigente: ColumnType<string, string | number, string | number>;
+  existencia_referencial: Generated<number>;
+  codigo_proveedor: string | null;
+  estado: Generated<EnumEstadoProducto>;
 }
 
 export interface CaracteristicaTable {
@@ -475,6 +486,7 @@ export interface Database {
   producto_subcategoria: ProductoSubcategoriaTable;
   color: ColorTable;
   tonos: TonosTable;
+  presentacion: PresentacionTable;
   variante: VarianteTable;
   caracteristica: CaracteristicaTable;
   combo: ComboTable;
@@ -588,6 +600,10 @@ export type ColorUpdate = Updateable<ColorTable>;
 export type Tono = Selectable<TonosTable>;
 export type NewTono = Insertable<TonosTable>;
 export type TonoUpdate = Updateable<TonosTable>;
+
+export type Presentacion = Selectable<PresentacionTable>;
+export type NewPresentacion = Insertable<PresentacionTable>;
+export type PresentacionUpdate = Updateable<PresentacionTable>;
 
 export type Variante = Selectable<VarianteTable>;
 export type NewVariante = Insertable<VarianteTable>;

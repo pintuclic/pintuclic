@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.9.0] - 2026-09-09
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Séptima entrega del módulo M01: gestión de variantes (HU-CAT-03) y de presentaciones como entidad propia. La variante es el SKU vendible con precio y existencia referencial; su forma depende de la clase del producto (entonable→base, colores_fijos→color, sin_color→ninguno). Con esto queda operativo el `publicar` real de HU-CAT-02 (ya validaba variante activa). La actualización de precio/color en la ficha pública (RF-CAT-03-07) es de frontend.
+- **Hitos Clave:** BD v3.2: nueva tabla **`presentacion`** (nombre + volumen numérico, RF-CAT-03-05) y `variante` enriquecida (`+id_presentacion` obligatoria, `+id_base`, `+existencia_referencial` con CHECK ≥ 0, `+codigo_proveedor` único, y unicidad de forma `UNIQUE NULLS NOT DISTINCT (id_producto, id_base, id_color, id_presentacion)`). Endpoints `POST/GET/PATCH /api/catalogo/variantes` (+`/desactivar`, `/reactivar`), `GET /api/catalogo/productos/:idProducto/variantes`, y `POST/GET/PATCH /api/catalogo/presentaciones` (+estado). Reglas: forma por clase (RF-CAT-03-02); sin variantes idénticas (RF-CAT-03-03); base/color deben ser de la marca del producto y estar activos; existencia no negativa (RF-CAT-03-04); código de proveedor único (RF-CAT-03-06); sin borrado físico, solo desactivación (RF-CAT-03-01); reactivación condicionada a dependencias activas (RF-CAT-09-04/05).
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 86/86 pruebas superadas. ⚠️ Validación contra PostgreSQL real pendiente (Docker Desktop apagado al momento de la entrega); se aplicará el reset de esquema en cuanto el contenedor `pintuclic-db` esté disponible.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.9.0_M01_variantes_backend.md](./walkthroughs/M01/walkthrough_v2.9.0_M01_variantes_backend.md)
+
+---
+
 ## [v2.8.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Sexta entrega del módulo M01: gestión de productos (HU-CAT-02), con la información común independiente de las variantes, clase de color, catálogo administrable de tipos de resina y relación N:M con subcategorías. La publicación (RF-CAT-02-05) se implementa de forma parcial (valida ≥1 variante activa; la exigencia de imagen queda diferida a HU-CAT-07). Variantes en sí (HU-CAT-03) quedan fuera de esta entrega.
