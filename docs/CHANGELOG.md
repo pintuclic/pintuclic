@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.14.0] - 2026-09-09
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Duodécima entrega del módulo M01: consulta pública del catálogo (HU-CAT-06). Primeros endpoints **públicos (sin autenticación)** del módulo, que exponen únicamente elementos activos y publicados (RF-CAT-06-01, RF-CAT-09-02). Sin cambios de esquema.
+- **Hitos Clave:** Nuevos endpoints públicos `GET /api/catalogo/publico/categorias` (categorías/subcategorías con productos activos+publicados — RF-CAT-06-02, CA-CAT-06-04), `GET /api/catalogo/publico/productos?subcategoria=&q=&pagina=&limite=` (listado paginado — RNF-CAT-06-01, CA-CAT-06-05) y `GET /api/catalogo/publico/productos/:id` (ficha con variantes activas —presentación, color/base, precio, existencia—, imágenes y rendimiento; 404 "no disponible" si el producto no está activo+publicado — CA-CAT-06-02/03). Consultas de solo lectura con joins y `EXISTS`.
+- **Diferido:** RF-CAT-06-03 (carta navegable por familia cromática — familias diferidas en HU-CAT-05) y RF-CAT-06-04 (solo colores preparables sobre una base activa — depende de color↔base, HU-CAT-12 flujo 3, pendiente de RF-CAT-12-12).
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 118/118 pruebas superadas. ✅ Consultas SQL validadas contra el esquema real de `pintuclic-db` (categorías con productos, listado paginado y variantes con joins). Sin cambios de esquema (43 tablas).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.14.0_M01_consulta_publica_backend.md](./walkthroughs/M01/walkthrough_v2.14.0_M01_consulta_publica_backend.md)
+
+---
+
 ## [v2.13.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Undécima entrega del módulo M01: estado y ciclo de vida del catálogo (HU-CAT-09). Buena parte de la HU ya estaba cubierta de forma transversal por las entregas previas; esta versión **consolida los huecos reales**: (1) cierra la cascada de desactivación marca→productos (posible ahora que `producto.id_marca` existe desde HU-CAT-02) y (2) agrega el aviso previo de impacto en cascada (RF-CAT-09-03) para marca y producto. **Sin cambios de esquema.**

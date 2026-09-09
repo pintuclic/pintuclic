@@ -11,6 +11,7 @@ import { VariantesService } from '../services/variantes.service';
 import { RendimientoService, derivarRendimiento } from '../services/rendimiento.service';
 import { ProductoBasesService } from '../services/producto-bases.service';
 import { ImagenesService } from '../services/imagenes.service';
+import { CatalogoPublicoService } from '../services/catalogo-publico.service';
 import { EstablecerRendimientoDto } from '../dtos/rendimiento.dto';
 import { CrearImagenDto } from '../dtos/imagenes.dto';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
@@ -620,6 +621,71 @@ async function ejecutarPruebasM01(): Promise<void> {
     },
   };
 
+  // ----------------------------------------------------------------------------
+  // Mock del repositorio de consulta pública (HU-CAT-06), calculado sobre los
+  // mapas en memoria de las demás entidades.
+  // ----------------------------------------------------------------------------
+  const esPublico = (idProducto: number): boolean => {
+    const p = productos.get(idProducto);
+    return !!p && p.estado === 'activo' && p.publicado === true;
+  };
+  const filtrarProductosPublicos = (filtros: { idSubcategoria?: number; busqueda?: string }) =>
+    Array.from(productos.values())
+      .filter((p) => esPublico(p.id_producto))
+      .filter((p) => filtros.idSubcategoria === undefined || (productoSubcats.get(p.id_producto) ?? []).includes(filtros.idSubcategoria))
+      .filter((p) => !filtros.busqueda || p.nombre.toLowerCase().includes(filtros.busqueda.toLowerCase()))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+  const mockCatalogoPublicoRepo = {
+    listarCategoriasConProductos: async () => {
+      const filas: { id_categoria: number; categoria_nombre: string; id_subcategoria: number; subcategoria_nombre: string }[] = [];
+      for (const s of subcategorias.values()) {
+        if (s.estado !== 'activo') continue;
+        const c = categorias.get(s.id_categoria);
+        if (!c || c.estado !== 'activo') continue;
+        const tieneProducto = Array.from(productoSubcats.entries()).some(
+          ([idProd, subs]) => subs.includes(s.id_subcategoria) && esPublico(idProd)
+        );
+        if (tieneProducto) {
+          filas.push({ id_categoria: c.id_categoria, categoria_nombre: c.nombre, id_subcategoria: s.id_subcategoria, subcategoria_nombre: s.nombre });
+        }
+      }
+      return filas;
+    },
+    listarProductos: async (filtros: { idSubcategoria?: number; busqueda?: string; limite: number; offset: number }) =>
+      filtrarProductosPublicos(filtros).slice(filtros.offset, filtros.offset + filtros.limite),
+    contarProductos: async (filtros: { idSubcategoria?: number; busqueda?: string }) => filtrarProductosPublicos(filtros).length,
+    obtenerProductoPublico: async (id: number) => (esPublico(id) ? productos.get(id) : undefined),
+    listarVariantesPublicas: async (idProducto: number) =>
+      Array.from(variantes.values())
+        .filter((v) => v.id_producto === idProducto && v.estado === 'activo')
+        .map((v) => ({
+          id_variante: v.id_variante,
+          id_presentacion: v.id_presentacion,
+          presentacion: presentaciones.get(v.id_presentacion)?.nombre ?? '',
+          volumen: presentaciones.get(v.id_presentacion)?.volumen ?? '0',
+          id_color: v.id_color,
+          color: v.id_color !== null ? colores.get(v.id_color)?.nombre ?? null : null,
+          id_base: v.id_base,
+          base: v.id_base !== null ? bases.get(v.id_base)?.nombre ?? null : null,
+          precio_vigente: v.precio_vigente,
+          existencia_referencial: v.existencia_referencial,
+        })),
+    listarImagenesPublicas: async (idProducto: number) =>
+      Array.from(imagenes.values())
+        .filter((i) => i.id_producto === idProducto)
+        .sort((a, b) => a.orden - b.orden || a.id_imagen - b.id_imagen)
+        .map((i) => ({
+          id_imagen: i.id_imagen,
+          id_producto: i.id_producto,
+          id_variante: i.id_variante,
+          id_color: i.id_color,
+          mime_type: i.mime_type,
+          orden: i.orden,
+          es_principal: i.es_principal,
+        })),
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const categoriasService = new CategoriasService(mockCategoriasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -686,6 +752,8 @@ async function ejecutarPruebasM01(): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockColoresRepo as any
   );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const catalogoPublicoService = new CatalogoPublicoService(mockCatalogoPublicoRepo as any);
 
   try {
     // --------------------------------------------------------------------------
@@ -1417,6 +1485,43 @@ async function ejecutarPruebasM01(): Promise<void> {
     assert(
       prodTrasDesactivarMarca.estado === 'inactivo',
       'RF-CAT-04-03 / HU-CAT-09: desactivar la marca ahora también desactiva sus productos'
+    );
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-06: Consulta pública del catálogo
+    // --------------------------------------------------------------------------
+    // Un producto no publicado no aparece ni tiene ficha pública (CA-CAT-06-03)
+    await assertLanza(
+      () => catalogoPublicoService.obtenerFicha(prodFijo.id_producto),
+      'CA-CAT-06-03: un producto no publicado no está disponible públicamente'
+    );
+
+    // Publicamos prodFijo (colores_fijos, comex, subcategoría interioresEsmaltes)
+    varianteStats.set(prodFijo.id_producto, { total: 1, activas: 1 });
+    await productosService.publicar(prodFijo.id_producto);
+
+    const categoriasPublicas = await catalogoPublicoService.listarCategorias();
+    const esmaltesPublica = categoriasPublicas.find((c) => c.id_categoria === esmaltes.id_categoria);
+    assert(
+      esmaltesPublica?.subcategorias.some((s) => s.id_subcategoria === interioresEsmaltes.id_subcategoria) === true,
+      'CA-CAT-06-04: solo aparecen categorías con productos activos y publicados'
+    );
+
+    const pagina = await catalogoPublicoService.listarProductos({});
+    assert(
+      pagina.items.some((p) => p.id_producto === prodFijo.id_producto) && pagina.limite === 20 && pagina.pagina === 1,
+      'RF-CAT-06-01/RNF-CAT-06-01: lista pública paginada incluye el producto publicado'
+    );
+
+    const paginaLimitada = await catalogoPublicoService.listarProductos({ limite: 1, pagina: 1 });
+    assert(paginaLimitada.items.length <= 1, 'CA-CAT-06-05: la paginación no descarga todo el catálogo');
+
+    const ficha = await catalogoPublicoService.obtenerFicha(prodFijo.id_producto);
+    assert(
+      ficha.id_producto === prodFijo.id_producto &&
+        ficha.variantes.some((v) => v.id_variante === varFijo.id_variante && v.presentacion === 'Galón' && typeof v.precio_vigente === 'number') &&
+        ficha.imagenes.length > 0,
+      'CA-CAT-06-02: la ficha pública trae variantes (con presentación y precio) e imágenes'
     );
 
     console.log(`\n======================================================`);

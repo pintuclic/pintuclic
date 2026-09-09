@@ -190,6 +190,60 @@ export interface ImpactoDesactivacionProducto {
 }
 
 // ------------------------------------------------------------------------------
+// CONSULTA PÚBLICA (HU-CAT-06) — solo elementos activos y publicados
+// ------------------------------------------------------------------------------
+
+/** Categoría pública con sus subcategorías que tienen productos activos+publicados. */
+export interface CategoriaPublica {
+  readonly id_categoria: number;
+  readonly nombre: string;
+  readonly subcategorias: ReadonlyArray<{ readonly id_subcategoria: number; readonly nombre: string }>;
+}
+
+/** Producto en el listado público (datos mínimos; la ficha trae el detalle). */
+export interface ProductoPublicoResumen {
+  readonly id_producto: number;
+  readonly nombre: string;
+  readonly id_marca: number;
+  readonly clase_color: EnumClaseColor;
+}
+
+/** Página del listado público (RNF-CAT-06-01: no se descarga todo el catálogo). */
+export interface PaginaProductosPublicos {
+  readonly items: ProductoPublicoResumen[];
+  readonly total: number;
+  readonly pagina: number;
+  readonly limite: number;
+}
+
+/** Variante vendible tal como se ofrece en la ficha pública. */
+export interface VariantePublica {
+  readonly id_variante: number;
+  readonly id_presentacion: number;
+  readonly presentacion: string;
+  readonly volumen: number;
+  readonly id_color: number | null;
+  readonly color: string | null;
+  readonly id_base: number | null;
+  readonly base: string | null;
+  readonly precio_vigente: number;
+  readonly existencia_referencial: number;
+}
+
+/** Ficha pública de un producto (RF-CAT-06-01, CA-CAT-06-02). */
+export interface FichaProductoPublico {
+  readonly id_producto: number;
+  readonly nombre: string;
+  readonly descripcion: string | null;
+  readonly id_marca: number;
+  readonly clase_color: EnumClaseColor;
+  readonly rendimiento_min: number | null;
+  readonly rendimiento_max: number | null;
+  readonly variantes: VariantePublica[];
+  readonly imagenes: ImagenDetalle[];
+}
+
+// ------------------------------------------------------------------------------
 // PRESENTACIONES Y VARIANTES (HU-CAT-03)
 // ------------------------------------------------------------------------------
 
