@@ -14,6 +14,7 @@ import { PresentacionesRepository } from './repositories/presentaciones.reposito
 import { VariantesRepository } from './repositories/variantes.repository';
 import { ProductoBasesRepository } from './repositories/producto-bases.repository';
 import { ImagenesRepository } from './repositories/imagenes.repository';
+import { CatalogoPublicoRepository } from './repositories/catalogo-publico.repository';
 
 import { CategoriasService } from './services/categorias.service';
 import { SubcategoriasService } from './services/subcategorias.service';
@@ -28,6 +29,7 @@ import { VariantesService } from './services/variantes.service';
 import { RendimientoService } from './services/rendimiento.service';
 import { ProductoBasesService } from './services/producto-bases.service';
 import { ImagenesService } from './services/imagenes.service';
+import { CatalogoPublicoService } from './services/catalogo-publico.service';
 
 import { CategoriasController } from './controllers/categorias.controller';
 import { SubcategoriasController } from './controllers/subcategorias.controller';
@@ -42,6 +44,7 @@ import { VariantesController } from './controllers/variantes.controller';
 import { RendimientoController } from './controllers/rendimiento.controller';
 import { ProductoBasesController } from './controllers/producto-bases.controller';
 import { ImagenesController } from './controllers/imagenes.controller';
+import { CatalogoPublicoController } from './controllers/catalogo-publico.controller';
 
 // ==============================================================================
 // M01 - ENRUTADOR PRINCIPAL: CATÁLOGO DE PRODUCTOS
@@ -62,6 +65,7 @@ const presentacionesRepo = new PresentacionesRepository(db);
 const variantesRepo = new VariantesRepository(db);
 const productoBasesRepo = new ProductoBasesRepository(db);
 const imagenesRepo = new ImagenesRepository(db);
+const catalogoPublicoRepo = new CatalogoPublicoRepository(db);
 
 const categoriasService = new CategoriasService(categoriasRepo);
 const subcategoriasService = new SubcategoriasService(subcategoriasRepo, categoriasRepo);
@@ -76,6 +80,7 @@ const variantesService = new VariantesService(variantesRepo, productosRepo, pres
 const rendimientoService = new RendimientoService(productosRepo, presentacionesRepo);
 const productoBasesService = new ProductoBasesService(productoBasesRepo, productosRepo, basesRepo);
 const imagenesService = new ImagenesService(imagenesRepo, productosRepo, variantesRepo, coloresRepo);
+const catalogoPublicoService = new CatalogoPublicoService(catalogoPublicoRepo);
 
 const categoriasCtrl = new CategoriasController(categoriasService);
 const subcategoriasCtrl = new SubcategoriasController(subcategoriasService);
@@ -90,8 +95,28 @@ const variantesCtrl = new VariantesController(variantesService);
 const rendimientoCtrl = new RendimientoController(rendimientoService);
 const productoBasesCtrl = new ProductoBasesController(productoBasesService);
 const imagenesCtrl = new ImagenesController(imagenesService);
+const catalogoPublicoCtrl = new CatalogoPublicoController(catalogoPublicoService);
 
 const catalogoRoutes = Router();
+
+// -----------------------------------------------------------------------------
+// Rutas PÚBLICAS de consulta del catálogo (HU-CAT-06) — sin autenticación
+// Se declaran antes que las protegidas; solo exponen elementos activos+publicados.
+// -----------------------------------------------------------------------------
+catalogoRoutes.get(
+  '/publico/categorias',
+  (req, res, next) => { void catalogoPublicoCtrl.categorias(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/publico/productos',
+  (req, res, next) => { void catalogoPublicoCtrl.productos(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/publico/productos/:id',
+  (req, res, next) => { void catalogoPublicoCtrl.ficha(req, res).catch(next); }
+);
 
 // -----------------------------------------------------------------------------
 // Rutas: Categorías (HU-CAT-01)
@@ -583,6 +608,6 @@ catalogoRoutes.delete(
 );
 
 // Fachadas públicas exportadas por M01 para consumo inter-módulo (HU-CAT-02 en adelante)
-export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService, resinasService, productosService, presentacionesService, variantesService, rendimientoService, productoBasesService, imagenesService };
+export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService, resinasService, productosService, presentacionesService, variantesService, rendimientoService, productoBasesService, imagenesService, catalogoPublicoService };
 
 export { catalogoRoutes };
