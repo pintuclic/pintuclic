@@ -10,7 +10,9 @@ import { PresentacionesService } from '../services/presentaciones.service';
 import { VariantesService } from '../services/variantes.service';
 import { RendimientoService, derivarRendimiento } from '../services/rendimiento.service';
 import { ProductoBasesService } from '../services/producto-bases.service';
+import { ImagenesService } from '../services/imagenes.service';
 import { EstablecerRendimientoDto } from '../dtos/rendimiento.dto';
+import { CrearImagenDto } from '../dtos/imagenes.dto';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
 import { CrearMarcaDto } from '../dtos/marcas.dto';
 import { CrearColorDto } from '../dtos/colores.dto';
@@ -45,6 +47,9 @@ import {
   Variante,
   NewVariante,
   VarianteUpdate,
+  Imagen,
+  NewImagen,
+  ImagenUpdate,
 } from '../../../core/db/types';
 
 // ==============================================================================
@@ -534,6 +539,72 @@ async function ejecutarPruebasM01(): Promise<void> {
       Array.from(variantes.values()).filter((v) => v.id_producto === idProducto && v.id_base === idBase).length,
   };
 
+  // ----------------------------------------------------------------------------
+  // Estado en memoria: imágenes (HU-CAT-07)
+  // ----------------------------------------------------------------------------
+  const imagenes: Map<number, Imagen> = new Map();
+  let seqImagen = 1;
+  const metaImagen = (i: Imagen) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { datos, ...meta } = i;
+    return meta;
+  };
+
+  const mockImagenesRepo = {
+    crear: async (data: NewImagen): Promise<Omit<Imagen, 'datos'>> => {
+      const imagen: Imagen = {
+        id_imagen: seqImagen++,
+        id_producto: data.id_producto,
+        id_variante: data.id_variante ?? null,
+        id_color: data.id_color ?? null,
+        datos: data.datos as Buffer,
+        mime_type: data.mime_type,
+        orden: typeof data.orden === 'number' ? data.orden : 0,
+        es_principal: typeof data.es_principal === 'boolean' ? data.es_principal : false,
+      };
+      imagenes.set(imagen.id_imagen, imagen);
+      return metaImagen(imagen);
+    },
+    listarPorProducto: async (idProducto: number) =>
+      Array.from(imagenes.values())
+        .filter((i) => i.id_producto === idProducto)
+        .sort((a, b) => a.orden - b.orden || a.id_imagen - b.id_imagen)
+        .map(metaImagen),
+    obtenerMetadatos: async (id: number) => {
+      const i = imagenes.get(id);
+      return i ? metaImagen(i) : undefined;
+    },
+    obtenerContenido: async (id: number) => {
+      const i = imagenes.get(id);
+      return i ? { datos: i.datos, mime_type: i.mime_type } : undefined;
+    },
+    actualizar: async (id: number, data: ImagenUpdate) => {
+      const actual = imagenes.get(id);
+      if (!actual) return undefined;
+      const actualizada = {
+        ...actual,
+        ...(data.id_variante !== undefined ? { id_variante: data.id_variante } : {}),
+        ...(data.id_color !== undefined ? { id_color: data.id_color } : {}),
+        ...(data.orden !== undefined ? { orden: data.orden as number } : {}),
+        ...(data.es_principal !== undefined ? { es_principal: data.es_principal as boolean } : {}),
+        ...(data.datos !== undefined ? { datos: data.datos as Buffer } : {}),
+        ...(data.mime_type !== undefined ? { mime_type: data.mime_type as string } : {}),
+      } as Imagen;
+      imagenes.set(id, actualizada);
+      return metaImagen(actualizada);
+    },
+    eliminar: async (id: number) => {
+      imagenes.delete(id);
+    },
+    desmarcarPrincipal: async (idProducto: number, excluirId?: number) => {
+      for (const i of imagenes.values()) {
+        if (i.id_producto === idProducto && i.es_principal && i.id_imagen !== excluirId) {
+          imagenes.set(i.id_imagen, { ...i, es_principal: false });
+        }
+      }
+    },
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const categoriasService = new CategoriasService(mockCategoriasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -589,6 +660,16 @@ async function ejecutarPruebasM01(): Promise<void> {
     mockProductosRepo as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockPresentacionesRepo as any
+  );
+  const imagenesService = new ImagenesService(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockImagenesRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockProductosRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockVariantesRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockColoresRepo as any
   );
 
   try {
@@ -1236,6 +1317,50 @@ async function ejecutarPruebasM01(): Promise<void> {
       () => productoBasesService.quitar(prodEntonable.id_producto, baseComex3.id_base),
       'HU-CAT-12 f2: impide quitar una base usada por una variante'
     );
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-07: Imágenes del producto
+    // --------------------------------------------------------------------------
+    const img1 = await imagenesService.crear(prodFijo.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1 }));
+    assert(
+      img1.id_producto === prodFijo.id_producto &&
+        img1.mime_type === 'image/png' &&
+        img1.contenido_url.includes(`/imagenes/${img1.id_imagen}/contenido`),
+      'RF-CAT-07-01: carga una imagen del producto'
+    );
+
+    const contenidoImg = await imagenesService.obtenerContenido(img1.id_imagen);
+    assert(contenidoImg.mime_type === 'image/png' && contenidoImg.datos.length > 0, 'RF-CAT-07-03: sirve el binario almacenado');
+
+    const dataUrlInvalidaRechazada = !CrearImagenDto.safeParse({ imagen: 'no-es-data-url' }).success;
+    assert(dataUrlInvalidaRechazada, 'RF-CAT-07-01: el DTO rechaza una imagen que no es data URL válida');
+
+    await assertLanza(
+      () => imagenesService.crear(prodFijo.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1, id_variante: varEnt.id_variante })),
+      'RF-CAT-07-02: rechaza asociar una variante de otro producto'
+    );
+    await assertLanza(
+      () => imagenesService.crear(prodFijo.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1, id_color: blancoOtraMarca.id_color })),
+      'RF-CAT-07-02: rechaza asociar un color de otra marca'
+    );
+
+    const imgVar = await imagenesService.crear(
+      prodFijo.id_producto,
+      CrearImagenDto.parse({ imagen: LOGO_PNG_1X1, id_variante: varFijo.id_variante })
+    );
+    assert(imgVar.id_variante === varFijo.id_variante, 'RF-CAT-07-02: asocia la imagen a una variante del producto');
+
+    await imagenesService.crear(prodFijo.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1, es_principal: true }));
+    const imgPrin2 = await imagenesService.crear(prodFijo.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1, es_principal: true }));
+    const listaImgs = await imagenesService.listarPorProducto(prodFijo.id_producto);
+    const principales = listaImgs.filter((i) => i.es_principal);
+    assert(
+      principales.length === 1 && principales[0]?.id_imagen === imgPrin2.id_imagen,
+      'CA-CAT-07-02: solo una imagen principal por producto (la última fijada)'
+    );
+
+    const eliminacionImg = await imagenesService.eliminar(img1.id_imagen);
+    assert('eliminado' in eliminacionImg, 'RF-CAT-07-01: elimina una imagen');
 
     console.log(`\n======================================================`);
     console.log(`🎯 RESULTADOS: Superadas: ${superadas} | Fallidas: ${fallidas}`);

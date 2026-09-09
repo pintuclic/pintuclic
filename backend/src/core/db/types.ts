@@ -247,6 +247,17 @@ export interface CaracteristicaTable {
   nombre: string;
 }
 
+export interface ImagenTable {
+  id_imagen: Generated<number>;
+  id_producto: number;
+  id_variante: number | null;
+  id_color: number | null;
+  datos: Buffer;
+  mime_type: string;
+  orden: Generated<number>;
+  es_principal: Generated<boolean>;
+}
+
 export interface ComboTable {
   id_combo: Generated<number>;
   id_producto: number;
@@ -498,6 +509,7 @@ export interface Database {
   presentacion: PresentacionTable;
   variante: VarianteTable;
   caracteristica: CaracteristicaTable;
+  imagen: ImagenTable;
   combo: ComboTable;
   variante_combo: VarianteComboTable;
 
@@ -624,6 +636,10 @@ export type VarianteUpdate = Updateable<VarianteTable>;
 export type Caracteristica = Selectable<CaracteristicaTable>;
 export type NewCaracteristica = Insertable<CaracteristicaTable>;
 export type CaracteristicaUpdate = Updateable<CaracteristicaTable>;
+
+export type Imagen = Selectable<ImagenTable>;
+export type NewImagen = Insertable<ImagenTable>;
+export type ImagenUpdate = Updateable<ImagenTable>;
 
 export type Combo = Selectable<ComboTable>;
 export type NewCombo = Insertable<ComboTable>;

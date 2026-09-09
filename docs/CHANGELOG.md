@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.12.0] - 2026-09-09
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Décima entrega del módulo M01: imágenes del producto (HU-CAT-07). Cargar, reemplazar, eliminar y ordenar imágenes (RF-CAT-07-01), asociarlas a una variante o color del propio producto (RF-CAT-07-02) y mantener una sola imagen principal por producto (CA-CAT-07-02). Almacenamiento en la propia infraestructura como BYTEA (RF-CAT-07-03). Con esto, el `publicar` de HU-CAT-02 ya puede exigir imagen.
+- **Hitos Clave:** BD v3.5: nueva tabla **`imagen`** (`id_producto` FK, `id_variante`/`id_color` opcionales, `datos` BYTEA, `mime_type`, `orden`, `es_principal`) con **índice único parcial** de una principal por producto. Endpoints `POST/GET /api/catalogo/productos/:idProducto/imagenes`, `GET /api/catalogo/imagenes/:id/contenido` (binario con `Cache-Control`), `PATCH/DELETE /api/catalogo/imagenes/:id`. La imagen viaja como data URL base64 (jpeg/png/webp ≤5MB, mismo validador que el logotipo de marca; sin dependencias nuevas).
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 110/110 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed en `pintuclic-db`): tabla `imagen`, FKs e índice único parcial de principal verificados; 43 tablas.
+- **Pendiente (RNF-CAT-07-01):** generación de miniaturas optimizadas — se sirve el binario con caché; las miniaturas requieren una librería de imágenes y quedan documentadas como pendientes.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.12.0_M01_imagenes_backend.md](./walkthroughs/M01/walkthrough_v2.12.0_M01_imagenes_backend.md)
+
+---
+
 ## [v2.11.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Novena entrega del módulo M01: se completa el **flujo 2 de HU-CAT-12** — declarar qué bases ofrece cada producto entonable (RF-CAT-12-02/03). Cierra un pendiente conocido de la v2.6.0. El flujo 3 (asociación color↔base) sigue diferido por depender de la decisión de negocio RF-CAT-12-12.

@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 3.4 (v3.3 + producto_base: bases ofrecidas por un entonable - M01 HU-CAT-12 flujo 2)
+-- VERSIÓN: 3.5 (v3.4 + tabla imagen del producto - M01 HU-CAT-07)
 -- MOTOR: PostgreSQL 15+ (usa UNIQUE NULLS NOT DISTINCT; compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 42
+-- TOTAL TABLAS: 43
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -486,6 +486,30 @@ CREATE TABLE IF NOT EXISTS caracteristica (
 
 COMMENT ON TABLE caracteristica IS 'Características y propiedades técnicas de una variante';
 
+-- Tabla: imagen (HU-CAT-07: imágenes del producto)
+CREATE TABLE IF NOT EXISTS imagen (
+    id_imagen SERIAL PRIMARY KEY,
+    id_producto INT NOT NULL,
+    id_variante INT,
+    id_color INT,
+    datos BYTEA NOT NULL,
+    mime_type VARCHAR(50) NOT NULL,
+    orden INT NOT NULL DEFAULT 0,
+    es_principal BOOLEAN NOT NULL DEFAULT false,
+    CONSTRAINT fk_imagen_producto FOREIGN KEY (id_producto)
+        REFERENCES producto (id_producto) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_imagen_variante FOREIGN KEY (id_variante)
+        REFERENCES variante (id_variante) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_imagen_color FOREIGN KEY (id_color)
+        REFERENCES color (id_color) ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+COMMENT ON TABLE imagen IS 'Imágenes de un producto (HU-CAT-07), almacenadas en la propia infraestructura como BYTEA (RF-CAT-07-03). Pueden asociarse a una variante o a un color (RF-CAT-07-02). La generación de miniaturas optimizadas (RNF-CAT-07-01) queda pendiente.';
+COMMENT ON COLUMN imagen.es_principal IS 'Imagen principal del producto para listados (CA-CAT-07-02); a lo sumo una por producto.';
+
+-- Una sola imagen principal por producto (CA-CAT-07-02)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_imagen_principal ON imagen (id_producto) WHERE es_principal;
+
 -- Tabla: combo
 CREATE TABLE IF NOT EXISTS combo (
     id_combo SERIAL PRIMARY KEY,
@@ -869,6 +893,9 @@ CREATE INDEX IF NOT EXISTS idx_variante_producto ON variante(id_producto);
 CREATE INDEX IF NOT EXISTS idx_variante_color ON variante(id_color);
 CREATE INDEX IF NOT EXISTS idx_variante_base ON variante(id_base);
 CREATE INDEX IF NOT EXISTS idx_variante_presentacion ON variante(id_presentacion);
+CREATE INDEX IF NOT EXISTS idx_imagen_producto ON imagen(id_producto);
+CREATE INDEX IF NOT EXISTS idx_imagen_variante ON imagen(id_variante);
+CREATE INDEX IF NOT EXISTS idx_imagen_color ON imagen(id_color);
 CREATE INDEX IF NOT EXISTS idx_variante_estado ON variante(estado);
 CREATE INDEX IF NOT EXISTS idx_caract_variante ON caracteristica(id_variante);
 CREATE INDEX IF NOT EXISTS idx_varcombo_variante ON variante_combo(id_variante);
