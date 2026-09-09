@@ -122,6 +122,25 @@ export interface ProductoDetalle {
   readonly estado: EnumEstadoGeneral;
   readonly publicado: boolean;
   readonly id_subcategorias: number[];
+  readonly rendimiento_min: number | null;
+  readonly rendimiento_max: number | null;
+}
+
+/** Rendimiento derivado para una presentación concreta (RF-CAT-10-03). */
+export interface RendimientoPorPresentacion {
+  readonly id_presentacion: number;
+  readonly nombre: string;
+  readonly volumen: number;
+  readonly rendimiento_min: number;
+  readonly rendimiento_max: number;
+}
+
+/** Rendimiento del producto (por galón) y su derivación por presentación (HU-CAT-10). */
+export interface RendimientoProducto {
+  readonly id_producto: number;
+  readonly rendimiento_min: number | null;
+  readonly rendimiento_max: number | null;
+  readonly por_presentacion: RendimientoPorPresentacion[];
 }
 
 // ------------------------------------------------------------------------------

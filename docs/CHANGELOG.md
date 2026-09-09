@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.10.0] - 2026-09-09
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Octava entrega del módulo M01: rendimiento del producto (HU-CAT-10). **Alcance aprobado por el PO: solo rendimiento**, sin catálogo genérico de atributos técnicos (RF-CAT-10-01 diferido). El rendimiento se captura en m² por galón (mínimo y máximo) y se deriva por presentación a partir del volumen, sin capturarlo una por una.
+- **Hitos Clave:** BD v3.3: `producto` gana `rendimiento_min` / `rendimiento_max` (NUMERIC, opcionales) con CHECK que exige ambos o ninguno, `> 0` y `min ≤ max` (RF-CAT-10-02/05). Endpoints `GET/PATCH /api/catalogo/productos/:idProducto/rendimiento`: el GET devuelve el rendimiento por galón y su **derivación por presentación activa** (RF-CAT-10-03, `valor × volumen / galón`). El rendimiento se incluye además en la ficha del producto. Sin tablas nuevas.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 94/94 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed en `pintuclic-db`): columnas y CHECK de rendimiento verificados con datos semilla (Viniltex 40–45, Esmalte 15–20); 41 tablas.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.10.0_M01_rendimiento_backend.md](./walkthroughs/M01/walkthrough_v2.10.0_M01_rendimiento_backend.md)
+
+---
+
 ## [v2.9.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Séptima entrega del módulo M01: gestión de variantes (HU-CAT-03) y de presentaciones como entidad propia. La variante es el SKU vendible con precio y existencia referencial; su forma depende de la clase del producto (entonable→base, colores_fijos→color, sin_color→ninguno). Con esto queda operativo el `publicar` real de HU-CAT-02 (ya validaba variante activa). La actualización de precio/color en la ficha pública (RF-CAT-03-07) es de frontend.

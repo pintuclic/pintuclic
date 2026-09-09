@@ -182,6 +182,9 @@ export interface ProductoTable {
   clase_color: EnumClaseColor;
   estado: Generated<EnumEstadoGeneral>;
   publicado: Generated<boolean>;
+  // Rendimiento en m² por galón (HU-CAT-10). NUMERIC se devuelve como string.
+  rendimiento_min: ColumnType<string | null, number | null, number | null>;
+  rendimiento_max: ColumnType<string | null, number | null, number | null>;
 }
 
 export interface TipoResinaTable {

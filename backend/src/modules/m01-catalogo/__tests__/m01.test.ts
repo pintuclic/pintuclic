@@ -8,6 +8,8 @@ import { TipoResinasService } from '../services/resinas.service';
 import { ProductosService } from '../services/productos.service';
 import { PresentacionesService } from '../services/presentaciones.service';
 import { VariantesService } from '../services/variantes.service';
+import { RendimientoService, derivarRendimiento } from '../services/rendimiento.service';
+import { EstablecerRendimientoDto } from '../dtos/rendimiento.dto';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
 import { CrearMarcaDto } from '../dtos/marcas.dto';
 import { CrearColorDto } from '../dtos/colores.dto';
@@ -379,6 +381,8 @@ async function ejecutarPruebasM01(): Promise<void> {
         clase_color: data.clase_color,
         estado: 'activo',
         publicado: false,
+        rendimiento_min: null,
+        rendimiento_max: null,
       };
       productos.set(producto.id_producto, producto);
       productoSubcats.set(producto.id_producto, [...idSubcategorias]);
@@ -544,6 +548,12 @@ async function ejecutarPruebasM01(): Promise<void> {
     mockBasesRepo as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockColoresRepo as any
+  );
+  const rendimientoService = new RendimientoService(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockProductosRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockPresentacionesRepo as any
   );
 
   try {
@@ -1105,6 +1115,32 @@ async function ejecutarPruebasM01(): Promise<void> {
     await assertLanza(
       () => variantesService.reactivar(varEnt.id_variante),
       'RF-CAT-09-05: rechaza reactivar una variante entonable con la base inactiva'
+    );
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-10: Rendimiento del producto (solo rendimiento; sin catálogo genérico)
+    // --------------------------------------------------------------------------
+    assert(derivarRendimiento(25, 3.785) === 25, 'RF-CAT-10-03: 25 m² por galón en un galón deriva 25');
+    assert(derivarRendimiento(25, 0.946) === 6.25, 'CA-CAT-10-05: 25 m² por galón en un cuarto de galón deriva 6,25');
+
+    const minMayorRechazado = !EstablecerRendimientoDto.safeParse({ rendimiento_min: 30, rendimiento_max: 20 }).success;
+    assert(minMayorRechazado, 'CA-CAT-10-03: el DTO rechaza rendimiento con mínimo mayor que el máximo');
+
+    const unoNuloRechazado = !EstablecerRendimientoDto.safeParse({ rendimiento_min: 25, rendimiento_max: null }).success;
+    assert(unoNuloRechazado, 'RF-CAT-10-05: el DTO exige ambos valores de rendimiento o ninguno');
+
+    const rendIgual = await rendimientoService.establecer(prodFijo.id_producto, { rendimiento_min: 25, rendimiento_max: 25 });
+    assert(rendIgual.rendimiento_min === 25 && rendIgual.rendimiento_max === 25, 'CA-CAT-10-01: acepta rendimiento con mínimo y máximo iguales');
+    const galonDerivado = rendIgual.por_presentacion.find((p) => p.id_presentacion === galon.id_presentacion);
+    assert(galonDerivado?.rendimiento_min === 25, 'RF-CAT-10-03: deriva el rendimiento por presentación (galón → 25)');
+
+    const rendRango = await rendimientoService.establecer(prodFijo.id_producto, { rendimiento_min: 15, rendimiento_max: 20 });
+    assert(rendRango.rendimiento_min === 15 && rendRango.rendimiento_max === 20, 'CA-CAT-10-02: conserva ambos extremos del rendimiento');
+
+    const rendLimpio = await rendimientoService.establecer(prodFijo.id_producto, { rendimiento_min: null, rendimiento_max: null });
+    assert(
+      rendLimpio.rendimiento_min === null && rendLimpio.por_presentacion.length === 0,
+      'RF-CAT-10-02: permite limpiar el rendimiento del producto'
     );
 
     console.log(`\n======================================================`);
