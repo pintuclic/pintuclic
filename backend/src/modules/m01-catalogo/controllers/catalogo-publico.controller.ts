@@ -46,4 +46,8 @@ export class CatalogoPublicoController {
   ficha = async (req: Request, res: Response): Promise<void> => {
     sendSuccess(res, await this.service.obtenerFicha(idDeParametro(req, 'id')));
   };
+
+  complementarios = async (req: Request, res: Response): Promise<void> => {
+    sendSuccess(res, await this.service.complementarios(idDeParametro(req, 'id')));
+  };
 }

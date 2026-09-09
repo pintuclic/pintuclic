@@ -74,7 +74,7 @@ const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo, color
 const basesService = new BasesService(basesRepo, marcasRepo);
 const coloresService = new ColoresService(coloresRepo, marcasRepo);
 const resinasService = new TipoResinasService(resinasRepo);
-const productosService = new ProductosService(productosRepo, marcasRepo, lineasRepo, resinasRepo, subcategoriasRepo);
+const productosService = new ProductosService(productosRepo, marcasRepo, lineasRepo, resinasRepo, subcategoriasRepo, categoriasRepo);
 const presentacionesService = new PresentacionesService(presentacionesRepo);
 const variantesService = new VariantesService(variantesRepo, productosRepo, presentacionesRepo, basesRepo, coloresRepo, productoBasesRepo);
 const rendimientoService = new RendimientoService(productosRepo, presentacionesRepo);
@@ -116,6 +116,11 @@ catalogoRoutes.get(
 catalogoRoutes.get(
   '/publico/productos/:id',
   (req, res, next) => { void catalogoPublicoCtrl.ficha(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/publico/productos/:id/complementarios',
+  (req, res, next) => { void catalogoPublicoCtrl.complementarios(req, res).catch(next); }
 );
 
 // -----------------------------------------------------------------------------

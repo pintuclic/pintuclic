@@ -129,6 +129,44 @@ export class CatalogoPublicoRepository {
       .execute();
   }
 
+  /** RF-CAT-08-02: productos activos+publicados de una categoría, patrocinados primero, excluyendo uno. */
+  async complementariosPorCategoria(idCategoria: number, excluirId: number, limite: number): Promise<Producto[]> {
+    return this.db
+      .selectFrom('producto as p')
+      .selectAll('p')
+      .where('p.estado', '=', 'activo')
+      .where('p.publicado', '=', true)
+      .where('p.id_producto', '!=', excluirId)
+      .where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('producto_subcategoria as ps')
+            .innerJoin('subcategorias as s', 's.id_subcategoria', 'ps.id_subcategoria')
+            .whereRef('ps.id_producto', '=', 'p.id_producto')
+            .where('s.id_categoria', '=', idCategoria)
+            .select('ps.id_producto')
+        )
+      )
+      .orderBy('p.patrocinado', 'desc')
+      .orderBy('p.nombre', 'asc')
+      .limit(limite)
+      .execute();
+  }
+
+  /** RF-CAT-08-02 (fallback): productos patrocinados activos+publicados, excluyendo uno. */
+  async patrocinados(excluirId: number, limite: number): Promise<Producto[]> {
+    return this.db
+      .selectFrom('producto')
+      .selectAll()
+      .where('estado', '=', 'activo')
+      .where('publicado', '=', true)
+      .where('patrocinado', '=', true)
+      .where('id_producto', '!=', excluirId)
+      .orderBy('nombre', 'asc')
+      .limit(limite)
+      .execute();
+  }
+
   async listarImagenesPublicas(idProducto: number): Promise<FilaImagenPublica[]> {
     return this.db
       .selectFrom('imagen')

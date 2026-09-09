@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.15.0] - 2026-09-09
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Decimotercera entrega del módulo M01: productos complementarios (HU-CAT-08). Cada producto puede declarar la categoría de la que se extraen sus complementarios, y los productos pueden marcarse como patrocinados para priorizarlos.
+- **Hitos Clave:** BD v3.6: `producto` gana `id_categoria_complementaria` (FK categoría, `ON DELETE SET NULL`, RF-CAT-08-01) y `patrocinado` (BOOLEAN, RF-CAT-08-02). Nuevo endpoint **público** `GET /api/catalogo/publico/productos/:id/complementarios` que devuelve hasta 4 productos activos+publicados de la categoría configurada, **patrocinados primero**, con **fallback a patrocinados** si no hay categoría o no arroja resultados, excluyendo el propio producto (CA-CAT-08-04). La configuración (`id_categoria_complementaria`, `patrocinado`) se administra vía el update de producto, validando que la categoría exista.
+- **Diferido:** configuración de complementarios a nivel categoría (la spec permite "producto o categoría"; se implementó a nivel producto), exclusión de combos agotados (RF-CAT-08-03, depende de combos/stock — CAT-13/M05-M08) y CA-CAT-08-05 (no sugerir en el carrito → M05).
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 123/123 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed en `pintuclic-db`): columnas y FK de complementarios verificadas; 43 tablas.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.15.0_M01_complementarios_backend.md](./walkthroughs/M01/walkthrough_v2.15.0_M01_complementarios_backend.md)
+
+---
+
 ## [v2.14.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Duodécima entrega del módulo M01: consulta pública del catálogo (HU-CAT-06). Primeros endpoints **públicos (sin autenticación)** del módulo, que exponen únicamente elementos activos y publicados (RF-CAT-06-01, RF-CAT-09-02). Sin cambios de esquema.

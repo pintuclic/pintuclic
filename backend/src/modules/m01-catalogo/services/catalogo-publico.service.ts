@@ -6,7 +6,10 @@ import {
   FichaProductoPublico,
   VariantePublica,
   ImagenDetalle,
+  ProductoPublicoResumen,
 } from '../interfaces/m01.interfaces';
+
+const MAX_COMPLEMENTARIOS = 4;
 
 // ==============================================================================
 // M01 - SERVICIO DE CONSULTA PÚBLICA (HU-CAT-06)
@@ -93,6 +96,36 @@ export class CatalogoPublicoService {
       variantes: variantes.map(aVariantePublica),
       imagenes: imagenes.map(aImagenDetalle),
     };
+  }
+
+  /**
+   * RF-CAT-08-02/03: hasta 4 productos complementarios, patrocinados primero. Se
+   * toman de la categoría configurada en el producto; si no hay categoría o no
+   * arroja resultados, se cae a los productos patrocinados. Excluye el propio
+   * producto (CA-CAT-08-04) y solo considera activos+publicados. Si no hay
+   * ninguno, devuelve lista vacía (el front oculta la sección, CA-CAT-08-03).
+   */
+  async complementarios(idProducto: number): Promise<ProductoPublicoResumen[]> {
+    const producto = await this.repo.obtenerProductoPublico(idProducto);
+    if (!producto) {
+      throw new AppError('Producto no disponible', 404, 'PRODUCTO_NO_DISPONIBLE');
+    }
+
+    let candidatos =
+      producto.id_categoria_complementaria !== null
+        ? await this.repo.complementariosPorCategoria(producto.id_categoria_complementaria, idProducto, MAX_COMPLEMENTARIOS)
+        : [];
+
+    if (candidatos.length === 0) {
+      candidatos = await this.repo.patrocinados(idProducto, MAX_COMPLEMENTARIOS);
+    }
+
+    return candidatos.map((p) => ({
+      id_producto: p.id_producto,
+      nombre: p.nombre,
+      id_marca: p.id_marca,
+      clase_color: p.clase_color,
+    }));
   }
 }
 

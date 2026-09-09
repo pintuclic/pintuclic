@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 3.5 (v3.4 + tabla imagen del producto - M01 HU-CAT-07)
+-- VERSIÓN: 3.6 (v3.5 + productos complementarios y patrocinado - M01 HU-CAT-08)
 -- MOTOR: PostgreSQL 15+ (usa UNIQUE NULLS NOT DISTINCT; compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
 -- TOTAL TABLAS: 43
@@ -350,12 +350,16 @@ CREATE TABLE IF NOT EXISTS producto (
     publicado BOOLEAN NOT NULL DEFAULT false,
     rendimiento_min NUMERIC(8, 2),
     rendimiento_max NUMERIC(8, 2),
+    id_categoria_complementaria INT,
+    patrocinado BOOLEAN NOT NULL DEFAULT false,
     CONSTRAINT fk_producto_marca FOREIGN KEY (id_marca)
         REFERENCES marca (id_marca) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_producto_linea FOREIGN KEY (id_linea)
         REFERENCES linea (id_linea) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT fk_producto_resina FOREIGN KEY (id_tipo_resina)
         REFERENCES tipo_resina (id_tipo_resina) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_producto_categoria_complementaria FOREIGN KEY (id_categoria_complementaria)
+        REFERENCES categoria (id_categoria) ON UPDATE CASCADE ON DELETE SET NULL,
     CONSTRAINT chk_producto_rendimiento CHECK (
         (rendimiento_min IS NULL AND rendimiento_max IS NULL)
         OR (rendimiento_min IS NOT NULL AND rendimiento_max IS NOT NULL
@@ -368,6 +372,8 @@ COMMENT ON COLUMN producto.clase_color IS 'Clase del producto: entonable | color
 COMMENT ON COLUMN producto.publicado IS 'Publicación en catálogo público (RF-CAT-02-05). Requiere >=1 variante activa y >=1 imagen; la exigencia de imagen queda pendiente de HU-CAT-07.';
 COMMENT ON COLUMN producto.rendimiento_min IS 'Rendimiento mínimo en m² por galón (HU-CAT-10, RF-CAT-10-02). El rendimiento por presentación se deriva de este valor y del volumen (RF-CAT-10-03).';
 COMMENT ON COLUMN producto.rendimiento_max IS 'Rendimiento máximo en m² por galón (HU-CAT-10, RF-CAT-10-02). Debe ser >= rendimiento_min (RF-CAT-10-05).';
+COMMENT ON COLUMN producto.id_categoria_complementaria IS 'Categoría de la que se extraen los productos complementarios de este producto (HU-CAT-08, RF-CAT-08-01).';
+COMMENT ON COLUMN producto.patrocinado IS 'Producto patrocinado: se prioriza como complementario (HU-CAT-08, RF-CAT-08-02).';
 
 -- Tabla: producto_subcategoria (relación N:M - RF-CAT-02-02: al menos una subcategoría)
 CREATE TABLE IF NOT EXISTS producto_subcategoria (
@@ -885,6 +891,7 @@ CREATE INDEX IF NOT EXISTS idx_linea_subsubcat ON linea(id_sub_subcategoria);
 CREATE INDEX IF NOT EXISTS idx_producto_linea ON producto(id_linea);
 CREATE INDEX IF NOT EXISTS idx_producto_marca ON producto(id_marca);
 CREATE INDEX IF NOT EXISTS idx_producto_resina ON producto(id_tipo_resina);
+CREATE INDEX IF NOT EXISTS idx_producto_cat_complementaria ON producto(id_categoria_complementaria);
 CREATE INDEX IF NOT EXISTS idx_prodsubcat_subcat ON producto_subcategoria(id_subcategoria);
 CREATE INDEX IF NOT EXISTS idx_prodbase_base ON producto_base(id_base);
 CREATE INDEX IF NOT EXISTS idx_combo_producto ON combo(id_producto);
