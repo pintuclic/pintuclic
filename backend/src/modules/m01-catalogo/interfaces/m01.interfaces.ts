@@ -144,6 +144,32 @@ export interface RendimientoProducto {
 }
 
 // ------------------------------------------------------------------------------
+// IMÁGENES (HU-CAT-07)
+// ------------------------------------------------------------------------------
+
+/**
+ * Metadatos de una imagen del producto (sin el binario). El binario se sirve
+ * aparte por `contenido_url` (RF-CAT-07-03). Puede asociarse a una variante o a
+ * un color (RF-CAT-07-02).
+ */
+export interface ImagenDetalle {
+  readonly id_imagen: number;
+  readonly id_producto: number;
+  readonly id_variante: number | null;
+  readonly id_color: number | null;
+  readonly mime_type: string;
+  readonly orden: number;
+  readonly es_principal: boolean;
+  readonly contenido_url: string;
+}
+
+/** Bytes crudos de una imagen, para el endpoint dedicado de servirla. */
+export interface ImagenContenido {
+  readonly datos: Buffer;
+  readonly mime_type: string;
+}
+
+// ------------------------------------------------------------------------------
 // PRESENTACIONES Y VARIANTES (HU-CAT-03)
 // ------------------------------------------------------------------------------
 
