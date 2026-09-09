@@ -179,7 +179,15 @@ export interface ProductoTable {
 
 export interface ColorTable {
   id_color: Generated<number>;
+  id_marca: number;
   nombre: string;
+  codigo: string | null;
+  // CIELAB (RF-CAT-05-02). El driver de PostgreSQL devuelve NUMERIC como string;
+  // se admite number|string al insertar/actualizar.
+  cie_l: ColumnType<string, number | string, number | string>;
+  cie_a: ColumnType<string, number | string, number | string>;
+  cie_b: ColumnType<string, number | string, number | string>;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface TonosTable {

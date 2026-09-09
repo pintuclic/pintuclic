@@ -82,3 +82,22 @@ export interface MarcaLogotipo {
   readonly logotipo: Buffer;
   readonly logotipo_mime_type: string;
 }
+
+// ------------------------------------------------------------------------------
+// COLORES (HU-CAT-05)
+// ------------------------------------------------------------------------------
+
+/**
+ * Ficha de un color tal como se expone en el panel. Cada color pertenece a una
+ * única marca (RF-CAT-05-01). `muestra_hex` se deriva del valor CIELAB para
+ * pintar la muestra sin requerir imagen (RF-CAT-05-02).
+ */
+export interface ColorDetalle {
+  readonly id_color: number;
+  readonly id_marca: number;
+  readonly nombre: string;
+  readonly codigo: string | null;
+  readonly cielab: { readonly l: number; readonly a: number; readonly b: number };
+  readonly muestra_hex: string;
+  readonly estado: EnumEstadoGeneral;
+}

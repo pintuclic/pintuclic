@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.7.0] - 2026-09-08
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Quinta entrega del módulo M01: gestión administrativa de colores (HU-CAT-05), cada color asociado a la marca que efectivamente lo ofrece y con su valor cromático CIELAB obligatorio. **Alcance aprobado por el PO: sin familias cromáticas** (RF-CAT-05-03 diferido). El uso del color en carta/variantes (RF-CAT-05-04/05/06) y la asociación color↔base (RF-CAT-12-04, flujo 3 de CAT-12) quedan diferidos por depender de HU-CAT-02/03 y de la decisión de negocio RF-CAT-12-12.
+- **Hitos Clave:** Tabla `color` enriquecida (BD v3.0): ahora `id_marca` (FK marca, obligatoria), `codigo` (opcional), `cie_l/cie_a/cie_b` (CIELAB obligatorio con CHECK de rango), `estado`, y unicidad `UNIQUE(id_marca, nombre)` en lugar de nombre global. La muestra visual se **deriva del CIELAB** (`muestra_hex` sRGB) sin requerir imagen (RF-CAT-05-02). Endpoints `POST/GET/PATCH /api/catalogo/colores` (+`/desactivar`, `/reactivar`) y `GET /api/catalogo/marcas/:idMarca/colores?q=` (búsqueda por nombre/código, RF-CAT-05-01/CA-CAT-05-05). Se extendió la cascada de HU-CAT-04: desactivar una marca ahora desactiva también sus colores (RF-CAT-04-03).
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 57/57 pruebas superadas. ⚠️ Validación contra PostgreSQL real pendiente de un reset de esquema (la tabla `color` cambió de forma; `CREATE TABLE IF NOT EXISTS` no la recrea sobre una BD existente).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.7.0_M01_colores_backend.md](./walkthroughs/M01/walkthrough_v2.7.0_M01_colores_backend.md)
+
+---
+
 ## [v2.6.0] - 2026-09-08
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Cuarta entrega del módulo M01: registro de bases (HU-CAT-12), la entidad sobre la que se preparan los colores de un producto entonable. Solo cubre el flujo 1 del diagrama oficial (registrar/editar/consultar/desactivar bases); los otros 3 flujos (asignar bases a un producto, asociar colores a bases, retirar colores al desactivar una base) quedan documentados como pendientes por depender de HU-CAT-02/HU-CAT-05, que aún no existen.

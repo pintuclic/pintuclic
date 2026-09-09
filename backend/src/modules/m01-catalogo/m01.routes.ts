@@ -7,18 +7,21 @@ import { SubcategoriasRepository } from './repositories/subcategorias.repository
 import { MarcasRepository } from './repositories/marcas.repository';
 import { LineasRepository } from './repositories/lineas.repository';
 import { BasesRepository } from './repositories/bases.repository';
+import { ColoresRepository } from './repositories/colores.repository';
 
 import { CategoriasService } from './services/categorias.service';
 import { SubcategoriasService } from './services/subcategorias.service';
 import { LineasService } from './services/lineas.service';
 import { MarcasService } from './services/marcas.service';
 import { BasesService } from './services/bases.service';
+import { ColoresService } from './services/colores.service';
 
 import { CategoriasController } from './controllers/categorias.controller';
 import { SubcategoriasController } from './controllers/subcategorias.controller';
 import { LineasController } from './controllers/lineas.controller';
 import { MarcasController } from './controllers/marcas.controller';
 import { BasesController } from './controllers/bases.controller';
+import { ColoresController } from './controllers/colores.controller';
 
 // ==============================================================================
 // M01 - ENRUTADOR PRINCIPAL: CATÁLOGO DE PRODUCTOS
@@ -32,18 +35,21 @@ const subcategoriasRepo = new SubcategoriasRepository(db);
 const marcasRepo = new MarcasRepository(db);
 const lineasRepo = new LineasRepository(db);
 const basesRepo = new BasesRepository(db);
+const coloresRepo = new ColoresRepository(db);
 
 const categoriasService = new CategoriasService(categoriasRepo);
 const subcategoriasService = new SubcategoriasService(subcategoriasRepo, categoriasRepo);
 const lineasService = new LineasService(lineasRepo, marcasRepo);
-const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo);
+const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo, coloresRepo);
 const basesService = new BasesService(basesRepo, marcasRepo);
+const coloresService = new ColoresService(coloresRepo, marcasRepo);
 
 const categoriasCtrl = new CategoriasController(categoriasService);
 const subcategoriasCtrl = new SubcategoriasController(subcategoriasService);
 const lineasCtrl = new LineasController(lineasService);
 const marcasCtrl = new MarcasController(marcasService);
 const basesCtrl = new BasesController(basesService);
+const coloresCtrl = new ColoresController(coloresService);
 
 const catalogoRoutes = Router();
 
@@ -248,7 +254,46 @@ catalogoRoutes.patch(
   (req, res, next) => { void basesCtrl.reactivar(req, res).catch(next); }
 );
 
+// -----------------------------------------------------------------------------
+// Rutas: Colores (HU-CAT-05)
+// -----------------------------------------------------------------------------
+catalogoRoutes.post(
+  '/colores',
+  ...guardas.protegido('catalogo.crear'),
+  (req, res, next) => { void coloresCtrl.crear(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/marcas/:idMarca/colores',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void coloresCtrl.listarPorMarca(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/colores/:id',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void coloresCtrl.obtener(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/colores/:id',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void coloresCtrl.actualizar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/colores/:id/desactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void coloresCtrl.desactivar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/colores/:id/reactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void coloresCtrl.reactivar(req, res).catch(next); }
+);
+
 // Fachadas públicas exportadas por M01 para consumo inter-módulo (HU-CAT-02 en adelante)
-export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService };
+export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService };
 
 export { catalogoRoutes };

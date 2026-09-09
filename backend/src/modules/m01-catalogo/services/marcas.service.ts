@@ -1,6 +1,7 @@
 import { MarcasRepository } from '../repositories/marcas.repository';
 import { LineasRepository } from '../repositories/lineas.repository';
 import { BasesRepository } from '../repositories/bases.repository';
+import { ColoresRepository } from '../repositories/colores.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { CrearMarcaDto, ActualizarMarcaDto } from '../dtos/marcas.dto';
 import { MarcaResumen, MarcaLogotipo, ResultadoDesactivacion, ResultadoReactivacion } from '../interfaces/m01.interfaces';
@@ -16,7 +17,8 @@ export class MarcasService {
   constructor(
     private readonly repo: MarcasRepository,
     private readonly lineasRepo: LineasRepository,
-    private readonly basesRepo: BasesRepository
+    private readonly basesRepo: BasesRepository,
+    private readonly coloresRepo: ColoresRepository
   ) {}
 
   /** RF-CAT-04-01, RF-CAT-04-02, CA-CAT-04-01, CA-CAT-04-02. */
@@ -82,8 +84,8 @@ export class MarcasService {
    * LIMITACIÓN CONOCIDA Y APROBADA: la cascada del RF también exige ocultar
    * productos y campañas de la marca, pero esas entidades todavía no tienen
    * relación con `marca` en el sistema (producto no tiene `id_marca`, y
-   * campañas no existe como tabla). Se cascada a `linea` y `base`, que son
-   * las relaciones reales hoy. Pendiente de completar cuando se implementen
+   * campañas no existe como tabla). Se cascada a `linea`, `base` y `color`, que
+   * son las relaciones reales hoy. Pendiente de completar cuando se implementen
    * HU-CAT-02 y el módulo de campañas.
    */
   async desactivar(id: number): Promise<ResultadoDesactivacion> {
@@ -95,6 +97,7 @@ export class MarcasService {
     await this.repo.cambiarEstado(id, 'inactivo');
     await this.lineasRepo.desactivarLineasDeMarca(id);
     await this.basesRepo.desactivarBasesDeMarca(id);
+    await this.coloresRepo.desactivarColoresDeMarca(id);
     return { desactivado: true };
   }
 
