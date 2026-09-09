@@ -10,6 +10,8 @@ import { BasesRepository } from './repositories/bases.repository';
 import { ColoresRepository } from './repositories/colores.repository';
 import { TipoResinasRepository } from './repositories/resinas.repository';
 import { ProductosRepository } from './repositories/productos.repository';
+import { PresentacionesRepository } from './repositories/presentaciones.repository';
+import { VariantesRepository } from './repositories/variantes.repository';
 
 import { CategoriasService } from './services/categorias.service';
 import { SubcategoriasService } from './services/subcategorias.service';
@@ -19,6 +21,8 @@ import { BasesService } from './services/bases.service';
 import { ColoresService } from './services/colores.service';
 import { TipoResinasService } from './services/resinas.service';
 import { ProductosService } from './services/productos.service';
+import { PresentacionesService } from './services/presentaciones.service';
+import { VariantesService } from './services/variantes.service';
 
 import { CategoriasController } from './controllers/categorias.controller';
 import { SubcategoriasController } from './controllers/subcategorias.controller';
@@ -28,6 +32,8 @@ import { BasesController } from './controllers/bases.controller';
 import { ColoresController } from './controllers/colores.controller';
 import { TipoResinasController } from './controllers/resinas.controller';
 import { ProductosController } from './controllers/productos.controller';
+import { PresentacionesController } from './controllers/presentaciones.controller';
+import { VariantesController } from './controllers/variantes.controller';
 
 // ==============================================================================
 // M01 - ENRUTADOR PRINCIPAL: CATÁLOGO DE PRODUCTOS
@@ -44,6 +50,8 @@ const basesRepo = new BasesRepository(db);
 const coloresRepo = new ColoresRepository(db);
 const resinasRepo = new TipoResinasRepository(db);
 const productosRepo = new ProductosRepository(db);
+const presentacionesRepo = new PresentacionesRepository(db);
+const variantesRepo = new VariantesRepository(db);
 
 const categoriasService = new CategoriasService(categoriasRepo);
 const subcategoriasService = new SubcategoriasService(subcategoriasRepo, categoriasRepo);
@@ -53,6 +61,8 @@ const basesService = new BasesService(basesRepo, marcasRepo);
 const coloresService = new ColoresService(coloresRepo, marcasRepo);
 const resinasService = new TipoResinasService(resinasRepo);
 const productosService = new ProductosService(productosRepo, marcasRepo, lineasRepo, resinasRepo, subcategoriasRepo);
+const presentacionesService = new PresentacionesService(presentacionesRepo);
+const variantesService = new VariantesService(variantesRepo, productosRepo, presentacionesRepo, basesRepo, coloresRepo);
 
 const categoriasCtrl = new CategoriasController(categoriasService);
 const subcategoriasCtrl = new SubcategoriasController(subcategoriasService);
@@ -62,6 +72,8 @@ const basesCtrl = new BasesController(basesService);
 const coloresCtrl = new ColoresController(coloresService);
 const resinasCtrl = new TipoResinasController(resinasService);
 const productosCtrl = new ProductosController(productosService);
+const presentacionesCtrl = new PresentacionesController(presentacionesService);
+const variantesCtrl = new VariantesController(variantesService);
 
 const catalogoRoutes = Router();
 
@@ -395,7 +407,85 @@ catalogoRoutes.patch(
   (req, res, next) => { void productosCtrl.reactivar(req, res).catch(next); }
 );
 
+// -----------------------------------------------------------------------------
+// Rutas: Presentaciones (HU-CAT-03, RF-CAT-03-05)
+// -----------------------------------------------------------------------------
+catalogoRoutes.post(
+  '/presentaciones',
+  ...guardas.protegido('catalogo.crear'),
+  (req, res, next) => { void presentacionesCtrl.crear(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/presentaciones',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void presentacionesCtrl.listar(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/presentaciones/:id',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void presentacionesCtrl.obtener(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/presentaciones/:id',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void presentacionesCtrl.actualizar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/presentaciones/:id/desactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void presentacionesCtrl.desactivar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/presentaciones/:id/reactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void presentacionesCtrl.reactivar(req, res).catch(next); }
+);
+
+// -----------------------------------------------------------------------------
+// Rutas: Variantes (HU-CAT-03) — permiso oficial «catalogo.*» (cubre productos y variantes)
+// -----------------------------------------------------------------------------
+catalogoRoutes.post(
+  '/variantes',
+  ...guardas.protegido('catalogo.crear'),
+  (req, res, next) => { void variantesCtrl.crear(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/productos/:idProducto/variantes',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void variantesCtrl.listarPorProducto(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/variantes/:id',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void variantesCtrl.obtener(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/variantes/:id',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void variantesCtrl.actualizar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/variantes/:id/desactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void variantesCtrl.desactivar(req, res).catch(next); }
+);
+
+catalogoRoutes.patch(
+  '/variantes/:id/reactivar',
+  ...guardas.protegido('catalogo.eliminar'),
+  (req, res, next) => { void variantesCtrl.reactivar(req, res).catch(next); }
+);
+
 // Fachadas públicas exportadas por M01 para consumo inter-módulo (HU-CAT-02 en adelante)
-export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService, resinasService, productosService };
+export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService, resinasService, productosService, presentacionesService, variantesService };
 
 export { catalogoRoutes };

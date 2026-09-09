@@ -1,4 +1,4 @@
-import { EnumEstadoGeneral, EnumClaseColor } from '../../../core/db/types';
+import { EnumEstadoGeneral, EnumClaseColor, EnumEstadoProducto } from '../../../core/db/types';
 
 // ==============================================================================
 // M01 - CATÁLOGO DE PRODUCTOS
@@ -122,4 +122,34 @@ export interface ProductoDetalle {
   readonly estado: EnumEstadoGeneral;
   readonly publicado: boolean;
   readonly id_subcategorias: number[];
+}
+
+// ------------------------------------------------------------------------------
+// PRESENTACIONES Y VARIANTES (HU-CAT-03)
+// ------------------------------------------------------------------------------
+
+/** Presentación comercial administrable con volumen numérico (RF-CAT-03-05). */
+export interface PresentacionDetalle {
+  readonly id_presentacion: number;
+  readonly nombre: string;
+  readonly volumen: number;
+  readonly estado: EnumEstadoGeneral;
+}
+
+/**
+ * Ficha de una variante vendible (SKU). Su forma depende de la clase del
+ * producto (RF-CAT-03-02): entonable lleva base; colores_fijos lleva color;
+ * sin_color no lleva ninguno. Precio y existencia viven en la variante física
+ * (RF-CAT-03-04).
+ */
+export interface VarianteDetalle {
+  readonly id_variante: number;
+  readonly id_producto: number;
+  readonly id_presentacion: number;
+  readonly id_color: number | null;
+  readonly id_base: number | null;
+  readonly precio_vigente: number;
+  readonly existencia_referencial: number;
+  readonly codigo_proveedor: string | null;
+  readonly estado: EnumEstadoProducto;
 }

@@ -171,11 +171,18 @@ INSERT INTO tonos (id_tono, id_color, precio) VALUES
     (2, 3, 12000.00)
 ON CONFLICT (id_tono) DO NOTHING;
 
--- 3.10 Variantes Vendibles (SKU)
-INSERT INTO variante (id_variante, id_producto, precio_vigente, estado, id_color) VALUES
-    (1, 1, 85900.00,  'activo', 1),
-    (2, 1, 95900.00,  'activo', 2),
-    (3, 3, 115000.00, 'activo', 3)
+-- 3.9b Presentaciones (HU-CAT-03, RF-CAT-03-05): entidad propia con volumen numérico
+INSERT INTO presentacion (id_presentacion, nombre, volumen) VALUES
+    (1, 'Galón',           3.785),
+    (2, 'Cuarto de Galón', 0.946),
+    (3, 'Litro',           1.000)
+ON CONFLICT (id_presentacion) DO NOTHING;
+
+-- 3.10 Variantes Vendibles (SKU) — producto + presentación (+ color si es de colores fijos)
+INSERT INTO variante (id_variante, id_producto, id_presentacion, id_color, precio_vigente, existencia_referencial, estado) VALUES
+    (1, 1, 1, 1, 85900.00,  50, 'activo'),
+    (2, 1, 1, 2, 95900.00,  30, 'activo'),
+    (3, 3, 1, 3, 115000.00, 20, 'activo')
 ON CONFLICT (id_variante) DO NOTHING;
 
 -- 3.11 Características Técnicas
@@ -347,6 +354,7 @@ SELECT setval('producto_id_producto_seq',                        COALESCE((SELEC
 SELECT setval('tipo_resina_id_tipo_resina_seq',                  COALESCE((SELECT MAX(id_tipo_resina) FROM tipo_resina), 1));
 SELECT setval('color_id_color_seq',                              COALESCE((SELECT MAX(id_color) FROM color), 1));
 SELECT setval('tonos_id_tono_seq',                               COALESCE((SELECT MAX(id_tono) FROM tonos), 1));
+SELECT setval('presentacion_id_presentacion_seq',                COALESCE((SELECT MAX(id_presentacion) FROM presentacion), 1));
 SELECT setval('variante_id_variante_seq',                        COALESCE((SELECT MAX(id_variante) FROM variante), 1));
 SELECT setval('caracteristica_id_caracteristica_seq',            COALESCE((SELECT MAX(id_caracteristica) FROM caracteristica), 1));
 SELECT setval('combo_id_combo_seq',                              COALESCE((SELECT MAX(id_combo) FROM combo), 1));
