@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 2.9 (v2.8 + tabla base - M01)
+-- VERSIÓN: 3.0 (v2.9 + tabla color enriquecida por marca + CIELAB - M01 HU-CAT-05)
 -- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
 -- TOTAL TABLAS: 38
@@ -337,10 +337,28 @@ COMMENT ON TABLE producto IS 'Entidad de producto clasificada dentro de una lín
 -- Tabla: color
 CREATE TABLE IF NOT EXISTS color (
     id_color SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL UNIQUE
+    id_marca INT NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    codigo VARCHAR(60),
+    cie_l NUMERIC(6, 3) NOT NULL,
+    cie_a NUMERIC(6, 3) NOT NULL,
+    cie_b NUMERIC(6, 3) NOT NULL,
+    estado enum_estado_general NOT NULL DEFAULT 'activo',
+    CONSTRAINT fk_color_marca FOREIGN KEY (id_marca)
+        REFERENCES marca (id_marca) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT uq_color_nombre_marca UNIQUE (id_marca, nombre),
+    CONSTRAINT chk_color_cie_l CHECK (cie_l >= 0 AND cie_l <= 100),
+    CONSTRAINT chk_color_cie_a CHECK (cie_a >= -128 AND cie_a <= 128),
+    CONSTRAINT chk_color_cie_b CHECK (cie_b >= -128 AND cie_b <= 128)
 );
 
-COMMENT ON TABLE color IS 'Catálogo maestro de colores';
+COMMENT ON TABLE color IS 'Catálogo de colores de una marca (HU-CAT-05). Cada color pertenece a la marca que efectivamente lo ofrece (RF-CAT-05-01) y almacena su valor cromático CIELAB obligatorio (RF-CAT-05-02), del que se deriva su muestra visual sin requerir imagen. Diferidos (dependen de otras HU): familias cromáticas administrables (RF-CAT-05-03), uso del color en carta/variantes (RF-CAT-05-04/05/06 → HU-CAT-02/03) y asociación color↔base (RF-CAT-12-04 → CAT-12 flujo 3, además RF-CAT-12-12 sin definir).';
+COMMENT ON COLUMN color.id_marca IS 'Marca dueña del color (RF-CAT-05-01, CA-CAT-05-01)';
+COMMENT ON COLUMN color.codigo IS 'Código del color cuando exista; opcional (RF-CAT-05-01, CA-CAT-05-02)';
+COMMENT ON COLUMN color.cie_l IS 'Componente L* (luminosidad, 0..100) del valor CIELAB (RF-CAT-05-02)';
+COMMENT ON COLUMN color.cie_a IS 'Componente a* (verde↔rojo) del valor CIELAB (RF-CAT-05-02)';
+COMMENT ON COLUMN color.cie_b IS 'Componente b* (azul↔amarillo) del valor CIELAB (RF-CAT-05-02)';
+COMMENT ON CONSTRAINT uq_color_nombre_marca ON color IS 'Impide nombres de color duplicados dentro de la misma marca; admite el mismo nombre entre marcas distintas (RF-CAT-05-01, CA-CAT-05-01)';
 
 -- Tabla: tonos
 CREATE TABLE IF NOT EXISTS tonos (

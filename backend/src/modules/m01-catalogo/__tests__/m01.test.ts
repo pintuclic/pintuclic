@@ -3,8 +3,10 @@ import { SubcategoriasService } from '../services/subcategorias.service';
 import { LineasService } from '../services/lineas.service';
 import { MarcasService } from '../services/marcas.service';
 import { BasesService } from '../services/bases.service';
+import { ColoresService, cielabAHex } from '../services/colores.service';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
 import { CrearMarcaDto } from '../dtos/marcas.dto';
+import { CrearColorDto } from '../dtos/colores.dto';
 import { MarcaResumen } from '../interfaces/m01.interfaces';
 import {
   Categoria,
@@ -19,6 +21,9 @@ import {
   Base,
   NewBase,
   BaseUpdate,
+  Color,
+  NewColor,
+  ColorUpdate,
 } from '../../../core/db/types';
 
 // ==============================================================================
@@ -251,6 +256,65 @@ async function ejecutarPruebasM01(): Promise<void> {
     },
   };
 
+  // ----------------------------------------------------------------------------
+  // Estado en memoria: colores (HU-CAT-05)
+  // ----------------------------------------------------------------------------
+  const colores: Map<number, Color> = new Map();
+  let seqColor = 1;
+
+  const mockColoresRepo = {
+    crear: async (data: NewColor): Promise<Color> => {
+      const color: Color = {
+        id_color: seqColor++,
+        id_marca: data.id_marca,
+        nombre: data.nombre,
+        codigo: data.codigo ?? null,
+        cie_l: String(data.cie_l),
+        cie_a: String(data.cie_a),
+        cie_b: String(data.cie_b),
+        estado: 'activo',
+      };
+      colores.set(color.id_color, color);
+      return color;
+    },
+    listarPorMarca: async (idMarca: number, busqueda?: string): Promise<Color[]> =>
+      Array.from(colores.values()).filter(
+        (c) =>
+          c.id_marca === idMarca &&
+          (!busqueda ||
+            c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+            (c.codigo ?? '').toLowerCase().includes(busqueda.toLowerCase()))
+      ),
+    obtenerPorId: async (id: number) => colores.get(id),
+    obtenerPorNombreYMarca: async (nombre: string, idMarca: number, excluirId?: number) =>
+      Array.from(colores.values()).find(
+        (c) => c.nombre === nombre && c.id_marca === idMarca && c.id_color !== excluirId
+      ),
+    actualizar: async (id: number, data: ColorUpdate) => {
+      const actual = colores.get(id);
+      if (!actual) return undefined;
+      const actualizado = {
+        ...actual,
+        ...(data.nombre !== undefined ? { nombre: data.nombre } : {}),
+        ...(data.codigo !== undefined ? { codigo: data.codigo } : {}),
+        ...(data.cie_l !== undefined ? { cie_l: String(data.cie_l) } : {}),
+        ...(data.cie_a !== undefined ? { cie_a: String(data.cie_a) } : {}),
+        ...(data.cie_b !== undefined ? { cie_b: String(data.cie_b) } : {}),
+      } as Color;
+      colores.set(id, actualizado);
+      return actualizado;
+    },
+    cambiarEstado: async (id: number, estado: 'activo' | 'inactivo') => {
+      const c = colores.get(id);
+      if (c) colores.set(id, { ...c, estado });
+    },
+    desactivarColoresDeMarca: async (idMarca: number) => {
+      for (const c of colores.values()) {
+        if (c.id_marca === idMarca) colores.set(c.id_color, { ...c, estado: 'inactivo' });
+      }
+    },
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const categoriasService = new CategoriasService(mockCategoriasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -258,9 +322,11 @@ async function ejecutarPruebasM01(): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lineasService = new LineasService(mockLineasRepo as any, mockMarcasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const marcasService = new MarcasService(mockMarcasRepo as any, mockLineasRepo as any, mockBasesRepo as any);
+  const marcasService = new MarcasService(mockMarcasRepo as any, mockLineasRepo as any, mockBasesRepo as any, mockColoresRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const basesService = new BasesService(mockBasesRepo as any, mockMarcasRepo as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const coloresService = new ColoresService(mockColoresRepo as any, mockMarcasRepo as any);
 
   try {
     // --------------------------------------------------------------------------
@@ -488,6 +554,90 @@ async function ejecutarPruebasM01(): Promise<void> {
     await assertLanza(
       () => basesService.reactivar(baseA.id_base),
       'RF-CAT-09-04: rechaza reactivar base con marca inactiva'
+    );
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-05: Gestión de colores (alcance aprobado: registro por marca +
+    // CIELAB obligatorio + muestra derivada; sin familias ni uso en producto).
+    // --------------------------------------------------------------------------
+    await assertLanza(
+      () => coloresService.crear({ nombre: 'Rojo', id_marca: 9999, cielab: { l: 50, a: 60, b: 40 } }),
+      'RF-CAT-05-01: rechaza color con marca inexistente'
+    );
+
+    const blanco = await coloresService.crear({
+      nombre: 'Blanco Puro',
+      id_marca: comex.id_marca,
+      codigo: 'CMX-01',
+      cielab: { l: 100, a: 0, b: 0 },
+    });
+    assert(
+      blanco.estado === 'activo' && blanco.id_marca === comex.id_marca,
+      'CA-CAT-05-01: color creado activo y asociado a su marca'
+    );
+    assert(blanco.muestra_hex === '#FFFFFF', 'RF-CAT-05-02: la muestra visual se deriva del CIELAB (L=100 → blanco)');
+
+    const sinCodigo = await coloresService.crear({
+      nombre: 'Azul Marino',
+      id_marca: comex.id_marca,
+      cielab: { l: 30, a: 10, b: -45 },
+    });
+    assert(sinCodigo.codigo === null, 'CA-CAT-05-02: admite registrar un color sin código');
+
+    await assertLanza(
+      () => coloresService.crear({ nombre: 'Blanco Puro', id_marca: comex.id_marca, cielab: { l: 100, a: 0, b: 0 } }),
+      'CA-CAT-05-01: rechaza color duplicado dentro de la misma marca'
+    );
+
+    const blancoOtraMarca = await coloresService.crear({
+      nombre: 'Blanco Puro',
+      id_marca: interpinturas.id_marca,
+      cielab: { l: 100, a: 0, b: 0 },
+    });
+    assert(
+      blancoOtraMarca.id_color !== blanco.id_color,
+      'CA-CAT-05-01: admite el mismo nombre de color en una marca distinta'
+    );
+
+    const sinCielabRechazado = !CrearColorDto.safeParse({ nombre: 'X', id_marca: comex.id_marca }).success;
+    assert(sinCielabRechazado, 'RF-CAT-05-02: el DTO Zod exige el valor CIELAB');
+
+    const cielabFueraRangoRechazado = !CrearColorDto.safeParse({
+      nombre: 'X',
+      id_marca: comex.id_marca,
+      cielab: { l: 150, a: 0, b: 0 },
+    }).success;
+    assert(cielabFueraRangoRechazado, 'RF-CAT-05-02: el DTO Zod rechaza L* fuera de rango');
+
+    assert(cielabAHex(0, 0, 0) === '#000000', 'RF-CAT-05-02: L=0 deriva la muestra negra');
+
+    const soloAzul = await coloresService.listarPorMarca(comex.id_marca, 'azul');
+    assert(soloAzul.length === 1 && soloAzul[0]?.nombre === 'Azul Marino', 'CA-CAT-05-05: la búsqueda filtra por nombre');
+
+    const desactivacionColor = await coloresService.desactivar(blanco.id_color);
+    assert('desactivado' in desactivacionColor, 'RF-CAT-05-01: desactiva el color');
+
+    const reactivacionColor = await coloresService.reactivar(blanco.id_color);
+    assert('reactivado' in reactivacionColor, 'RF-CAT-09-04: reactiva el color cuando su marca está activa');
+
+    const acme = await marcasService.crear({
+      nombre: 'Acme',
+      logotipo: CrearMarcaDto.parse({ nombre: 'Acme', logotipo: LOGO_PNG_1X1 }).logotipo,
+    });
+    const colorAcme = await coloresService.crear({
+      nombre: 'Verde Bosque',
+      id_marca: acme.id_marca,
+      cielab: { l: 55, a: -40, b: 35 },
+    });
+    await marcasService.desactivar(acme.id_marca);
+    const colorTrasDesactivarMarca = await coloresService.obtenerPorId(colorAcme.id_color);
+    assert(
+      colorTrasDesactivarMarca.estado === 'inactivo',
+      'RF-CAT-04-03: desactivar la marca también desactiva en cascada sus colores'
+    );
+    await assertLanza(
+      () => coloresService.reactivar(colorAcme.id_color),
+      'RF-CAT-09-04: rechaza reactivar color con marca inactiva'
     );
 
     console.log(`\n======================================================`);

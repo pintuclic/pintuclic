@@ -145,11 +145,11 @@ INSERT INTO producto (id_producto, id_linea, nombre) VALUES
     (3, 2, 'Esmalte Anticorrosivo Secado Rápido')
 ON CONFLICT (id_producto) DO NOTHING;
 
--- 3.8 Colores Maestros
-INSERT INTO color (id_color, nombre) VALUES
-    (1, 'Blanco Puro'),
-    (2, 'Azul Océano'),
-    (3, 'Gris Titanio')
+-- 3.8 Colores por marca (HU-CAT-05): nombre + código opcional + valor CIELAB obligatorio
+INSERT INTO color (id_color, id_marca, nombre, codigo, cie_l, cie_a, cie_b) VALUES
+    (1, 1, 'Blanco Puro',  'PIN-BLA-01', 96.000,  0.000,   0.500),
+    (2, 1, 'Azul Océano',  'PIN-AZU-07', 45.000, -5.000, -35.000),
+    (3, 2, 'Gris Titanio', NULL,         60.000,  0.000,   0.000)
 ON CONFLICT (id_color) DO NOTHING;
 
 -- 3.9 Tonos Derivados con recargo de precio
