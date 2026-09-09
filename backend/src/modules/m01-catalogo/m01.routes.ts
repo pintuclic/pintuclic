@@ -12,6 +12,7 @@ import { TipoResinasRepository } from './repositories/resinas.repository';
 import { ProductosRepository } from './repositories/productos.repository';
 import { PresentacionesRepository } from './repositories/presentaciones.repository';
 import { VariantesRepository } from './repositories/variantes.repository';
+import { ProductoBasesRepository } from './repositories/producto-bases.repository';
 
 import { CategoriasService } from './services/categorias.service';
 import { SubcategoriasService } from './services/subcategorias.service';
@@ -24,6 +25,7 @@ import { ProductosService } from './services/productos.service';
 import { PresentacionesService } from './services/presentaciones.service';
 import { VariantesService } from './services/variantes.service';
 import { RendimientoService } from './services/rendimiento.service';
+import { ProductoBasesService } from './services/producto-bases.service';
 
 import { CategoriasController } from './controllers/categorias.controller';
 import { SubcategoriasController } from './controllers/subcategorias.controller';
@@ -36,6 +38,7 @@ import { ProductosController } from './controllers/productos.controller';
 import { PresentacionesController } from './controllers/presentaciones.controller';
 import { VariantesController } from './controllers/variantes.controller';
 import { RendimientoController } from './controllers/rendimiento.controller';
+import { ProductoBasesController } from './controllers/producto-bases.controller';
 
 // ==============================================================================
 // M01 - ENRUTADOR PRINCIPAL: CATÁLOGO DE PRODUCTOS
@@ -54,6 +57,7 @@ const resinasRepo = new TipoResinasRepository(db);
 const productosRepo = new ProductosRepository(db);
 const presentacionesRepo = new PresentacionesRepository(db);
 const variantesRepo = new VariantesRepository(db);
+const productoBasesRepo = new ProductoBasesRepository(db);
 
 const categoriasService = new CategoriasService(categoriasRepo);
 const subcategoriasService = new SubcategoriasService(subcategoriasRepo, categoriasRepo);
@@ -64,8 +68,9 @@ const coloresService = new ColoresService(coloresRepo, marcasRepo);
 const resinasService = new TipoResinasService(resinasRepo);
 const productosService = new ProductosService(productosRepo, marcasRepo, lineasRepo, resinasRepo, subcategoriasRepo);
 const presentacionesService = new PresentacionesService(presentacionesRepo);
-const variantesService = new VariantesService(variantesRepo, productosRepo, presentacionesRepo, basesRepo, coloresRepo);
+const variantesService = new VariantesService(variantesRepo, productosRepo, presentacionesRepo, basesRepo, coloresRepo, productoBasesRepo);
 const rendimientoService = new RendimientoService(productosRepo, presentacionesRepo);
+const productoBasesService = new ProductoBasesService(productoBasesRepo, productosRepo, basesRepo);
 
 const categoriasCtrl = new CategoriasController(categoriasService);
 const subcategoriasCtrl = new SubcategoriasController(subcategoriasService);
@@ -78,6 +83,7 @@ const productosCtrl = new ProductosController(productosService);
 const presentacionesCtrl = new PresentacionesController(presentacionesService);
 const variantesCtrl = new VariantesController(variantesService);
 const rendimientoCtrl = new RendimientoController(rendimientoService);
+const productoBasesCtrl = new ProductoBasesController(productoBasesService);
 
 const catalogoRoutes = Router();
 
@@ -504,7 +510,28 @@ catalogoRoutes.patch(
   (req, res, next) => { void rendimientoCtrl.establecer(req, res).catch(next); }
 );
 
+// -----------------------------------------------------------------------------
+// Rutas: Bases de un producto entonable (HU-CAT-12 flujo 2, RF-CAT-12-02/03)
+// -----------------------------------------------------------------------------
+catalogoRoutes.get(
+  '/productos/:idProducto/bases',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void productoBasesCtrl.listar(req, res).catch(next); }
+);
+
+catalogoRoutes.post(
+  '/productos/:idProducto/bases',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void productoBasesCtrl.asignar(req, res).catch(next); }
+);
+
+catalogoRoutes.delete(
+  '/productos/:idProducto/bases/:idBase',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void productoBasesCtrl.quitar(req, res).catch(next); }
+);
+
 // Fachadas públicas exportadas por M01 para consumo inter-módulo (HU-CAT-02 en adelante)
-export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService, resinasService, productosService, presentacionesService, variantesService, rendimientoService };
+export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService, resinasService, productosService, presentacionesService, variantesService, rendimientoService, productoBasesService };
 
 export { catalogoRoutes };

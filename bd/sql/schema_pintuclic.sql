@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 3.3 (v3.2 + rendimiento del producto - M01 HU-CAT-10)
+-- VERSIÓN: 3.4 (v3.3 + producto_base: bases ofrecidas por un entonable - M01 HU-CAT-12 flujo 2)
 -- MOTOR: PostgreSQL 15+ (usa UNIQUE NULLS NOT DISTINCT; compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 41
+-- TOTAL TABLAS: 42
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -381,6 +381,19 @@ CREATE TABLE IF NOT EXISTS producto_subcategoria (
 );
 
 COMMENT ON TABLE producto_subcategoria IS 'Relación N:M producto↔subcategoría (RF-CAT-02-02: un producto exige al menos una subcategoría). Es la relación real que reemplaza el remanente linea.id_sub_subcategoria del árbol previo.';
+
+-- Tabla: producto_base (HU-CAT-12 flujo 2 - RF-CAT-12-02: bases que ofrece un producto entonable)
+CREATE TABLE IF NOT EXISTS producto_base (
+    id_producto INT NOT NULL,
+    id_base INT NOT NULL,
+    PRIMARY KEY (id_producto, id_base),
+    CONSTRAINT fk_prodbase_producto FOREIGN KEY (id_producto)
+        REFERENCES producto (id_producto) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_prodbase_base FOREIGN KEY (id_base)
+        REFERENCES base (id_base) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+COMMENT ON TABLE producto_base IS 'Bases que ofrece un producto entonable (HU-CAT-12 flujo 2, RF-CAT-12-02); no se fija en el código cuántas son. La base debe pertenecer a la marca del producto (RF-CAT-12-03). Una variante entonable solo puede usar una base aquí declarada.';
 
 -- Tabla: color
 CREATE TABLE IF NOT EXISTS color (
@@ -849,6 +862,7 @@ CREATE INDEX IF NOT EXISTS idx_producto_linea ON producto(id_linea);
 CREATE INDEX IF NOT EXISTS idx_producto_marca ON producto(id_marca);
 CREATE INDEX IF NOT EXISTS idx_producto_resina ON producto(id_tipo_resina);
 CREATE INDEX IF NOT EXISTS idx_prodsubcat_subcat ON producto_subcategoria(id_subcategoria);
+CREATE INDEX IF NOT EXISTS idx_prodbase_base ON producto_base(id_base);
 CREATE INDEX IF NOT EXISTS idx_combo_producto ON combo(id_producto);
 CREATE INDEX IF NOT EXISTS idx_tonos_color ON tonos(id_color);
 CREATE INDEX IF NOT EXISTS idx_variante_producto ON variante(id_producto);
