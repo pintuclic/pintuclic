@@ -56,4 +56,15 @@ export class BasesRepository {
   async desactivarBasesDeMarca(idMarca: number): Promise<void> {
     await this.db.updateTable('base').set({ estado: 'inactivo' }).where('id_marca', '=', idMarca).execute();
   }
+
+  /** RF-CAT-09-03: bases activas de la marca (aviso de impacto). */
+  async contarActivasPorMarca(idMarca: number): Promise<number> {
+    const fila = await this.db
+      .selectFrom('base')
+      .select(({ fn }) => fn.countAll<string>().as('total'))
+      .where('id_marca', '=', idMarca)
+      .where('estado', '=', 'activo')
+      .executeTakeFirst();
+    return Number(fila?.total ?? 0);
+  }
 }

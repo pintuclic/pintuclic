@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.13.0] - 2026-09-09
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Undécima entrega del módulo M01: estado y ciclo de vida del catálogo (HU-CAT-09). Buena parte de la HU ya estaba cubierta de forma transversal por las entregas previas; esta versión **consolida los huecos reales**: (1) cierra la cascada de desactivación marca→productos (posible ahora que `producto.id_marca` existe desde HU-CAT-02) y (2) agrega el aviso previo de impacto en cascada (RF-CAT-09-03) para marca y producto. **Sin cambios de esquema.**
+- **Hitos Clave:** `MarcasService.desactivar` ahora también desactiva los productos de la marca (RF-CAT-04-03, antes era un hueco). Nuevos endpoints de solo lectura `GET /api/catalogo/marcas/:id/impacto-desactivacion` (líneas, bases, colores y productos activos afectados) y `GET /api/catalogo/productos/:id/impacto-desactivacion` (variantes activas e imágenes afectadas). Métodos de conteo (`contarActivasPorMarca` / `contarActivosPorMarca`, `contarImagenes`) en los repositorios.
+- **Estado ya cubierto por HU previas:** RF-CAT-09-01 (sin borrado físico de referenciados: no hay endpoints DELETE de catálogo salvo `imagen`), RF-CAT-09-04/05/06 (reactivación verificando dependencias activas, incluida la variante entonable con base inactiva y la variante de brocha sin comprobación de base/color). RF-CAT-09-02 (exclusión del catálogo público) se aplicará en HU-CAT-06.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 113/113 pruebas superadas. ℹ️ Sin cambios de esquema (43 tablas); la lógica de cascada e impacto se valida en el suite en memoria.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.13.0_M01_ciclo_vida_backend.md](./walkthroughs/M01/walkthrough_v2.13.0_M01_ciclo_vida_backend.md)
+
+---
+
 ## [v2.12.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Décima entrega del módulo M01: imágenes del producto (HU-CAT-07). Cargar, reemplazar, eliminar y ordenar imágenes (RF-CAT-07-01), asociarlas a una variante o color del propio producto (RF-CAT-07-02) y mantener una sola imagen principal por producto (CA-CAT-07-02). Almacenamiento en la propia infraestructura como BYTEA (RF-CAT-07-03). Con esto, el `publicar` de HU-CAT-02 ya puede exigir imagen.

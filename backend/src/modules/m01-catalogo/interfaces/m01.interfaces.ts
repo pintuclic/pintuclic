@@ -170,6 +170,26 @@ export interface ImagenContenido {
 }
 
 // ------------------------------------------------------------------------------
+// CICLO DE VIDA (HU-CAT-09): aviso de impacto en cascada antes de desactivar
+// ------------------------------------------------------------------------------
+
+/** RF-CAT-09-03: elementos que quedarán ocultos al desactivar una marca. */
+export interface ImpactoDesactivacionMarca {
+  readonly requiere_confirmacion: true;
+  readonly lineas_afectadas: number;
+  readonly bases_afectadas: number;
+  readonly colores_afectados: number;
+  readonly productos_afectados: number;
+}
+
+/** RF-CAT-09-03: elementos que quedarán ocultos al desactivar un producto. */
+export interface ImpactoDesactivacionProducto {
+  readonly requiere_confirmacion: true;
+  readonly variantes_afectadas: number;
+  readonly imagenes_afectadas: number;
+}
+
+// ------------------------------------------------------------------------------
 // PRESENTACIONES Y VARIANTES (HU-CAT-03)
 // ------------------------------------------------------------------------------
 

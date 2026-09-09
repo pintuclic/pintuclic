@@ -82,4 +82,15 @@ export class LineasRepository {
       .where('id_marca', '=', idMarca)
       .execute();
   }
+
+  /** RF-CAT-09-03: líneas activas de la marca (aviso de impacto). */
+  async contarActivasPorMarca(idMarca: number): Promise<number> {
+    const fila = await this.db
+      .selectFrom('linea')
+      .select(({ fn }) => fn.countAll<string>().as('total'))
+      .where('id_marca', '=', idMarca)
+      .where('estado', '=', 'activo')
+      .executeTakeFirst();
+    return Number(fila?.total ?? 0);
+  }
 }

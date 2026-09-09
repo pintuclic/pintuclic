@@ -52,4 +52,15 @@ export class ColoresRepository {
   async desactivarColoresDeMarca(idMarca: number): Promise<void> {
     await this.db.updateTable('color').set({ estado: 'inactivo' }).where('id_marca', '=', idMarca).execute();
   }
+
+  /** RF-CAT-09-03: colores activos de la marca (aviso de impacto). */
+  async contarActivosPorMarca(idMarca: number): Promise<number> {
+    const fila = await this.db
+      .selectFrom('color')
+      .select(({ fn }) => fn.countAll<string>().as('total'))
+      .where('id_marca', '=', idMarca)
+      .where('estado', '=', 'activo')
+      .executeTakeFirst();
+    return Number(fila?.total ?? 0);
+  }
 }

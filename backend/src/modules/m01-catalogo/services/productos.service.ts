@@ -6,7 +6,12 @@ import { SubcategoriasRepository } from '../repositories/subcategorias.repositor
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { Producto, ProductoUpdate, EnumClaseColor } from '../../../core/db/types';
 import { CrearProductoDto, ActualizarProductoDto } from '../dtos/productos.dto';
-import { ProductoDetalle, ResultadoDesactivacion, ResultadoReactivacion } from '../interfaces/m01.interfaces';
+import {
+  ProductoDetalle,
+  ResultadoDesactivacion,
+  ResultadoReactivacion,
+  ImpactoDesactivacionProducto,
+} from '../interfaces/m01.interfaces';
 
 // ==============================================================================
 // M01 - SERVICIO DE PRODUCTOS (HU-CAT-02)
@@ -133,6 +138,16 @@ export class ProductosService {
     }
     await this.repo.cambiarEstado(id, 'inactivo');
     return { desactivado: true };
+  }
+
+  /** RF-CAT-09-03: informa, antes de desactivar, qué quedará oculto al ocultar el producto. */
+  async impactoDesactivacion(id: number): Promise<ImpactoDesactivacionProducto> {
+    await this.obtenerEntidad(id);
+    const [variantes, imagenes] = await Promise.all([
+      this.repo.contarVariantesActivas(id),
+      this.repo.contarImagenes(id),
+    ]);
+    return { requiere_confirmacion: true, variantes_afectadas: variantes, imagenes_afectadas: imagenes };
   }
 
   /** RF-CAT-09-04: al reactivar, sus dependencias (marca, línea) deben estar activas. */

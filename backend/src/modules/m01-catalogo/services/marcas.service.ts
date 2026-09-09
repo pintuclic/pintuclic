@@ -2,9 +2,16 @@ import { MarcasRepository } from '../repositories/marcas.repository';
 import { LineasRepository } from '../repositories/lineas.repository';
 import { BasesRepository } from '../repositories/bases.repository';
 import { ColoresRepository } from '../repositories/colores.repository';
+import { ProductosRepository } from '../repositories/productos.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { CrearMarcaDto, ActualizarMarcaDto } from '../dtos/marcas.dto';
-import { MarcaResumen, MarcaLogotipo, ResultadoDesactivacion, ResultadoReactivacion } from '../interfaces/m01.interfaces';
+import {
+  MarcaResumen,
+  MarcaLogotipo,
+  ResultadoDesactivacion,
+  ResultadoReactivacion,
+  ImpactoDesactivacionMarca,
+} from '../interfaces/m01.interfaces';
 
 // ==============================================================================
 // M01 - SERVICIO DE MARCAS (HU-CAT-04)
@@ -18,7 +25,8 @@ export class MarcasService {
     private readonly repo: MarcasRepository,
     private readonly lineasRepo: LineasRepository,
     private readonly basesRepo: BasesRepository,
-    private readonly coloresRepo: ColoresRepository
+    private readonly coloresRepo: ColoresRepository,
+    private readonly productosRepo: ProductosRepository
   ) {}
 
   /** RF-CAT-04-01, RF-CAT-04-02, CA-CAT-04-01, CA-CAT-04-02. */
@@ -81,12 +89,10 @@ export class MarcasService {
    * El diagrama de esta HU no pide confirmación previa (a diferencia de
    * categoría/línea): se desactiva directamente.
    *
-   * LIMITACIÓN CONOCIDA Y APROBADA: la cascada del RF también exige ocultar
-   * productos y campañas de la marca, pero esas entidades todavía no tienen
-   * relación con `marca` en el sistema (producto no tiene `id_marca`, y
-   * campañas no existe como tabla). Se cascada a `linea`, `base` y `color`, que
-   * son las relaciones reales hoy. Pendiente de completar cuando se implementen
-   * HU-CAT-02 y el módulo de campañas.
+   * RF-CAT-04-03 / HU-CAT-09: la desactivación cascada a `linea`, `base`,
+   * `color` y `producto` (esta última se cerró en HU-CAT-09, al existir ya
+   * `producto.id_marca` desde HU-CAT-02). El módulo de campañas aún no existe;
+   * su cascada queda pendiente de ese módulo.
    */
   async desactivar(id: number): Promise<ResultadoDesactivacion> {
     const marca = await this.obtenerPorId(id);
@@ -98,7 +104,26 @@ export class MarcasService {
     await this.lineasRepo.desactivarLineasDeMarca(id);
     await this.basesRepo.desactivarBasesDeMarca(id);
     await this.coloresRepo.desactivarColoresDeMarca(id);
+    await this.productosRepo.desactivarProductosDeMarca(id);
     return { desactivado: true };
+  }
+
+  /** RF-CAT-09-03: informa, antes de desactivar, qué elementos de la marca quedarán ocultos. */
+  async impactoDesactivacion(id: number): Promise<ImpactoDesactivacionMarca> {
+    await this.obtenerPorId(id);
+    const [lineas, bases, colores, productos] = await Promise.all([
+      this.lineasRepo.contarActivasPorMarca(id),
+      this.basesRepo.contarActivasPorMarca(id),
+      this.coloresRepo.contarActivosPorMarca(id),
+      this.productosRepo.contarActivosPorMarca(id),
+    ]);
+    return {
+      requiere_confirmacion: true,
+      lineas_afectadas: lineas,
+      bases_afectadas: bases,
+      colores_afectados: colores,
+      productos_afectados: productos,
+    };
   }
 
   async reactivar(id: number): Promise<ResultadoReactivacion> {

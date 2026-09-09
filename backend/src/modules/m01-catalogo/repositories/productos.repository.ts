@@ -103,4 +103,30 @@ export class ProductosRepository {
       .executeTakeFirst();
     return Number(fila?.total ?? 0);
   }
+
+  /** RF-CAT-09-03: imágenes del producto (aviso de impacto). */
+  async contarImagenes(idProducto: number): Promise<number> {
+    const fila = await this.db
+      .selectFrom('imagen')
+      .select(({ fn }) => fn.countAll<string>().as('total'))
+      .where('id_producto', '=', idProducto)
+      .executeTakeFirst();
+    return Number(fila?.total ?? 0);
+  }
+
+  /** RF-CAT-09-03: productos activos de una marca (aviso de impacto). */
+  async contarActivosPorMarca(idMarca: number): Promise<number> {
+    const fila = await this.db
+      .selectFrom('producto')
+      .select(({ fn }) => fn.countAll<string>().as('total'))
+      .where('id_marca', '=', idMarca)
+      .where('estado', '=', 'activo')
+      .executeTakeFirst();
+    return Number(fila?.total ?? 0);
+  }
+
+  /** RF-CAT-04-03: desactiva en cascada todos los productos de una marca. */
+  async desactivarProductosDeMarca(idMarca: number): Promise<void> {
+    await this.db.updateTable('producto').set({ estado: 'inactivo' }).where('id_marca', '=', idMarca).execute();
+  }
 }

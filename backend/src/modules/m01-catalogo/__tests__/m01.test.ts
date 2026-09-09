@@ -246,6 +246,8 @@ async function ejecutarPruebasM01(): Promise<void> {
         if (l.id_marca === idMarca) lineas.set(l.id_linea, { ...l, estado: 'inactivo' });
       }
     },
+    contarActivasPorMarca: async (idMarca: number) =>
+      Array.from(lineas.values()).filter((l) => l.id_marca === idMarca && l.estado === 'activo').length,
   };
 
   // ----------------------------------------------------------------------------
@@ -280,6 +282,8 @@ async function ejecutarPruebasM01(): Promise<void> {
         if (b.id_marca === idMarca) bases.set(b.id_base, { ...b, estado: 'inactivo' });
       }
     },
+    contarActivasPorMarca: async (idMarca: number) =>
+      Array.from(bases.values()).filter((b) => b.id_marca === idMarca && b.estado === 'activo').length,
   };
 
   // ----------------------------------------------------------------------------
@@ -339,6 +343,8 @@ async function ejecutarPruebasM01(): Promise<void> {
         if (c.id_marca === idMarca) colores.set(c.id_color, { ...c, estado: 'inactivo' });
       }
     },
+    contarActivosPorMarca: async (idMarca: number) =>
+      Array.from(colores.values()).filter((c) => c.id_marca === idMarca && c.estado === 'activo').length,
   };
 
   // ----------------------------------------------------------------------------
@@ -420,6 +426,15 @@ async function ejecutarPruebasM01(): Promise<void> {
     },
     contarVariantes: async (id: number) => varianteStats.get(id)?.total ?? 0,
     contarVariantesActivas: async (id: number) => varianteStats.get(id)?.activas ?? 0,
+    contarImagenes: async (idProducto: number) =>
+      Array.from(imagenes.values()).filter((i) => i.id_producto === idProducto).length,
+    contarActivosPorMarca: async (idMarca: number) =>
+      Array.from(productos.values()).filter((p) => p.id_marca === idMarca && p.estado === 'activo').length,
+    desactivarProductosDeMarca: async (idMarca: number) => {
+      for (const p of productos.values()) {
+        if (p.id_marca === idMarca) productos.set(p.id_producto, { ...p, estado: 'inactivo' });
+      }
+    },
   };
 
   // ----------------------------------------------------------------------------
@@ -612,7 +627,7 @@ async function ejecutarPruebasM01(): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lineasService = new LineasService(mockLineasRepo as any, mockMarcasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const marcasService = new MarcasService(mockMarcasRepo as any, mockLineasRepo as any, mockBasesRepo as any, mockColoresRepo as any);
+  const marcasService = new MarcasService(mockMarcasRepo as any, mockLineasRepo as any, mockBasesRepo as any, mockColoresRepo as any, mockProductosRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const basesService = new BasesService(mockBasesRepo as any, mockMarcasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1361,6 +1376,48 @@ async function ejecutarPruebasM01(): Promise<void> {
 
     const eliminacionImg = await imagenesService.eliminar(img1.id_imagen);
     assert('eliminado' in eliminacionImg, 'RF-CAT-07-01: elimina una imagen');
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-09: Estado y ciclo de vida (aviso de impacto + cascada marca→productos)
+    // --------------------------------------------------------------------------
+    const marcaCiclo = await marcasService.crear({
+      nombre: 'CicloVida',
+      logotipo: CrearMarcaDto.parse({ nombre: 'CicloVida', logotipo: LOGO_PNG_1X1 }).logotipo,
+    });
+    await lineasService.crear({ nombre: 'LineaCiclo', id_marca: marcaCiclo.id_marca });
+    await basesService.crear({ nombre: 'BaseCiclo', id_marca: marcaCiclo.id_marca });
+    await coloresService.crear({ nombre: 'ColorCiclo', id_marca: marcaCiclo.id_marca, cielab: { l: 50, a: 0, b: 0 } });
+    const prodCiclo = await productosService.crear({
+      nombre: 'ProdCiclo',
+      id_marca: marcaCiclo.id_marca,
+      clase_color: 'sin_color',
+      id_subcategorias: [interioresEsmaltes.id_subcategoria],
+    });
+
+    varianteStats.set(prodCiclo.id_producto, { total: 1, activas: 1 });
+    await imagenesService.crear(prodCiclo.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1 }));
+
+    const impactoProd = await productosService.impactoDesactivacion(prodCiclo.id_producto);
+    assert(
+      impactoProd.variantes_afectadas === 1 && impactoProd.imagenes_afectadas === 1,
+      'RF-CAT-09-03: informa variantes e imágenes afectadas del producto'
+    );
+
+    const impactoMarca = await marcasService.impactoDesactivacion(marcaCiclo.id_marca);
+    assert(
+      impactoMarca.lineas_afectadas === 1 &&
+        impactoMarca.bases_afectadas === 1 &&
+        impactoMarca.colores_afectados === 1 &&
+        impactoMarca.productos_afectados === 1,
+      'RF-CAT-09-03: informa el impacto en cascada de la marca (líneas, bases, colores, productos)'
+    );
+
+    await marcasService.desactivar(marcaCiclo.id_marca);
+    const prodTrasDesactivarMarca = await productosService.obtenerPorId(prodCiclo.id_producto);
+    assert(
+      prodTrasDesactivarMarca.estado === 'inactivo',
+      'RF-CAT-04-03 / HU-CAT-09: desactivar la marca ahora también desactiva sus productos'
+    );
 
     console.log(`\n======================================================`);
     console.log(`🎯 RESULTADOS: Superadas: ${superadas} | Fallidas: ${fallidas}`);
