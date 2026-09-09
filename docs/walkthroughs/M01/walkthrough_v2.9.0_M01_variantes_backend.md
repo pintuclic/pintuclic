@@ -80,7 +80,7 @@ Al existir ya la entidad `variante` completa, el `publicar` de productos (RF-CAT
 
 ### ⚠️ Limitaciones Conocidas
 1. **RF-CAT-03-07** (actualización reactiva de precio/color en la ficha) es responsabilidad del frontend; el backend ya expone el dato por variante.
-2. **Validación contra PostgreSQL real pendiente:** Docker Desktop estaba apagado al momento de la entrega. Se aplicará el reset de esquema (drop + recreate + seed) contra `pintuclic-db` en cuanto el contenedor esté disponible.
+2. **Validación contra PostgreSQL real:** realizada — se aplicó el reset de esquema (drop + recreate + seed) contra `pintuclic-db` y se verificaron la estructura de `variante` v3.2 (unicidad de forma con `NULLS NOT DISTINCT`, unicidad de código, CHECKs y FKs), la tabla `presentacion` y los datos semilla (41 tablas).
 
 ---
 
@@ -110,5 +110,5 @@ Al existir ya la entidad `variante` completa, el `publicar` de productos (RF-CAT
 
 * **Incremento Registrado en `CHANGELOG.md`:** `✅ SÍ`
 * **Pruebas de Calidad Superadas (QA Gate):** `✅ SÍ` (`tsc --noEmit` limpio, `npm run lint` limpio, 86/86 pruebas en memoria)
-* **Validación contra PostgreSQL real:** `⚠️ Pendiente (Docker Desktop apagado); se ejecutará el reset cuando el contenedor esté disponible`
+* **Validación contra PostgreSQL real:** `✅ SÍ` (reset de esquema + seed en `pintuclic-db`: `variante`, `presentacion`, unicidad de forma/código, CHECKs, FKs y datos verificados; 41 tablas)
 * **Apego al Alcance Aprobado:** `✅ RF-CAT-03-01..06; RF-CAT-03-07 es frontend`
