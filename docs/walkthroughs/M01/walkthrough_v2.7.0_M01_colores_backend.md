@@ -73,7 +73,7 @@
 ### ⚠️ Limitaciones Conocidas y Aprobadas por el Product Owner
 1. **Sin familias cromáticas:** RF-CAT-05-03 (familias administrables, derivación y carga masiva) se excluyó por decisión explícita del PO en esta conversación.
 2. **Sin uso en producto:** los flujos que ligan el color a carta/variantes no se implementaron por falta de las entidades de las que dependen (HU-CAT-02/03).
-3. **Validación contra PostgreSQL real pendiente:** la tabla `color` cambió de forma (nuevas columnas y nueva unicidad). Como el DDL usa `CREATE TABLE IF NOT EXISTS`, sobre una BD ya creada **no** se recrea automáticamente; requiere un reset de esquema (destructivo) para verificar el DDL/seed nuevos contra PostgreSQL.
+3. **Reset de esquema requerido para aplicar el cambio:** la tabla `color` cambió de forma (nuevas columnas y nueva unicidad). Como el DDL usa `CREATE TABLE IF NOT EXISTS`, sobre una BD ya creada **no** se recrea automáticamente; se aplicó un reset de esquema (drop + recreate + seed) contra el contenedor `pintuclic-db` para validarlo (ver sección 7).
 
 ---
 
@@ -100,5 +100,5 @@
 
 * **Incremento Registrado en `CHANGELOG.md`:** `✅ SÍ`
 * **Pruebas de Calidad Superadas (QA Gate):** `✅ SÍ` (`tsc --noEmit` limpio, `npm run lint` limpio, 57/57 pruebas en memoria)
-* **Validación contra PostgreSQL real:** `⚠️ Pendiente de reset de esquema (destructivo)`
+* **Validación contra PostgreSQL real:** `✅ SÍ` (reset de esquema + seed en `pintuclic-db`: columnas, CHECKs CIELAB, unicidad por marca y FKs verificadas; 38 tablas)
 * **Apego al Alcance Aprobado:** `✅ RF-CAT-05-01/02; RF-CAT-05-03 excluido por el PO; resto diferido por dependencias`
