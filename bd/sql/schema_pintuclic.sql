@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 3.0 (v2.9 + tabla color enriquecida por marca + CIELAB - M01 HU-CAT-05)
+-- VERSIÓN: 3.1 (v3.0 + producto enriquecido, tipo_resina y producto_subcategoria - M01 HU-CAT-02)
 -- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 38
+-- TOTAL TABLAS: 40
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -102,6 +102,11 @@ BEGIN
     -- Propósito transaccional del código OTP efímero (M04 - HU-CUE-01, 05, 06)
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_tipo_codigo_otp') THEN
         CREATE TYPE enum_tipo_codigo_otp AS ENUM ('registro', 'recuperacion_password', 'cambio_correo');
+    END IF;
+
+    -- Clase de color de un producto (M01 - HU-CAT-02, RF-CAT-02-03)
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_clase_color') THEN
+        CREATE TYPE enum_clase_color AS ENUM ('entonable', 'colores_fijos', 'sin_color');
     END IF;
 END $$;
 
@@ -323,16 +328,50 @@ CREATE TABLE IF NOT EXISTS base (
 COMMENT ON TABLE base IS 'Base sobre la que se prepara cada color de un producto entonable (HU-CAT-12). El tipo de resina que pide RF-CAT-12-01 se excluyó a petición explícita del Product Owner. La asignación de bases a productos entonables (RF-CAT-12-02/03) y la asociación color↔base (RF-CAT-12-04) quedan pendientes: dependen de que existan producto (HU-CAT-02) y color (HU-CAT-05), y esta última regla además está marcada como no definida en la especificación (RF-CAT-12-12).';
 COMMENT ON CONSTRAINT uq_base_nombre_marca ON base IS 'Impide nombres de base duplicados dentro de la misma marca (RF-CAT-12-01)';
 
+-- Tabla: tipo_resina (catálogo administrable - RF-CAT-02-04)
+CREATE TABLE IF NOT EXISTS tipo_resina (
+    id_tipo_resina SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    estado enum_estado_general NOT NULL DEFAULT 'activo'
+);
+
+COMMENT ON TABLE tipo_resina IS 'Catálogo administrable de tipos de resina (RF-CAT-02-04). Reemplaza cualquier lista fija en el código.';
+
 -- Tabla: producto
 CREATE TABLE IF NOT EXISTS producto (
     id_producto SERIAL PRIMARY KEY,
-    id_linea INT NOT NULL,
+    id_marca INT NOT NULL,
+    id_linea INT,
+    id_tipo_resina INT,
     nombre VARCHAR(150) NOT NULL,
-    CONSTRAINT fk_producto_linea FOREIGN KEY (id_linea) 
-        REFERENCES linea (id_linea) ON UPDATE CASCADE ON DELETE CASCADE
+    descripcion TEXT,
+    clase_color enum_clase_color NOT NULL,
+    estado enum_estado_general NOT NULL DEFAULT 'activo',
+    publicado BOOLEAN NOT NULL DEFAULT false,
+    CONSTRAINT fk_producto_marca FOREIGN KEY (id_marca)
+        REFERENCES marca (id_marca) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_producto_linea FOREIGN KEY (id_linea)
+        REFERENCES linea (id_linea) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_producto_resina FOREIGN KEY (id_tipo_resina)
+        REFERENCES tipo_resina (id_tipo_resina) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-COMMENT ON TABLE producto IS 'Entidad de producto clasificada dentro de una línea';
+COMMENT ON TABLE producto IS 'Producto del catálogo (HU-CAT-02). Información común independiente de sus variantes. Marca obligatoria; línea y tipo de resina obligatorios solo para pinturas (clase_color != sin_color); una brocha (sin_color) puede omitirlos (RF-CAT-02-02). La clase de color no puede cambiarse una vez el producto tiene variantes (RF-CAT-02-03).';
+COMMENT ON COLUMN producto.clase_color IS 'Clase del producto: entonable | colores_fijos | sin_color (RF-CAT-02-03)';
+COMMENT ON COLUMN producto.publicado IS 'Publicación en catálogo público (RF-CAT-02-05). Requiere >=1 variante activa y >=1 imagen; la exigencia de imagen queda pendiente de HU-CAT-07.';
+
+-- Tabla: producto_subcategoria (relación N:M - RF-CAT-02-02: al menos una subcategoría)
+CREATE TABLE IF NOT EXISTS producto_subcategoria (
+    id_producto INT NOT NULL,
+    id_subcategoria INT NOT NULL,
+    PRIMARY KEY (id_producto, id_subcategoria),
+    CONSTRAINT fk_prodsubcat_producto FOREIGN KEY (id_producto)
+        REFERENCES producto (id_producto) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_prodsubcat_subcat FOREIGN KEY (id_subcategoria)
+        REFERENCES subcategorias (id_subcategoria) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+COMMENT ON TABLE producto_subcategoria IS 'Relación N:M producto↔subcategoría (RF-CAT-02-02: un producto exige al menos una subcategoría). Es la relación real que reemplaza el remanente linea.id_sub_subcategoria del árbol previo.';
 
 -- Tabla: color
 CREATE TABLE IF NOT EXISTS color (
@@ -773,6 +812,9 @@ CREATE INDEX IF NOT EXISTS idx_subcat_categoria ON subcategorias(id_categoria);
 CREATE INDEX IF NOT EXISTS idx_subsubcat_subcat ON sub_subcategorias(id_subcategoria);
 CREATE INDEX IF NOT EXISTS idx_linea_subsubcat ON linea(id_sub_subcategoria);
 CREATE INDEX IF NOT EXISTS idx_producto_linea ON producto(id_linea);
+CREATE INDEX IF NOT EXISTS idx_producto_marca ON producto(id_marca);
+CREATE INDEX IF NOT EXISTS idx_producto_resina ON producto(id_tipo_resina);
+CREATE INDEX IF NOT EXISTS idx_prodsubcat_subcat ON producto_subcategoria(id_subcategoria);
 CREATE INDEX IF NOT EXISTS idx_combo_producto ON combo(id_producto);
 CREATE INDEX IF NOT EXISTS idx_tonos_color ON tonos(id_color);
 CREATE INDEX IF NOT EXISTS idx_variante_producto ON variante(id_producto);

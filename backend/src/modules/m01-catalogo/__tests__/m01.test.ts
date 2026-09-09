@@ -4,9 +4,12 @@ import { LineasService } from '../services/lineas.service';
 import { MarcasService } from '../services/marcas.service';
 import { BasesService } from '../services/bases.service';
 import { ColoresService, cielabAHex } from '../services/colores.service';
+import { TipoResinasService } from '../services/resinas.service';
+import { ProductosService } from '../services/productos.service';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
 import { CrearMarcaDto } from '../dtos/marcas.dto';
 import { CrearColorDto } from '../dtos/colores.dto';
+import { CrearProductoDto } from '../dtos/productos.dto';
 import { MarcaResumen } from '../interfaces/m01.interfaces';
 import {
   Categoria,
@@ -24,6 +27,12 @@ import {
   Color,
   NewColor,
   ColorUpdate,
+  TipoResina,
+  NewTipoResina,
+  TipoResinaUpdate,
+  Producto,
+  NewProducto,
+  ProductoUpdate,
 } from '../../../core/db/types';
 
 // ==============================================================================
@@ -315,6 +324,85 @@ async function ejecutarPruebasM01(): Promise<void> {
     },
   };
 
+  // ----------------------------------------------------------------------------
+  // Estado en memoria: tipos de resina y productos (HU-CAT-02)
+  // ----------------------------------------------------------------------------
+  const resinas: Map<number, TipoResina> = new Map();
+  let seqResina = 1;
+
+  const mockResinasRepo = {
+    crear: async (data: NewTipoResina): Promise<TipoResina> => {
+      const resina: TipoResina = { id_tipo_resina: seqResina++, nombre: data.nombre, estado: 'activo' };
+      resinas.set(resina.id_tipo_resina, resina);
+      return resina;
+    },
+    listar: async () => Array.from(resinas.values()),
+    obtenerPorId: async (id: number) => resinas.get(id),
+    obtenerPorNombre: async (nombre: string, excluirId?: number) =>
+      Array.from(resinas.values()).find((r) => r.nombre === nombre && r.id_tipo_resina !== excluirId),
+    actualizar: async (id: number, data: TipoResinaUpdate) => {
+      const actual = resinas.get(id);
+      if (!actual) return undefined;
+      const actualizada = { ...actual, ...data } as TipoResina;
+      resinas.set(id, actualizada);
+      return actualizada;
+    },
+    cambiarEstado: async (id: number, estado: 'activo' | 'inactivo') => {
+      const r = resinas.get(id);
+      if (r) resinas.set(id, { ...r, estado });
+    },
+  };
+
+  const productos: Map<number, Producto> = new Map();
+  const productoSubcats: Map<number, number[]> = new Map();
+  const varianteStats: Map<number, { total: number; activas: number }> = new Map();
+  let seqProducto = 1;
+
+  const mockProductosRepo = {
+    crear: async (data: NewProducto, idSubcategorias: number[]): Promise<Producto> => {
+      const producto: Producto = {
+        id_producto: seqProducto++,
+        id_marca: data.id_marca,
+        id_linea: data.id_linea ?? null,
+        id_tipo_resina: data.id_tipo_resina ?? null,
+        nombre: data.nombre,
+        descripcion: data.descripcion ?? null,
+        clase_color: data.clase_color,
+        estado: 'activo',
+        publicado: false,
+      };
+      productos.set(producto.id_producto, producto);
+      productoSubcats.set(producto.id_producto, [...idSubcategorias]);
+      return producto;
+    },
+    listar: async (filtros?: { busqueda?: string; idMarca?: number }) =>
+      Array.from(productos.values()).filter(
+        (p) =>
+          (filtros?.idMarca === undefined || p.id_marca === filtros.idMarca) &&
+          (!filtros?.busqueda || p.nombre.toLowerCase().includes(filtros.busqueda.toLowerCase()))
+      ),
+    obtenerPorId: async (id: number) => productos.get(id),
+    listarSubcategorias: async (id: number) => productoSubcats.get(id) ?? [],
+    actualizar: async (id: number, data: ProductoUpdate, idSubcategorias?: number[]) => {
+      const actual = productos.get(id);
+      if (!actual) return undefined;
+      const actualizado = { ...actual, ...data } as Producto;
+      productos.set(id, actualizado);
+      if (idSubcategorias !== undefined) productoSubcats.set(id, [...idSubcategorias]);
+      return actualizado;
+    },
+    cambiarEstado: async (id: number, estado: 'activo' | 'inactivo') => {
+      const p = productos.get(id);
+      if (p) productos.set(id, { ...p, estado });
+    },
+    cambiarPublicado: async (id: number, publicado: boolean) => {
+      const p = productos.get(id);
+      if (p) productos.set(id, { ...p, publicado });
+    },
+    contarVariantes: async (id: number) => varianteStats.get(id)?.total ?? 0,
+    contarVariantesActivas: async (id: number) => varianteStats.get(id)?.activas ?? 0,
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const categoriasService = new CategoriasService(mockCategoriasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -327,6 +415,20 @@ async function ejecutarPruebasM01(): Promise<void> {
   const basesService = new BasesService(mockBasesRepo as any, mockMarcasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const coloresService = new ColoresService(mockColoresRepo as any, mockMarcasRepo as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const resinasService = new TipoResinasService(mockResinasRepo as any);
+  const productosService = new ProductosService(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockProductosRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockMarcasRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockLineasRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockResinasRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockSubcategoriasRepo as any
+  );
 
   try {
     // --------------------------------------------------------------------------
@@ -638,6 +740,112 @@ async function ejecutarPruebasM01(): Promise<void> {
     await assertLanza(
       () => coloresService.reactivar(colorAcme.id_color),
       'RF-CAT-09-04: rechaza reactivar color con marca inactiva'
+    );
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-02: Gestión de productos (con 'publicar' parcial: valida variante
+    // activa; la exigencia de imagen queda diferida a HU-CAT-07).
+    // --------------------------------------------------------------------------
+    const resinaAgua = await resinasService.crear({ nombre: 'Base Agua' });
+    assert(resinaAgua.estado === 'activo', 'RF-CAT-02-04: tipo de resina creado activo');
+    await assertLanza(() => resinasService.crear({ nombre: 'Base Agua' }), 'RF-CAT-02-04: rechaza tipo de resina duplicado');
+
+    const lineaComex = await lineasService.crear({ nombre: 'ComexLinea', id_marca: comex.id_marca });
+
+    const sinSubcatRechazado = !CrearProductoDto.safeParse({
+      nombre: 'X',
+      id_marca: comex.id_marca,
+      clase_color: 'sin_color',
+      id_subcategorias: [],
+    }).success;
+    assert(sinSubcatRechazado, 'RF-CAT-02-02: el DTO exige al menos una subcategoría');
+
+    const brocha = await productosService.crear({
+      nombre: 'Brocha Profesional 3"',
+      id_marca: comex.id_marca,
+      clase_color: 'sin_color',
+      id_subcategorias: [interioresEsmaltes.id_subcategoria],
+    });
+    assert(
+      brocha.clase_color === 'sin_color' && brocha.id_linea === null && brocha.id_subcategorias.length === 1,
+      'CA-CAT-02-03: una brocha (sin_color) se registra sin línea ni resina'
+    );
+
+    await assertLanza(
+      () =>
+        productosService.crear({
+          nombre: 'Vinilo A',
+          id_marca: comex.id_marca,
+          clase_color: 'colores_fijos',
+          id_subcategorias: [interioresEsmaltes.id_subcategoria],
+        }),
+      'RF-CAT-02-02: una pintura exige línea y resina'
+    );
+
+    await assertLanza(
+      () =>
+        productosService.crear({
+          nombre: 'Vinilo B',
+          id_marca: comex.id_marca,
+          clase_color: 'colores_fijos',
+          id_subcategorias: [interioresEsmaltes.id_subcategoria],
+          id_linea: viniltexOtraMarca.id_linea,
+          id_tipo_resina: resinaAgua.id_tipo_resina,
+        }),
+      'CA-CAT-11-02: rechaza asignar al producto una línea de otra marca'
+    );
+
+    const vinilo = await productosService.crear({
+      nombre: 'Vinilo Premium',
+      id_marca: comex.id_marca,
+      clase_color: 'colores_fijos',
+      id_subcategorias: [interioresEsmaltes.id_subcategoria],
+      id_linea: lineaComex.id_linea,
+      id_tipo_resina: resinaAgua.id_tipo_resina,
+    });
+    assert(
+      vinilo.id_linea === lineaComex.id_linea && vinilo.id_tipo_resina === resinaAgua.id_tipo_resina,
+      'CA-CAT-02-01: pintura registrada con marca, línea, resina y subcategoría'
+    );
+
+    await assertLanza(
+      () =>
+        productosService.crear({
+          nombre: 'Fantasma',
+          id_marca: comex.id_marca,
+          clase_color: 'sin_color',
+          id_subcategorias: [99999],
+        }),
+      'RF-CAT-02-02: rechaza una subcategoría inexistente'
+    );
+
+    const viniloEntonable = await productosService.actualizar(vinilo.id_producto, { clase_color: 'entonable' });
+    assert(viniloEntonable.clase_color === 'entonable', 'RF-CAT-02-03: permite cambiar la clase cuando no hay variantes');
+
+    varianteStats.set(vinilo.id_producto, { total: 2, activas: 1 });
+    await assertLanza(
+      () => productosService.actualizar(vinilo.id_producto, { clase_color: 'colores_fijos' }),
+      'RF-CAT-02-03: impide cambiar la clase si el producto ya tiene variantes'
+    );
+
+    await assertLanza(
+      () => productosService.publicar(brocha.id_producto),
+      'RF-CAT-02-05: no publica un producto sin variante activa'
+    );
+
+    const publicado = await productosService.publicar(vinilo.id_producto);
+    assert(publicado.publicado === true, 'RF-CAT-02-05: publica cuando hay variante activa (imagen diferida a HU-CAT-07)');
+
+    const desactivacionProducto = await productosService.desactivar(brocha.id_producto);
+    assert('desactivado' in desactivacionProducto, 'RF-CAT-02-01: desactiva el producto');
+
+    const reactivacionProducto = await productosService.reactivar(brocha.id_producto);
+    assert('reactivado' in reactivacionProducto, 'RF-CAT-09-04: reactiva el producto con su marca activa');
+
+    const encontrados = await productosService.listar({ idMarca: comex.id_marca, busqueda: 'premium' });
+    assert(
+      encontrados.length === 1 && encontrados[0]?.nombre === 'Vinilo Premium',
+      'RF-CAT-02-01: la búsqueda de productos filtra por nombre'
     );
 
     console.log(`\n======================================================`);

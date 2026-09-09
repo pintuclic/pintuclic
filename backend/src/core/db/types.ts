@@ -5,6 +5,7 @@ import { Generated, ColumnType, Selectable, Insertable, Updateable } from 'kysel
 // ==============================================================================
 
 export type EnumEstadoGeneral = 'activo' | 'inactivo';
+export type EnumClaseColor = 'entonable' | 'colores_fijos' | 'sin_color';
 
 export type EnumTipoUsuario = 'normal' | 'empresa';
 
@@ -173,8 +174,25 @@ export interface BaseTable {
 
 export interface ProductoTable {
   id_producto: Generated<number>;
-  id_linea: number;
+  id_marca: number;
+  id_linea: number | null;
+  id_tipo_resina: number | null;
   nombre: string;
+  descripcion: string | null;
+  clase_color: EnumClaseColor;
+  estado: Generated<EnumEstadoGeneral>;
+  publicado: Generated<boolean>;
+}
+
+export interface TipoResinaTable {
+  id_tipo_resina: Generated<number>;
+  nombre: string;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
+export interface ProductoSubcategoriaTable {
+  id_producto: number;
+  id_subcategoria: number;
 }
 
 export interface ColorTable {
@@ -452,7 +470,9 @@ export interface Database {
   marca: MarcaTable;
   linea: LineaTable;
   base: BaseTable;
+  tipo_resina: TipoResinaTable;
   producto: ProductoTable;
+  producto_subcategoria: ProductoSubcategoriaTable;
   color: ColorTable;
   tonos: TonosTable;
   variante: VarianteTable;
@@ -553,6 +573,13 @@ export type BaseUpdate = Updateable<BaseTable>;
 export type Producto = Selectable<ProductoTable>;
 export type NewProducto = Insertable<ProductoTable>;
 export type ProductoUpdate = Updateable<ProductoTable>;
+
+export type TipoResina = Selectable<TipoResinaTable>;
+export type NewTipoResina = Insertable<TipoResinaTable>;
+export type TipoResinaUpdate = Updateable<TipoResinaTable>;
+
+export type ProductoSubcategoria = Selectable<ProductoSubcategoriaTable>;
+export type NewProductoSubcategoria = Insertable<ProductoSubcategoriaTable>;
 
 export type Color = Selectable<ColorTable>;
 export type NewColor = Insertable<ColorTable>;
