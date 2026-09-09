@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.11.0] - 2026-09-09
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Novena entrega del módulo M01: se completa el **flujo 2 de HU-CAT-12** — declarar qué bases ofrece cada producto entonable (RF-CAT-12-02/03). Cierra un pendiente conocido de la v2.6.0. El flujo 3 (asociación color↔base) sigue diferido por depender de la decisión de negocio RF-CAT-12-12.
+- **Hitos Clave:** BD v3.4: nueva tabla join **`producto_base`** (`id_producto`, `id_base`). Endpoints `GET/POST/DELETE /api/catalogo/productos/:idProducto/bases`. Reglas: solo productos entonables pueden ofrecer bases (RF-CAT-12-02); la base debe ser de la marca del producto y estar activa (RF-CAT-12-03); no se puede quitar una base usada por una variante. **Acoplamiento con HU-CAT-03:** una variante entonable ahora exige que su base esté declarada en `producto_base` (además de pertenecer a la marca).
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 102/102 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed en `pintuclic-db`): tabla `producto_base` con PK compuesta y FKs verificadas; 42 tablas.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.11.0_M01_producto_base_backend.md](./walkthroughs/M01/walkthrough_v2.11.0_M01_producto_base_backend.md)
+
+---
+
 ## [v2.10.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Octava entrega del módulo M01: rendimiento del producto (HU-CAT-10). **Alcance aprobado por el PO: solo rendimiento**, sin catálogo genérico de atributos técnicos (RF-CAT-10-01 diferido). El rendimiento se captura en m² por galón (mínimo y máximo) y se deriva por presentación a partir del volumen, sin capturarlo una por una.

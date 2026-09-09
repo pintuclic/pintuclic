@@ -9,6 +9,7 @@ import { ProductosService } from '../services/productos.service';
 import { PresentacionesService } from '../services/presentaciones.service';
 import { VariantesService } from '../services/variantes.service';
 import { RendimientoService, derivarRendimiento } from '../services/rendimiento.service';
+import { ProductoBasesService } from '../services/producto-bases.service';
 import { EstablecerRendimientoDto } from '../dtos/rendimiento.dto';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
 import { CrearMarcaDto } from '../dtos/marcas.dto';
@@ -509,6 +510,30 @@ async function ejecutarPruebasM01(): Promise<void> {
     },
   };
 
+  // ----------------------------------------------------------------------------
+  // Estado en memoria: producto_base (HU-CAT-12 flujo 2)
+  // ----------------------------------------------------------------------------
+  const productoBases: Set<string> = new Set();
+  const claveProdBase = (idProducto: number, idBase: number): string => `${idProducto}:${idBase}`;
+
+  const mockProductoBasesRepo = {
+    asignar: async (idProducto: number, idBase: number) => {
+      productoBases.add(claveProdBase(idProducto, idBase));
+    },
+    quitar: async (idProducto: number, idBase: number) => {
+      productoBases.delete(claveProdBase(idProducto, idBase));
+    },
+    existe: async (idProducto: number, idBase: number) => productoBases.has(claveProdBase(idProducto, idBase)),
+    listarBases: async (idProducto: number): Promise<Base[]> => {
+      const ids = Array.from(productoBases)
+        .filter((k) => k.startsWith(`${idProducto}:`))
+        .map((k) => Number(k.split(':')[1]));
+      return ids.map((id) => bases.get(id)).filter((b): b is Base => b !== undefined);
+    },
+    contarVariantesConBase: async (idProducto: number, idBase: number) =>
+      Array.from(variantes.values()).filter((v) => v.id_producto === idProducto && v.id_base === idBase).length,
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const categoriasService = new CategoriasService(mockCategoriasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -547,7 +572,17 @@ async function ejecutarPruebasM01(): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockBasesRepo as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockColoresRepo as any
+    mockColoresRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockProductoBasesRepo as any
+  );
+  const productoBasesService = new ProductoBasesService(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockProductoBasesRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockProductosRepo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockBasesRepo as any
   );
   const rendimientoService = new RendimientoService(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1001,6 +1036,9 @@ async function ejecutarPruebasM01(): Promise<void> {
       id_tipo_resina: resinaAgua.id_tipo_resina,
     });
 
+    // HU-CAT-12 flujo 2: la base debe declararse en el producto antes de usarla en una variante
+    await productoBasesService.asignar(prodEntonable.id_producto, baseComex.id_base);
+
     const varEnt = await variantesService.crear({
       id_producto: prodEntonable.id_producto,
       id_presentacion: galon.id_presentacion,
@@ -1141,6 +1179,62 @@ async function ejecutarPruebasM01(): Promise<void> {
     assert(
       rendLimpio.rendimiento_min === null && rendLimpio.por_presentacion.length === 0,
       'RF-CAT-10-02: permite limpiar el rendimiento del producto'
+    );
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-12 flujo 2: asignar bases a un producto entonable
+    // --------------------------------------------------------------------------
+    const baseComex2 = await basesService.crear({ nombre: 'Base Neutra 2', id_marca: comex.id_marca });
+    const baseComex3 = await basesService.crear({ nombre: 'Base Neutra 3', id_marca: comex.id_marca });
+
+    const basesAsignadas = await productoBasesService.asignar(prodEntonable.id_producto, baseComex2.id_base);
+    assert(
+      basesAsignadas.some((b) => b.id_base === baseComex2.id_base),
+      'RF-CAT-12-02: asigna una base declarada al producto entonable'
+    );
+
+    await assertLanza(
+      () => productoBasesService.asignar(prodFijo.id_producto, baseComex2.id_base),
+      'RF-CAT-12-02: solo un producto entonable puede ofrecer bases'
+    );
+    await assertLanza(
+      () => productoBasesService.asignar(prodEntonable.id_producto, baseInter.id_base),
+      'RF-CAT-12-03: rechaza asignar una base de otra marca'
+    );
+    await assertLanza(
+      () => productoBasesService.asignar(prodEntonable.id_producto, baseComex2.id_base),
+      'RF-CAT-12-02: rechaza asignar una base ya asignada'
+    );
+
+    await assertLanza(
+      () =>
+        variantesService.crear({
+          id_producto: prodEntonable.id_producto,
+          id_presentacion: galon.id_presentacion,
+          id_base: baseComex3.id_base,
+          precio_vigente: 1,
+        }),
+      'HU-CAT-12 f2: rechaza una variante entonable con una base no declarada'
+    );
+
+    await productoBasesService.asignar(prodEntonable.id_producto, baseComex3.id_base);
+    const varDeclarada = await variantesService.crear({
+      id_producto: prodEntonable.id_producto,
+      id_presentacion: galon.id_presentacion,
+      id_base: baseComex3.id_base,
+      precio_vigente: 88000,
+      existencia_referencial: 5,
+    });
+    assert(varDeclarada.id_base === baseComex3.id_base, 'HU-CAT-12 f2: permite la variante cuando la base está declarada');
+
+    const trasQuitar = await productoBasesService.quitar(prodEntonable.id_producto, baseComex2.id_base);
+    assert(
+      !trasQuitar.some((b) => b.id_base === baseComex2.id_base),
+      'HU-CAT-12 f2: quita una base no usada por variantes'
+    );
+    await assertLanza(
+      () => productoBasesService.quitar(prodEntonable.id_producto, baseComex3.id_base),
+      'HU-CAT-12 f2: impide quitar una base usada por una variante'
     );
 
     console.log(`\n======================================================`);

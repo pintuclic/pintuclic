@@ -3,6 +3,7 @@ import { ProductosRepository } from '../repositories/productos.repository';
 import { PresentacionesRepository } from '../repositories/presentaciones.repository';
 import { BasesRepository } from '../repositories/bases.repository';
 import { ColoresRepository } from '../repositories/colores.repository';
+import { ProductoBasesRepository } from '../repositories/producto-bases.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { Variante, VarianteUpdate, Producto, EnumClaseColor } from '../../../core/db/types';
 import { CrearVarianteDto, ActualizarVarianteDto } from '../dtos/variantes.dto';
@@ -23,7 +24,8 @@ export class VariantesService {
     private readonly productosRepo: ProductosRepository,
     private readonly presentacionesRepo: PresentacionesRepository,
     private readonly basesRepo: BasesRepository,
-    private readonly coloresRepo: ColoresRepository
+    private readonly coloresRepo: ColoresRepository,
+    private readonly productoBasesRepo: ProductoBasesRepository
   ) {}
 
   async crear(dto: CrearVarianteDto): Promise<VarianteDetalle> {
@@ -34,6 +36,7 @@ export class VariantesService {
     const idColor = dto.id_color ?? null;
     this.validarForma(producto.clase_color, idBase, idColor);
     await this.validarBaseYColor(producto.id_marca, idBase, idColor);
+    await this.exigirBaseDeclarada(producto.clase_color, producto.id_producto, idBase);
 
     if (dto.codigo_proveedor !== undefined) {
       await this.exigirCodigoUnico(dto.codigo_proveedor);
@@ -72,6 +75,7 @@ export class VariantesService {
 
     this.validarForma(producto.clase_color, idBase, idColor);
     await this.validarBaseYColor(producto.id_marca, idBase, idColor);
+    await this.exigirBaseDeclarada(producto.clase_color, producto.id_producto, idBase);
     if (dto.id_presentacion !== undefined) {
       await this.exigirPresentacionActiva(dto.id_presentacion);
     }
@@ -216,6 +220,20 @@ export class VariantesService {
       }
       if (color.estado !== 'activo') {
         throw new AppError('El color indicado está inactivo', 409, 'COLOR_INACTIVO');
+      }
+    }
+  }
+
+  /** HU-CAT-12 flujo 2: la base de una variante entonable debe estar declarada en producto_base. */
+  private async exigirBaseDeclarada(clase: EnumClaseColor, idProducto: number, idBase: number | null): Promise<void> {
+    if (clase === 'entonable' && idBase !== null) {
+      const declarada = await this.productoBasesRepo.existe(idProducto, idBase);
+      if (!declarada) {
+        throw new AppError(
+          'La base no está declarada para este producto entonable; asígnela primero (HU-CAT-12 flujo 2)',
+          409,
+          'BASE_NO_DECLARADA'
+        );
       }
     }
   }

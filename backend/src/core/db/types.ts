@@ -198,6 +198,11 @@ export interface ProductoSubcategoriaTable {
   id_subcategoria: number;
 }
 
+export interface ProductoBaseTable {
+  id_producto: number;
+  id_base: number;
+}
+
 export interface ColorTable {
   id_color: Generated<number>;
   id_marca: number;
@@ -487,6 +492,7 @@ export interface Database {
   tipo_resina: TipoResinaTable;
   producto: ProductoTable;
   producto_subcategoria: ProductoSubcategoriaTable;
+  producto_base: ProductoBaseTable;
   color: ColorTable;
   tonos: TonosTable;
   presentacion: PresentacionTable;
@@ -595,6 +601,9 @@ export type TipoResinaUpdate = Updateable<TipoResinaTable>;
 
 export type ProductoSubcategoria = Selectable<ProductoSubcategoriaTable>;
 export type NewProductoSubcategoria = Insertable<ProductoSubcategoriaTable>;
+
+export type ProductoBase = Selectable<ProductoBaseTable>;
+export type NewProductoBase = Insertable<ProductoBaseTable>;
 
 export type Color = Selectable<ColorTable>;
 export type NewColor = Insertable<ColorTable>;
