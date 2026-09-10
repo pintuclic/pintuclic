@@ -299,11 +299,12 @@ todavía.
 - **Backend M01:** ningún endpoint `GET/POST/PUT/PATCH /api/catalogo/...` existe aún.
   Mientras tanto cada store sirve su `*.mock.ts` y la vista muestra el aviso
   «datos de ejemplo».
-- **Router del panel:** hoy la navegación la resuelve el shell `VistaPanelCatalogo.vue`
-  (sin URLs ni botón atrás del navegador). Al integrar `vue-router`: montar el router,
-  registrar `...dashboardCatalogoRoutes` y hacer que `usePanelNavegacion().irA` delegue
-  en `router.push()` (el shell pasa a ser un layout con `<router-view>`). Las vistas no
-  cambian: siguen llamando a `irA()`.
+- **Router del panel:** ✅ integrado. `main.ts` monta `vue-router` con
+  `core/routes/index.ts`, que agrega `...dashboardCatalogoRoutes` (una URL por vista,
+  bajo `/admin/catalogo`). `usePanelNavegacion().irA` delega en `router.push()` cuando
+  no hay shell (traducción clave→path en `rutaRealPanel`). El shell
+  `VistaPanelCatalogo.vue` queda como alternativa sin router. Las vistas no cambiaron:
+  siguen llamando a `irA()`.
 - **Layout admin:** `BarraLateralAdmin` / `BarraSuperiorAdmin` deberían moverse a
   `core/layouts/DisenoAdmin.vue` cuando exista, para compartirlo con otros módulos.
 - **Sesión (M04):** el nombre de usuario está fijo (`Carlos Álvarez`) hasta que el
