@@ -1,13 +1,14 @@
 import { Kysely, sql, SqlBool, RawBuilder } from 'kysely';
 import { Database, EnumClaseColor } from '../../../core/db/types';
+import { FiltrosBusqueda } from '../interfaces/m02.interfaces';
 
 // ==============================================================================
-// M02 - REPOSITORIO DE BÚSQUEDA (HU-BUS-01)
+// M02 - REPOSITORIO DE BÚSQUEDA Y FILTROS (HU-BUS-01, HU-BUS-02)
 // Búsqueda en servidor (RF-BUS-01-02), sin autenticación, sobre productos
 // activos+publicados. Insensible a mayúsculas y acentos y tolerante a errores
 // tipográficos (RF-BUS-01-03) usando `unaccent` + `pg_trgm` (word_similarity).
 // El producto aparece una sola vez porque se filtra la tabla `producto` con
-// subconsultas EXISTS, sin joins que multipliquen filas (RF-BUS-01-04).
+// subconsultas EXISTS, sin joins que multipliquen filas (RF-BUS-01-04 / RF-BUS-02-03).
 //
 // PRERREQUISITO DE BD (global, fuera de este módulo): las extensiones
 // `unaccent` y `pg_trgm` deben estar habilitadas. Ver walkthrough M02.
@@ -27,9 +28,14 @@ export interface FilaProductoBusqueda {
 export class BusquedaRepository {
   constructor(private readonly db: Kysely<Database>) {}
 
-  /** Productos que coinciden con el término, paginados. Término vacío => catálogo completo. */
-  async buscar(termino: string | undefined, limite: number, offset: number): Promise<FilaProductoBusqueda[]> {
-    let q = this.base(termino).select(['p.id_producto', 'p.nombre', 'p.id_marca', 'p.clase_color']);
+  /** Productos que coinciden con el término y los filtros, paginados. */
+  async buscar(
+    termino: string | undefined,
+    filtros: FiltrosBusqueda | undefined,
+    limite: number,
+    offset: number
+  ): Promise<FilaProductoBusqueda[]> {
+    let q = this.base(termino, filtros).select(['p.id_producto', 'p.nombre', 'p.id_marca', 'p.clase_color']);
     // Con término: relevancia por nombre desc y desempate estable por nombre (base para HU-BUS-03).
     // Sin término: catálogo completo ordenado alfabéticamente.
     q = termino
@@ -38,16 +44,120 @@ export class BusquedaRepository {
     return q.limit(limite).offset(offset).execute();
   }
 
-  async contar(termino: string | undefined): Promise<number> {
-    const fila = await this.base(termino)
+  async contar(termino: string | undefined, filtros: FiltrosBusqueda | undefined): Promise<number> {
+    const fila = await this.base(termino, filtros)
       .select(({ fn }) => fn.countAll<string>().as('total'))
       .executeTakeFirst();
     return Number(fila?.total ?? 0);
   }
 
-  private base(termino: string | undefined) {
-    const q = this.db.selectFrom('producto as p').where('p.estado', '=', 'activo').where('p.publicado', '=', true);
-    return termino ? q.where(this.predicado(termino)) : q;
+  /**
+   * Base de la consulta: productos activos+publicados, más el término (HU-BUS-01)
+   * y los filtros del catálogo (HU-BUS-02). Cada lista de filtro es un OR interno
+   * (`in`) y entre filtros distintos es AND. Todo se resuelve sobre `producto` con
+   * `EXISTS` para devolver productos, no variantes (RF-BUS-02-03). Sin anotación de
+   * tipo: se deja inferir el builder de Kysely (encadenar `.where` conserva el tipo).
+   */
+  private base(termino: string | undefined, f: FiltrosBusqueda | undefined) {
+    let q = this.db.selectFrom('producto as p').where('p.estado', '=', 'activo').where('p.publicado', '=', true);
+
+    if (termino) q = q.where(this.predicado(termino));
+    if (!f) return q;
+
+    if (f.idMarca?.length) q = q.where('p.id_marca', 'in', f.idMarca);
+    if (f.idLinea?.length) q = q.where('p.id_linea', 'in', f.idLinea);
+    if (f.idTipoResina?.length) q = q.where('p.id_tipo_resina', 'in', f.idTipoResina);
+
+    if (f.idSubcategoria?.length) {
+      const ids = f.idSubcategoria;
+      q = q.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('producto_subcategoria as ps')
+            .whereRef('ps.id_producto', '=', 'p.id_producto')
+            .where('ps.id_subcategoria', 'in', ids)
+            .select('ps.id_producto')
+        )
+      );
+    }
+
+    if (f.idCategoria?.length) {
+      const ids = f.idCategoria;
+      q = q.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('producto_subcategoria as ps')
+            .innerJoin('subcategorias as s', 's.id_subcategoria', 'ps.id_subcategoria')
+            .whereRef('ps.id_producto', '=', 'p.id_producto')
+            .where('s.id_categoria', 'in', ids)
+            .select('ps.id_producto')
+        )
+      );
+    }
+
+    if (f.idPresentacion?.length) {
+      const ids = f.idPresentacion;
+      q = q.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('variante as v')
+            .whereRef('v.id_producto', '=', 'p.id_producto')
+            .where('v.estado', '=', 'activo')
+            .where('v.id_presentacion', 'in', ids)
+            .select('v.id_variante')
+        )
+      );
+    }
+
+    if (f.idColor?.length) {
+      const ids = f.idColor;
+      q = q.where((eb) =>
+        eb.or([
+          // Preparado: el producto tiene una variante activa con ese color.
+          eb.exists(
+            eb
+              .selectFrom('variante as v')
+              .whereRef('v.id_producto', '=', 'p.id_producto')
+              .where('v.estado', '=', 'activo')
+              .where('v.id_color', 'in', ids)
+              .select('v.id_variante')
+          ),
+          // Entonable: el producto se entona y el color existe en la carta de su marca.
+          eb.and([
+            eb('p.clase_color', '=', 'entonable'),
+            eb.exists(
+              eb
+                .selectFrom('color as c')
+                .whereRef('c.id_marca', '=', 'p.id_marca')
+                .where('c.estado', '=', 'activo')
+                .where('c.id_color', 'in', ids)
+                .select('c.id_color')
+            ),
+          ]),
+        ])
+      );
+    }
+
+    // Rango de precio (RF-BUS-02-04). ponytail: opera sobre `variante.precio_vigente`
+    // (precio base). El precio final tras descuentos + IVA depende de M06 (aún
+    // inexistente); integrar aquí cuando M06 exponga el precio aplicable por cliente.
+    if (f.precioMin !== undefined || f.precioMax !== undefined) {
+      const min = f.precioMin;
+      const max = f.precioMax;
+      q = q.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('variante as v')
+            .whereRef('v.id_producto', '=', 'p.id_producto')
+            .where('v.estado', '=', 'activo')
+            .$if(min !== undefined, (qb) => qb.where(sql<SqlBool>`v.precio_vigente >= ${min}`))
+            .$if(max !== undefined, (qb) => qb.where(sql<SqlBool>`v.precio_vigente <= ${max}`))
+            .select('v.id_variante')
+        )
+      );
+    }
+
+    return q;
   }
 
   private relevanciaNombre(t: string): RawBuilder<number> {
