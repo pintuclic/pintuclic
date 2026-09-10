@@ -24,6 +24,7 @@ import VistaProductoDetalle from './VistaProductoDetalle.vue';
 import VistaVariantes from './VistaVariantes.vue';
 import VistaVarianteFormulario from './VistaVarianteFormulario.vue';
 import VistaCategorias from './VistaCategorias.vue';
+import VistaCategoriaFormulario from './VistaCategoriaFormulario.vue';
 import VistaMarcas from './VistaMarcas.vue';
 import VistaColores from './VistaColores.vue';
 import VistaBusquedas from './VistaBusquedas.vue';
@@ -41,6 +42,7 @@ const COMPONENTES: Record<ClaveVistaPanel, Component> = {
   variantes: VistaVariantes,
   'variante-formulario': VistaVarianteFormulario,
   categorias: VistaCategorias,
+  'categoria-formulario': VistaCategoriaFormulario,
   marcas: VistaMarcas,
   colores: VistaColores,
   busquedas: VistaBusquedas,
@@ -68,6 +70,9 @@ const propsVista = computed<Record<string, unknown>>(() => {
   }
   if (vistaActiva.value === 'variante-formulario') {
     return { varianteId: parametro.value ?? undefined };
+  }
+  if (vistaActiva.value === 'categoria-formulario') {
+    return { categoriaId: parametro.value ?? undefined };
   }
   return {};
 });

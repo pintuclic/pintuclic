@@ -5,6 +5,7 @@ export * from './producto-detalle.store';
 export * from './variantes.store';
 export * from './variante-formulario.store';
 export * from './categorias.store';
+export * from './categoria-formulario.store';
 export * from './marcas.store';
 export * from './colores.store';
 export * from './busquedas.store';
