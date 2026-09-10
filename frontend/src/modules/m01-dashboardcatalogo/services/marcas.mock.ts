@@ -1,6 +1,7 @@
 import type { FiltrosMarcasDTO } from '../dtos/marcas.dto';
 import { hayFiltrosMarcasActivos } from '../dtos/marcas.dto';
 import type { MarcaListado, PaginaMarcas, ResumenMarcas } from '../interfaces';
+import { LOGO_MARCA_DEMO } from '../assets/imagenes-catalogo';
 
 /**
  * ==============================================================================
@@ -31,6 +32,12 @@ export const MARCAS_DEMO: MarcaListado[] = [
   { id: 'flex', nombre: 'Flex', descripcionCorta: 'Soluciones en pintura', logoUrl: null, lineasAsociadas: 4, productos: 68, colores: 12, estado: 'activa' },
   { id: 'tak', nombre: 'Tak', descripcionCorta: 'Innovación en cada obra', logoUrl: null, lineasAsociadas: 3, productos: 54, colores: 10, estado: 'inactiva' },
 ];
+
+// Logo de la maqueta "ADMIN 06": monograma de la marca mientras el backend no
+// entrega el asset real.
+for (const marca of MARCAS_DEMO) {
+  marca.logoUrl = LOGO_MARCA_DEMO[marca.id] ?? null;
+}
 
 /** Líneas de ejemplo para el panel de edición (marca "Pintuco"). */
 export const LINEAS_MARCA_DEMO: Record<string, string[]> = {

@@ -2,6 +2,7 @@ import type {
   FormularioProducto,
   OpcionesFormularioProducto,
 } from '../interfaces';
+import { GALERIA_PRODUCTO_DEMO } from '../assets/imagenes-catalogo';
 
 /**
  * ==============================================================================
@@ -108,9 +109,9 @@ export const FORMULARIO_PRODUCTO_DEMO: FormularioProducto = {
   codigoColor: 'AP-001',
   coloresDisponiblesIds: ['col-amarillo-profundo', 'col-azul-oceano', 'col-rojo-carmesi', 'col-verde-olivo'],
   imagenes: [
-    { id: 'img-1', url: '', nombre: 'viniltex-advanced-frontal.jpg', esPrincipal: true },
-    { id: 'img-2', url: '', nombre: 'viniltex-advanced-lateral.jpg', esPrincipal: false },
-    { id: 'img-3', url: '', nombre: 'ambiente-sala.jpg', esPrincipal: false },
+    { id: 'img-1', url: GALERIA_PRODUCTO_DEMO.frontal, nombre: 'viniltex-advanced-frontal.jpg', esPrincipal: true },
+    { id: 'img-2', url: GALERIA_PRODUCTO_DEMO.lateral, nombre: 'viniltex-advanced-lateral.jpg', esPrincipal: false },
+    { id: 'img-3', url: GALERIA_PRODUCTO_DEMO.ambiente, nombre: 'ambiente-sala.jpg', esPrincipal: false },
   ],
   precioVenta: 39900,
   precioReferencia: 0,
