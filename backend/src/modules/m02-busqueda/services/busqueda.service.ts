@@ -1,5 +1,9 @@
 import { BusquedaRepository } from '../repositories/busqueda.repository';
-import { PaginaBusqueda, FiltrosBusqueda } from '../interfaces/m02.interfaces';
+import { PaginaBusqueda, FiltrosBusqueda, OrdenBusqueda } from '../interfaces/m02.interfaces';
+
+// ponytail: criterio por defecto fijo (`relevancia`). RF-BUS-03-01 lo llama
+// "configurable"; moverlo a configuración del sistema cuando exista ese módulo.
+const ORDEN_POR_DEFECTO: OrdenBusqueda = 'relevancia';
 
 // ==============================================================================
 // M02 - SERVICIO DE BÚSQUEDA Y FILTROS (HU-BUS-01, HU-BUS-02)
@@ -18,6 +22,7 @@ export class BusquedaService {
   async buscar(opciones: {
     termino?: string;
     filtros?: FiltrosBusqueda;
+    orden?: OrdenBusqueda;
     pagina?: number;
     limite?: number;
   }): Promise<PaginaBusqueda> {
@@ -29,9 +34,10 @@ export class BusquedaService {
     );
     const offset = (pagina - 1) * limite;
     const filtros = opciones.filtros;
+    const orden = opciones.orden ?? ORDEN_POR_DEFECTO;
 
     const [items, total] = await Promise.all([
-      this.repo.buscar(termino, filtros, limite, offset),
+      this.repo.buscar(termino, filtros, orden, limite, offset),
       this.repo.contar(termino, filtros),
     ]);
 

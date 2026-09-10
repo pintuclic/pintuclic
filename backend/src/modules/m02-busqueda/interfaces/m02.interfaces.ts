@@ -13,6 +13,13 @@ export interface ProductoBusqueda {
   readonly clase_color: EnumClaseColor;
 }
 
+/**
+ * Criterio de ordenamiento de resultados (HU-BUS-03, RF-BUS-03-01). `relevancia`
+ * pondera nombre>marca>línea>color>descripción (RF-BUS-03-02); `precio_asc`/`desc`
+ * ordenan por el precio del producto; `novedad`, por lo más reciente.
+ */
+export type OrdenBusqueda = 'relevancia' | 'precio_asc' | 'precio_desc' | 'novedad';
+
 /** Página de resultados: conserva total y ubicación para la paginación (HU-BUS-05). */
 export interface PaginaBusqueda {
   readonly items: ReadonlyArray<ProductoBusqueda>;

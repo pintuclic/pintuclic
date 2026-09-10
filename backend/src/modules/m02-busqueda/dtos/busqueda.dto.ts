@@ -26,6 +26,8 @@ export const BuscarProductosDto = z
     q: z.string().trim().max(150, 'El término de búsqueda es demasiado largo').optional(),
     pagina: z.coerce.number().int().positive().optional(),
     limite: z.coerce.number().int().positive().max(100).optional(),
+    // Criterio de ordenamiento (HU-BUS-03, RF-BUS-03-01). Ausente => por defecto.
+    orden: z.enum(['relevancia', 'precio_asc', 'precio_desc', 'novedad']).optional(),
     // Filtros del catálogo (HU-BUS-02, RF-BUS-02-01)
     categoria: idLista,
     subcategoria: idLista,

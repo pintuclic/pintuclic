@@ -1,7 +1,7 @@
 import { BusquedaService } from '../services/busqueda.service';
 import { BusquedaRepository, FilaProductoBusqueda } from '../repositories/busqueda.repository';
 import { BuscarProductosDto } from '../dtos/busqueda.dto';
-import { FiltrosBusqueda } from '../interfaces/m02.interfaces';
+import { FiltrosBusqueda, OrdenBusqueda } from '../interfaces/m02.interfaces';
 
 // ==============================================================================
 // M02 - SUITE DE VALIDACIÓN DE CRITERIOS DE ACEPTACIÓN (HU-BUS-01, HU-BUS-02)
@@ -14,6 +14,7 @@ import { FiltrosBusqueda } from '../interfaces/m02.interfaces';
 interface LlamadaBuscar {
   termino: string | undefined;
   filtros: FiltrosBusqueda | undefined;
+  orden: OrdenBusqueda;
   limite: number;
   offset: number;
 }
@@ -28,10 +29,11 @@ class RepoFake extends BusquedaRepository {
   override async buscar(
     termino: string | undefined,
     filtros: FiltrosBusqueda | undefined,
+    orden: OrdenBusqueda,
     limite: number,
     offset: number
   ): Promise<FilaProductoBusqueda[]> {
-    this.ultimaBusqueda = { termino, filtros, limite, offset };
+    this.ultimaBusqueda = { termino, filtros, orden, limite, offset };
     return this.filas.slice(offset, offset + limite);
   }
 
@@ -152,6 +154,35 @@ async function ejecutarPruebasM02(): Promise<void> {
     {
       const dto = BuscarProductosDto.parse({ precio_min: '50', precio_max: '100' });
       assert(dto.precio_min === 50 && dto.precio_max === 100, 'RF-BUS-02-04: rango válido se acepta como números');
+    }
+
+    // --- HU-BUS-03 -----------------------------------------------------------
+
+    // CA-BUS-03-02 / RF-BUS-03-01: sin criterio se aplica el orden por defecto (relevancia).
+    {
+      const repo = new RepoFake([]);
+      await new BusquedaService(repo).buscar({ termino: 'azul' });
+      assert(repo.ultimaBusqueda?.orden === 'relevancia', 'CA-BUS-03-02: sin criterio se aplica el orden por defecto (relevancia)');
+    }
+
+    // CA-BUS-03-01 / RF-BUS-03-01: el criterio elegido se propaga al repositorio.
+    {
+      const repo = new RepoFake([]);
+      await new BusquedaService(repo).buscar({ orden: 'precio_asc' });
+      assert(repo.ultimaBusqueda?.orden === 'precio_asc', 'CA-BUS-03-01: el criterio elegido llega al repositorio');
+    }
+
+    // RF-BUS-03-01: el DTO acepta los criterios válidos y rechaza los inválidos.
+    {
+      const dto = BuscarProductosDto.parse({ orden: 'novedad' });
+      assert(dto.orden === 'novedad', 'RF-BUS-03-01: el DTO acepta un criterio válido');
+      let rechazado = false;
+      try {
+        BuscarProductosDto.parse({ orden: 'popularidad' });
+      } catch {
+        rechazado = true;
+      }
+      assert(rechazado, 'RF-BUS-03-01: el DTO rechaza un criterio no soportado');
     }
 
     console.log(`\n======================================================`);
