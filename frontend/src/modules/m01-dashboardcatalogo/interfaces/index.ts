@@ -6,6 +6,7 @@ export * from './producto-detalle.interface';
 export * from './variantes.interface';
 export * from './variante-formulario.interface';
 export * from './categorias.interface';
+export * from './categoria-formulario.interface';
 export * from './marcas.interface';
 export * from './colores.interface';
 export * from './busquedas.interface';

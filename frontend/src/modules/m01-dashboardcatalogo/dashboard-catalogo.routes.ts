@@ -108,6 +108,37 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/admin/catalogo/categorias/nueva',
+    name: 'AdminCategoriaNueva',
+    component: () => import('./views/VistaCategoriaFormulario.vue'),
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Crear categoría',
+    },
+  },
+  {
+    path: '/admin/catalogo/categorias/subcategorias/nueva',
+    name: 'AdminSubcategoriaNueva',
+    component: () => import('./views/VistaCategoriaFormulario.vue'),
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Crear subcategoría',
+    },
+  },
+  {
+    path: '/admin/catalogo/categorias/:categoriaId/editar',
+    name: 'AdminCategoriaEditar',
+    component: () => import('./views/VistaCategoriaFormulario.vue'),
+    props: true,
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Editar categoría',
+    },
+  },
+  {
     path: '/admin/catalogo/marcas',
     name: 'AdminMarcas',
     component: () => import('./views/VistaMarcas.vue'),

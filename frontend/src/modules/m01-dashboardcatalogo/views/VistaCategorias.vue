@@ -63,14 +63,124 @@
             :total-elementos="totalElementos"
             :cargando="cargandoDetalle"
             @editar="(id) => irA(`/admin/catalogo/categorias/${id}/editar`)"
-            @menu="(id) => irA(`/admin/catalogo/categorias/${id}/acciones`)"
-            @menu-elemento="(id) => irA(`/admin/catalogo/categorias/${id}/acciones`)"
+            @menu="pedirDesactivar"
+            @menu-elemento="pedirDesactivar"
             @ordenar="ordenarElementosPor"
             @buscar="(t) => aplicarFiltroElementos({ busqueda: t })"
             @filtrar-tipo="onFiltrarTipo"
           />
         </div>
       </main>
+    </div>
+
+    <!-- ADMIN 12 - Modal desactivar categoría/subcategoría -->
+    <div
+      v-if="impactoDesactivar"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-black/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="titulo-desactivar-categoria"
+      @click.self="cancelarDesactivar"
+    >
+      <div class="w-full max-w-lg rounded-card bg-neutral-white shadow-xl">
+        <div class="flex items-start gap-3 p-5">
+          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-card bg-highlight/15 text-highlight">
+            <AlertTriangle class="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div>
+            <h2 id="titulo-desactivar-categoria" class="text-base font-semibold text-neutral-black">
+              ¿Desactivar {{ impactoDesactivar.tipo === 'subcategoria' ? 'subcategoría' : 'categoría' }}?
+            </h2>
+            <p class="mt-1 text-sm text-neutral-medium">
+              Estás a punto de desactivar el siguiente elemento:
+            </p>
+          </div>
+          <button
+            type="button"
+            class="ml-auto grid h-8 w-8 place-items-center rounded-button text-neutral-medium hover:bg-neutral-lightest"
+            aria-label="Cerrar"
+            @click="cancelarDesactivar"
+          >
+            <X class="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div class="space-y-4 px-5">
+          <div class="flex items-center gap-3 rounded-card border border-neutral-light bg-neutral-lightest p-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-card bg-subaction text-corporate">
+              <Layers class="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div>
+              <p class="flex items-center gap-2 font-medium text-neutral-black">
+                {{ impactoDesactivar.nombre }}
+                <span class="rounded-button bg-neutral-light px-1.5 py-0.5 text-[11px] font-medium text-neutral-medium">
+                  {{ impactoDesactivar.tipo === 'subcategoria' ? 'Subcategoría' : 'Categoría' }}
+                </span>
+              </p>
+              <p class="text-xs text-neutral-medium">{{ impactoDesactivar.ruta }}</p>
+            </div>
+          </div>
+
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="rounded-card border border-neutral-light p-3">
+              <p class="text-xl font-bold text-neutral-black tabular-nums">
+                {{ formatearNumero(impactoDesactivar.productosAfectados) }}
+              </p>
+              <p class="text-xs text-neutral-medium">
+                Productos afectados. Dejarán de mostrarse en el catálogo público si no tienen otra
+                categoría activa.
+              </p>
+            </div>
+            <div class="rounded-card border border-neutral-light p-3">
+              <p class="text-xl font-bold text-neutral-black tabular-nums">
+                {{ impactoDesactivar.subcategoriasAfectadas }}
+              </p>
+              <p class="text-xs text-neutral-medium">
+                Subcategorías afectadas por la baja en cascada.
+              </p>
+            </div>
+          </div>
+
+          <p class="flex items-start gap-2 rounded-card bg-highlight/10 px-3 py-2 text-xs text-neutral-dark">
+            <Info class="mt-0.5 h-3.5 w-3.5 shrink-0 text-highlight" aria-hidden="true" />
+            Los productos que no tengan otra categoría activa dejarán de aparecer en el catálogo
+            público de Pintu Clic, pero conservarán su información, historial de ventas y registros.
+          </p>
+
+          <label class="flex items-start gap-2 text-sm text-neutral-dark">
+            <input v-model="entiendoImpacto" type="checkbox" class="mt-0.5 accent-action" />
+            Entiendo el impacto de esta acción y deseo continuar.
+          </label>
+        </div>
+
+        <div class="flex flex-wrap justify-end gap-3 p-5">
+          <button
+            type="button"
+            class="rounded-button px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
+            :disabled="desactivando"
+            @click="cancelarDesactivar"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
+            @click="irA('/admin/catalogo/productos')"
+          >
+            <Eye class="h-4 w-4" aria-hidden="true" />
+            Ver productos afectados
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-button bg-corporate px-4 py-2 text-sm font-medium text-neutral-white hover:bg-corporate/90 disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="!entiendoImpacto || desactivando"
+            @click="onConfirmarDesactivar"
+          >
+            <Power class="h-4 w-4" aria-hidden="true" />
+            Desactivar
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -90,7 +200,7 @@
  */
 import { ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
-import { Plus } from 'lucide-vue-next';
+import { Plus, AlertTriangle, Info, X, Layers, Eye, Power } from 'lucide-vue-next';
 import BarraLateralAdmin from '../components/BarraLateralAdmin.vue';
 import BarraSuperiorAdmin from '../components/BarraSuperiorAdmin.vue';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
@@ -111,18 +221,30 @@ const {
   arbolFiltrado,
   elementosFiltrados,
   totalElementos,
+  impactoDesactivar,
+  desactivando,
   seleccionar,
   alternarExpandida,
   buscarEnArbol,
   aplicarFiltroElementos,
   ordenarElementosPor,
+  pedirDesactivar,
+  cancelarDesactivar,
+  confirmarDesactivar,
+  formatearNumero,
 } = useCategorias();
 
 const busquedaGlobal = ref('');
+const entiendoImpacto = ref(false);
 
 function onFiltrarTipo(valor: string): void {
   const tipo = valor === '' ? null : (valor as TipoNodoCategoria);
   aplicarFiltroElementos({ tipo });
+}
+
+async function onConfirmarDesactivar(): Promise<void> {
+  const ok = await confirmarDesactivar();
+  if (ok) entiendoImpacto.value = false;
 }
 
 const { irA } = usePanelNavegacion();

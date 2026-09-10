@@ -29,10 +29,11 @@ export { default as VistaPreviaProducto } from './VistaPreviaProducto.vue';
 export { default as FiltrosVariantes } from './FiltrosVariantes.vue';
 export { default as TablaVariantes } from './TablaVariantes.vue';
 
-// Vista: Categorías y subcategorías (ADMIN 05)
+// Vista: Categorías y subcategorías (ADMIN 05 / ADMIN 10-11-12)
 export { default as ArbolCategorias } from './ArbolCategorias.vue';
 export { default as PanelDetalleCategoria } from './PanelDetalleCategoria.vue';
 export { default as TablaElementosCategoria } from './TablaElementosCategoria.vue';
+export { default as ChipsSeleccion } from './ChipsSeleccion.vue';
 
 // Vista: Marcas (ADMIN 06)
 export { default as TablaMarcas } from './TablaMarcas.vue';

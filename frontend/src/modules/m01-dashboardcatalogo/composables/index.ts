@@ -5,6 +5,7 @@ export * from './useProductoDetalle';
 export * from './useVariantes';
 export * from './useVarianteFormulario';
 export * from './useCategorias';
+export * from './useCategoriaFormulario';
 export * from './useMarcas';
 export * from './useColores';
 export * from './useBusquedas';

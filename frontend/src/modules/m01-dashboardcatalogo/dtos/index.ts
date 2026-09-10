@@ -4,6 +4,7 @@ export * from './producto-formulario.dto';
 export * from './variantes.dto';
 export * from './variante-formulario.dto';
 export * from './categorias.dto';
+export * from './categoria-formulario.dto';
 export * from './marcas.dto';
 export * from './colores.dto';
 export * from './busquedas.dto';
