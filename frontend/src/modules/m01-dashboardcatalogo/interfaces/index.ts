@@ -2,6 +2,7 @@ export * from './api.interface';
 export * from './dashboard.interface';
 export * from './productos.interface';
 export * from './producto-formulario.interface';
+export * from './producto-detalle.interface';
 export * from './variantes.interface';
 export * from './categorias.interface';
 export * from './marcas.interface';

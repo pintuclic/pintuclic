@@ -22,6 +22,7 @@ export type ClaveVistaPanel =
   | 'dashboard'
   | 'productos'
   | 'producto-formulario'
+  | 'producto-detalle'
   | 'variantes'
   | 'categorias'
   | 'marcas'
@@ -71,6 +72,10 @@ export function rutaRealPanel(
       return parametro
         ? `/admin/catalogo/productos/${parametro}/editar`
         : '/admin/catalogo/productos/nuevo';
+    case 'producto-detalle':
+      return parametro
+        ? `/admin/catalogo/productos/${parametro}`
+        : '/admin/catalogo/productos';
     case 'variantes':
       return '/admin/catalogo/variantes';
     case 'categorias':
@@ -105,10 +110,12 @@ export function resolverRutaPanel(destino: string): {
   if (ruta === '' || ruta === 'dashboard') return { clave: 'dashboard', parametro: null };
   if (ruta === 'productos/nuevo') return { clave: 'producto-formulario', parametro: null };
 
-  const edicion = ruta.match(/^productos\/([^/]+)(?:\/editar)?$/);
-  const idProducto = edicion?.[1];
-  if (idProducto && idProducto !== 'nuevo') {
-    return { clave: 'producto-formulario', parametro: idProducto };
+  const edicion = ruta.match(/^productos\/([^/]+)\/editar$/);
+  if (edicion?.[1]) return { clave: 'producto-formulario', parametro: edicion[1] };
+
+  const detalle = ruta.match(/^productos\/([^/]+)$/);
+  if (detalle?.[1] && detalle[1] !== 'nuevo') {
+    return { clave: 'producto-detalle', parametro: detalle[1] };
   }
 
   if (ruta === 'productos') return { clave: 'productos', parametro: null };
