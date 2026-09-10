@@ -115,7 +115,9 @@
                 type="button"
                 class="grid h-8 w-8 place-items-center rounded-button text-neutral-medium hover:bg-neutral-light"
                 :aria-label="`Acciones de ${producto.nombre}`"
-                @click="$emit('menu', producto.id)"
+                :aria-expanded="menuAbierto === producto.id"
+                aria-haspopup="menu"
+                @click.stop="abrirMenu(producto.id, $event)"
               >
                 <MoreVertical class="h-4 w-4" aria-hidden="true" />
               </button>
@@ -134,12 +136,56 @@
       etiqueta="productos"
       @ir-pagina="(n) => $emit('ir-pagina', n)"
     />
+
+    <!-- Menú de acciones de fila (posición fija para no recortarse en la tabla con scroll) -->
+    <template v-if="menuAbierto">
+      <button
+        type="button"
+        class="fixed inset-0 z-20 cursor-default"
+        aria-hidden="true"
+        tabindex="-1"
+        @click="menuAbierto = null"
+      />
+      <div
+        class="fixed z-30 w-44 overflow-hidden rounded-card border border-neutral-light bg-neutral-white py-1 text-left shadow-lg"
+        :style="{ top: `${menuPos.top}px`, left: `${menuPos.left}px` }"
+        role="menu"
+      >
+        <button
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
+          @click="ejecutar('editar')"
+        >
+          <Pencil class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
+          Editar producto
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
+          @click="ejecutar('abrir')"
+        >
+          <Eye class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
+          Ver detalle
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
+          @click="ejecutar('duplicar')"
+        >
+          <Copy class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
+          Duplicar
+        </button>
+      </div>
+    </template>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Package, MoreVertical } from 'lucide-vue-next';
+import { Package, MoreVertical, Pencil, Eye, Copy } from 'lucide-vue-next';
 import BadgeEstadoProducto from './BadgeEstadoProducto.vue';
 import PaginacionTabla from './PaginacionTabla.vue';
 import { useFormatoCatalogo } from '../composables/useFormatoCatalogo';
@@ -155,9 +201,34 @@ const emit = defineEmits<{
   (e: 'ordenar', orden: OrdenProductos): void;
   (e: 'ir-pagina', numero: number): void;
   (e: 'abrir', id: string): void;
-  (e: 'menu', id: string): void;
+  (e: 'editar', id: string): void;
+  (e: 'duplicar', id: string): void;
   (e: 'seleccion', ids: string[]): void;
 }>();
+
+// --- Menú de acciones por fila -------------------------------------------
+const menuAbierto = ref<string | null>(null);
+const menuPos = ref<{ top: number; left: number }>({ top: 0, left: 0 });
+
+function abrirMenu(id: string, evento: Event): void {
+  if (menuAbierto.value === id) {
+    menuAbierto.value = null;
+    return;
+  }
+  const boton = evento.currentTarget as HTMLElement;
+  const r = boton.getBoundingClientRect();
+  menuPos.value = { top: r.bottom + 4, left: Math.max(8, r.right - 176) };
+  menuAbierto.value = id;
+}
+
+function ejecutar(accion: 'editar' | 'abrir' | 'duplicar'): void {
+  const id = menuAbierto.value;
+  menuAbierto.value = null;
+  if (!id) return;
+  if (accion === 'editar') emit('editar', id);
+  else if (accion === 'duplicar') emit('duplicar', id);
+  else emit('abrir', id);
+}
 
 const { formatearNumero, formatearFechaHora } = useFormatoCatalogo();
 

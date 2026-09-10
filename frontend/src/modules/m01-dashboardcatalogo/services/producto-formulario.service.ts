@@ -1,6 +1,7 @@
 import { apiClient } from '@/core/api/axios';
 import type {
   ApiResponse,
+  DetalleEdicionProducto,
   FormularioProducto,
   OpcionesFormularioProducto,
   ResultadoGuardadoProducto,
@@ -32,6 +33,14 @@ export const ProductoFormularioService = {
   /** GET /api/catalogo/productos/:id — carga un producto para editar. */
   async obtenerProducto(id: string): Promise<ApiResponse<FormularioProducto>> {
     const { data } = await apiClient.get<ApiResponse<FormularioProducto>>(`${BASE}/${id}`);
+    return data;
+  },
+
+  /** GET /api/catalogo/productos/:id/detalle-edicion — auditoría y conteos (maqueta ADMIN 04). */
+  async obtenerDetalleEdicion(id: string): Promise<ApiResponse<DetalleEdicionProducto>> {
+    const { data } = await apiClient.get<ApiResponse<DetalleEdicionProducto>>(
+      `${BASE}/${id}/detalle-edicion`
+    );
     return data;
   },
 

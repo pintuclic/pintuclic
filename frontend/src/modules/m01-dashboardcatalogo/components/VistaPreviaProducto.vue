@@ -48,6 +48,27 @@
             {{ color.nombre }}<template v-if="color.codigo"> · {{ color.codigo }}</template>
           </dd>
         </dl>
+
+        <dl
+          v-if="meta"
+          class="space-y-1.5 border-t border-neutral-light pt-3 text-xs text-neutral-medium"
+        >
+          <div class="flex items-center gap-1.5">
+            <CalendarClock class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <dt class="sr-only">Última actualización</dt>
+            <dd class="text-neutral-dark">Última actualización · {{ meta.actualizadoEn }}</dd>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <User class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <dt class="sr-only">Editado por</dt>
+            <dd class="text-neutral-dark">Por {{ meta.creadoPor }}</dd>
+          </div>
+          <div v-if="meta.sku" class="flex items-center gap-1.5">
+            <Hash class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <dt class="sr-only">SKU</dt>
+            <dd class="text-neutral-dark">SKU: {{ meta.sku }}</dd>
+          </div>
+        </dl>
       </div>
     </div>
   </section>
@@ -55,14 +76,22 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Eye, Image as ImageIcon } from 'lucide-vue-next';
+import { Eye, Image as ImageIcon, CalendarClock, User, Hash } from 'lucide-vue-next';
 import BadgeEstadoProducto from './BadgeEstadoProducto.vue';
 import { useFormatoCatalogo } from '../composables/useFormatoCatalogo';
 import type { ColorCatalogo, FormularioProducto } from '../interfaces';
 
+/** Metadatos de auditoría que solo se muestran al editar (maqueta ADMIN 04). */
+interface MetaVistaPrevia {
+  actualizadoEn: string;
+  creadoPor: string;
+  sku: string;
+}
+
 const props = defineProps<{
   formulario: FormularioProducto;
   color: ColorCatalogo | null;
+  meta?: MetaVistaPrevia | null;
 }>();
 
 const { formatearNumero } = useFormatoCatalogo();

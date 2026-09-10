@@ -5,6 +5,7 @@ import { ProductoFormularioService } from '../services/producto-formulario.servi
 import {
   OPCIONES_FORMULARIO_DEMO,
   FORMULARIO_PRODUCTO_DEMO,
+  EDICION_PRODUCTO_DEMO,
   formularioProductoVacio,
 } from '../services/producto-formulario.mock';
 import { validarProductoFormulario } from '../dtos/producto-formulario.dto';
@@ -16,6 +17,7 @@ import type {
   SeccionChecklist,
   ProgresoChecklist,
   ColorCatalogo,
+  DetalleEdicionProducto,
   ApiErrorResponse,
 } from '../interfaces';
 
@@ -26,6 +28,16 @@ const OPCIONES_VACIAS: OpcionesFormularioProducto = {
   marcas: [],
   lineas: [],
   colores: [],
+  atributos: {
+    presentaciones: [],
+    rendimientos: [],
+    acabados: [],
+    usos: [],
+    secados: [],
+    repintados: [],
+  },
+  bases: [],
+  sistemasEntonado: [],
 };
 
 /**
@@ -44,6 +56,8 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
   const opciones = ref<OpcionesFormularioProducto>({ ...OPCIONES_VACIAS });
   const modo = ref<ModoFormulario>('crear');
   const productoId = ref<string | null>(null);
+  /** Auditoría / conteos que solo existen al editar (maqueta ADMIN 04). */
+  const detalleEdicion = ref<DetalleEdicionProducto | null>(null);
 
   const cargando = ref<boolean>(false);
   const guardando = ref<boolean>(false);
@@ -51,6 +65,7 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
   const erroresValidacion = ref<Record<string, string>>({});
   const usandoDatosDemo = ref<boolean>(false);
   const guardadoOk = ref<boolean>(false);
+  const desactivado = ref<boolean>(false);
 
   // --- Getters: opciones dependientes --------------------------------------
   const subcategoriasDisponibles = computed(() =>
@@ -156,6 +171,7 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
     error.value = null;
     erroresValidacion.value = {};
     guardadoOk.value = false;
+    desactivado.value = false;
     usandoDatosDemo.value = false;
 
     await cargarOpciones();
@@ -164,15 +180,21 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
       modo.value = 'editar';
       productoId.value = id;
       try {
-        const respuesta = await ProductoFormularioService.obtenerProducto(id);
-        formulario.value = respuesta.data;
+        const [prod, det] = await Promise.all([
+          ProductoFormularioService.obtenerProducto(id),
+          ProductoFormularioService.obtenerDetalleEdicion(id),
+        ]);
+        formulario.value = prod.data;
+        detalleEdicion.value = det.data;
       } catch {
         formulario.value = { ...FORMULARIO_PRODUCTO_DEMO };
+        detalleEdicion.value = EDICION_PRODUCTO_DEMO;
         usandoDatosDemo.value = true;
       }
     } else {
       modo.value = 'crear';
       productoId.value = null;
+      detalleEdicion.value = null;
       formulario.value = formularioProductoVacio();
     }
 
@@ -308,14 +330,42 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
   const guardarBorrador = () => guardar('borrador');
   const publicar = () => guardar('publicado');
 
+  /**
+   * Desactiva el producto (maqueta ADMIN 04). Sin backend deja el formulario en
+   * borrador y marca `desactivado` para el aviso de la vista.
+   */
+  async function desactivar(): Promise<boolean> {
+    if (modo.value !== 'editar' || !productoId.value) return false;
+    guardando.value = true;
+    error.value = null;
+    try {
+      if (!usandoDatosDemo.value) {
+        await ProductoFormularioService.actualizar(productoId.value, {
+          ...formulario.value,
+          estado: 'borrador',
+        });
+      }
+      formulario.value = { ...formulario.value, estado: 'borrador' };
+      desactivado.value = true;
+      return true;
+    } catch (e) {
+      error.value = extraerMensajeError(e);
+      return false;
+    } finally {
+      guardando.value = false;
+    }
+  }
+
   function reiniciar(): void {
     formulario.value = formularioProductoVacio();
     opciones.value = { ...OPCIONES_VACIAS };
     modo.value = 'crear';
     productoId.value = null;
+    detalleEdicion.value = null;
     error.value = null;
     erroresValidacion.value = {};
     guardadoOk.value = false;
+    desactivado.value = false;
     usandoDatosDemo.value = false;
   }
 
@@ -325,12 +375,14 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
     opciones,
     modo,
     productoId,
+    detalleEdicion,
     cargando,
     guardando,
     error,
     erroresValidacion,
     usandoDatosDemo,
     guardadoOk,
+    desactivado,
     // getters
     subcategoriasDisponibles,
     lineasDisponibles,
@@ -355,6 +407,7 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
     validar,
     guardarBorrador,
     publicar,
+    desactivar,
     reiniciar,
   };
 });
