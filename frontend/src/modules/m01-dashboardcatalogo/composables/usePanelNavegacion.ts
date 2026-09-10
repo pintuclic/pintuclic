@@ -1,4 +1,5 @@
 import { inject, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import type { InjectionKey, Ref } from 'vue';
 
 /**
@@ -10,8 +11,10 @@ import type { InjectionKey, Ref } from 'vue';
  * actúa de "shell": mantiene la vista activa y la cambia con `<component :is>`.
  * Este composable expone esa API a cualquier vista/componente por `inject`.
  *
- * Si una vista se monta suelta (sin shell), devuelve una implementación inerte:
- * `irA()` no hace nada, igual que el marcador de posición anterior.
+ * Si una vista se monta suelta (sin shell) pero hay `vue-router` montado
+ * —el caso real: `dashboardCatalogoRoutes` registra cada vista con su URL—,
+ * `irA()` navega por URL real con `router.push`. Si tampoco hay router
+ * (tests, render aislado), `irA()` es inerte.
  * ==============================================================================
  */
 
@@ -37,11 +40,51 @@ export interface PanelNavegacion {
 export const NAV_PANEL_CATALOGO = Symbol('nav-panel-catalogo') as InjectionKey<PanelNavegacion>;
 
 export function usePanelNavegacion(): PanelNavegacion {
-  return inject(NAV_PANEL_CATALOGO, {
+  const shell = inject(NAV_PANEL_CATALOGO, null);
+  if (shell) return shell;
+
+  // Sin shell: las vistas están montadas por `vue-router` (una URL por vista).
+  const router = useRouter();
+  return {
     vistaActiva: ref<ClaveVistaPanel>('dashboard'),
     parametro: ref<string | null>(null),
-    irA: () => {},
-  });
+    irA: (destino: string): void => {
+      const { clave, parametro } = resolverRutaPanel(destino);
+      if (!clave || !router) return;
+      void router.push(rutaRealPanel(clave, parametro));
+    },
+  };
+}
+
+/**
+ * Inverso de `resolverRutaPanel`: traduce la clave del shell (y su parámetro)
+ * al `path` real registrado en `dashboardCatalogoRoutes`.
+ */
+export function rutaRealPanel(
+  clave: ClaveVistaPanel,
+  parametro: string | null = null
+): string {
+  switch (clave) {
+    case 'productos':
+      return '/admin/catalogo/productos';
+    case 'producto-formulario':
+      return parametro
+        ? `/admin/catalogo/productos/${parametro}/editar`
+        : '/admin/catalogo/productos/nuevo';
+    case 'variantes':
+      return '/admin/catalogo/variantes';
+    case 'categorias':
+      return '/admin/catalogo/categorias';
+    case 'marcas':
+      return '/admin/catalogo/marcas';
+    case 'colores':
+      return '/admin/catalogo/colores';
+    case 'busquedas':
+      return '/admin/catalogo/busquedas-sin-resultado';
+    case 'dashboard':
+    default:
+      return '/admin/catalogo';
+  }
 }
 
 /**
