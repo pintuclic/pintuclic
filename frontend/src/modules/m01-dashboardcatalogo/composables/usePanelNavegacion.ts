@@ -24,6 +24,7 @@ export type ClaveVistaPanel =
   | 'producto-formulario'
   | 'producto-detalle'
   | 'variantes'
+  | 'variante-formulario'
   | 'categorias'
   | 'marcas'
   | 'colores'
@@ -78,6 +79,10 @@ export function rutaRealPanel(
         : '/admin/catalogo/productos';
     case 'variantes':
       return '/admin/catalogo/variantes';
+    case 'variante-formulario':
+      return parametro
+        ? `/admin/catalogo/variantes/${parametro}/editar`
+        : '/admin/catalogo/variantes/nueva';
     case 'categorias':
       return '/admin/catalogo/categorias';
     case 'marcas':
@@ -119,6 +124,15 @@ export function resolverRutaPanel(destino: string): {
   }
 
   if (ruta === 'productos') return { clave: 'productos', parametro: null };
+
+  if (ruta === 'variantes/nueva') return { clave: 'variante-formulario', parametro: null };
+  const varEdicion = ruta.match(/^variantes\/([^/]+)\/(editar|duplicar)$/);
+  if (varEdicion?.[1]) {
+    return {
+      clave: 'variante-formulario',
+      parametro: varEdicion[2] === 'duplicar' ? null : varEdicion[1],
+    };
+  }
   if (ruta.startsWith('variantes')) return { clave: 'variantes', parametro: null };
   if (ruta.startsWith('categorias')) return { clave: 'categorias', parametro: null };
   if (ruta.startsWith('marcas')) return { clave: 'marcas', parametro: null };
