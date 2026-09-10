@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.18.0] - 2026-09-09
+### Módulo: M02 Búsqueda y navegación (Backend)
+- **Alcance:** Tercera entrega del módulo M02: ordenamiento de resultados (HU-BUS-03). Se **extiende el mismo endpoint** `GET /api/busqueda/productos` con el parámetro `orden`, combinable con término y filtros y conservado en la paginación (CA-BUS-03-01). Sin cambios de esquema.
+- **Hitos Clave:** Nuevo parámetro `orden` con valores `relevancia` (por defecto), `precio_asc`, `precio_desc` y `novedad` (RF-BUS-03-01). La **relevancia se pondera** nombre>marca>línea>color>descripción (pesos 5/4/3/2/1) con un bonus por coincidencia exacta del nombre para priorizar el exacto sobre el aproximado (RF-BUS-03-02). Todos los criterios cierran con **desempate estable por nombre asc**, de modo que consultas idénticas mantienen el orden entre páginas (RF-BUS-03-03 / CA-BUS-03-03). El precio del producto para ordenar es el mínimo de sus variantes activas. Los productos sin coincidencia (relevancia 0) no se elevan por patrocinio (CA-BUS-03-04, ya garantizado desde HU-BUS-01).
+- **Diferido:** (1) **precio final tras descuentos + IVA** y **precio por condiciones de empresa** en el orden por precio (CA-BUS-03-05): dependen de M06 (inexistente); el orden opera sobre `variante.precio_vigente` (precio base). (2) **Novedad sin fecha:** `producto` no tiene columna de fecha de alta; se usa `id_producto` (serial) como proxy de novedad hasta que el esquema incorpore una fecha. (3) **Default "configurable"** (RF-BUS-03-01): fijo en `relevancia` hasta que exista un módulo de configuración.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 18/18 pruebas superadas (+3 de ordenamiento: default, propagación del criterio y validación del enum). ✅ **Validado contra PostgreSQL real** (`pintuclic-db`): la relevancia ponderada y el subquery de precio mínimo ejecutan sin errores y ordenan correctamente (p. ej. `vinil` → *Viniltex* con relevancia 6.667 encabezando).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.18.0_M02_ordenamiento_backend.md](./walkthroughs/M02/walkthrough_v2.18.0_M02_ordenamiento_backend.md)
+
+---
+
 ## [v2.17.0] - 2026-09-09
 ### Módulo: M02 Búsqueda y navegación (Backend)
 - **Alcance:** Segunda entrega del módulo M02: filtros del catálogo (HU-BUS-02). Se **extiende el mismo endpoint** `GET /api/busqueda/productos` para aceptar filtros simultáneos y multivalor (RF-BUS-02-01), combinables con el término de búsqueda y conservados en la paginación (CA-BUS-02-05). Sin cambios de esquema.

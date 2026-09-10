@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { sendSuccess } from '../../../core/utils/apiResponse';
 import { BuscarProductosDto } from '../dtos/busqueda.dto';
 import { BusquedaService } from '../services/busqueda.service';
-import { FiltrosBusqueda } from '../interfaces/m02.interfaces';
+import { FiltrosBusqueda, OrdenBusqueda } from '../interfaces/m02.interfaces';
 
 // ==============================================================================
 // M02 - CONTROLADOR DE BÚSQUEDA Y FILTROS (HU-BUS-01, HU-BUS-02) — sin autenticación
@@ -29,8 +29,15 @@ export class BusquedaController {
     if (dto.precio_min !== undefined) filtros.precioMin = dto.precio_min;
     if (dto.precio_max !== undefined) filtros.precioMax = dto.precio_max;
 
-    const opciones: { termino?: string; filtros?: FiltrosBusqueda; pagina?: number; limite?: number } = {};
+    const opciones: {
+      termino?: string;
+      filtros?: FiltrosBusqueda;
+      orden?: OrdenBusqueda;
+      pagina?: number;
+      limite?: number;
+    } = {};
     if (dto.q !== undefined) opciones.termino = dto.q;
+    if (dto.orden !== undefined) opciones.orden = dto.orden;
     if (dto.pagina !== undefined) opciones.pagina = dto.pagina;
     if (dto.limite !== undefined) opciones.limite = dto.limite;
     if (Object.keys(filtros).length > 0) opciones.filtros = filtros;

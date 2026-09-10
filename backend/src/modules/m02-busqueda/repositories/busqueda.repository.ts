@@ -1,6 +1,6 @@
 import { Kysely, sql, SqlBool, RawBuilder } from 'kysely';
 import { Database, EnumClaseColor } from '../../../core/db/types';
-import { FiltrosBusqueda } from '../interfaces/m02.interfaces';
+import { FiltrosBusqueda, OrdenBusqueda } from '../interfaces/m02.interfaces';
 
 // ==============================================================================
 // M02 - REPOSITORIO DE BÚSQUEDA Y FILTROS (HU-BUS-01, HU-BUS-02)
@@ -28,19 +28,46 @@ export interface FilaProductoBusqueda {
 export class BusquedaRepository {
   constructor(private readonly db: Kysely<Database>) {}
 
-  /** Productos que coinciden con el término y los filtros, paginados. */
+  /** Productos que coinciden con el término y los filtros, ordenados y paginados. */
   async buscar(
     termino: string | undefined,
     filtros: FiltrosBusqueda | undefined,
+    orden: OrdenBusqueda,
     limite: number,
     offset: number
   ): Promise<FilaProductoBusqueda[]> {
     let q = this.base(termino, filtros).select(['p.id_producto', 'p.nombre', 'p.id_marca', 'p.clase_color']);
-    // Con término: relevancia por nombre desc y desempate estable por nombre (base para HU-BUS-03).
-    // Sin término: catálogo completo ordenado alfabéticamente.
-    q = termino
-      ? q.orderBy(this.relevanciaNombre(termino), 'desc').orderBy('p.nombre', 'asc')
-      : q.orderBy('p.nombre', 'asc');
+
+    // ponytail: precio del producto = mínimo de sus variantes activas (precio base).
+    // El precio final tras descuentos/IVA y por empresa depende de M06 (CA-BUS-03-05).
+    const precioProducto = sql<number>`(
+      select min(v.precio_vigente) from variante v
+      where v.id_producto = p.id_producto and v.estado = 'activo'
+    )`;
+
+    // Todos los criterios cierran con nombre asc como desempate estable para que
+    // consultas idénticas mantengan el orden entre páginas (RF-BUS-03-03 / CA-BUS-03-03).
+    switch (orden) {
+      case 'precio_asc':
+        q = q.orderBy(precioProducto, 'asc').orderBy('p.nombre', 'asc');
+        break;
+      case 'precio_desc':
+        q = q.orderBy(precioProducto, 'desc').orderBy('p.nombre', 'asc');
+        break;
+      case 'novedad':
+        // ponytail: `producto` no tiene columna de fecha; el id serial es proxy de
+        // novedad. Cambiar por una fecha de alta si el esquema la incorpora.
+        q = q.orderBy('p.id_producto', 'desc');
+        break;
+      case 'relevancia':
+      default:
+        // Sin término la relevancia carece de señal y equivale al orden alfabético.
+        q = termino
+          ? q.orderBy(this.relevanciaPonderada(termino), 'desc').orderBy('p.nombre', 'asc')
+          : q.orderBy('p.nombre', 'asc');
+        break;
+    }
+
     return q.limit(limite).offset(offset).execute();
   }
 
@@ -160,8 +187,27 @@ export class BusquedaRepository {
     return q;
   }
 
-  private relevanciaNombre(t: string): RawBuilder<number> {
-    return sql<number>`word_similarity(unaccent(lower(${t})), unaccent(lower(p.nombre)))`;
+  /**
+   * Relevancia ponderada (RF-BUS-03-02): nombre > marca > línea > color >
+   * descripción, con un bonus por coincidencia exacta del nombre para priorizar
+   * el resultado exacto sobre el aproximado. Cada campo aporta su `word_similarity`
+   * normalizada (unaccent + lower) multiplicada por su peso.
+   */
+  private relevanciaPonderada(t: string): RawBuilder<number> {
+    const nt = sql`unaccent(lower(${t}))`;
+    const sim = (col: RawBuilder<unknown>): RawBuilder<number> => sql<number>`word_similarity(${nt}, unaccent(lower(${col})))`;
+    return sql<number>`(
+      case when unaccent(lower(p.nombre)) = ${nt} then 100 else 0 end
+      + 5 * ${sim(sql.ref('p.nombre'))}
+      + 4 * coalesce((select ${sim(sql.ref('m.nombre'))} from marca m where m.id_marca = p.id_marca), 0)
+      + 3 * coalesce((select ${sim(sql.ref('l.nombre'))} from linea l where l.id_linea = p.id_linea), 0)
+      + 2 * coalesce((
+          select max(word_similarity(${nt}, unaccent(lower(c.nombre))))
+          from variante v join color c on c.id_color = v.id_color
+          where v.id_producto = p.id_producto and v.estado = 'activo'
+        ), 0)
+      + 1 * ${sim(sql`coalesce(p.descripcion, '')`)}
+    )`;
   }
 
   /**
