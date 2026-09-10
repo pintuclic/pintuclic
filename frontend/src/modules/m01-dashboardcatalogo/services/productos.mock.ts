@@ -1,5 +1,6 @@
 import type { FiltrosProductosDTO } from '../dtos/productos.dto';
 import { hayFiltrosActivos } from '../dtos/productos.dto';
+import { IMAGEN_PRODUCTO_DEMO } from '../assets/imagenes-catalogo';
 import type {
   OpcionesFiltroProductos,
   PaginaProductos,
@@ -159,6 +160,12 @@ export const PRODUCTOS_DEMO: ProductoListado[] = [
     actualizadoPor: 'Juan Pérez',
   },
 ];
+
+// Miniatura de la maqueta "ADMIN 02" (RF-CAT-07-01): ilustración plana por
+// producto hasta que el backend entregue la foto real optimizada.
+for (const producto of PRODUCTOS_DEMO) {
+  producto.imagenUrl = IMAGEN_PRODUCTO_DEMO[producto.id] ?? null;
+}
 
 function coincideOpcion(valorFiltro: string | null, textoFila: string | null): boolean {
   if (valorFiltro === null) return true;
