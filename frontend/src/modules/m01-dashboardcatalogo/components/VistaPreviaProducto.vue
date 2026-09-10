@@ -11,7 +11,7 @@
           v-if="imagenPrincipal?.url"
           :src="imagenPrincipal.url"
           :alt="formulario.nombre || 'Producto'"
-          class="h-full w-full object-cover"
+          class="h-full w-full object-contain p-3"
         />
         <ImageIcon v-else class="h-8 w-8 text-neutral-light" aria-hidden="true" />
       </div>

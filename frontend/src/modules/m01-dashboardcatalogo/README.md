@@ -28,6 +28,8 @@ m01-dashboardcatalogo/
 ├── README.md                     Este documento
 ├── dashboard-catalogo.routes.ts  Rutas del módulo (todas las vistas)
 │
+├── assets/       (19)  Ilustraciones SVG de las fotos de producto y logos de marca
+│                       de las maquetas (imagenes-catalogo.ts las mapea por id).
 ├── interfaces/   (10)  Contratos de datos TypeScript — 0 bytes de runtime
 ├── dtos/         (9)   Esquemas Zod (validación de lo que se envía al backend)
 ├── services/     (16)  Cliente HTTP tipado + semillas de datos de ejemplo (*.mock.ts)
@@ -122,6 +124,11 @@ que reproduce filtrado / orden / paginación en memoria).
 > Los `hex` que aparecen en los mocks de colores/formulario son la representación
 > visual derivada del valor CIELAB (RF-CAT-05-02): son **datos de catálogo**, no
 > tokens de UI.
+
+> **Imágenes:** `productos.mock.ts`, `producto-formulario.mock.ts` y `marcas.mock.ts`
+> toman sus `imagenUrl` / `imagenes[].url` / `logoUrl` de `assets/imagenes-catalogo.ts`,
+> que importa las ilustraciones SVG de `assets/productos/` y `assets/marcas/` y las
+> mapea por id. Al conectar el backend real esas rutas las reemplaza el CDN.
 
 ## 6. `store/` — caché de sesión (Pinia, sintaxis setup)
 
