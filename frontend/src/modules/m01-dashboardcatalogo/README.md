@@ -246,7 +246,7 @@ Reciben `props`, emiten eventos, no conocen el store. Agrupados por dónde se us
 | Componente | Qué hace |
 | :--- | :--- |
 | `FiltrosVariantes.vue` | 4 selects (producto, presentación, estado, marca) + «Limpiar filtros» + «Nueva variante». Emite `cambiar` / `limpiar` / `nueva`. |
-| `TablaVariantes.vue` | Cabecera «Variantes (N)» + «Exportar»; cabeceras ordenables (▲/▼/↕), acciones editar/duplicar/estado por fila, pie con paginación y «N por página». Píldora de estado inline (deriva «Sin stock» de existencia 0). |
+| `TablaVariantes.vue` | Cabecera «Variantes (N)» + «Exportar»; `table-fixed` (sin scroll horizontal, toda la info a la vista), cabeceras ordenables (▲/▼/↕), acciones por fila en un menú ⋮ (Editar / Duplicar / Activar-Desactivar) posicionado con `position: fixed` como en `TablaProductos`, pie con paginación y «N por página». Píldora de estado inline (deriva «Sin stock» de existencia 0). |
 
 ### ADMIN 05 — Categorías y subcategorías
 
