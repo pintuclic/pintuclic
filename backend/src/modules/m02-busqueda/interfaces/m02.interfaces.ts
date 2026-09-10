@@ -14,6 +14,31 @@ export interface ProductoBusqueda {
 }
 
 /**
+ * Un valor disponible de un filtro con su número de productos (HU-BUS-02,
+ * RF-BUS-02-02). Solo se listan valores que producen resultados (cantidad ≥ 1).
+ */
+export interface FacetaValor {
+  readonly id: number;
+  readonly nombre: string;
+  readonly cantidad: number;
+}
+
+/**
+ * Facetas del catálogo: valores disponibles por dimensión dado el término y los
+ * filtros vigentes (RF-BUS-02-02). Conteo conjuntivo (todos los filtros activos
+ * aplicados). `familia cromática` se difiere (sin dato, HU-CAT-05).
+ */
+export interface FacetasBusqueda {
+  readonly categorias: FacetaValor[];
+  readonly subcategorias: FacetaValor[];
+  readonly marcas: FacetaValor[];
+  readonly lineas: FacetaValor[];
+  readonly resinas: FacetaValor[];
+  readonly colores: FacetaValor[];
+  readonly presentaciones: FacetaValor[];
+}
+
+/**
  * Ventana temporal para consultar la analítica de búsquedas sin resultado
  * (HU-BUS-06, RF-BUS-06-02).
  */

@@ -1,7 +1,17 @@
 import { BusquedaService } from '../services/busqueda.service';
 import { BusquedaRepository, FilaProductoBusqueda } from '../repositories/busqueda.repository';
 import { BuscarProductosDto } from '../dtos/busqueda.dto';
-import { FiltrosBusqueda, OrdenBusqueda, TerminoSinResultado } from '../interfaces/m02.interfaces';
+import { FiltrosBusqueda, OrdenBusqueda, TerminoSinResultado, FacetasBusqueda } from '../interfaces/m02.interfaces';
+
+const FACETAS_VACIAS: FacetasBusqueda = {
+  categorias: [],
+  subcategorias: [],
+  marcas: [],
+  lineas: [],
+  resinas: [],
+  colores: [],
+  presentaciones: [],
+};
 
 // ==============================================================================
 // M02 - SUITE DE VALIDACIÓN DE CRITERIOS DE ACEPTACIÓN (HU-BUS-01, HU-BUS-02)
@@ -50,6 +60,12 @@ class RepoFake extends BusquedaRepository {
   override async listarSinResultado(desde: Date): Promise<TerminoSinResultado[]> {
     this.desdeConsultado = desde;
     return [];
+  }
+
+  public facetasArgs: { termino: string | undefined; filtros: FiltrosBusqueda | undefined } | undefined;
+  override async facetas(termino: string | undefined, filtros: FiltrosBusqueda | undefined): Promise<FacetasBusqueda> {
+    this.facetasArgs = { termino, filtros };
+    return FACETAS_VACIAS;
   }
 }
 
@@ -248,6 +264,16 @@ async function ejecutarPruebasM02(): Promise<void> {
       await new BusquedaService(repo).estadisticasSinResultado('diario');
       const dias = (antes - (repo.desdeConsultado?.getTime() ?? 0)) / (24 * 60 * 60 * 1000);
       assert(Math.abs(dias - 1) < 0.01, 'RF-BUS-06-02: periodo diario consulta desde ~1 día atrás');
+    }
+
+    // RF-BUS-02-02: las facetas normalizan el término y propagan los filtros vigentes.
+    {
+      const repo = new RepoFake([]);
+      await new BusquedaService(repo).facetas({ termino: '  Vinilo ', filtros: { idMarca: [1] } });
+      assert(
+        repo.facetasArgs?.termino === 'Vinilo' && repo.facetasArgs?.filtros?.idMarca?.[0] === 1,
+        'RF-BUS-02-02: las facetas normalizan el término y propagan los filtros'
+      );
     }
 
     console.log(`\n======================================================`);

@@ -5,6 +5,7 @@ import {
   OrdenBusqueda,
   PeriodoEstadistica,
   TerminoSinResultado,
+  FacetasBusqueda,
 } from '../interfaces/m02.interfaces';
 
 // Ventana en días por periodo para la analítica de HU-BUS-06 (RF-BUS-06-02).
@@ -75,6 +76,15 @@ export class BusquedaService {
       // Páginas numeradas (RF-BUS-05-02). 0 cuando no hay resultados.
       total_paginas: Math.ceil(total / limite),
     };
+  }
+
+  /**
+   * Facetas del catálogo (HU-BUS-02, RF-BUS-02-02): valores de filtro disponibles
+   * con su conteo, dado el término y los filtros vigentes. Sin autenticación.
+   */
+  async facetas(opciones: { termino?: string; filtros?: FiltrosBusqueda }): Promise<FacetasBusqueda> {
+    const termino = opciones.termino && opciones.termino.trim() !== '' ? opciones.termino.trim() : undefined;
+    return this.repo.facetas(termino, opciones.filtros);
   }
 
   /**

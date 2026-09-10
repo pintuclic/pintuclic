@@ -24,6 +24,11 @@ busquedaRoutes.get('/productos', (req, res, next) => {
   void busquedaCtrl.buscar(req, res).catch(next);
 });
 
+// HU-BUS-02 (RF-BUS-02-02): facetas — valores de filtro con conteo, según término/filtros.
+busquedaRoutes.get('/facetas', (req, res, next) => {
+  void busquedaCtrl.facetas(req, res).catch(next);
+});
+
 // HU-BUS-06: analítica de búsquedas sin resultado (solo admin). Exige el permiso
 // «Consultar estadísticas» validado en servidor por las guardas de M20 (CA-BUS-06-03).
 busquedaRoutes.get(

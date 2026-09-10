@@ -1,6 +1,12 @@
 import { Kysely, sql, SqlBool, RawBuilder } from 'kysely';
 import { Database, EnumClaseColor } from '../../../core/db/types';
-import { FiltrosBusqueda, OrdenBusqueda, TerminoSinResultado } from '../interfaces/m02.interfaces';
+import { FiltrosBusqueda, OrdenBusqueda, TerminoSinResultado, FacetasBusqueda, FacetaValor } from '../interfaces/m02.interfaces';
+
+interface FilaFaceta {
+  id: number;
+  nombre: string;
+  cantidad: string | number | bigint;
+}
 
 // ==============================================================================
 // M02 - REPOSITORIO DE BÚSQUEDA Y FILTROS (HU-BUS-01, HU-BUS-02)
@@ -76,6 +82,81 @@ export class BusquedaRepository {
       .select(({ fn }) => fn.countAll<string>().as('total'))
       .executeTakeFirst();
     return Number(fila?.total ?? 0);
+  }
+
+  /**
+   * Facetas del catálogo (HU-BUS-02, RF-BUS-02-02): por cada dimensión, los valores
+   * que producen resultados con su conteo de productos, aplicando término + filtros
+   * vigentes (conjuntivo). Cada dimensión se agrega sobre la misma base filtrada.
+   * ponytail: color solo cuenta preparados (variante con ese color); los entonables
+   * quedan fuera del conteo — ampliar a la carta de la marca si se requiere paridad
+   * exacta con el filtro de color.
+   */
+  async facetas(termino: string | undefined, filtros: FiltrosBusqueda | undefined): Promise<FacetasBusqueda> {
+    const t = termino;
+    const f = filtros;
+
+    const [marcas, lineas, resinas, subcategorias, categorias, presentaciones, colores] = await Promise.all([
+      this.base(t, f)
+        .innerJoin('marca as m', 'm.id_marca', 'p.id_marca')
+        .select(({ fn }) => ['m.id_marca as id', 'm.nombre', fn.count<string>('p.id_producto').distinct().as('cantidad')])
+        .groupBy(['m.id_marca', 'm.nombre'])
+        .execute(),
+      this.base(t, f)
+        .innerJoin('linea as l', 'l.id_linea', 'p.id_linea')
+        .select(({ fn }) => ['l.id_linea as id', 'l.nombre', fn.count<string>('p.id_producto').distinct().as('cantidad')])
+        .groupBy(['l.id_linea', 'l.nombre'])
+        .execute(),
+      this.base(t, f)
+        .innerJoin('tipo_resina as tr', 'tr.id_tipo_resina', 'p.id_tipo_resina')
+        .select(({ fn }) => ['tr.id_tipo_resina as id', 'tr.nombre', fn.count<string>('p.id_producto').distinct().as('cantidad')])
+        .groupBy(['tr.id_tipo_resina', 'tr.nombre'])
+        .execute(),
+      this.base(t, f)
+        .innerJoin('producto_subcategoria as ps', 'ps.id_producto', 'p.id_producto')
+        .innerJoin('subcategorias as s', 's.id_subcategoria', 'ps.id_subcategoria')
+        .select(({ fn }) => ['s.id_subcategoria as id', 's.nombre', fn.count<string>('p.id_producto').distinct().as('cantidad')])
+        .groupBy(['s.id_subcategoria', 's.nombre'])
+        .execute(),
+      this.base(t, f)
+        .innerJoin('producto_subcategoria as ps', 'ps.id_producto', 'p.id_producto')
+        .innerJoin('subcategorias as s', 's.id_subcategoria', 'ps.id_subcategoria')
+        .innerJoin('categoria as c', 'c.id_categoria', 's.id_categoria')
+        .select(({ fn }) => ['c.id_categoria as id', 'c.nombre', fn.count<string>('p.id_producto').distinct().as('cantidad')])
+        .groupBy(['c.id_categoria', 'c.nombre'])
+        .execute(),
+      this.base(t, f)
+        .innerJoin('variante as v', 'v.id_producto', 'p.id_producto')
+        .innerJoin('presentacion as pr', 'pr.id_presentacion', 'v.id_presentacion')
+        .where('v.estado', '=', 'activo')
+        .select(({ fn }) => ['pr.id_presentacion as id', 'pr.nombre', fn.count<string>('p.id_producto').distinct().as('cantidad')])
+        .groupBy(['pr.id_presentacion', 'pr.nombre'])
+        .execute(),
+      this.base(t, f)
+        .innerJoin('variante as v', 'v.id_producto', 'p.id_producto')
+        .innerJoin('color as c', 'c.id_color', 'v.id_color')
+        .where('v.estado', '=', 'activo')
+        .select(({ fn }) => ['c.id_color as id', 'c.nombre', fn.count<string>('p.id_producto').distinct().as('cantidad')])
+        .groupBy(['c.id_color', 'c.nombre'])
+        .execute(),
+    ]);
+
+    return {
+      categorias: this.ordenarFaceta(categorias),
+      subcategorias: this.ordenarFaceta(subcategorias),
+      marcas: this.ordenarFaceta(marcas),
+      lineas: this.ordenarFaceta(lineas),
+      resinas: this.ordenarFaceta(resinas),
+      colores: this.ordenarFaceta(colores),
+      presentaciones: this.ordenarFaceta(presentaciones),
+    };
+  }
+
+  /** Normaliza el conteo y ordena por cantidad desc y nombre asc (estable). */
+  private ordenarFaceta(filas: FilaFaceta[]): FacetaValor[] {
+    return filas
+      .map((f) => ({ id: f.id, nombre: f.nombre, cantidad: Number(f.cantidad) }))
+      .sort((a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre));
   }
 
   /** Registra un evento de búsqueda sin resultado (HU-BUS-06). Sin identidad (M20). */
