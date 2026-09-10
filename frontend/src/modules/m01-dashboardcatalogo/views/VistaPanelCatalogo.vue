@@ -5,15 +5,14 @@
 <script setup lang="ts">
 /**
  * ==============================================================================
- * M01 - SHELL DEL PANEL DE CATÁLOGO
+ * M01 - SHELL DEL PANEL DE CATÁLOGO (alternativa sin router)
  * Ubicación: src/modules/m01-dashboardcatalogo/views/VistaPanelCatalogo.vue
  *
- * Punto de entrada del panel mientras no exista `vue-router` montado. Mantiene
- * la vista activa y la cambia con `<component :is>` cuando cualquier vista/
- * componente llama a `irA()` (provisto por `usePanelNavegacion`).
- *
- * Al integrar el router: registrar `dashboardCatalogoRoutes` y usar este archivo
- * solo como referencia, o dejarlo como layout que renderiza `<router-view>`.
+ * La app ya monta `vue-router` y `dashboardCatalogoRoutes` registra una URL por
+ * vista, así que este shell no está en uso. Se conserva como opción para montar
+ * el panel de forma autocontenida (una sola ruta) sin depender del router:
+ * mantiene la vista activa y la cambia con `<component :is>` cuando alguien
+ * llama a `irA()` (provisto por `usePanelNavegacion`).
  * ==============================================================================
  */
 import { computed, provide, ref } from 'vue';
