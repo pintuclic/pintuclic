@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { sendSuccess } from '../../../core/utils/apiResponse';
-import { BuscarProductosDto } from '../dtos/busqueda.dto';
+import { BuscarProductosDto, EstadisticasSinResultadoDto } from '../dtos/busqueda.dto';
 import { BusquedaService } from '../services/busqueda.service';
 import { FiltrosBusqueda, OrdenBusqueda } from '../interfaces/m02.interfaces';
 
@@ -43,5 +43,12 @@ export class BusquedaController {
     if (Object.keys(filtros).length > 0) opciones.filtros = filtros;
 
     sendSuccess(res, await this.service.buscar(opciones));
+  };
+
+  // HU-BUS-06: listado admin de búsquedas sin resultado. La autorización
+  // («Consultar estadísticas») la exige la ruta con guardas de M20 (CA-BUS-06-03).
+  estadisticasSinResultado = async (req: Request, res: Response): Promise<void> => {
+    const { periodo } = EstadisticasSinResultadoDto.parse(req.query);
+    sendSuccess(res, await this.service.estadisticasSinResultado(periodo ?? 'mensual'));
   };
 }

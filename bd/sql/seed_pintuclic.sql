@@ -54,7 +54,9 @@ INSERT INTO permisos (id_permiso, nombre, descripcion, estado) VALUES
     (16, 'seguridad.gestionar_permisos',   'Asignar y revocar permisos individuales a empleados', 'activo'),
     (17, 'seguridad.gestionar_privacidad', 'Gestionar solicitudes de supresión y habeas data',  'activo'),
     (18, 'configuracion.ver',              'Consultar parámetros operativos del sistema',       'activo'),
-    (19, 'configuracion.editar',           'Actualizar parámetros y reglas del sistema',        'activo')
+    (19, 'configuracion.editar',           'Actualizar parámetros y reglas del sistema',        'activo'),
+    -- Analítica de Búsqueda (M02 HU-BUS-06)
+    (20, 'estadisticas.consultar',         'Consultar estadísticas de búsqueda sin resultado',  'activo')
 ON CONFLICT (id_permiso) DO NOTHING;
 
 -- 1.5 Asignación de Permisos a Roles
@@ -62,7 +64,7 @@ INSERT INTO asignacion_permiso (id_rol, id_permiso) VALUES
     (1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
     (1, 6), (1, 7), (1, 8), (1, 9), (1, 10),
     (1, 11), (1, 12), (1, 13), (1, 14), (1, 15),
-    (1, 16), (1, 17), (1, 18), (1, 19),
+    (1, 16), (1, 17), (1, 18), (1, 19), (1, 20),
     (3, 4), (3, 10)
 ON CONFLICT (id_rol, id_permiso) DO NOTHING;
 

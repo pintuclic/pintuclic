@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 3.6 (v3.5 + productos complementarios y patrocinado - M01 HU-CAT-08)
+-- VERSIÓN: 3.7 (v3.6 + analítica de búsquedas sin resultado - M02 HU-BUS-06)
 -- MOTOR: PostgreSQL 15+ (usa UNIQUE NULLS NOT DISTINCT; compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 43
+-- TOTAL TABLAS: 44
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -870,6 +870,23 @@ COMMENT ON COLUMN codigo_verificacion.intentos IS 'Contador de intentos fallidos
 COMMENT ON COLUMN codigo_verificacion.datos_temporales IS 'Metadatos adicionales asociados al trámite (ej. nuevo_correo, id_usuario)';
 
 -- ==============================================================================
+-- 9B. MÓDULO DE BÚSQUEDA — ANALÍTICA (M02 - HU-BUS-06)
+-- ==============================================================================
+
+-- Registro de términos de búsqueda que no produjeron resultados (RF-BUS-06-01).
+-- Modelo por evento: una fila por búsqueda fallida, para poder acotar por periodo
+-- (RF-BUS-06-02) y agregar repeticiones (CA-BUS-06-01) con GROUP BY termino.
+-- M20: NO se almacena identidad del usuario (CA-BUS-06-02).
+CREATE TABLE IF NOT EXISTS busqueda_sin_resultado (
+    id_busqueda BIGSERIAL PRIMARY KEY,
+    termino     TEXT NOT NULL,
+    fecha       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE busqueda_sin_resultado IS 'Analítica de búsquedas sin resultado, sin identidad de usuario (M02 HU-BUS-06 / M20 HU-SEG-06)';
+COMMENT ON COLUMN busqueda_sin_resultado.termino IS 'Término normalizado (minúsculas, sin espacios extremos) que no arrojó resultados';
+
+-- ==============================================================================
 -- 10. ÍNDICES DE RENDIMIENTO (OPTIMIZACIÓN DE BÚSQUEDAS Y JOINS)
 -- ==============================================================================
 
@@ -952,6 +969,10 @@ CREATE INDEX IF NOT EXISTS idx_identidad_proveedor ON usuario_identidad_externa(
 CREATE INDEX IF NOT EXISTS idx_identidad_usuario ON usuario_identidad_externa(id_usuario);
 CREATE INDEX IF NOT EXISTS idx_codigo_correo_tipo ON codigo_verificacion(correo, tipo);
 CREATE INDEX IF NOT EXISTS idx_codigo_expiracion ON codigo_verificacion(expiracion);
+
+-- Índices en Analítica de Búsqueda (M02 - HU-BUS-06): filtro por periodo y agrupación por término
+CREATE INDEX IF NOT EXISTS idx_bsr_fecha ON busqueda_sin_resultado(fecha);
+CREATE INDEX IF NOT EXISTS idx_bsr_termino ON busqueda_sin_resultado(termino);
 
 -- ==============================================================================
 -- FIN DEL SCRIPT DDL (36 TABLAS - v2.4)

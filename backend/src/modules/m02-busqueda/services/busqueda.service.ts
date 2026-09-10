@@ -1,5 +1,15 @@
 import { BusquedaRepository } from '../repositories/busqueda.repository';
-import { PaginaBusqueda, FiltrosBusqueda, OrdenBusqueda } from '../interfaces/m02.interfaces';
+import {
+  PaginaBusqueda,
+  FiltrosBusqueda,
+  OrdenBusqueda,
+  PeriodoEstadistica,
+  TerminoSinResultado,
+} from '../interfaces/m02.interfaces';
+
+// Ventana en días por periodo para la analítica de HU-BUS-06 (RF-BUS-06-02).
+const DIAS_POR_PERIODO: Record<PeriodoEstadistica, number> = { diario: 1, semanal: 7, mensual: 30, anual: 365 };
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
 
 // ponytail: criterio por defecto fijo (`relevancia`). RF-BUS-03-01 lo llama
 // "configurable"; moverlo a configuración del sistema cuando exista ese módulo.
@@ -41,6 +51,17 @@ export class BusquedaService {
       this.repo.contar(termino, filtros),
     ]);
 
+    // HU-BUS-06: registrar el término cuando una búsqueda con texto no arroja
+    // resultados. La analítica nunca debe tumbar la búsqueda (RF-BUS-01-06), por
+    // eso se aísla en try/catch. Sin identidad de usuario (M20 / CA-BUS-06-02).
+    if (termino && total === 0) {
+      try {
+        await this.repo.registrarSinResultado(termino.toLowerCase());
+      } catch (error) {
+        console.error('[M02][HU-BUS-06] No se pudo registrar la búsqueda sin resultado:', error);
+      }
+    }
+
     return {
       items: items.map((p) => ({
         id_producto: p.id_producto,
@@ -54,5 +75,16 @@ export class BusquedaService {
       // Páginas numeradas (RF-BUS-05-02). 0 cuando no hay resultados.
       total_paginas: Math.ceil(total / limite),
     };
+  }
+
+  /**
+   * Estadística de búsquedas sin resultado en la ventana pedida (HU-BUS-06,
+   * RF-BUS-06-02). Devuelve los términos agregados por frecuencia, sin identidad
+   * de usuario (CA-BUS-06-02). La autorización («Consultar estadísticas») se
+   * exige en la ruta vía guardas de M20 (CA-BUS-06-03).
+   */
+  async estadisticasSinResultado(periodo: PeriodoEstadistica): Promise<TerminoSinResultado[]> {
+    const desde = new Date(Date.now() - DIAS_POR_PERIODO[periodo] * MS_POR_DIA);
+    return this.repo.listarSinResultado(desde);
   }
 }

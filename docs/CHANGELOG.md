@@ -4,6 +4,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.20.0] - 2026-09-09
+### Módulo: M02 Búsqueda y navegación (Backend)
+- **Alcance:** Quinta entrega del módulo M02: registro de búsquedas sin resultado (HU-BUS-06). Completa las HU funcionales del módulo. Registra de forma **anónima** los términos que no arrojan resultados (M20 / CA-BUS-06-02) y expone un listado **solo para administradores** con el permiso «Consultar estadísticas» (M17 / CA-BUS-06-03).
+- **Hitos Clave:** **BD v3.7:** nueva tabla **`busqueda_sin_resultado`** (`id_busqueda`, `termino`, `fecha`), modelo por evento (sin identidad de usuario) con índices por `fecha` y `termino`. Nuevo permiso M17 **`estadisticas.consultar`** (id 20) asignado al rol administrador. El endpoint público `GET /api/busqueda/productos` ahora **registra** el término (normalizado a minúsculas) cuando una búsqueda con texto da 0 resultados, aislado en `try/catch` para no afectar a la búsqueda (RF-BUS-01-06). Nuevo endpoint **protegido** `GET /api/busqueda/estadisticas/sin-resultado?periodo=diario|semanal|mensual|anual` (default `mensual`) que agrega por término y ordena por frecuencia (RF-BUS-06-02 / CA-BUS-06-01), sin exponer identidad.
+- **Nota de arquitectura:** el registro en runtime es un insert operacional (analítica), no auto-siembra de catálogo; no incumple la política de seed centralizado (regla #10). Toques globales autorizados por el PO: `bd/sql/schema_pintuclic.sql` (tabla), `backend/src/core/db/types.ts` (tipos) y `bd/sql/seed_pintuclic.sql` (permiso + asignación).
+- **Diferido:** retención por periodo configurable (RF-BUS-06-01: purga de eventos antiguos) — pendiente de un job/config; hoy se conservan todos los eventos.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 25/25 pruebas superadas (+4 de HU-BUS-06). ✅ **Validado contra PostgreSQL real** (`pintuclic-db`): tabla e índices creados, permiso 20 asignado al rol administrador, y la agregación por frecuencia verificada (un término repetido aparece una sola vez con su conteo; CA-BUS-06-01). Datos de prueba eliminados tras la validación. ℹ️ `npm run db:reset` no se ejecutó por un desajuste de conexión preexistente del `setup.ts` (usuario/host); los objetos se aplicaron directamente al contenedor.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.20.0_M02_busquedas_sin_resultado_backend.md](./walkthroughs/M02/walkthrough_v2.20.0_M02_busquedas_sin_resultado_backend.md)
+
+---
+
 ## [v2.19.0] - 2026-09-09
 ### Módulo: M02 Búsqueda y navegación (Backend)
 - **Alcance:** Cuarta entrega del módulo M02: paginación de resultados (HU-BUS-05). Buena parte ya estaba cubierta por la paginación introducida en HU-BUS-01 (entrega por páginas con `limite`/`offset`, `total`, `pagina` y conservación de filtros/orden por ser un endpoint sin estado). Esta versión **consolida el hueco real**: los metadatos de **páginas numeradas** (RF-BUS-05-02). Sin cambios de esquema.

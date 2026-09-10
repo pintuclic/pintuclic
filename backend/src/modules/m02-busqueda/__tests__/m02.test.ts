@@ -1,7 +1,7 @@
 import { BusquedaService } from '../services/busqueda.service';
 import { BusquedaRepository, FilaProductoBusqueda } from '../repositories/busqueda.repository';
 import { BuscarProductosDto } from '../dtos/busqueda.dto';
-import { FiltrosBusqueda, OrdenBusqueda } from '../interfaces/m02.interfaces';
+import { FiltrosBusqueda, OrdenBusqueda, TerminoSinResultado } from '../interfaces/m02.interfaces';
 
 // ==============================================================================
 // M02 - SUITE DE VALIDACIÓN DE CRITERIOS DE ACEPTACIÓN (HU-BUS-01, HU-BUS-02)
@@ -21,6 +21,8 @@ interface LlamadaBuscar {
 
 class RepoFake extends BusquedaRepository {
   public ultimaBusqueda: LlamadaBuscar | undefined;
+  public terminoRegistrado: string | undefined;
+  public desdeConsultado: Date | undefined;
 
   constructor(private readonly filas: FilaProductoBusqueda[]) {
     super(undefined as never); // no se usa la BD en el fake
@@ -39,6 +41,15 @@ class RepoFake extends BusquedaRepository {
 
   override async contar(): Promise<number> {
     return this.filas.length;
+  }
+
+  override async registrarSinResultado(termino: string): Promise<void> {
+    this.terminoRegistrado = termino;
+  }
+
+  override async listarSinResultado(desde: Date): Promise<TerminoSinResultado[]> {
+    this.desdeConsultado = desde;
+    return [];
   }
 }
 
@@ -205,6 +216,38 @@ async function ejecutarPruebasM02(): Promise<void> {
       const filas = Array.from({ length: 5 }, (_, i) => producto(i + 1));
       const pagina = await new BusquedaService(new RepoFake(filas)).buscar({ pagina: 99, limite: 10 });
       assert(pagina.items.length === 0 && pagina.total === 5 && pagina.pagina === 99, 'CA-BUS-05-04: página fuera de rango devuelve vacío sin error, con total correcto');
+    }
+
+    // --- HU-BUS-06 -----------------------------------------------------------
+
+    // RF-BUS-06-01: una búsqueda con término y sin resultados se registra (normalizada).
+    {
+      const repo = new RepoFake([]); // total = 0
+      await new BusquedaService(repo).buscar({ termino: 'Vinil XZ' });
+      assert(repo.terminoRegistrado === 'vinil xz', 'RF-BUS-06-01: término sin resultado se registra en minúsculas');
+    }
+
+    // RF-BUS-06-01: si hay resultados, no se registra nada.
+    {
+      const repo = new RepoFake([producto(1)]); // total = 1
+      await new BusquedaService(repo).buscar({ termino: 'vinil' });
+      assert(repo.terminoRegistrado === undefined, 'RF-BUS-06-01: con resultados no se registra la búsqueda');
+    }
+
+    // RF-BUS-06-01: sin término (catálogo completo) no se registra aunque haya 0 resultados.
+    {
+      const repo = new RepoFake([]);
+      await new BusquedaService(repo).buscar({});
+      assert(repo.terminoRegistrado === undefined, 'RF-BUS-06-01: sin término no se registra nada');
+    }
+
+    // RF-BUS-06-02: el periodo acota la ventana temporal (diario ≈ hoy - 1 día).
+    {
+      const repo = new RepoFake([]);
+      const antes = Date.now();
+      await new BusquedaService(repo).estadisticasSinResultado('diario');
+      const dias = (antes - (repo.desdeConsultado?.getTime() ?? 0)) / (24 * 60 * 60 * 1000);
+      assert(Math.abs(dias - 1) < 0.01, 'RF-BUS-06-02: periodo diario consulta desde ~1 día atrás');
     }
 
     console.log(`\n======================================================`);
