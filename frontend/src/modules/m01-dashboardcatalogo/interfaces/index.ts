@@ -4,6 +4,7 @@ export * from './productos.interface';
 export * from './producto-formulario.interface';
 export * from './producto-detalle.interface';
 export * from './variantes.interface';
+export * from './variante-formulario.interface';
 export * from './categorias.interface';
 export * from './marcas.interface';
 export * from './colores.interface';

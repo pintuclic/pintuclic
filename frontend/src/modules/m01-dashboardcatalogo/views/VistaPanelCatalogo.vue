@@ -22,6 +22,7 @@ import VistaProductos from './VistaProductos.vue';
 import VistaProductoFormulario from './VistaProductoFormulario.vue';
 import VistaProductoDetalle from './VistaProductoDetalle.vue';
 import VistaVariantes from './VistaVariantes.vue';
+import VistaVarianteFormulario from './VistaVarianteFormulario.vue';
 import VistaCategorias from './VistaCategorias.vue';
 import VistaMarcas from './VistaMarcas.vue';
 import VistaColores from './VistaColores.vue';
@@ -38,6 +39,7 @@ const COMPONENTES: Record<ClaveVistaPanel, Component> = {
   'producto-formulario': VistaProductoFormulario,
   'producto-detalle': VistaProductoDetalle,
   variantes: VistaVariantes,
+  'variante-formulario': VistaVarianteFormulario,
   categorias: VistaCategorias,
   marcas: VistaMarcas,
   colores: VistaColores,
@@ -60,9 +62,13 @@ provide(NAV_PANEL_CATALOGO, { vistaActiva, parametro, irA });
 // `:key` fuerza el remonte al cambiar de vista o de parámetro (recarga datos).
 const claveInstancia = computed(() => `${vistaActiva.value}:${parametro.value ?? ''}`);
 
-const propsVista = computed<Record<string, unknown>>(() =>
-  vistaActiva.value === 'producto-formulario' || vistaActiva.value === 'producto-detalle'
-    ? { productoId: parametro.value ?? undefined }
-    : {}
-);
+const propsVista = computed<Record<string, unknown>>(() => {
+  if (vistaActiva.value === 'producto-formulario' || vistaActiva.value === 'producto-detalle') {
+    return { productoId: parametro.value ?? undefined };
+  }
+  if (vistaActiva.value === 'variante-formulario') {
+    return { varianteId: parametro.value ?? undefined };
+  }
+  return {};
+});
 </script>

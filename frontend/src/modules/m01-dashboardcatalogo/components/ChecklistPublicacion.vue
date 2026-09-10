@@ -53,10 +53,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { CheckCircle2, Circle } from 'lucide-vue-next';
-import type { ProgresoChecklist, SeccionChecklist } from '../interfaces';
+import type { ProgresoChecklist } from '../interfaces';
+
+/** Ítem del checklist. `SeccionChecklist` (producto) y `SeccionChecklistVariante` lo satisfacen. */
+interface ItemChecklist {
+  clave: string;
+  etiqueta: string;
+  completa: boolean;
+  opcional: boolean;
+}
 
 const props = defineProps<{
-  checklist: SeccionChecklist[];
+  checklist: ItemChecklist[];
   progreso: ProgresoChecklist;
 }>();
 
