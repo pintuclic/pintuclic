@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.17.0] - 2026-09-09
+### Módulo: M02 Búsqueda y navegación (Backend)
+- **Alcance:** Segunda entrega del módulo M02: filtros del catálogo (HU-BUS-02). Se **extiende el mismo endpoint** `GET /api/busqueda/productos` para aceptar filtros simultáneos y multivalor (RF-BUS-02-01), combinables con el término de búsqueda y conservados en la paginación (CA-BUS-02-05). Sin cambios de esquema.
+- **Hitos Clave:** Nuevos parámetros de query `categoria`, `subcategoria`, `marca`, `linea`, `resina`, `color`, `presentacion` (multivalor: `?marca=1&marca=2` o `?marca=1,2`) y `precio_min`/`precio_max`. Cada filtro es un OR interno (`in`) y entre filtros distintos es AND; todos se resuelven con `EXISTS` sobre `producto` para devolver **productos, no variantes** (RF-BUS-02-03). El filtro de color incluye **preparados y entonables** (CA-BUS-02-08). El rango de precio inválido (mínimo > máximo) se rechaza como error de validación 400 (CA-BUS-02-06). Los filtros se aplican por igual a productos patrocinados (CA-BUS-02-09, sin tratamiento especial).
+- **Diferido:** (1) **familia cromática** (RF-BUS-02-01): las familias se difirieron en M01/HU-CAT-05, no hay dato que filtrar. (2) **Precio final tras descuentos + IVA** y **precio por condiciones de empresa** (RF-BUS-02-04 / CA-BUS-02-07): dependen de M06 (inexistente); el rango opera de momento sobre `variante.precio_vigente` (precio base). (3) **Facetas** (RF-BUS-02-02: "ofrecer solo los valores que producen resultados"): endpoint de valores disponibles pendiente; el backend ya acepta que el frontend agregue/quite filtros y responde `total=0` cuando no hay coincidencias.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 14/14 pruebas superadas (término, paginación, propagación de filtros, parseo multivalor y validación del rango de precio). ⚠️ Validación de la consulta SQL contra PostgreSQL real **pendiente** de habilitar `unaccent`/`pg_trgm` en `pintuclic-db`.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.17.0_M02_filtros_backend.md](./walkthroughs/M02/walkthrough_v2.17.0_M02_filtros_backend.md)
+
+---
+
 ## [v2.16.0] - 2026-09-09
 ### Módulo: M02 Búsqueda y navegación (Backend)
 - **Alcance:** Primera entrega del módulo M02: búsqueda de productos por texto libre (HU-BUS-01). Primer endpoint del módulo, **público (sin autenticación)** y resuelto en servidor (RF-BUS-01-02 / CA-BUS-01-04). Búsqueda tolerante a errores tipográficos e insensible a mayúsculas y acentos (RF-BUS-01-03).

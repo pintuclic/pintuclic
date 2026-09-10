@@ -1,35 +1,41 @@
 import { BusquedaService } from '../services/busqueda.service';
 import { BusquedaRepository, FilaProductoBusqueda } from '../repositories/busqueda.repository';
+import { BuscarProductosDto } from '../dtos/busqueda.dto';
+import { FiltrosBusqueda } from '../interfaces/m02.interfaces';
 
 // ==============================================================================
-// M02 - SUITE DE VALIDACIÓN DE CRITERIOS DE ACEPTACIÓN (HU-BUS-01)
-// Repositorio falso en memoria: valida la lógica del servicio (normalización del
-// término y cálculo de paginación) sin BD real. El matching SQL (unaccent +
-// pg_trgm) se valida contra la BD en QA.
+// M02 - SUITE DE VALIDACIÓN DE CRITERIOS DE ACEPTACIÓN (HU-BUS-01, HU-BUS-02)
+// Repositorio falso en memoria + parseo del DTO: valida la lógica sin BD real
+// (normalización del término, paginación, propagación de filtros y validación
+// del rango de precio). El matching SQL (unaccent + pg_trgm) se valida en QA.
 // Ejecutar: npx tsx src/modules/m02-busqueda/__tests__/m02.test.ts
 // ==============================================================================
 
 interface LlamadaBuscar {
   termino: string | undefined;
+  filtros: FiltrosBusqueda | undefined;
   limite: number;
   offset: number;
 }
 
 class RepoFake extends BusquedaRepository {
   public ultimaBusqueda: LlamadaBuscar | undefined;
-  public ultimoContar: string | undefined;
 
   constructor(private readonly filas: FilaProductoBusqueda[]) {
     super(undefined as never); // no se usa la BD en el fake
   }
 
-  override async buscar(termino: string | undefined, limite: number, offset: number): Promise<FilaProductoBusqueda[]> {
-    this.ultimaBusqueda = { termino, limite, offset };
+  override async buscar(
+    termino: string | undefined,
+    filtros: FiltrosBusqueda | undefined,
+    limite: number,
+    offset: number
+  ): Promise<FilaProductoBusqueda[]> {
+    this.ultimaBusqueda = { termino, filtros, limite, offset };
     return this.filas.slice(offset, offset + limite);
   }
 
-  override async contar(termino: string | undefined): Promise<number> {
-    this.ultimoContar = termino;
+  override async contar(): Promise<number> {
     return this.filas.length;
   }
 }
@@ -39,7 +45,7 @@ function producto(id: number): FilaProductoBusqueda {
 }
 
 async function ejecutarPruebasM02(): Promise<void> {
-  console.log('🚀 Iniciando suite de validación técnica de M02: Búsqueda (HU-BUS-01)...\n');
+  console.log('🚀 Iniciando suite de validación técnica de M02: Búsqueda y filtros (HU-BUS-01/02)...\n');
 
   let superadas = 0;
   let fallidas = 0;
@@ -55,27 +61,26 @@ async function ejecutarPruebasM02(): Promise<void> {
   }
 
   try {
+    // --- HU-BUS-01 -----------------------------------------------------------
+
     // RF-BUS-01-01: término vacío o solo espacios => catálogo completo (sin término).
     {
       const repo = new RepoFake([producto(1), producto(2)]);
-      const service = new BusquedaService(repo);
-      await service.buscar({ termino: '   ' });
+      await new BusquedaService(repo).buscar({ termino: '   ' });
       assert(repo.ultimaBusqueda?.termino === undefined, 'RF-BUS-01-01: término en blanco se trata como catálogo completo');
     }
 
     // RF-BUS-01-01: término con espacios alrededor se recorta.
     {
       const repo = new RepoFake([producto(1)]);
-      const service = new BusquedaService(repo);
-      await service.buscar({ termino: '  vinilo  ' });
+      await new BusquedaService(repo).buscar({ termino: '  vinilo  ' });
       assert(repo.ultimaBusqueda?.termino === 'vinilo', 'RF-BUS-01-01: el término se recorta antes de buscar');
     }
 
     // HU-BUS-05: paginación por defecto (página 1, límite 20, offset 0).
     {
       const repo = new RepoFake([]);
-      const service = new BusquedaService(repo);
-      const pagina = await service.buscar({});
+      const pagina = await new BusquedaService(repo).buscar({});
       assert(pagina.pagina === 1 && pagina.limite === 20, 'HU-BUS-05: valores por defecto de página y límite');
       assert(repo.ultimaBusqueda?.offset === 0, 'HU-BUS-05: offset inicial es 0');
     }
@@ -83,16 +88,14 @@ async function ejecutarPruebasM02(): Promise<void> {
     // HU-BUS-05: offset calculado a partir de la página solicitada.
     {
       const repo = new RepoFake([]);
-      const service = new BusquedaService(repo);
-      await service.buscar({ pagina: 3, limite: 10 });
+      await new BusquedaService(repo).buscar({ pagina: 3, limite: 10 });
       assert(repo.ultimaBusqueda?.offset === 20, 'HU-BUS-05: offset = (pagina-1) * limite');
     }
 
     // HU-BUS-05: el límite se acota al máximo (100).
     {
       const repo = new RepoFake([]);
-      const service = new BusquedaService(repo);
-      const pagina = await service.buscar({ limite: 999 });
+      const pagina = await new BusquedaService(repo).buscar({ limite: 999 });
       assert(pagina.limite === 100, 'HU-BUS-05: límite acotado al máximo permitido');
     }
 
@@ -100,10 +103,55 @@ async function ejecutarPruebasM02(): Promise<void> {
     {
       const filas = Array.from({ length: 25 }, (_, i) => producto(i + 1));
       const repo = new RepoFake(filas);
-      const service = new BusquedaService(repo);
-      const pagina = await service.buscar({ limite: 20 });
+      const pagina = await new BusquedaService(repo).buscar({ limite: 20 });
       assert(pagina.total === 25, 'RF-BUS-01-04: total refleja todos los coincidentes');
       assert(pagina.items.length === 20, 'HU-BUS-05: la primera página entrega solo el tamaño pedido');
+    }
+
+    // --- HU-BUS-02 -----------------------------------------------------------
+
+    // RF-BUS-02-01: los filtros parseados se propagan al repositorio.
+    {
+      const repo = new RepoFake([]);
+      await new BusquedaService(repo).buscar({ filtros: { idMarca: [1, 2], precioMin: 10, precioMax: 50 } });
+      const f = repo.ultimaBusqueda?.filtros;
+      assert(!!f && f.idMarca?.length === 2 && f.precioMin === 10 && f.precioMax === 50, 'RF-BUS-02-01: los filtros llegan al repositorio');
+    }
+
+    // Sin filtros, el servicio no inventa un objeto de filtros.
+    {
+      const repo = new RepoFake([]);
+      await new BusquedaService(repo).buscar({ termino: 'azul' });
+      assert(repo.ultimaBusqueda?.filtros === undefined, 'Sin filtros => filtros undefined en el repositorio');
+    }
+
+    // RF-BUS-02-01: el DTO acepta multivalor separado por comas.
+    {
+      const dto = BuscarProductosDto.parse({ marca: '1,2,3' });
+      assert(JSON.stringify(dto.marca) === JSON.stringify([1, 2, 3]), 'RF-BUS-02-01: "1,2,3" se parsea como [1,2,3]');
+    }
+
+    // RF-BUS-02-01: el DTO acepta multivalor como array de query repetido.
+    {
+      const dto = BuscarProductosDto.parse({ color: ['4', '5'] });
+      assert(JSON.stringify(dto.color) === JSON.stringify([4, 5]), 'RF-BUS-02-01: ?color=4&color=5 se parsea como [4,5]');
+    }
+
+    // CA-BUS-02-06 / RF-BUS-02-04: rango con mínimo > máximo se rechaza.
+    {
+      let rechazado = false;
+      try {
+        BuscarProductosDto.parse({ precio_min: '100', precio_max: '50' });
+      } catch {
+        rechazado = true;
+      }
+      assert(rechazado, 'CA-BUS-02-06: se rechaza el rango con mínimo superior al máximo');
+    }
+
+    // RF-BUS-02-04: rango válido (min ≤ max) se acepta y coacciona a número.
+    {
+      const dto = BuscarProductosDto.parse({ precio_min: '50', precio_max: '100' });
+      assert(dto.precio_min === 50 && dto.precio_max === 100, 'RF-BUS-02-04: rango válido se acepta como números');
     }
 
     console.log(`\n======================================================`);

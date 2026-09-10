@@ -20,3 +20,21 @@ export interface PaginaBusqueda {
   readonly pagina: number;
   readonly limite: number;
 }
+
+/**
+ * Filtros del catálogo aplicables de forma simultánea y multivalor (HU-BUS-02,
+ * RF-BUS-02-01). Cada lista actúa como OR interno; entre filtros distintos es AND
+ * (RF-BUS-02-03: siempre se devuelven productos, no variantes). El rango de precio
+ * se valida (min ≤ max, RF-BUS-02-04) antes de llegar aquí.
+ */
+export interface FiltrosBusqueda {
+  readonly idCategoria?: number[];
+  readonly idSubcategoria?: number[];
+  readonly idMarca?: number[];
+  readonly idLinea?: number[];
+  readonly idTipoResina?: number[];
+  readonly idColor?: number[];
+  readonly idPresentacion?: number[];
+  readonly precioMin?: number;
+  readonly precioMax?: number;
+}
