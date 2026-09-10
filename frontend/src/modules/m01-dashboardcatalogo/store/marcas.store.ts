@@ -74,8 +74,8 @@ export const useMarcasStore = defineStore('m01-marcas', () => {
       pagina.value = lista.data;
       if (res) resumen.value = res.data;
       usandoDatosDemo.value = false;
-    } catch (e) {
-      error.value = extraerMensajeError(e);
+    } catch {
+      // Respaldo transparente a la semilla local, sin mostrar aviso.
       pagina.value = consultarMarcasDemo(filtros.value);
       resumen.value = RESUMEN_MARCAS_DEMO;
       usandoDatosDemo.value = true;

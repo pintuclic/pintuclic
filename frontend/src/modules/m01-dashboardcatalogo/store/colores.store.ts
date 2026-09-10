@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import axios from 'axios';
 import { ColoresService } from '../services/colores.service';
 import {
   consultarColoresDemo,
@@ -18,7 +17,6 @@ import type {
   OpcionesFiltroColores,
   FamiliaCromatica,
   ResumenColores,
-  ApiErrorResponse,
 } from '../interfaces';
 
 const RESUMEN_VACIO: ResumenColores = {
@@ -72,8 +70,7 @@ export const useColoresStore = defineStore('m01-colores', () => {
       const respuesta = await ColoresService.listar(filtros.value);
       pagina.value = respuesta.data;
       usandoDatosDemo.value = false;
-    } catch (e) {
-      error.value = extraerMensajeError(e);
+    } catch {
       pagina.value = consultarColoresDemo(filtros.value);
       usandoDatosDemo.value = true;
     } finally {
@@ -138,11 +135,3 @@ export const useColoresStore = defineStore('m01-colores', () => {
     reiniciar,
   };
 });
-
-function extraerMensajeError(error: unknown): string {
-  if (axios.isAxiosError(error) && error.response?.data) {
-    const apiError = error.response.data as ApiErrorResponse;
-    if (apiError.error?.message) return apiError.error.message;
-  }
-  return 'No fue posible cargar los colores.';
-}

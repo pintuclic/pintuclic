@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import axios from 'axios';
 import { VariantesService } from '../services/variantes.service';
 import {
   consultarVariantesDemo,
@@ -17,7 +16,6 @@ import type {
   OpcionesFiltroVariantes,
   ResumenVariantes,
   CampoOrdenVariantes,
-  ApiErrorResponse,
 } from '../interfaces';
 
 const RESUMEN_VACIO: ResumenVariantes = {
@@ -71,8 +69,8 @@ export const useVariantesStore = defineStore('m01-variantes', () => {
       const respuesta = await VariantesService.listar(filtros.value);
       pagina.value = respuesta.data;
       usandoDatosDemo.value = false;
-    } catch (e) {
-      error.value = extraerMensajeError(e);
+    } catch {
+      // Respaldo transparente a la semilla local, sin mostrar aviso.
       pagina.value = consultarVariantesDemo(filtros.value);
       usandoDatosDemo.value = true;
     } finally {
@@ -153,10 +151,3 @@ export const useVariantesStore = defineStore('m01-variantes', () => {
   };
 });
 
-function extraerMensajeError(error: unknown): string {
-  if (axios.isAxiosError(error) && error.response?.data) {
-    const apiError = error.response.data as ApiErrorResponse;
-    if (apiError.error?.message) return apiError.error.message;
-  }
-  return 'No fue posible cargar el listado de variantes.';
-}
