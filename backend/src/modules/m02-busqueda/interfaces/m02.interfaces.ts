@@ -20,12 +20,18 @@ export interface ProductoBusqueda {
  */
 export type OrdenBusqueda = 'relevancia' | 'precio_asc' | 'precio_desc' | 'novedad';
 
-/** Página de resultados: conserva total y ubicación para la paginación (HU-BUS-05). */
+/**
+ * Página de resultados (HU-BUS-05). Entrega solo el tramo pedido (RF-BUS-05-01) e
+ * incluye los metadatos para páginas numeradas (RF-BUS-05-02): `total` de
+ * resultados, `pagina` actual, `limite` (tamaño) y `total_paginas`. Una página que
+ * excede el total devuelve `items` vacío sin error (CA-BUS-05-04).
+ */
 export interface PaginaBusqueda {
   readonly items: ReadonlyArray<ProductoBusqueda>;
   readonly total: number;
   readonly pagina: number;
   readonly limite: number;
+  readonly total_paginas: number;
 }
 
 /**
