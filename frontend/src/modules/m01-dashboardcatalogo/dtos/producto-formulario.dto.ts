@@ -29,6 +29,16 @@ export const imagenProductoSchema = z.object({
   esPrincipal: z.boolean(),
 });
 
+/** Atributos técnicos (maqueta "ADMIN 04"): todos opcionales, no bloquean publicar. */
+export const atributosTecnicosSchema = z.object({
+  presentacionPrincipal: z.string().trim().max(80).default(''),
+  rendimiento: z.string().trim().max(80).default(''),
+  acabado: z.string().trim().max(80).default(''),
+  usoRecomendado: z.string().trim().max(80).default(''),
+  secadoAlTacto: z.string().trim().max(80).default(''),
+  tiempoRepintado: z.string().trim().max(80).default(''),
+});
+
 /**
  * Esquema base del formulario. Las validaciones cruzadas (color según clase,
  * imagen obligatoria para publicar) se aplican en `.superRefine`.
@@ -50,6 +60,17 @@ export const productoFormularioSchema = z
     colorPrincipalId: z.string().trim().min(1).nullable().default(null),
     codigoColor: z.string().trim().max(40, 'Máximo 40 caracteres').default(''),
     coloresDisponiblesIds: z.array(z.string()).default([]),
+
+    atributos: atributosTecnicosSchema.default({
+      presentacionPrincipal: '',
+      rendimiento: '',
+      acabado: '',
+      usoRecomendado: '',
+      secadoAlTacto: '',
+      tiempoRepintado: '',
+    }),
+    basesDisponibles: z.array(z.string()).default([]),
+    sistemaEntonado: z.string().trim().max(80).default(''),
 
     imagenes: z.array(imagenProductoSchema).default([]),
 

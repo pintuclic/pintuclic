@@ -44,6 +44,36 @@ export interface SubcategoriaOpcion extends OpcionSelect {
   categoriaId: string;
 }
 
+/**
+ * Atributos técnicos del producto (maqueta "ADMIN 04 - Editar producto").
+ * Todos opcionales: no bloquean la publicación, enriquecen la ficha.
+ */
+export interface AtributosTecnicosProducto {
+  presentacionPrincipal: string;
+  rendimiento: string;
+  acabado: string;
+  usoRecomendado: string;
+  secadoAlTacto: string;
+  tiempoRepintado: string;
+}
+
+/** Base disponible para entonado (maqueta "ADMIN 04"). */
+export interface OpcionBaseProducto {
+  valor: string;
+  etiqueta: string;
+  descripcion: string;
+}
+
+/** Listas de opciones de los selectores de atributos técnicos. */
+export interface OpcionesAtributosTecnicos {
+  presentaciones: OpcionSelect[];
+  rendimientos: OpcionSelect[];
+  acabados: OpcionSelect[];
+  usos: OpcionSelect[];
+  secados: OpcionSelect[];
+  repintados: OpcionSelect[];
+}
+
 /** Línea comercial dependiente de su marca (RF-CAT-11-02). */
 export interface LineaOpcion extends OpcionSelect {
   marcaId: string;
@@ -57,6 +87,9 @@ export interface OpcionesFormularioProducto {
   marcas: OpcionSelect[];
   lineas: LineaOpcion[];
   colores: ColorCatalogo[];
+  atributos: OpcionesAtributosTecnicos;
+  bases: OpcionBaseProducto[];
+  sistemasEntonado: OpcionSelect[];
 }
 
 /**
@@ -84,6 +117,13 @@ export interface FormularioProducto {
   colorPrincipalId: string | null;
   codigoColor: string;
   coloresDisponiblesIds: string[];
+
+  // Atributos técnicos (maqueta "ADMIN 04")
+  atributos: AtributosTecnicosProducto;
+
+  // Bases y entonado (maqueta "ADMIN 04")
+  basesDisponibles: string[];
+  sistemaEntonado: string;
 
   // Imágenes (HU-CAT-07)
   imagenes: ImagenProducto[];
@@ -130,4 +170,24 @@ export interface ResultadoGuardadoProducto {
   id: string;
   estado: EstadoPublicacion;
   mensaje: string;
+}
+
+/** Entrada del historial / auditoría del producto (maqueta "ADMIN 04"). */
+export interface MovimientoAuditoriaProducto {
+  id: string;
+  fechaHora: string;
+  descripcion: string;
+  usuario: string;
+}
+
+/**
+ * Datos que solo existen al editar un producto ya creado (maqueta "ADMIN 04"):
+ * metadatos de auditoría, conteos relacionados e historial de cambios.
+ */
+export interface DetalleEdicionProducto {
+  actualizadoEn: string;
+  creadoPor: string;
+  variantesActivas: number;
+  productosRelacionados: number;
+  historial: MovimientoAuditoriaProducto[];
 }
