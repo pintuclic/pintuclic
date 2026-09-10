@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.21.0] - 2026-09-09
+### Módulo: M02 Búsqueda y navegación (Backend)
+- **Alcance:** Sexta entrega del módulo M02: facetas del catálogo (HU-BUS-02, RF-BUS-02-02). Cierra el último requisito funcional pendiente del módulo: ofrecer en cada filtro únicamente los valores que producen resultados, con su conteo. Sin cambios de esquema.
+- **Hitos Clave:** Nuevo endpoint **público** `GET /api/busqueda/facetas` que acepta los mismos parámetros que la búsqueda (término + filtros) y devuelve, por dimensión (`categorias`, `subcategorias`, `marcas`, `lineas`, `resinas`, `colores`, `presentaciones`), los valores disponibles con su número de productos. Conteo **conjuntivo** (aplica todos los filtros vigentes) mediante agregaciones `GROUP BY` con `COUNT(DISTINCT producto)` sobre la misma base filtrada de la búsqueda; solo aparecen valores con `cantidad ≥ 1` (RF-BUS-02-02). Ordenadas por frecuencia desc con desempate por nombre. Se refactorizó el armado de filtros del controlador a un helper compartido por `buscar` y `facetas`.
+- **Diferido:** (1) **conteo disyuntivo** (que una dimensión no se cuente a sí misma, estándar de e-commerce): hoy es conjuntivo; ampliar si se requiere. (2) **Faceta de color solo cuenta preparados** (variante con ese color); los entonables (carta de la marca) quedan fuera del conteo. (3) **Familia cromática:** sigue diferida (sin dato, HU-CAT-05).
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 26/26 pruebas superadas (+1 de facetas). ✅ **Validado contra PostgreSQL real** (`pintuclic-db`): las agregaciones de marca, presentación (vía variante) y subcategoría ejecutan sin errores y cuentan productos distintos correctamente (p. ej. Pintuco 2 / Interpinturas 1). Con esto, **M02 backend cubre todas sus HU funcionales** (HU-BUS-01/02/03/05/06; HU-BUS-04 descartada por el spec).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.21.0_M02_facetas_backend.md](./walkthroughs/M02/walkthrough_v2.21.0_M02_facetas_backend.md)
+
+---
+
 ## [v2.20.0] - 2026-09-09
 ### Módulo: M02 Búsqueda y navegación (Backend)
 - **Alcance:** Quinta entrega del módulo M02: registro de búsquedas sin resultado (HU-BUS-06). Completa las HU funcionales del módulo. Registra de forma **anónima** los términos que no arrojan resultados (M20 / CA-BUS-06-02) y expone un listado **solo para administradores** con el permiso «Consultar estadísticas» (M17 / CA-BUS-06-03).
