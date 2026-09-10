@@ -101,5 +101,5 @@
 
 * **Incremento Registrado en `CHANGELOG.md`:** `✅ SÍ`
 * **Pruebas de Calidad Superadas (QA Gate):** `✅ SÍ` (`tsc --noEmit` limpio, `npm run lint` limpio, 14/14 pruebas en memoria)
-* **Validación contra PostgreSQL real:** `⚠️ PENDIENTE` (requiere `unaccent` + `pg_trgm` en `pintuclic-db`)
+* **Validación contra PostgreSQL real:** `✅ SÍ` (extensiones `unaccent`/`pg_trgm` activas en `pintuclic-db`; el predicado de búsqueda y las ramas `EXISTS` de filtros —precio, color preparado/entonable, presentación— ejecutan sin errores contra el esquema real. Seed con `publicado=f`: el endpoint público responde vacío hasta publicar productos)
 * **Apego al Alcance:** `✅ RF-BUS-02-01/03/05 + validación de rango; RF-BUS-02-02 (facetas), familia cromática y precio real (M06) diferidos`

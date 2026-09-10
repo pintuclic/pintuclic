@@ -112,5 +112,5 @@
 
 * **Incremento Registrado en `CHANGELOG.md`:** `✅ SÍ`
 * **Pruebas de Calidad Superadas (QA Gate):** `✅ SÍ` (`tsc --noEmit` limpio, `npm run lint` limpio, 8/8 pruebas en memoria)
-* **Validación contra PostgreSQL real:** `⚠️ PENDIENTE` (requiere habilitar `unaccent` + `pg_trgm` en `pintuclic-db`)
+* **Validación contra PostgreSQL real:** `✅ SÍ` (extensiones `unaccent`/`pg_trgm` activas en `pintuclic-db`; `unaccent` resuelve acentos y `word_similarity` la tolerancia a typos —`vinil`→"Viniltex" 0.833 ≥ 0.3—; el predicado completo ejecuta sin errores contra el esquema real. Seed con `publicado=f`: el endpoint público responde vacío hasta publicar productos)
 * **Apego al Alcance:** `✅ HU-BUS-01 completa; HU-BUS-02/03/05/06 fuera de alcance de esta versión`
