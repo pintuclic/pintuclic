@@ -1,13 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import axios from 'axios';
 import { DashboardCatalogoService } from '../services/dashboard.service';
 import { RESUMEN_DASHBOARD_DEMO } from '../services/dashboard.mock';
 import type { FiltroDashboardDTO } from '../dtos/dashboard.dto';
-import type {
-  ResumenDashboardCatalogo,
-  ApiErrorResponse,
-} from '../interfaces';
+import type { ResumenDashboardCatalogo } from '../interfaces';
 
 /**
  * ==============================================================================
@@ -55,9 +51,9 @@ export const useDashboardCatalogoStore = defineStore('m01-dashboard-catalogo', (
       const respuesta = await DashboardCatalogoService.obtenerResumen(filtro);
       resumen.value = respuesta.data;
       usandoDatosDemo.value = false;
-    } catch (e) {
-      error.value = extraerMensajeError(e);
-      // Respaldo: M01 backend aún no publica el endpoint del tablero.
+    } catch {
+      // Respaldo transparente: mientras M01 backend no publique el endpoint,
+      // se sirve la semilla local sin mostrar aviso.
       resumen.value = RESUMEN_DASHBOARD_DEMO;
       usandoDatosDemo.value = true;
     } finally {
@@ -92,17 +88,3 @@ export const useDashboardCatalogoStore = defineStore('m01-dashboard-catalogo', (
     reiniciar,
   };
 });
-
-/**
- * Interpreta el contrato de error estándar del backend y devuelve un mensaje
- * legible. Mantiene el mismo criterio que `procesarErrorApi` de m04-cuentas.
- */
-function extraerMensajeError(error: unknown): string {
-  if (axios.isAxiosError(error) && error.response?.data) {
-    const apiError = error.response.data as ApiErrorResponse;
-    if (apiError.error?.message) {
-      return apiError.error.message;
-    }
-  }
-  return 'No fue posible cargar el panel del catálogo.';
-}

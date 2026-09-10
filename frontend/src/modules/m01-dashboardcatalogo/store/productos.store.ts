@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import axios from 'axios';
 import { ProductosService } from '../services/productos.service';
 import { consultarProductosDemo, OPCIONES_FILTRO_DEMO } from '../services/productos.mock';
 import {
@@ -11,7 +10,6 @@ import type { FiltrosProductosDTO } from '../dtos/productos.dto';
 import type {
   PaginaProductos,
   OpcionesFiltroProductos,
-  ApiErrorResponse,
   OrdenProductos,
 } from '../interfaces';
 
@@ -60,8 +58,8 @@ export const useProductosStore = defineStore('m01-productos', () => {
       const respuesta = await ProductosService.listar(filtros.value);
       pagina.value = respuesta.data;
       usandoDatosDemo.value = false;
-    } catch (e) {
-      error.value = extraerMensajeError(e);
+    } catch {
+      // Respaldo transparente a la semilla local, sin mostrar aviso.
       pagina.value = consultarProductosDemo(filtros.value);
       usandoDatosDemo.value = true;
     } finally {
@@ -128,10 +126,3 @@ export const useProductosStore = defineStore('m01-productos', () => {
   };
 });
 
-function extraerMensajeError(error: unknown): string {
-  if (axios.isAxiosError(error) && error.response?.data) {
-    const apiError = error.response.data as ApiErrorResponse;
-    if (apiError.error?.message) return apiError.error.message;
-  }
-  return 'No fue posible cargar el listado de productos.';
-}

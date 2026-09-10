@@ -38,13 +38,6 @@
           <strong>{{ formulario.estado === 'publicado' ? 'publicado' : 'borrador' }}</strong>.
         </p>
         <p
-          v-else-if="usandoDatosDemo"
-          class="rounded-card border border-highlight/40 bg-highlight/10 px-4 py-3 text-sm text-neutral-dark"
-        >
-          Datos de ejemplo. El formulario usará
-          <code class="font-medium">/api/catalogo/productos</code> cuando el backend de M01 lo publique.
-        </p>
-        <p
           v-else-if="error"
           class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
         >
@@ -142,7 +135,6 @@ const {
   cargando,
   guardando,
   error,
-  usandoDatosDemo,
   guardadoOk,
   colorPrincipal,
   checklist,

@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import axios from 'axios';
 import { BusquedasService } from '../services/busquedas.service';
 import {
   consultarBusquedasDemo,
@@ -16,7 +15,6 @@ import type {
   PaginaBusquedas,
   OpcionesFiltroBusquedas,
   ResumenBusquedas,
-  ApiErrorResponse,
 } from '../interfaces';
 
 const RESUMEN_VACIO: ResumenBusquedas = {
@@ -68,8 +66,7 @@ export const useBusquedasStore = defineStore('m01-busquedas', () => {
       const respuesta = await BusquedasService.listar(filtros.value);
       pagina.value = respuesta.data;
       usandoDatosDemo.value = false;
-    } catch (e) {
-      error.value = extraerMensajeError(e);
+    } catch {
       pagina.value = consultarBusquedasDemo(filtros.value);
       usandoDatosDemo.value = true;
     } finally {
@@ -132,11 +129,3 @@ export const useBusquedasStore = defineStore('m01-busquedas', () => {
     reiniciar,
   };
 });
-
-function extraerMensajeError(error: unknown): string {
-  if (axios.isAxiosError(error) && error.response?.data) {
-    const apiError = error.response.data as ApiErrorResponse;
-    if (apiError.error?.message) return apiError.error.message;
-  }
-  return 'No fue posible cargar el reporte de búsquedas.';
-}
