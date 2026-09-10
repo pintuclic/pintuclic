@@ -4,6 +4,8 @@ export * from './productos.service';
 export * from './productos.mock';
 export * from './producto-formulario.service';
 export * from './producto-formulario.mock';
+export * from './producto-detalle.service';
+export * from './producto-detalle.mock';
 export * from './variantes.service';
 export * from './variantes.mock';
 export * from './categorias.service';

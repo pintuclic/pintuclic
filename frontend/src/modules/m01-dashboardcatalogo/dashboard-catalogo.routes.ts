@@ -45,6 +45,17 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/admin/catalogo/productos/:productoId',
+    name: 'AdminProductoDetalle',
+    component: () => import('./views/VistaProductoDetalle.vue'),
+    props: true,
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_PRODUCTOS',
+      titulo: 'Detalle del producto',
+    },
+  },
+  {
     path: '/admin/catalogo/productos/:productoId/editar',
     name: 'AdminProductoEditar',
     component: () => import('./views/VistaProductoFormulario.vue'),
