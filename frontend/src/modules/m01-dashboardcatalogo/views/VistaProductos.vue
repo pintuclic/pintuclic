@@ -59,7 +59,8 @@
           @ordenar="ordenarPor"
           @ir-pagina="irAPagina"
           @abrir="(id) => irA(`/admin/catalogo/productos/${id}`)"
-          @menu="(id) => irA(`/admin/catalogo/productos/${id}/acciones`)"
+          @editar="(id) => irA(`/admin/catalogo/productos/${id}/editar`)"
+          @duplicar="() => irA('/admin/catalogo/productos/nuevo')"
           @seleccion="onSeleccion"
         />
       </main>
