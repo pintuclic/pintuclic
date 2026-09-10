@@ -27,19 +27,8 @@
           </div>
         </header>
 
-        <!-- Aviso: datos de ejemplo mientras M01 backend no expone el endpoint -->
         <p
-          v-if="usandoDatosDemo"
-          class="rounded-card border border-highlight/40 bg-highlight/10 px-4 py-3 text-sm text-neutral-dark"
-        >
-          Mostrando datos de ejemplo. El panel se conectará a
-          <code class="font-medium">GET /api/catalogo/dashboard/resumen</code> cuando el
-          backend de M01 lo publique.
-        </p>
-
-        <!-- Error real de red / permisos -->
-        <p
-          v-else-if="error"
+          v-if="error"
           class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
         >
           {{ error }}
@@ -97,7 +86,6 @@ const {
   cargando,
   cargado,
   error,
-  usandoDatosDemo,
   metricas,
   accesosRapidos,
   actividadReciente,
