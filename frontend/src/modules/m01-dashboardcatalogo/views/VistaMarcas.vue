@@ -20,7 +20,7 @@
             <button
               type="button"
               class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover"
-              @click="nuevaMarca"
+              @click="irA('/admin/catalogo/marcas/nueva')"
             >
               <Plus class="h-4 w-4" aria-hidden="true" />
               Nueva marca
@@ -80,8 +80,8 @@
           v-if="pagina"
           :pagina="pagina"
           :cargando="cargando"
-          @editar="abrirEdicion"
-          @menu="(id) => irA(`/admin/catalogo/marcas/${id}/acciones`)"
+          @editar="(marca) => irA(`/admin/catalogo/marcas/${marca.id}/editar`)"
+          @menu="(id) => irA(`/admin/catalogo/marcas/${id}`)"
           @ir-pagina="irAPagina"
         />
       </main>
@@ -136,8 +136,6 @@ const {
   aplicarFiltros,
   irAPagina,
   limpiarFiltros,
-  abrirEdicion,
-  nuevaMarca,
   cerrarEdicion,
   actualizarEdicion,
   guardarEdicion,

@@ -6,5 +6,6 @@ export * from './variante-formulario.dto';
 export * from './categorias.dto';
 export * from './categoria-formulario.dto';
 export * from './marcas.dto';
+export * from './marca-formulario.dto';
 export * from './colores.dto';
 export * from './busquedas.dto';
