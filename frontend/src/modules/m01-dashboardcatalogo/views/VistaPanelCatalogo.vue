@@ -20,6 +20,7 @@ import type { Component } from 'vue';
 import VistaDashboardCatalogo from './VistaDashboardCatalogo.vue';
 import VistaProductos from './VistaProductos.vue';
 import VistaProductoFormulario from './VistaProductoFormulario.vue';
+import VistaProductoDetalle from './VistaProductoDetalle.vue';
 import VistaVariantes from './VistaVariantes.vue';
 import VistaCategorias from './VistaCategorias.vue';
 import VistaMarcas from './VistaMarcas.vue';
@@ -35,6 +36,7 @@ const COMPONENTES: Record<ClaveVistaPanel, Component> = {
   dashboard: VistaDashboardCatalogo,
   productos: VistaProductos,
   'producto-formulario': VistaProductoFormulario,
+  'producto-detalle': VistaProductoDetalle,
   variantes: VistaVariantes,
   categorias: VistaCategorias,
   marcas: VistaMarcas,
@@ -59,7 +61,7 @@ provide(NAV_PANEL_CATALOGO, { vistaActiva, parametro, irA });
 const claveInstancia = computed(() => `${vistaActiva.value}:${parametro.value ?? ''}`);
 
 const propsVista = computed<Record<string, unknown>>(() =>
-  vistaActiva.value === 'producto-formulario'
+  vistaActiva.value === 'producto-formulario' || vistaActiva.value === 'producto-detalle'
     ? { productoId: parametro.value ?? undefined }
     : {}
 );

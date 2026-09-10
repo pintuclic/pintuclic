@@ -1,6 +1,7 @@
 export * from './useDashboardCatalogo';
 export * from './useProductos';
 export * from './useProductoFormulario';
+export * from './useProductoDetalle';
 export * from './useVariantes';
 export * from './useCategorias';
 export * from './useMarcas';

@@ -30,13 +30,13 @@ m01-dashboardcatalogo/
 │
 ├── assets/       (19)  Ilustraciones SVG de las fotos de producto y logos de marca
 │                       de las maquetas (imagenes-catalogo.ts las mapea por id).
-├── interfaces/   (10)  Contratos de datos TypeScript — 0 bytes de runtime
+├── interfaces/   (11)  Contratos de datos TypeScript — 0 bytes de runtime
 ├── dtos/         (9)   Esquemas Zod (validación de lo que se envía al backend)
-├── services/     (16)  Cliente HTTP tipado + semillas de datos de ejemplo (*.mock.ts)
-├── store/        (9)   Caché de sesión por vista (Pinia, sintaxis setup)
-├── composables/  (10)  Orquestación reactiva que consumen las vistas
+├── services/     (18)  Cliente HTTP tipado + semillas de datos de ejemplo (*.mock.ts)
+├── store/        (10)  Caché de sesión por vista (Pinia, sintaxis setup)
+├── composables/  (11)  Orquestación reactiva que consumen las vistas
 ├── components/   (29)  Piezas de interfaz reutilizables (no tienen ruta)
-└── views/        (8)   Pantallas con ruta (una por maqueta ADMIN)
+└── views/        (9)   Pantallas con ruta (una por maqueta ADMIN)
 ```
 
 ## 2. Flujo de datos (todas las vistas siguen el mismo patrón)
@@ -78,6 +78,7 @@ runtime: al compilar no generan ni un byte. Todo se reexporta desde `interfaces/
 | `dashboard.interface.ts` | ADMIN 01. `MetricaCatalogo`, `AccesoRapido`, `RegistroActividad`, `EstadoActividad`, `EstadoCatalogo`, `SegmentoEstadoCatalogo`, `ResumenDashboardCatalogo`, `PeriodoDashboard`. |
 | `productos.interface.ts` | ADMIN 02. `ProductoListado`, `FiltrosProductos`, `OrdenProductos`, `EstadoProducto`, `ClaseColorProducto`, `OpcionSelect`, `OpcionesFiltroProductos`, `PaginaProductos`. |
 | `producto-formulario.interface.ts` | ADMIN 03 + ADMIN 04. `FormularioProducto` (modelo editable: incluye `atributos` técnicos, `basesDisponibles`, `sistemaEntonado`), `OpcionesFormularioProducto`, `AtributosTecnicosProducto`, `OpcionBaseProducto`, `ColorCatalogo`, `ImagenProducto`, `SubcategoriaOpcion`, `LineaOpcion`, `EstadoPublicacion`, `ModoFormulario`, `SeccionChecklist`, `ProgresoChecklist`, `ResultadoGuardadoProducto`, `DetalleEdicionProducto` + `MovimientoAuditoriaProducto` (auditoría solo-edición). |
+| `producto-detalle.interface.ts` | ADMIN 05. `DetalleAdministrativoProducto` (ficha de solo lectura completa), `ImagenDetalleProducto`, `VarianteResumenDetalle`, `AtributoTecnicoDetalle`, `ColorAsociadoDetalle`, `IndicadorDetalle`, `PestanaDetalleProducto`. |
 | `variantes.interface.ts` | ADMIN 04. `VarianteListado` (modelo RF-CAT-03-02), `FiltrosVariantes`, `OrdenVariantes` (`{campo, direccion}`), `CampoOrdenVariantes`, `EstadoVariante`, `OpcionesFiltroVariantes`, `PaginaVariantes`, `ResumenVariantes`, `IndicadorResumen`. |
 | `categorias.interface.ts` | ADMIN 05. `NodoCategoria`, `CategoriaConHijos`, `DetalleCategoria`, `FiltrosElementosCategoria`, `OrdenElementoCategoria`, `TipoNodoCategoria`, `EstadoCategoria`. |
 | `marcas.interface.ts` | ADMIN 06. `MarcaListado`, `FiltrosMarcas`, `PaginaMarcas`, `ResumenMarcas`, `MarcaFormulario`, `EstadoMarca`. |
@@ -114,6 +115,7 @@ que reproduce filtrado / orden / paginación en memoria).
 | dashboard | `DashboardCatalogoService`: `obtenerResumen`, `obtenerActividadReciente`, `obtenerEstadoCatalogo` | `RESUMEN_DASHBOARD_DEMO` |
 | productos | `ProductosService`: `listar`, `opcionesFiltro` | `PRODUCTOS_DEMO`, `OPCIONES_FILTRO_DEMO`, `consultarProductosDemo()` |
 | producto-formulario | `ProductoFormularioService`: `obtenerOpciones`, `obtenerProducto`, `obtenerDetalleEdicion`, `crear`, `actualizar` | `OPCIONES_FORMULARIO_DEMO`, `FORMULARIO_PRODUCTO_DEMO`, `EDICION_PRODUCTO_DEMO`, `formularioProductoVacio()` |
+| producto-detalle | `ProductoDetalleService`: `obtener`, `cambiarEstado` | `DETALLE_PRODUCTO_DEMO`, `detalleProductoDemo()` |
 | variantes | `VariantesService`: `listar`, `opcionesFiltro`, `resumen` | `VARIANTES_DEMO`, `RESUMEN_VARIANTES_DEMO`, `OPCIONES_FILTRO_VARIANTES_DEMO`, `consultarVariantesDemo()` |
 | categorias | `CategoriasService`: `obtenerArbol`, `obtenerDetalle`, `crearCategoria`, `crearSubcategoria`, `cambiarEstado` | `ARBOL_CATEGORIAS_DEMO`, `CATEGORIA_INICIAL_DEMO`, `detalleCategoriaDemo()` |
 | marcas | `MarcasService`: `listar`, `resumen`, `crear`, `actualizar` | `MARCAS_DEMO`, `RESUMEN_MARCAS_DEMO`, `LINEAS_MARCA_DEMO`, `consultarMarcasDemo()` |
@@ -142,6 +144,7 @@ endpoint carga la semilla y pone `usandoDatosDemo = true`. Todos reexportados en
 | `dashboard.store.ts` | `useDashboardCatalogoStore` | `resumen`, `cargando`, `error`; getters `metricas`, `accesosRapidos`, `actividadReciente`, `estadoCatalogo`; acción `cargar(filtro, {forzar})` idempotente. |
 | `productos.store.ts` | `useProductosStore` | `filtros`, `pagina`, `opciones`; acciones `inicializar`, `aplicarFiltros`, `ordenarPor`, `irAPagina`, `limpiarFiltros`. |
 | `producto-formulario.store.ts` | `useProductoFormularioStore` | `formulario`, `opciones`, `modo` (crear/editar), `detalleEdicion` (auditoría/relacionados), `erroresValidacion`, `guardadoOk`, `desactivado`; getters `subcategoriasDisponibles`, `lineasDisponibles`, `coloresDeLaMarca`, `checklist`, `progresoChecklist`, `puedePublicar`; acciones `inicializar(id?)` (en edición carga también el detalle de auditoría), `actualizar()` (con reset en cascada categoría→subcategoría y marca→línea/colores), `definirColorPrincipal`, `alternarColorDisponible`, `agregar/quitarEtiqueta`, `agregar/quitarImagen`, `marcarImagenPrincipal`, `guardarBorrador`, `publicar`, `desactivar`. |
+| `producto-detalle.store.ts` | `useProductoDetalleStore` | `detalle` (ficha completa), `pestanaActiva`, `cargando`, `guardando`, `desactivado`; acciones `inicializar(id)` / `cargar(id)` (respaldo transparente a la semilla), `setPestana`, `desactivar`, `reiniciar`. |
 | `variantes.store.ts` | `useVariantesStore` | `filtros` (con `orden {campo,direccion}`), `pagina`, `opciones`, `resumen`; acciones `inicializar`, `aplicarFiltros`, `ordenarPor` (asc→desc por columna), `irAPagina`, `cambiarPorPagina`, `limpiarFiltros`. |
 | `categorias.store.ts` | `useCategoriasStore` | `arbol`, `seleccionadaId`, `detalle`, `busquedaArbol`, `expandidas` (Set), `filtrosElementos`; getters `arbolFiltrado`, `elementosFiltrados`, `totalElementos`; acciones `inicializar`, `seleccionar(id)`, `alternarExpandida`, `buscarEnArbol`, `aplicarFiltroElementos`, `ordenarElementosPor`. |
 | `marcas.store.ts` | `useMarcasStore` | listado + `resumen` + **panel lateral**: `marcaEnEdicion`, `erroresEdicion`; acciones `abrirEdicion(marca)`, `nuevaMarca()`, `cerrarEdicion()`, `actualizarEdicion()`, `guardarEdicion()`. |
@@ -162,6 +165,7 @@ si autocargar en `onMounted`, y añade los formateadores de presentación. Barre
 | `useDashboardCatalogo.ts` | Estado del dashboard + `refrescar()` + formateadores. Autocarga. |
 | `useProductos.ts` | Listado de productos: estado + `aplicarFiltros`, `ordenarPor`, `irAPagina`, `limpiarFiltros`. Autocarga. |
 | `useProductoFormulario.ts` | Formulario de producto: **no autocarga** (la vista llama `inicializar(id?)` cuando conoce la ruta). Expone todo el estado, getters y acciones del store. |
+| `useProductoDetalle.ts` | Detalle administrativo del producto: **no autocarga** (`inicializar(id)`). Expone `detalle`, `pestanaActiva`, acciones (`setPestana`, `desactivar`) y los formateadores. |
 | `useVariantes.ts` | Listado de variantes + `resumen` + acciones de orden/paginación/porPágina. Autocarga. |
 | `useCategorias.ts` | Árbol + detalle + filtro local de elementos. Autocarga. |
 | `useMarcas.ts` | Listado + acciones del panel de edición (`abrirEdicion`, `nuevaMarca`, `guardarEdicion`…). Autocarga. |
@@ -181,6 +185,7 @@ provisional (`irA()` guarda la ruta en un ref) hasta montar el router del panel 
 | `VistaDashboardCatalogo.vue` | ADMIN 01 | `/admin/catalogo` | Saludo + fecha (inline), 5 KPIs, accesos rápidos, tabla de actividad reciente y rosco de estado del catálogo. |
 | `VistaProductos.vue` | ADMIN 02 | `/admin/catalogo/productos` | Encabezado con «Nuevo producto» / «Exportar», barra de filtros (categoría, marca, línea, estado, tipo de color), tabla con orden y paginación. |
 | `VistaProductoFormulario.vue` | ADMIN 03 + ADMIN 04 | `/admin/catalogo/productos/nuevo` y `/…/:productoId/editar` | Enlace «Volver» + título, `FormularioProducto` (9 secciones), aside contextual: en **crear** vista previa + checklist; en **editar** vista previa con metadatos + tarjetas «Variantes y relacionados» e «Historial / auditoría» (inline), acciones de cabecera (Ver en catálogo / Duplicar) y barra fija Cancelar / Desactivar / Guardar cambios. |
+| `VistaProductoDetalle.vue` | ADMIN 05 | `/admin/catalogo/productos/:productoId` | Ficha de solo lectura: encabezado con galería + disponibilidad + acciones (Editar / Duplicar / Desactivar), 6 tarjetas de indicadores, pestañas (general / galería / variantes / bases y entonado / etiquetas — inline) y «Actividad reciente» siempre visible. |
 | `VistaVariantes.vue` | ADMIN 04 | `/admin/catalogo/variantes` | Filtros + `TablaVariantes` (columnas ordenables, acciones editar/duplicar/estado) + aside «Resumen de variantes» (3 `TarjetaEstadistica` + nota, inline). |
 | `VistaCategorias.vue` | ADMIN 05 | `/admin/catalogo/categorias` | Rejilla `ArbolCategorias` (izquierda) + `PanelDetalleCategoria` (derecha: cabecera, 4 indicadores, tabla de elementos). |
 | `VistaMarcas.vue` | ADMIN 06 | `/admin/catalogo/marcas` | 4 KPIs, filtros inline, `TablaMarcas`, y `PanelEditarMarca` (slide-over) cuando hay `marcaEnEdicion`. |
@@ -270,11 +275,13 @@ Barrel con `export { default as … }` de todos los componentes, agrupados por v
 
 ## 10. `dashboard-catalogo.routes.ts`
 
-Exporta `dashboardCatalogoRoutes: RouteRecordRaw[]` con las rutas de las 8 vistas
-(carga diferida por `import()`). Cada ruta lleva `meta.permiso`
-(`GESTION_CATALOGO` / `GESTION_PRODUCTOS`) que el guard de navegación y **el backend**
-deben exigir. Aún **no está montado**: `App.vue` / `main.ts` no usan `vue-router`
-todavía.
+Exporta `dashboardCatalogoRoutes: RouteRecordRaw[]` con las rutas de las 9 vistas
+(carga diferida por `import()`): dashboard, productos (listado), producto nuevo,
+**producto detalle** (`/productos/:productoId`), producto editar
+(`/productos/:productoId/editar`), variantes, categorías, marcas, colores,
+búsquedas sin resultado. Cada ruta lleva `meta.permiso` (`GESTION_CATALOGO` /
+`GESTION_PRODUCTOS`) que el guard de navegación y **el backend** deben exigir.
+`main.ts` monta el router con estas rutas vía `core/routes/index.ts` (ver §12).
 
 ---
 
