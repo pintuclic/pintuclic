@@ -4,6 +4,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.16.0] - 2026-09-09
+### Módulo: M02 Búsqueda y navegación (Backend)
+- **Alcance:** Primera entrega del módulo M02: búsqueda de productos por texto libre (HU-BUS-01). Primer endpoint del módulo, **público (sin autenticación)** y resuelto en servidor (RF-BUS-01-02 / CA-BUS-01-04). Búsqueda tolerante a errores tipográficos e insensible a mayúsculas y acentos (RF-BUS-01-03).
+- **Hitos Clave:** Nuevo endpoint público `GET /api/busqueda/productos?q=&pagina=&limite=`. Busca sobre **nombre, descripción, marca, línea y color** del producto usando `unaccent` + `pg_trgm` (`word_similarity`, umbral 0.3). En color incluye tanto los **preparados** (variante con ese color) como los **entonables** (producto entonable cuyo color existe en la carta de su marca), cumpliendo RF-BUS-01-05. Cada producto aparece **una sola vez** vía subconsultas `EXISTS` (sin joins que multipliquen filas), excluye inactivos/no publicados (RF-BUS-01-04) y con término vacío devuelve el catálogo completo (RF-BUS-01-01). Resultados paginados con `total/pagina/limite` (base para HU-BUS-05) y ordenados por relevancia de nombre con desempate estable alfabético.
+- **Prerrequisito de BD (global):** habilitar las extensiones `unaccent` y `pg_trgm` en PostgreSQL (`CREATE EXTENSION IF NOT EXISTS ...`). No se modificó `bd/sql/schema_pintuclic.sql` (archivo del equipo de BD); su inclusión durable en el esquema queda pendiente de coordinación con ese equipo.
+- **Diferido:** filtros (HU-BUS-02), ordenamiento configurable por precio/novedad y relevancia ponderada completa (HU-BUS-03), metadatos de paginación numerada (HU-BUS-05) y registro de búsquedas sin resultado (HU-BUS-06). El precio real tras descuentos (M06) no aplica a esta HU.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 8/8 pruebas superadas (normalización del término y paginación con repositorio en memoria). ⚠️ Validación de la consulta SQL contra PostgreSQL real **pendiente** de habilitar las extensiones en el contenedor `pintuclic-db`.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.16.0_M02_busqueda_backend.md](./walkthroughs/M02/walkthrough_v2.16.0_M02_busqueda_backend.md)
+
+---
+
 ## [v2.15.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Decimotercera entrega del módulo M01: productos complementarios (HU-CAT-08). Cada producto puede declarar la categoría de la que se extraen sus complementarios, y los productos pueden marcarse como patrocinados para priorizarlos.
