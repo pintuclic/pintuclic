@@ -137,16 +137,11 @@
       @ir-pagina="(n) => $emit('ir-pagina', n)"
     />
 
-    <!-- Menú de acciones de fila (posición fija para no recortarse en la tabla con scroll) -->
+    <!-- Menú de acciones de fila: `position: fixed` reposicionado en cada scroll
+         para quedar siempre pegado a su botón sin recortarse en la tabla. -->
     <template v-if="menuAbierto">
-      <button
-        type="button"
-        class="fixed inset-0 z-20 cursor-default"
-        aria-hidden="true"
-        tabindex="-1"
-        @click="menuAbierto = null"
-      />
       <div
+        ref="menuEl"
         class="fixed z-30 w-44 overflow-hidden rounded-card border border-neutral-light bg-neutral-white py-1 text-left shadow-lg"
         :style="{ top: `${menuPos.top}px`, left: `${menuPos.left}px` }"
         role="menu"
@@ -184,7 +179,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch, onBeforeUnmount } from 'vue';
 import { Package, MoreVertical, Pencil, Eye, Copy } from 'lucide-vue-next';
 import BadgeEstadoProducto from './BadgeEstadoProducto.vue';
 import PaginacionTabla from './PaginacionTabla.vue';
@@ -206,29 +201,70 @@ const emit = defineEmits<{
   (e: 'seleccion', ids: string[]): void;
 }>();
 
-// --- Menú de acciones por fila -------------------------------------------
+// --- Menú de acciones por fila -----------------------------------------------
+// El menú se pinta con `position: fixed` (no lo recorta el scroll de la tabla) y
+// se reposiciona en cada evento de scroll/resize para quedar pegado a su botón.
 const menuAbierto = ref<string | null>(null);
 const menuPos = ref<{ top: number; left: number }>({ top: 0, left: 0 });
+const menuEl = ref<HTMLElement | null>(null);
+let botonActivo: HTMLElement | null = null;
+
+function situarMenu(): void {
+  if (!botonActivo) return;
+  const r = botonActivo.getBoundingClientRect();
+  menuPos.value = { top: r.bottom + 4, left: Math.max(8, r.right - 176) };
+}
+
+function cerrarMenu(): void {
+  menuAbierto.value = null;
+  botonActivo = null;
+}
 
 function abrirMenu(id: string, evento: Event): void {
   if (menuAbierto.value === id) {
-    menuAbierto.value = null;
+    cerrarMenu();
     return;
   }
-  const boton = evento.currentTarget as HTMLElement;
-  const r = boton.getBoundingClientRect();
-  menuPos.value = { top: r.bottom + 4, left: Math.max(8, r.right - 176) };
+  botonActivo = evento.currentTarget as HTMLElement;
+  situarMenu();
   menuAbierto.value = id;
 }
 
 function ejecutar(accion: 'editar' | 'abrir' | 'duplicar'): void {
   const id = menuAbierto.value;
-  menuAbierto.value = null;
+  cerrarMenu();
   if (!id) return;
   if (accion === 'editar') emit('editar', id);
   else if (accion === 'duplicar') emit('duplicar', id);
   else emit('abrir', id);
 }
+
+function alHacerClicFuera(e: Event): void {
+  const t = e.target as HTMLElement;
+  if (menuEl.value?.contains(t) || botonActivo?.contains(t)) return;
+  cerrarMenu();
+}
+
+function alPresionarTecla(e: KeyboardEvent): void {
+  if (e.key === 'Escape') cerrarMenu();
+}
+
+function escuchar(activar: boolean): void {
+  if (activar) {
+    window.addEventListener('scroll', situarMenu, true);
+    window.addEventListener('resize', situarMenu);
+    window.addEventListener('mousedown', alHacerClicFuera);
+    window.addEventListener('keydown', alPresionarTecla);
+  } else {
+    window.removeEventListener('scroll', situarMenu, true);
+    window.removeEventListener('resize', situarMenu);
+    window.removeEventListener('mousedown', alHacerClicFuera);
+    window.removeEventListener('keydown', alPresionarTecla);
+  }
+}
+
+watch(menuAbierto, (abierto) => escuchar(abierto !== null));
+onBeforeUnmount(() => escuchar(false));
 
 const { formatearNumero, formatearFechaHora } = useFormatoCatalogo();
 
