@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="flex w-60 shrink-0 flex-col border-r border-neutral-light bg-neutral-white"
+    class="sticky top-0 flex h-screen w-60 shrink-0 flex-col overflow-y-auto border-r border-neutral-light bg-neutral-white"
     aria-label="Navegación del panel de catálogo"
   >
     <div class="flex h-20 items-center px-6">
