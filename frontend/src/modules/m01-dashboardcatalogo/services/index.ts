@@ -12,6 +12,8 @@ export * from './variante-formulario.service';
 export * from './variante-formulario.mock';
 export * from './categorias.service';
 export * from './categorias.mock';
+export * from './categoria-formulario.service';
+export * from './categoria-formulario.mock';
 export * from './marcas.service';
 export * from './marcas.mock';
 export * from './colores.service';

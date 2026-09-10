@@ -13,6 +13,8 @@ import type {
   DetalleCategoria,
   NodoCategoria,
   CampoOrdenElementoCategoria,
+  EstadoCategoria,
+  ImpactoDesactivarCategoria,
 } from '../interfaces';
 
 /**
@@ -40,6 +42,10 @@ export const useCategoriasStore = defineStore('m01-categorias', () => {
   const cargandoDetalle = ref<boolean>(false);
   const error = ref<string | null>(null);
   const usandoDatosDemo = ref<boolean>(false);
+
+  // Modal "ADMIN 12 - Desactivar categoría/subcategoría"
+  const nodoADesactivar = ref<NodoCategoria | null>(null);
+  const desactivando = ref<boolean>(false);
 
   // --- Getters ---------------------------------------------------------------
   const arbolFiltrado = computed<CategoriaConHijos[]>(() => {
@@ -89,6 +95,31 @@ export const useCategoriasStore = defineStore('m01-categorias', () => {
   });
 
   const totalElementos = computed(() => detalle.value?.elementos.length ?? 0);
+
+  /** Nodo (categoría raíz o subcategoría) por id, buscado en el árbol. */
+  function buscarNodo(id: string): NodoCategoria | null {
+    for (const cat of arbol.value) {
+      if (cat.id === id) return cat;
+      const hijo = cat.hijos.find((h) => h.id === id);
+      if (hijo) return hijo;
+    }
+    return null;
+  }
+
+  /** Impacto estimado de la baja lógica (para el modal ADMIN 12). */
+  const impactoDesactivar = computed<ImpactoDesactivarCategoria | null>(() => {
+    const n = nodoADesactivar.value;
+    if (!n) return null;
+    const cat = arbol.value.find((c) => c.id === n.id);
+    return {
+      id: n.id,
+      nombre: n.nombre,
+      tipo: n.tipo,
+      ruta: n.padreNombre ? `${n.padreNombre} › ${n.nombre}` : n.nombre,
+      productosAfectados: n.productosAsociados,
+      subcategoriasAfectadas: cat?.hijos.filter((h) => h.estado === 'publicado').length ?? 0,
+    };
+  });
 
   // --- Acciones ------------------------------------------------------------
   async function cargarArbol(): Promise<void> {
@@ -154,6 +185,44 @@ export const useCategoriasStore = defineStore('m01-categorias', () => {
     };
   }
 
+  // --- Baja lógica (modal ADMIN 12) --------------------------------------
+  function pedirDesactivar(id: string): void {
+    nodoADesactivar.value = buscarNodo(id);
+  }
+
+  function cancelarDesactivar(): void {
+    nodoADesactivar.value = null;
+  }
+
+  function aplicarEstadoLocal(id: string, estado: EstadoCategoria): void {
+    arbol.value = arbol.value.map((cat) =>
+      cat.id === id
+        ? { ...cat, estado }
+        : { ...cat, hijos: cat.hijos.map((h) => (h.id === id ? { ...h, estado } : h)) }
+    );
+  }
+
+  async function confirmarDesactivar(): Promise<boolean> {
+    const n = nodoADesactivar.value;
+    if (!n) return false;
+    desactivando.value = true;
+    error.value = null;
+    try {
+      if (!usandoDatosDemo.value) {
+        await CategoriasService.cambiarEstado(n.id, 'inactivo');
+      }
+      aplicarEstadoLocal(n.id, 'inactivo');
+      if (seleccionadaId.value) await seleccionar(seleccionadaId.value);
+      nodoADesactivar.value = null;
+      return true;
+    } catch {
+      error.value = 'No fue posible desactivar la categoría.';
+      return false;
+    } finally {
+      desactivando.value = false;
+    }
+  }
+
   function reiniciar(): void {
     arbol.value = [];
     seleccionadaId.value = null;
@@ -175,9 +244,12 @@ export const useCategoriasStore = defineStore('m01-categorias', () => {
     cargandoDetalle,
     error,
     usandoDatosDemo,
+    nodoADesactivar,
+    desactivando,
     arbolFiltrado,
     elementosFiltrados,
     totalElementos,
+    impactoDesactivar,
     inicializar,
     seleccionar,
     alternarExpandida,
@@ -185,6 +257,9 @@ export const useCategoriasStore = defineStore('m01-categorias', () => {
     aplicarFiltroElementos,
     ordenarElementosPor,
     limpiarFiltroElementos,
+    pedirDesactivar,
+    cancelarDesactivar,
+    confirmarDesactivar,
     reiniciar,
   };
 });

@@ -24,9 +24,12 @@ export function useCategorias(opciones: { autoCargar?: boolean } = {}) {
     cargandoDetalle,
     error,
     usandoDatosDemo,
+    nodoADesactivar,
+    desactivando,
     arbolFiltrado,
     elementosFiltrados,
     totalElementos,
+    impactoDesactivar,
   } = storeToRefs(store);
 
   if (autoCargar) {
@@ -46,9 +49,12 @@ export function useCategorias(opciones: { autoCargar?: boolean } = {}) {
     cargandoDetalle,
     error,
     usandoDatosDemo,
+    nodoADesactivar,
+    desactivando,
     arbolFiltrado,
     elementosFiltrados,
     totalElementos,
+    impactoDesactivar,
     inicializar: store.inicializar,
     seleccionar: store.seleccionar,
     alternarExpandida: store.alternarExpandida,
@@ -56,6 +62,9 @@ export function useCategorias(opciones: { autoCargar?: boolean } = {}) {
     aplicarFiltroElementos: store.aplicarFiltroElementos,
     ordenarElementosPor: store.ordenarElementosPor,
     limpiarFiltroElementos: store.limpiarFiltroElementos,
+    pedirDesactivar: store.pedirDesactivar,
+    cancelarDesactivar: store.cancelarDesactivar,
+    confirmarDesactivar: store.confirmarDesactivar,
     ...useFormatoCatalogo(),
   };
 }
