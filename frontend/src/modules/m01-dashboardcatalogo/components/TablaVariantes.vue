@@ -25,18 +25,29 @@
       No hay variantes que coincidan con los filtros aplicados.
     </p>
 
-    <div v-else class="overflow-x-auto">
-      <table class="w-full min-w-[920px] text-left text-sm">
+    <div v-else>
+      <table class="w-full table-fixed text-left text-sm">
+        <colgroup>
+          <col class="w-9" />
+          <col />
+          <col class="w-24" />
+          <col class="w-20" />
+          <col class="w-28" />
+          <col class="w-24" />
+          <col class="w-20" />
+          <col class="w-24" />
+          <col class="w-14" />
+        </colgroup>
         <thead>
           <tr class="border-b border-neutral-light text-xs uppercase tracking-wide text-neutral-medium">
-            <th scope="col" class="w-10 px-4 py-3">
+            <th scope="col" class="px-3 py-3">
               <input type="checkbox" class="accent-action" aria-label="Seleccionar todos" />
             </th>
             <th
               v-for="col in columnas"
               :key="col.campo"
               scope="col"
-              class="px-3 py-3 font-semibold"
+              class="px-2 py-3 font-semibold"
               :class="col.alineado === 'derecha' ? 'text-right' : ''"
             >
               <button
@@ -47,18 +58,18 @@
                 {{ col.etiqueta }}
                 <ArrowUp
                   v-if="filtros.orden.campo === col.campo && filtros.orden.direccion === 'asc'"
-                  class="h-3 w-3"
+                  class="h-3 w-3 shrink-0"
                   aria-hidden="true"
                 />
                 <ArrowDown
                   v-else-if="filtros.orden.campo === col.campo"
-                  class="h-3 w-3"
+                  class="h-3 w-3 shrink-0"
                   aria-hidden="true"
                 />
-                <ChevronsUpDown v-else class="h-3 w-3 opacity-40" aria-hidden="true" />
+                <ChevronsUpDown v-else class="h-3 w-3 shrink-0 opacity-40" aria-hidden="true" />
               </button>
             </th>
-            <th scope="col" class="px-3 py-3 text-right font-semibold">Acciones</th>
+            <th scope="col" class="px-2 py-3 text-right font-semibold">Acc.</th>
           </tr>
         </thead>
         <tbody>
@@ -67,58 +78,42 @@
             :key="v.id"
             class="border-b border-neutral-light last:border-0 hover:bg-neutral-lightest"
           >
-            <td class="px-4 py-3">
+            <td class="px-3 py-3 align-top">
               <input type="checkbox" class="accent-action" :aria-label="`Seleccionar ${v.productoNombre} ${v.presentacion}`" />
             </td>
-            <td class="px-3 py-3">
-              <span class="block font-medium text-neutral-black">{{ v.productoNombre }}</span>
-              <span class="text-xs text-neutral-medium">{{ v.marca }}</span>
+            <td class="px-2 py-3">
+              <span class="block truncate font-medium text-neutral-black">{{ v.productoNombre }}</span>
+              <span class="block truncate text-xs text-neutral-medium">{{ v.marca }}</span>
             </td>
-            <td class="px-3 py-3 text-neutral-dark">{{ v.presentacion }}</td>
-            <td class="px-3 py-3 text-neutral-dark">{{ v.base ?? v.color ?? 'N/A' }}</td>
-            <td class="px-3 py-3 font-mono text-xs text-neutral-dark">{{ v.codigoProveedor }}</td>
-            <td class="px-3 py-3 text-right font-medium text-neutral-dark tabular-nums">
+            <td class="px-2 py-3 text-neutral-dark">{{ v.presentacion }}</td>
+            <td class="px-2 py-3 text-neutral-dark">{{ v.base ?? v.color ?? 'N/A' }}</td>
+            <td class="px-2 py-3 font-mono text-xs text-neutral-dark break-all">{{ v.codigoProveedor }}</td>
+            <td class="px-2 py-3 text-right font-medium text-neutral-dark tabular-nums">
               ${{ formatearNumero(v.precio) }}
             </td>
-            <td class="px-3 py-3 text-right tabular-nums" :class="v.existenciaReferencial <= 0 ? 'text-neutral-medium' : 'text-neutral-dark'">
+            <td class="px-2 py-3 text-right tabular-nums" :class="v.existenciaReferencial <= 0 ? 'text-neutral-medium' : 'text-neutral-dark'">
               {{ formatearNumero(v.existenciaReferencial) }}
             </td>
-            <td class="px-3 py-3">
+            <td class="px-2 py-3">
               <span
-                class="inline-flex items-center gap-1.5 rounded-button px-2.5 py-1 text-xs font-medium whitespace-nowrap"
+                class="inline-flex items-center gap-1.5 rounded-button px-2 py-1 text-xs font-medium"
                 :class="estadoVariante(v).clases"
               >
                 <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
                 {{ estadoVariante(v).etiqueta }}
               </span>
             </td>
-            <td class="px-3 py-3">
-              <div class="flex items-center justify-end gap-1">
-                <button
-                  type="button"
-                  class="grid h-8 w-8 place-items-center rounded-button text-neutral-medium hover:bg-neutral-light"
-                  :aria-label="`Editar ${v.productoNombre} ${v.presentacion}`"
-                  @click="$emit('editar', v.id)"
-                >
-                  <Pencil class="h-4 w-4" aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  class="grid h-8 w-8 place-items-center rounded-button text-neutral-medium hover:bg-neutral-light"
-                  :aria-label="`Duplicar ${v.productoNombre} ${v.presentacion}`"
-                  @click="$emit('duplicar', v.id)"
-                >
-                  <Copy class="h-4 w-4" aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  class="grid h-8 w-8 place-items-center rounded-button text-neutral-medium hover:bg-neutral-light"
-                  :aria-label="`${v.estado === 'inactivo' ? 'Activar' : 'Desactivar'} ${v.productoNombre} ${v.presentacion}`"
-                  @click="$emit('alternar', v.id)"
-                >
-                  <Power class="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
+            <td class="px-2 py-3 text-right">
+              <button
+                type="button"
+                class="grid h-8 w-8 place-items-center rounded-button text-neutral-medium hover:bg-neutral-light"
+                :aria-label="`Acciones de ${v.productoNombre} ${v.presentacion}`"
+                :aria-expanded="menuAbierto === v.id"
+                aria-haspopup="menu"
+                @click.stop="abrirMenu(v, $event)"
+              >
+                <MoreVertical class="h-4 w-4" aria-hidden="true" />
+              </button>
             </td>
           </tr>
         </tbody>
@@ -183,13 +178,53 @@
         </select>
       </label>
     </footer>
+
+    <!-- Menú de acciones de fila: `position: fixed` reposicionado en cada scroll
+         para quedar pegado a su botón (igual que en la tabla de productos). -->
+    <template v-if="menuAbierto && varianteActiva">
+      <div
+        ref="menuEl"
+        class="fixed z-30 w-44 overflow-hidden rounded-card border border-neutral-light bg-neutral-white py-1 text-left shadow-lg"
+        :style="{ top: `${menuPos.top}px`, left: `${menuPos.left}px` }"
+        role="menu"
+      >
+        <button
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
+          @click="ejecutar('editar')"
+        >
+          <Pencil class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
+          Editar variante
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
+          @click="ejecutar('duplicar')"
+        >
+          <Copy class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
+          Duplicar
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
+          @click="ejecutar('alternar')"
+        >
+          <Power class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
+          {{ varianteActiva.estado === 'inactivo' ? 'Activar' : 'Desactivar' }}
+        </button>
+      </div>
+    </template>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch, onBeforeUnmount } from 'vue';
 import {
   Download,
+  MoreVertical,
   Pencil,
   Copy,
   Power,
@@ -213,7 +248,7 @@ const props = defineProps<{
   cargando?: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'ordenar', campo: CampoOrdenVariantes): void;
   (e: 'ir-pagina', numero: number): void;
   (e: 'por-pagina', numero: number): void;
@@ -246,9 +281,9 @@ const columnas: { campo: CampoOrdenVariantes; etiqueta: string; alineado?: 'dere
   { campo: 'producto', etiqueta: 'Producto' },
   { campo: 'presentacion', etiqueta: 'Presentación' },
   { campo: 'base', etiqueta: 'Base' },
-  { campo: 'codigo', etiqueta: 'Código proveedor' },
+  { campo: 'codigo', etiqueta: 'Código' },
   { campo: 'precio', etiqueta: 'Precio', alineado: 'derecha' },
-  { campo: 'existencia', etiqueta: 'Existencia referencial', alineado: 'derecha' },
+  { campo: 'existencia', etiqueta: 'Exist.', alineado: 'derecha' },
   { campo: 'estado', etiqueta: 'Estado' },
 ];
 
@@ -262,4 +297,70 @@ const hasta = computed(() => Math.min(props.pagina.pagina * props.pagina.porPagi
 const paginasVisibles = computed(() =>
   Array.from({ length: props.pagina.totalPaginas }, (_, i) => i + 1)
 );
+
+// --- Menú de acciones por fila (idéntico patrón a TablaProductos) -----------
+const menuAbierto = ref<string | null>(null);
+const menuPos = ref<{ top: number; left: number }>({ top: 0, left: 0 });
+const menuEl = ref<HTMLElement | null>(null);
+const varianteActiva = ref<VarianteListado | null>(null);
+let botonActivo: HTMLElement | null = null;
+
+function situarMenu(): void {
+  if (!botonActivo) return;
+  const r = botonActivo.getBoundingClientRect();
+  menuPos.value = { top: r.bottom + 4, left: Math.max(8, r.right - 176) };
+}
+
+function cerrarMenu(): void {
+  menuAbierto.value = null;
+  varianteActiva.value = null;
+  botonActivo = null;
+}
+
+function abrirMenu(v: VarianteListado, evento: Event): void {
+  if (menuAbierto.value === v.id) {
+    cerrarMenu();
+    return;
+  }
+  botonActivo = evento.currentTarget as HTMLElement;
+  varianteActiva.value = v;
+  situarMenu();
+  menuAbierto.value = v.id;
+}
+
+function ejecutar(accion: 'editar' | 'duplicar' | 'alternar'): void {
+  const id = menuAbierto.value;
+  cerrarMenu();
+  if (!id) return;
+  if (accion === 'editar') emit('editar', id);
+  else if (accion === 'duplicar') emit('duplicar', id);
+  else emit('alternar', id);
+}
+
+function alHacerClicFuera(e: Event): void {
+  const t = e.target as HTMLElement;
+  if (menuEl.value?.contains(t) || botonActivo?.contains(t)) return;
+  cerrarMenu();
+}
+
+function alPresionarTecla(e: KeyboardEvent): void {
+  if (e.key === 'Escape') cerrarMenu();
+}
+
+function escuchar(activar: boolean): void {
+  if (activar) {
+    window.addEventListener('scroll', situarMenu, true);
+    window.addEventListener('resize', situarMenu);
+    window.addEventListener('mousedown', alHacerClicFuera);
+    window.addEventListener('keydown', alPresionarTecla);
+  } else {
+    window.removeEventListener('scroll', situarMenu, true);
+    window.removeEventListener('resize', situarMenu);
+    window.removeEventListener('mousedown', alHacerClicFuera);
+    window.removeEventListener('keydown', alPresionarTecla);
+  }
+}
+
+watch(menuAbierto, (abierto) => escuchar(abierto !== null));
+onBeforeUnmount(() => escuchar(false));
 </script>
