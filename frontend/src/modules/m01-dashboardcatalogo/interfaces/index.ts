@@ -8,5 +8,7 @@ export * from './variante-formulario.interface';
 export * from './categorias.interface';
 export * from './categoria-formulario.interface';
 export * from './marcas.interface';
+export * from './marca-formulario.interface';
+export * from './marca-detalle.interface';
 export * from './colores.interface';
 export * from './busquedas.interface';

@@ -149,6 +149,38 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/admin/catalogo/marcas/nueva',
+    name: 'AdminMarcaNueva',
+    component: () => import('./views/VistaMarcaFormulario.vue'),
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Crear marca',
+    },
+  },
+  {
+    path: '/admin/catalogo/marcas/:marcaId',
+    name: 'AdminMarcaDetalle',
+    component: () => import('./views/VistaMarcaDetalle.vue'),
+    props: true,
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Detalle de marca',
+    },
+  },
+  {
+    path: '/admin/catalogo/marcas/:marcaId/editar',
+    name: 'AdminMarcaEditar',
+    component: () => import('./views/VistaMarcaFormulario.vue'),
+    props: true,
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Editar marca',
+    },
+  },
+  {
     path: '/admin/catalogo/colores',
     name: 'AdminColores',
     component: () => import('./views/VistaColores.vue'),

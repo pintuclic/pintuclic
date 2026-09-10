@@ -28,6 +28,8 @@ export type ClaveVistaPanel =
   | 'categorias'
   | 'categoria-formulario'
   | 'marcas'
+  | 'marca-formulario'
+  | 'marca-detalle'
   | 'colores'
   | 'busquedas';
 
@@ -95,6 +97,12 @@ export function rutaRealPanel(
         : '/admin/catalogo/categorias/nueva';
     case 'marcas':
       return '/admin/catalogo/marcas';
+    case 'marca-formulario':
+      return parametro
+        ? `/admin/catalogo/marcas/${parametro}/editar`
+        : '/admin/catalogo/marcas/nueva';
+    case 'marca-detalle':
+      return parametro ? `/admin/catalogo/marcas/${parametro}` : '/admin/catalogo/marcas';
     case 'colores':
       return '/admin/catalogo/colores';
     case 'busquedas':
@@ -151,6 +159,14 @@ export function resolverRutaPanel(destino: string): {
   const catEdicion = ruta.match(/^categorias\/([^/]+)\/editar$/);
   if (catEdicion?.[1]) return { clave: 'categoria-formulario', parametro: catEdicion[1] };
   if (ruta.startsWith('categorias')) return { clave: 'categorias', parametro: null };
+
+  if (ruta === 'marcas/nueva') return { clave: 'marca-formulario', parametro: null };
+  const marcaEdicion = ruta.match(/^marcas\/([^/]+)\/editar$/);
+  if (marcaEdicion?.[1]) return { clave: 'marca-formulario', parametro: marcaEdicion[1] };
+  const marcaDetalle = ruta.match(/^marcas\/([^/]+)$/);
+  if (marcaDetalle?.[1] && marcaDetalle[1] !== 'nueva') {
+    return { clave: 'marca-detalle', parametro: marcaDetalle[1] };
+  }
   if (ruta.startsWith('marcas')) return { clave: 'marcas', parametro: null };
   if (ruta.startsWith('colores')) return { clave: 'colores', parametro: null };
   if (ruta.startsWith('busquedas')) return { clave: 'busquedas', parametro: null };

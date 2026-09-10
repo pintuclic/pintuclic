@@ -7,5 +7,7 @@ export * from './variante-formulario.store';
 export * from './categorias.store';
 export * from './categoria-formulario.store';
 export * from './marcas.store';
+export * from './marca-formulario.store';
+export * from './marca-detalle.store';
 export * from './colores.store';
 export * from './busquedas.store';

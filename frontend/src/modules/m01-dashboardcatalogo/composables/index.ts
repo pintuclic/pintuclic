@@ -7,6 +7,8 @@ export * from './useVarianteFormulario';
 export * from './useCategorias';
 export * from './useCategoriaFormulario';
 export * from './useMarcas';
+export * from './useMarcaFormulario';
+export * from './useMarcaDetalle';
 export * from './useColores';
 export * from './useBusquedas';
 export * from './usePanelNavegacion';
