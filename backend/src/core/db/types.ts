@@ -479,6 +479,22 @@ export interface CodigoVerificacionTable {
 }
 
 // ==============================================================================
+// 9B. MÓDULO DE BÚSQUEDA — ANALÍTICA (M02 - HU-BUS-06)
+// ==============================================================================
+
+/**
+ * Registro de búsquedas sin resultado (M02 - HU-BUS-06). Modelo por evento: una
+ * fila por búsqueda fallida. NO almacena identidad del usuario (M20 - HU-SEG-06 /
+ * CA-BUS-06-02). Las repeticiones y el filtro por periodo se calculan agregando
+ * por `termino` (GROUP BY) en el repositorio.
+ */
+export interface BusquedaSinResultadoTable {
+  id_busqueda: Generated<number>;
+  termino: string;
+  fecha: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+// ==============================================================================
 // 10. INTERFAZ CENTRAL DATABASE (Única fuente de la verdad para Kysely)
 // ==============================================================================
 
@@ -543,6 +559,9 @@ export interface Database {
   solicitud_actualizacion_nit: SolicitudActualizacionNitTable;
   usuario_identidad_externa: UsuarioIdentidadExternaTable;
   codigo_verificacion: CodigoVerificacionTable;
+
+  // Analítica de búsqueda (M02 - HU-BUS-06)
+  busqueda_sin_resultado: BusquedaSinResultadoTable;
 }
 
 // ==============================================================================
@@ -719,4 +738,9 @@ export type UsuarioIdentidadExternaUpdate = Updateable<UsuarioIdentidadExternaTa
 export type CodigoVerificacion = Selectable<CodigoVerificacionTable>;
 export type NewCodigoVerificacion = Insertable<CodigoVerificacionTable>;
 export type CodigoVerificacionUpdate = Updateable<CodigoVerificacionTable>;
+
+// M02 - Analítica de búsqueda (HU-BUS-06)
+export type BusquedaSinResultado = Selectable<BusquedaSinResultadoTable>;
+export type NewBusquedaSinResultado = Insertable<BusquedaSinResultadoTable>;
+export type BusquedaSinResultadoUpdate = Updateable<BusquedaSinResultadoTable>;
 

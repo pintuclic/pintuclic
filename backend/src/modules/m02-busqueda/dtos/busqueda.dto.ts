@@ -45,3 +45,10 @@ export const BuscarProductosDto = z
     path: ['precio_min'],
   });
 export type BuscarProductosDto = z.infer<typeof BuscarProductosDto>;
+
+// HU-BUS-06: consulta de la analítica de búsquedas sin resultado. `periodo`
+// acota la ventana temporal (RF-BUS-06-02); ausente => `mensual` (en el servicio).
+export const EstadisticasSinResultadoDto = z.object({
+  periodo: z.enum(['diario', 'semanal', 'mensual', 'anual']).optional(),
+});
+export type EstadisticasSinResultadoDto = z.infer<typeof EstadisticasSinResultadoDto>;

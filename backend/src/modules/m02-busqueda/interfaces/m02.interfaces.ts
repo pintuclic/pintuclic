@@ -14,6 +14,21 @@ export interface ProductoBusqueda {
 }
 
 /**
+ * Ventana temporal para consultar la analítica de búsquedas sin resultado
+ * (HU-BUS-06, RF-BUS-06-02).
+ */
+export type PeriodoEstadistica = 'diario' | 'semanal' | 'mensual' | 'anual';
+
+/**
+ * Término sin resultado agregado (HU-BUS-06, CA-BUS-06-01): un término aparece una
+ * sola vez con su número de repeticiones. Sin identidad de usuario (CA-BUS-06-02).
+ */
+export interface TerminoSinResultado {
+  readonly termino: string;
+  readonly repeticiones: number;
+}
+
+/**
  * Criterio de ordenamiento de resultados (HU-BUS-03, RF-BUS-03-01). `relevancia`
  * pondera nombre>marca>línea>color>descripción (RF-BUS-03-02); `precio_asc`/`desc`
  * ordenan por el precio del producto; `novedad`, por lo más reciente.

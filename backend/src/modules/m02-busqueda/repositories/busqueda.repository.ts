@@ -1,6 +1,6 @@
 import { Kysely, sql, SqlBool, RawBuilder } from 'kysely';
 import { Database, EnumClaseColor } from '../../../core/db/types';
-import { FiltrosBusqueda, OrdenBusqueda } from '../interfaces/m02.interfaces';
+import { FiltrosBusqueda, OrdenBusqueda, TerminoSinResultado } from '../interfaces/m02.interfaces';
 
 // ==============================================================================
 // M02 - REPOSITORIO DE BÚSQUEDA Y FILTROS (HU-BUS-01, HU-BUS-02)
@@ -76,6 +76,27 @@ export class BusquedaRepository {
       .select(({ fn }) => fn.countAll<string>().as('total'))
       .executeTakeFirst();
     return Number(fila?.total ?? 0);
+  }
+
+  /** Registra un evento de búsqueda sin resultado (HU-BUS-06). Sin identidad (M20). */
+  async registrarSinResultado(termino: string): Promise<void> {
+    await this.db.insertInto('busqueda_sin_resultado').values({ termino }).execute();
+  }
+
+  /**
+   * Términos sin resultado desde `desde`, agregados por término y ordenados por
+   * frecuencia (RF-BUS-06-02 / CA-BUS-06-01). No expone identidad (CA-BUS-06-02).
+   */
+  async listarSinResultado(desde: Date): Promise<TerminoSinResultado[]> {
+    const filas = await this.db
+      .selectFrom('busqueda_sin_resultado')
+      .select(({ fn }) => ['termino', fn.count<string>('id_busqueda').as('repeticiones')])
+      .where('fecha', '>=', desde)
+      .groupBy('termino')
+      .orderBy('repeticiones', 'desc')
+      .orderBy('termino', 'asc')
+      .execute();
+    return filas.map((f) => ({ termino: f.termino, repeticiones: Number(f.repeticiones) }));
   }
 
   /**
