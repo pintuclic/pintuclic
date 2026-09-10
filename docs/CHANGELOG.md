@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.19.0] - 2026-09-09
+### Módulo: M02 Búsqueda y navegación (Backend)
+- **Alcance:** Cuarta entrega del módulo M02: paginación de resultados (HU-BUS-05). Buena parte ya estaba cubierta por la paginación introducida en HU-BUS-01 (entrega por páginas con `limite`/`offset`, `total`, `pagina` y conservación de filtros/orden por ser un endpoint sin estado). Esta versión **consolida el hueco real**: los metadatos de **páginas numeradas** (RF-BUS-05-02). Sin cambios de esquema.
+- **Hitos Clave:** La respuesta de `GET /api/busqueda/productos` incorpora `total_paginas` (= `ceil(total/limite)`) junto a `total`, `pagina` y `limite`, habilitando la navegación por páginas numeradas. Una página que excede el total responde **sin error** con `items` vacío y los metadatos correctos (CA-BUS-05-04). El orden determinista (desempate estable por nombre, HU-BUS-03) garantiza que no haya reordenamiento dinámico entre páginas (RF-BUS-05-02).
+- **Estado ya cubierto por HU previas:** RF-BUS-05-01 (entrega por páginas del tamaño configurado sin cargar todo; `total` y `pagina`) y CA-BUS-05-01/02 (primera página acotada; avanzar conservando filtros y orden) provienen de HU-BUS-01/02/03. RNF-BUS-05-01 (móvil/tableta/escritorio sin scroll horizontal) y CA-BUS-05-03 son responsabilidad del frontend.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 21/21 pruebas superadas (+3 de paginación: `total_paginas`, sin resultados y página fuera de rango). ℹ️ Sin SQL nuevo; el cálculo de páginas se valida en el suite en memoria.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.19.0_M02_paginacion_backend.md](./walkthroughs/M02/walkthrough_v2.19.0_M02_paginacion_backend.md)
+
+---
+
 ## [v2.18.0] - 2026-09-09
 ### Módulo: M02 Búsqueda y navegación (Backend)
 - **Alcance:** Tercera entrega del módulo M02: ordenamiento de resultados (HU-BUS-03). Se **extiende el mismo endpoint** `GET /api/busqueda/productos` con el parámetro `orden`, combinable con término y filtros y conservado en la paginación (CA-BUS-03-01). Sin cambios de esquema.

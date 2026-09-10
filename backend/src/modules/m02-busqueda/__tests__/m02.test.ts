@@ -185,6 +185,28 @@ async function ejecutarPruebasM02(): Promise<void> {
       assert(rechazado, 'RF-BUS-03-01: el DTO rechaza un criterio no soportado');
     }
 
+    // --- HU-BUS-05 -----------------------------------------------------------
+
+    // RF-BUS-05-02: total_paginas = ceil(total / limite).
+    {
+      const filas = Array.from({ length: 25 }, (_, i) => producto(i + 1));
+      const pagina = await new BusquedaService(new RepoFake(filas)).buscar({ limite: 10 });
+      assert(pagina.total_paginas === 3, 'RF-BUS-05-02: total_paginas = ceil(total/limite) (25/10 => 3)');
+    }
+
+    // RF-BUS-05-02: sin resultados, total_paginas = 0.
+    {
+      const pagina = await new BusquedaService(new RepoFake([])).buscar({});
+      assert(pagina.total === 0 && pagina.total_paginas === 0, 'RF-BUS-05-02: sin resultados total y total_paginas son 0');
+    }
+
+    // CA-BUS-05-04: una página que excede el total responde sin error, con items vacío.
+    {
+      const filas = Array.from({ length: 5 }, (_, i) => producto(i + 1));
+      const pagina = await new BusquedaService(new RepoFake(filas)).buscar({ pagina: 99, limite: 10 });
+      assert(pagina.items.length === 0 && pagina.total === 5 && pagina.pagina === 99, 'CA-BUS-05-04: página fuera de rango devuelve vacío sin error, con total correcto');
+    }
+
     console.log(`\n======================================================`);
     console.log(`🎯 RESULTADOS: Superadas: ${superadas} | Fallidas: ${fallidas}`);
     console.log(`======================================================\n`);

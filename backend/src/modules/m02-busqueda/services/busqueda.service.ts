@@ -51,6 +51,8 @@ export class BusquedaService {
       total,
       pagina,
       limite,
+      // Páginas numeradas (RF-BUS-05-02). 0 cuando no hay resultados.
+      total_paginas: Math.ceil(total / limite),
     };
   }
 }
