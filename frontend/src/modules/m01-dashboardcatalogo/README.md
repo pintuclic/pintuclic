@@ -30,13 +30,13 @@ m01-dashboardcatalogo/
 │
 ├── assets/       (19)  Ilustraciones SVG de las fotos de producto y logos de marca
 │                       de las maquetas (imagenes-catalogo.ts las mapea por id).
-├── interfaces/   (13)  Contratos de datos TypeScript — 0 bytes de runtime
-├── dtos/         (11)  Esquemas Zod (validación de lo que se envía al backend)
-├── services/     (22)  Cliente HTTP tipado + semillas de datos de ejemplo (*.mock.ts)
-├── store/        (12)  Caché de sesión por vista (Pinia, sintaxis setup)
-├── composables/  (13)  Orquestación reactiva que consumen las vistas
+├── interfaces/   (15)  Contratos de datos TypeScript — 0 bytes de runtime
+├── dtos/         (12)  Esquemas Zod (validación de lo que se envía al backend)
+├── services/     (26)  Cliente HTTP tipado + semillas de datos de ejemplo (*.mock.ts)
+├── store/        (14)  Caché de sesión por vista (Pinia, sintaxis setup)
+├── composables/  (15)  Orquestación reactiva que consumen las vistas
 ├── components/   (30)  Piezas de interfaz reutilizables (no tienen ruta)
-└── views/        (11)  Pantallas con ruta (una por maqueta ADMIN)
+└── views/        (13)  Pantallas con ruta (una por maqueta ADMIN)
 ```
 
 ## 2. Flujo de datos (todas las vistas siguen el mismo patrón)
@@ -84,6 +84,8 @@ runtime: al compilar no generan ni un byte. Todo se reexporta desde `interfaces/
 | `categorias.interface.ts` | ADMIN 05. `NodoCategoria`, `CategoriaConHijos`, `DetalleCategoria`, `FiltrosElementosCategoria`, `OrdenElementoCategoria`, `TipoNodoCategoria`, `EstadoCategoria`. |
 | `categoria-formulario.interface.ts` | ADMIN 10 + 11 + 12. `FormularioCategoria` (modelo editable), `OpcionesFormularioCategoria`, `NodoPreviewCategoria`, `ResumenImpactoCategoria`, `ImpactoDesactivarCategoria` (modal), `ModoFormularioCategoria`, `ResultadoGuardadoCategoria`. |
 | `marcas.interface.ts` | ADMIN 06. `MarcaListado`, `FiltrosMarcas`, `PaginaMarcas`, `ResumenMarcas`, `MarcaFormulario`, `EstadoMarca`. |
+| `marca-formulario.interface.ts` | ADMIN 13. `FormularioMarca` (modelo editable), `OpcionesFormularioMarca`, `SeccionChecklistMarca`, `ResumenPreviaMarca`, `ModoFormularioMarca`, `ResultadoGuardadoMarca`. |
+| `marca-detalle.interface.ts` | ADMIN 14. `DetalleAdministrativoMarca` (ficha de solo lectura completa), `RecursoMarca`, `PestanaDetalleMarca`. |
 | `colores.interface.ts` | ADMIN 07. `ColorListado`, `FamiliaCromatica`, `FiltrosColores`, `OpcionesFiltroColores`, `PaginaColores`, `ResumenColores`, `EstadoColor`. |
 | `busquedas.interface.ts` | ADMIN 08. `TerminoBusqueda`, `FiltrosBusquedas`, `PaginaBusquedas`, `ResumenBusquedas`, `OpcionesFiltroBusquedas`, `PeriodoBusqueda`, `FrecuenciaBusqueda`, `EstadoTerminoBusqueda`, `AccionSugerida`. |
 | `index.ts` | Barrel: `export * from` de todos los anteriores. |
@@ -103,6 +105,7 @@ va sincronizado 1:1 con su interface. Reexportados desde `dtos/index.ts`.
 | `categorias.dto.ts` | `categoriaFormSchema` y `subcategoriaFormSchema` (nombre ≤ 100, padre obligatorio — RF-CAT-01-01), `filtrosElementosCategoriaSchema`, `FILTROS_ELEMENTOS_INICIALES`. |
 | `categoria-formulario.dto.ts` | `categoriaFormularioSchema` con `.superRefine` (padre obligatorio si es subcategoría) + slug con formato de URL, `validarCategoriaFormulario()`, `slugificar()`. |
 | `marcas.dto.ts` | `filtrosMarcasSchema`, `marcaFormSchema` (nombre + logo + descripción ≤ 120 — RF-CAT-04-01/02), `validarMarcaForm()`, helpers de filtros. |
+| `marca-formulario.dto.ts` | `marcaFormularioSchema` (nombre + logo obligatorios; URL/correo validados), `validarMarcaFormulario()`. |
 | `colores.dto.ts` | `filtrosColoresSchema`, `FILTROS_COLORES_INICIALES`, `normalizarFiltrosColores()`, `hayFiltrosColoresActivos()`. |
 | `busquedas.dto.ts` | `filtrosBusquedasSchema` (periodo, categoría, frecuencia, término), helpers de filtros. |
 | `index.ts` | Barrel. |
@@ -125,6 +128,8 @@ que reproduce filtrado / orden / paginación en memoria).
 | categorias | `CategoriasService`: `obtenerArbol`, `obtenerDetalle`, `crearCategoria`, `crearSubcategoria`, `cambiarEstado` | `ARBOL_CATEGORIAS_DEMO`, `CATEGORIA_INICIAL_DEMO`, `detalleCategoriaDemo()` |
 | categoria-formulario | `CategoriaFormularioService`: `obtenerOpciones`, `obtenerCategoria`, `obtenerResumenImpacto`, `crear`, `actualizar` | `OPCIONES_FORMULARIO_CATEGORIA_DEMO`, `CATEGORIA_FORMULARIO_DEMO`, `RESUMEN_IMPACTO_CATEGORIA_DEMO`, `formularioCategoriaVacio()` |
 | marcas | `MarcasService`: `listar`, `resumen`, `crear`, `actualizar` | `MARCAS_DEMO`, `RESUMEN_MARCAS_DEMO`, `LINEAS_MARCA_DEMO`, `consultarMarcasDemo()` |
+| marca-formulario | `MarcaFormularioService`: `obtenerOpciones`, `obtenerMarca`, `crear`, `actualizar` | `OPCIONES_FORMULARIO_MARCA_DEMO`, `FORMULARIO_MARCA_DEMO`, `formularioMarcaVacio()` |
+| marca-detalle | `MarcaDetalleService`: `obtener`, `cambiarEstado` | `DETALLE_MARCA_DEMO`, `detalleMarcaDemo()` |
 | colores | `ColoresService`: `listar`, `familias`, `opcionesFiltro`, `resumen` | `COLORES_DEMO`, `FAMILIAS_CROMATICAS_DEMO`, `OPCIONES_FILTRO_COLORES_DEMO`, `RESUMEN_COLORES_DEMO`, `consultarColoresDemo()` |
 | busquedas | `BusquedasService`: `listar`, `opcionesFiltro`, `resumen` | `BUSQUEDAS_DEMO`, `RESUMEN_BUSQUEDAS_DEMO`, `OPCIONES_FILTRO_BUSQUEDAS_DEMO`, `consultarBusquedasDemo()` |
 | — | — | `services/index.ts`: barrel de todo lo anterior |
@@ -155,7 +160,9 @@ endpoint carga la semilla y pone `usandoDatosDemo = true`. Todos reexportados en
 | `variante-formulario.store.ts` | `useVarianteFormularioStore` | `formulario`, `opciones`, `modo` (crear/editar), `detalleEdicion` (movimientos/rotación), `erroresValidacion`, `guardadoOk`, `desactivado`; getters `productoAsociado`, `colorAsociado`, `margenEstimado` (calculado), `checklist`, `progresoChecklist`, `puedePublicar`; acciones `inicializar(id?)`, `actualizar`, `definirColor`, `agregar/quitar/marcarImagen`, `guardarBorrador`, `publicar`, `guardarCambios`, `desactivar`. |
 | `categorias.store.ts` | `useCategoriasStore` | `arbol`, `seleccionadaId`, `detalle`, `busquedaArbol`, `expandidas` (Set), `filtrosElementos`, `nodoADesactivar`; getters `arbolFiltrado`, `elementosFiltrados`, `totalElementos`, `impactoDesactivar` (modal ADMIN 12); acciones `inicializar`, `seleccionar(id)`, `alternarExpandida`, `buscarEnArbol`, `aplicarFiltroElementos`, `ordenarElementosPor`, `pedirDesactivar(id)` / `cancelarDesactivar` / `confirmarDesactivar` (baja lógica local). |
 | `categoria-formulario.store.ts` | `useCategoriaFormularioStore` | `formulario`, `opciones`, `resumenImpacto`, `modo`, `erroresValidacion`, `guardadoOk`; getters `esSubcategoria`, `rutaJerarquia`; acciones `inicializar({id, tipo})`, `actualizar` (autoderiva el slug del nombre), `alternarLista('filtros'|'lineas', v)`, `agregar/quitarEtiqueta`, `guardarBorrador`, `guardarCambios`. |
-| `marcas.store.ts` | `useMarcasStore` | listado + `resumen` + **panel lateral**: `marcaEnEdicion`, `erroresEdicion`; acciones `abrirEdicion(marca)`, `nuevaMarca()`, `cerrarEdicion()`, `actualizarEdicion()`, `guardarEdicion()`. |
+| `marcas.store.ts` | `useMarcasStore` | listado + `resumen`. Conserva el panel lateral `PanelEditarMarca` (`marcaEnEdicion`…) para edición rápida, pero el listado ahora navega a `VistaMarcaFormulario` / `VistaMarcaDetalle`. |
+| `marca-formulario.store.ts` | `useMarcaFormularioStore` | `formulario`, `opciones`, `resumenPrevia`, `modo`, `erroresValidacion`, `guardadoOk`; getters `checklist`, `progresoChecklist`, `puedePublicar`; acciones `inicializar(id?)`, `actualizar`, `alternarLista('lineas'|'basesCompatibles', v)`, `agregar/quitarEtiqueta`, `quitarLogo`, `guardarBorrador`, `guardarCambios`. |
+| `marca-detalle.store.ts` | `useMarcaDetalleStore` | `detalle`, `pestanaActiva`, `cargando`, `guardando`, `desactivado`; acciones `inicializar(id)` / `cargar(id)` (respaldo transparente a la semilla), `setPestana`, `desactivar`, `reiniciar`. |
 | `colores.store.ts` | `useColoresStore` | `filtros`, `pagina`, `familias`, `opciones`, `resumen`; acción especial `filtrarPorFamilia(clave)` (alterna el filtro al pulsar un círculo de la tira). |
 | `busquedas.store.ts` | `useBusquedasStore` | `filtros` que **no** recargan al vuelo: `setFiltro()` los cambia en memoria y `aplicarFiltros()` (botón «Filtrar») confirma. |
 | `index.ts` | — | Barrel. |
@@ -178,7 +185,9 @@ si autocargar en `onMounted`, y añade los formateadores de presentación. Barre
 | `useVarianteFormulario.ts` | Formulario de variante: **no autocarga** (`inicializar(id?)`). Expone estado, getters (`margenEstimado`, `checklist`…) y acciones del store. |
 | `useCategorias.ts` | Árbol + detalle + filtro local de elementos + estado del modal de baja (`impactoDesactivar`, `pedir/cancelar/confirmarDesactivar`). Autocarga. |
 | `useCategoriaFormulario.ts` | Formulario de categoría/subcategoría: **no autocarga** (`inicializar({id, tipo})`). Expone estado, getters y acciones del store. |
-| `useMarcas.ts` | Listado + acciones del panel de edición (`abrirEdicion`, `nuevaMarca`, `guardarEdicion`…). Autocarga. |
+| `useMarcas.ts` | Listado + acciones del panel de edición rápida (`abrirEdicion`, `guardarEdicion`…). Autocarga. |
+| `useMarcaFormulario.ts` | Formulario de marca: **no autocarga** (`inicializar(id?)`). Expone estado, getters y acciones del store. |
+| `useMarcaDetalle.ts` | Detalle de marca: **no autocarga** (`inicializar(id)`). Expone `detalle`, `pestanaActiva`, acciones (`setPestana`, `desactivar`) y los formateadores. |
 | `useColores.ts` | Listado + `familias` + `filtrarPorFamilia`. Autocarga. |
 | `useBusquedas.ts` | Reporte + `setFiltro` / `aplicarFiltros` (confirmación con botón). Autocarga. |
 | `index.ts` | Barrel. |
@@ -200,7 +209,9 @@ provisional (`irA()` guarda la ruta en un ref) hasta montar el router del panel 
 | `VistaVarianteFormulario.vue` | ADMIN 07 + ADMIN 08 | `/admin/catalogo/variantes/nueva` y `/…/:varianteId/editar` | «Volver» + título, formulario (producto asociado, presentación/unidad, base y color, códigos, comercial con margen calculado, inventario, dimensiones, notas, imágenes) reutilizando `TarjetaSeccionFormulario`/`CampoFormulario`; aside contextual: **crear** → vista previa + `ChecklistPublicacion`; **editar** → vista previa + últimos movimientos de inventario + tarjetas rotación/disponibilidad; barra fija Cancelar / Guardar borrador / Publicar (o Duplicar / Desactivar / Guardar cambios). |
 | `VistaCategorias.vue` | ADMIN 05 + ADMIN 12 | `/admin/catalogo/categorias` | Rejilla `ArbolCategorias` (izquierda) + `PanelDetalleCategoria` (derecha) + **modal «Desactivar categoría/subcategoría»** (inline): impacto en productos/subcategorías, checkbox de confirmación, «Ver productos afectados» y «Desactivar». |
 | `VistaCategoriaFormulario.vue` | ADMIN 10 + ADMIN 11 | `/admin/catalogo/categorias/nueva`, `/…/subcategorias/nueva` y `/…/:categoriaId/editar` | «Volver» + título según tipo/modo; columna izquierda: información general (slug autoderivado), icono, filtros heredados y líneas (`ChipsSeleccion`), SEO, notas; columna derecha: jerarquía (tipo/padre/estado/orden), vista previa del árbol y «Resumen e impacto»; barra fija Cancelar / Guardar borrador / Guardar cambios. |
-| `VistaMarcas.vue` | ADMIN 06 | `/admin/catalogo/marcas` | 4 KPIs, filtros inline, `TablaMarcas`, y `PanelEditarMarca` (slide-over) cuando hay `marcaEnEdicion`. |
+| `VistaMarcas.vue` | ADMIN 06 | `/admin/catalogo/marcas` | 4 KPIs, filtros inline, `TablaMarcas` (pencil → editar, ⋮ → detalle), `PanelEditarMarca` (slide-over) latente para edición rápida. |
+| `VistaMarcaFormulario.vue` | ADMIN 13 | `/admin/catalogo/marcas/nueva` y `/…/:marcaId/editar` | «Volver» + título; izquierda: información general, identidad visual (logo), datos de contacto, relaciones del catálogo (líneas / colores / bases con `ChipsSeleccion`), SEO, notas internas; derecha: vista previa en vivo + `ChecklistPublicacion`; barra fija Cancelar / Guardar borrador / Guardar cambios. |
+| `VistaMarcaDetalle.vue` | ADMIN 14 | `/admin/catalogo/marcas/:marcaId` | Ficha de solo lectura: encabezado con logo + datos + acciones (Editar / Ver líneas / Desactivar), 4 indicadores, pestañas (general / líneas / colores / destacados / bases / historial — inline) y columna «Estado y visibilidad» + «Relaciones y uso». |
 | `VistaColores.vue` | ADMIN 07 | `/admin/catalogo/colores` | Tira de familias cromáticas (inline, filtro rápido) + filtros + `TablaColores` + aside «Resumen de colores» (3 `TarjetaEstadistica`). |
 | `VistaBusquedas.vue` | ADMIN 08 | `/admin/catalogo/busquedas-sin-resultado` | Filtros con botón «Filtrar», 4 KPIs mixtos (número + texto), `TablaBusquedasSinResultado` (acción sugerida + estado de gestión). |
 
@@ -292,8 +303,9 @@ Exporta `dashboardCatalogoRoutes: RouteRecordRaw[]` (carga diferida por
 `import()`): dashboard, productos (listado / nuevo / detalle
 `/productos/:productoId` / editar), variantes (listado / `/variantes/nueva` /
 `/variantes/:varianteId/editar`), categorías (listado / `/categorias/nueva` /
-`/categorias/subcategorias/nueva` / `/categorias/:categoriaId/editar`), marcas,
-colores, búsquedas sin resultado. Cada ruta lleva `meta.permiso`
+`/categorias/subcategorias/nueva` / `/categorias/:categoriaId/editar`), marcas
+(listado / `/marcas/nueva` / `/marcas/:marcaId` detalle /
+`/marcas/:marcaId/editar`), colores, búsquedas sin resultado. Cada ruta lleva `meta.permiso`
 (`GESTION_CATALOGO` / `GESTION_PRODUCTOS`) que el guard de navegación y **el
 backend** deben exigir. `main.ts` monta el router con estas rutas vía
 `core/routes/index.ts` (ver §12).
