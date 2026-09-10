@@ -8,6 +8,8 @@ export * from './producto-detalle.service';
 export * from './producto-detalle.mock';
 export * from './variantes.service';
 export * from './variantes.mock';
+export * from './variante-formulario.service';
+export * from './variante-formulario.mock';
 export * from './categorias.service';
 export * from './categorias.mock';
 export * from './marcas.service';

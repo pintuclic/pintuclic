@@ -3,6 +3,7 @@ export * from './useProductos';
 export * from './useProductoFormulario';
 export * from './useProductoDetalle';
 export * from './useVariantes';
+export * from './useVarianteFormulario';
 export * from './useCategorias';
 export * from './useMarcas';
 export * from './useColores';

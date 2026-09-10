@@ -77,6 +77,27 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/admin/catalogo/variantes/nueva',
+    name: 'AdminVarianteNueva',
+    component: () => import('./views/VistaVarianteFormulario.vue'),
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_PRODUCTOS',
+      titulo: 'Crear nueva variante',
+    },
+  },
+  {
+    path: '/admin/catalogo/variantes/:varianteId/editar',
+    name: 'AdminVarianteEditar',
+    component: () => import('./views/VistaVarianteFormulario.vue'),
+    props: true,
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_PRODUCTOS',
+      titulo: 'Editar variante',
+    },
+  },
+  {
     path: '/admin/catalogo/categorias',
     name: 'AdminCategorias',
     component: () => import('./views/VistaCategorias.vue'),
