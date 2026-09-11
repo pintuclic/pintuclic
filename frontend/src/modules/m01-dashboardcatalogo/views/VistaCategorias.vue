@@ -43,14 +43,20 @@
           {{ error }}
         </p>
 
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[20rem_1fr]">
+        <!--
+          Sin sticky/fixed a propósito: el árbol y el panel de detalle se
+          desplazan junto con el resto de la página, como cualquier contenido
+          normal. `min-w-0` evita que la tabla de elementos empuje el ancho de
+          la columna y genere scroll horizontal.
+        -->
+        <div class="flex flex-col gap-6 lg:flex-row">
           <ArbolCategorias
             :arbol="arbolFiltrado"
             :seleccionada-id="seleccionadaId"
             :expandidas="expandidas"
             :busqueda="busquedaArbol"
             :cargando="cargando"
-            class="lg:sticky lg:top-24 lg:self-start"
+            class="min-w-0 lg:w-80 lg:shrink-0"
             @seleccionar="seleccionar"
             @alternar="alternarExpandida"
             @buscar="buscarEnArbol"
@@ -62,6 +68,7 @@
             :filtros="filtrosElementos"
             :total-elementos="totalElementos"
             :cargando="cargandoDetalle"
+            class="min-w-0 flex-1"
             @editar="(id) => irA(`/admin/catalogo/categorias/${id}/editar`)"
             @menu="pedirDesactivar"
             @menu-elemento="pedirDesactivar"
@@ -165,7 +172,7 @@
           <button
             type="button"
             class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-            @click="irA('/admin/catalogo/productos')"
+            @click="verProductosAfectados"
           >
             <Eye class="h-4 w-4" aria-hidden="true" />
             Ver productos afectados
@@ -207,6 +214,7 @@ import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import ArbolCategorias from '../components/ArbolCategorias.vue';
 import PanelDetalleCategoria from '../components/PanelDetalleCategoria.vue';
 import { useCategorias } from '../composables/useCategorias';
+import { useProductosStore } from '../store/productos.store';
 import type { TipoNodoCategoria } from '../interfaces';
 
 const {
@@ -240,6 +248,18 @@ const entiendoImpacto = ref(false);
 function onFiltrarTipo(valor: string): void {
   const tipo = valor === '' ? null : (valor as TipoNodoCategoria);
   aplicarFiltroElementos({ tipo });
+}
+
+// Store de productos: solo para preseleccionar el filtro por categoría antes
+// de navegar (el listado real vive en VistaProductos / useProductos).
+const productosStore = useProductosStore();
+
+/** «Ver productos afectados»: filtra el listado por la categoría del modal. */
+function verProductosAfectados(): void {
+  if (impactoDesactivar.value) {
+    void productosStore.aplicarFiltros({ categoriaId: impactoDesactivar.value.id });
+  }
+  irA('/admin/catalogo/productos');
 }
 
 async function onConfirmarDesactivar(): Promise<void> {
