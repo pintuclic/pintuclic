@@ -11,3 +11,5 @@ export * from './marca-formulario.store';
 export * from './marca-detalle.store';
 export * from './colores.store';
 export * from './busquedas.store';
+export * from './lineas.store';
+export * from './linea-formulario.store';

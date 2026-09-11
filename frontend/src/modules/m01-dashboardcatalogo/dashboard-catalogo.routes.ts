@@ -111,6 +111,8 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     path: '/admin/catalogo/categorias/nueva',
     name: 'AdminCategoriaNueva',
     component: () => import('./views/VistaCategoriaFormulario.vue'),
+    // Prop estática: indica a la vista que arranque en modo "categoría".
+    props: { categoriaId: 'nueva-categoria' },
     meta: {
       requiereAuth: true,
       permiso: 'GESTION_CATALOGO',
@@ -121,6 +123,8 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     path: '/admin/catalogo/categorias/subcategorias/nueva',
     name: 'AdminSubcategoriaNueva',
     component: () => import('./views/VistaCategoriaFormulario.vue'),
+    // Prop estática: indica a la vista que arranque en modo "subcategoría".
+    props: { categoriaId: 'nueva-subcategoria' },
     meta: {
       requiereAuth: true,
       permiso: 'GESTION_CATALOGO',
@@ -178,6 +182,37 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
       requiereAuth: true,
       permiso: 'GESTION_CATALOGO',
       titulo: 'Editar marca',
+    },
+  },
+  {
+    path: '/admin/catalogo/lineas',
+    name: 'AdminLineasComerciales',
+    component: () => import('./views/VistaLineas.vue'),
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Líneas comerciales',
+    },
+  },
+  {
+    path: '/admin/catalogo/lineas/nueva',
+    name: 'AdminLineaNueva',
+    component: () => import('./views/VistaLineaFormulario.vue'),
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Crear línea comercial',
+    },
+  },
+  {
+    path: '/admin/catalogo/lineas/:lineaId/editar',
+    name: 'AdminLineaEditar',
+    component: () => import('./views/VistaLineaFormulario.vue'),
+    props: true,
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Editar línea comercial',
     },
   },
   {

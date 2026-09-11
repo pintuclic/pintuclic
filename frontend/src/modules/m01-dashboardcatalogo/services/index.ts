@@ -24,3 +24,7 @@ export * from './colores.service';
 export * from './colores.mock';
 export * from './busquedas.service';
 export * from './busquedas.mock';
+export * from './lineas.service';
+export * from './lineas.mock';
+export * from './linea-formulario.service';
+export * from './linea-formulario.mock';

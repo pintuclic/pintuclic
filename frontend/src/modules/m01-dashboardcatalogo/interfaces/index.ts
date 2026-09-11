@@ -12,3 +12,5 @@ export * from './marca-formulario.interface';
 export * from './marca-detalle.interface';
 export * from './colores.interface';
 export * from './busquedas.interface';
+export * from './lineas.interface';
+export * from './linea-formulario.interface';

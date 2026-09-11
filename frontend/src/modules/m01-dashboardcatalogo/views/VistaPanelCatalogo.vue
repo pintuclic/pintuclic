@@ -28,6 +28,8 @@ import VistaCategoriaFormulario from './VistaCategoriaFormulario.vue';
 import VistaMarcas from './VistaMarcas.vue';
 import VistaMarcaFormulario from './VistaMarcaFormulario.vue';
 import VistaMarcaDetalle from './VistaMarcaDetalle.vue';
+import VistaLineas from './VistaLineas.vue';
+import VistaLineaFormulario from './VistaLineaFormulario.vue';
 import VistaColores from './VistaColores.vue';
 import VistaBusquedas from './VistaBusquedas.vue';
 import {
@@ -48,6 +50,8 @@ const COMPONENTES: Record<ClaveVistaPanel, Component> = {
   marcas: VistaMarcas,
   'marca-formulario': VistaMarcaFormulario,
   'marca-detalle': VistaMarcaDetalle,
+  lineas: VistaLineas,
+  'linea-formulario': VistaLineaFormulario,
   colores: VistaColores,
   busquedas: VistaBusquedas,
 };
@@ -80,6 +84,9 @@ const propsVista = computed<Record<string, unknown>>(() => {
   }
   if (vistaActiva.value === 'marca-formulario' || vistaActiva.value === 'marca-detalle') {
     return { marcaId: parametro.value ?? undefined };
+  }
+  if (vistaActiva.value === 'linea-formulario') {
+    return { lineaId: parametro.value ?? undefined };
   }
   return {};
 });

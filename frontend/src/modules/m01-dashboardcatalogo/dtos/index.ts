@@ -9,3 +9,5 @@ export * from './marcas.dto';
 export * from './marca-formulario.dto';
 export * from './colores.dto';
 export * from './busquedas.dto';
+export * from './lineas.dto';
+export * from './linea-formulario.dto';

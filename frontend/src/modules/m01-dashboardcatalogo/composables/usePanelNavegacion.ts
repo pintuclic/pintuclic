@@ -30,6 +30,8 @@ export type ClaveVistaPanel =
   | 'marcas'
   | 'marca-formulario'
   | 'marca-detalle'
+  | 'lineas'
+  | 'linea-formulario'
   | 'colores'
   | 'busquedas';
 
@@ -103,6 +105,12 @@ export function rutaRealPanel(
         : '/admin/catalogo/marcas/nueva';
     case 'marca-detalle':
       return parametro ? `/admin/catalogo/marcas/${parametro}` : '/admin/catalogo/marcas';
+    case 'lineas':
+      return '/admin/catalogo/lineas';
+    case 'linea-formulario':
+      return parametro
+        ? `/admin/catalogo/lineas/${parametro}/editar`
+        : '/admin/catalogo/lineas/nueva';
     case 'colores':
       return '/admin/catalogo/colores';
     case 'busquedas':
@@ -159,6 +167,12 @@ export function resolverRutaPanel(destino: string): {
   const catEdicion = ruta.match(/^categorias\/([^/]+)\/editar$/);
   if (catEdicion?.[1]) return { clave: 'categoria-formulario', parametro: catEdicion[1] };
   if (ruta.startsWith('categorias')) return { clave: 'categorias', parametro: null };
+
+  // Líneas comerciales (sección propia en el menú).
+  if (ruta === 'lineas/nueva') return { clave: 'linea-formulario', parametro: null };
+  const lineaEdicion = ruta.match(/^lineas\/([^/]+)\/editar$/);
+  if (lineaEdicion?.[1]) return { clave: 'linea-formulario', parametro: lineaEdicion[1] };
+  if (ruta.startsWith('lineas')) return { clave: 'lineas', parametro: null };
 
   if (ruta === 'marcas/nueva') return { clave: 'marca-formulario', parametro: null };
   const marcaEdicion = ruta.match(/^marcas\/([^/]+)\/editar$/);

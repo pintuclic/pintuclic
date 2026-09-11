@@ -44,3 +44,7 @@ export { default as TablaColores } from './TablaColores.vue';
 
 // Vista: Búsquedas sin resultado (ADMIN 08)
 export { default as TablaBusquedasSinResultado } from './TablaBusquedasSinResultado.vue';
+
+// Vista: Líneas comerciales (ADMIN 15)
+export { default as TablaLineas } from './TablaLineas.vue';
+export { default as ModalDesactivarLinea } from './ModalDesactivarLinea.vue';

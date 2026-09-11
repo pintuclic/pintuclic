@@ -14,3 +14,5 @@ export * from './useBusquedas';
 export * from './usePanelNavegacion';
 export * from './useFormatoCatalogo';
 export * from './useMenuMovil';
+export * from './useLineas';
+export * from './useLineaFormulario';
