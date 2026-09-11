@@ -1,7 +1,17 @@
 <template>
   <header
-    class="flex h-20 items-center gap-4 border-b border-neutral-light bg-neutral-white px-6"
+    class="flex h-20 items-center gap-3 border-b border-neutral-light bg-neutral-white px-4 sm:gap-4 sm:px-6"
   >
+    <!-- Botón menú (móvil / tablet) -->
+    <button
+      type="button"
+      class="-ml-1 shrink-0 rounded-button p-2 text-neutral-dark hover:bg-neutral-lightest lg:hidden"
+      aria-label="Abrir menú"
+      @click="alternar"
+    >
+      <Menu class="h-6 w-6" aria-hidden="true" />
+    </button>
+
     <!-- Migas -->
     <nav class="hidden items-center gap-2 text-sm text-neutral-medium md:flex" aria-label="Ruta">
       <span>Admin</span>
@@ -65,7 +75,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ChevronRight, ChevronDown, Search, Bell } from 'lucide-vue-next';
+import { ChevronRight, ChevronDown, Search, Bell, Menu } from 'lucide-vue-next';
+import { useMenuMovil } from '../composables/useMenuMovil';
+
+const { alternar } = useMenuMovil();
 
 const props = withDefaults(
   defineProps<{
