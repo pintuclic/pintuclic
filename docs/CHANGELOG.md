@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.30.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Ficha pública de producto de HU-CAT-06 con galería, descripción, variantes, precio, cantidad y productos complementarios.
+- **Navegación:** Las tarjetas del Home y del catálogo abren `/productos/:productoId`; los productos no disponibles muestran el estado contractual correspondiente.
+- **Estado de Calidad:** Datos obtenidos exclusivamente de los endpoints públicos de M01 y respaldo visual local mientras HU-CAT-07 no exponga imágenes.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.30.0_M01_detalle_producto_publico_frontend.md](./walkthroughs/M01/walkthrough_v3.30.0_M01_detalle_producto_publico_frontend.md)
+
+---
+
 ## [v3.29.0] - 2026-09-12
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** Vista de catálogo público de HU-CAT-06 con búsqueda, filtro por subcategoría, paginación y navegación hacia la ficha de producto.

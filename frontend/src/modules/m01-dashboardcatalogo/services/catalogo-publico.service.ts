@@ -4,6 +4,7 @@ import type {
   CategoriaPublica,
   FichaProductoPublico,
   PaginaProductosPublicos,
+  ProductoPublicoResumen,
 } from '../interfaces/catalogo-publico.interface';
 
 const BASE = '/catalogo/publico';
@@ -30,6 +31,13 @@ export const CatalogoPublicoService = {
   async obtenerFicha(idProducto: number): Promise<FichaProductoPublico> {
     const { data } = await apiClient.get<ApiResponse<FichaProductoPublico>>(
       `${BASE}/productos/${idProducto}`
+    );
+    return data.data;
+  },
+
+  async listarComplementarios(idProducto: number): Promise<ProductoPublicoResumen[]> {
+    const { data } = await apiClient.get<ApiResponse<ProductoPublicoResumen[]>>(
+      `${BASE}/productos/${idProducto}/complementarios`
     );
     return data.data;
   },
