@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="min-h-screen flex flex-col bg-neutral-lightest font-sans">
     
     <!-- Top Bar Azul Oscuro -->
@@ -142,10 +142,14 @@ import {
 import ModalLogin from '@/modules/m04-cuentas/components/ModalLogin.vue';
 import RegistroWizard from '@/modules/m04-cuentas/components/RegistroWizard.vue';
 import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
+import { useRouter } from 'vue-router';
 
 // Estado global local del layout para modales
 const showLogin = ref(false);
 const showWizard = ref(false);
+const showMobileMenu = ref(false);
+
+const router = useRouter();
 
 const closeAllModals = () => {
   showLogin.value = false;
@@ -165,6 +169,8 @@ const openRegister = () => {
 const handleLoginSuccess = () => {
   console.log('Login exitoso en layout global');
   closeAllModals();
+  // Redirigir al panel de administración tras iniciar sesión
+  router.push('/admin');
 };
 
 const handleWizardSuccess = (tipoCuenta: TipoCuentaRegistro) => {
