@@ -4,186 +4,321 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
-## [v2.21.0] - 2026-09-09
+## [v3.26.0] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** feat(M01): responsive adaptado del dashboard de catalogo para telefono y tablet.
+- **Hitos Clave:** Ajustes de responsive.
+- **Estado de Calidad:** Validado en rama feature/m01-especificacion-catalogo.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.26.0_M01_dashboard_responsive_frontend.md](./walkthroughs/M01/walkthrough_v3.26.0_M01_dashboard_responsive_frontend.md)
+
+---
+
+## [v3.25.2] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** fix(M01): compactar el resumen lateral de variantes para que la tabla se vea completa.
+- **Hitos Clave:** Ajustes visuales de tabla.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.25.2_M01_compactar_variantes_frontend.md](./walkthroughs/M01/walkthrough_v3.25.2_M01_compactar_variantes_frontend.md)
+
+---
+
+## [v3.25.1] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** fix(M01): corregir desbordamiento lateral en categorias y filtrar productos afectados al desactivar.
+- **Hitos Clave:** Corrección de desbordamiento.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.25.1_M01_fix_desbordamiento_categorias_frontend.md](./walkthroughs/M01/walkthrough_v3.25.1_M01_fix_desbordamiento_categorias_frontend.md)
+
+---
+
+## [v3.25.0] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** feat(M01): integrar crear/editar marca y detalle de marca segun maquetas admin 13 y 14.
+- **Hitos Clave:** Integración de maquetas.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.25.0_M01_marcas_frontend.md](./walkthroughs/M01/walkthrough_v3.25.0_M01_marcas_frontend.md)
+
+---
+
+## [v3.24.0] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** feat(M01): integrar crear/editar categoria, subcategoria y modal desactivar segun maquetas admin 10 11 12.
+- **Hitos Clave:** Integración de maquetas de categorías.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.24.0_M01_categorias_frontend.md](./walkthroughs/M01/walkthrough_v3.24.0_M01_categorias_frontend.md)
+
+---
+
+## [v3.23.1] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** fix(M01): tabla de variantes no horizontal y acciones en menu de tres puntos.
+- **Hitos Clave:** Fix UI.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.23.1_M01_fix_tabla_variantes_frontend.md](./walkthroughs/M01/walkthrough_v3.23.1_M01_fix_tabla_variantes_frontend.md)
+
+---
+
+## [v3.23.0] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** feat(M01): integrar crear y editar variante segun maquetas admin 07 y 08.
+- **Hitos Clave:** Integración de variantes.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.23.0_M01_crear_editar_variante_frontend.md](./walkthroughs/M01/walkthrough_v3.23.0_M01_crear_editar_variante_frontend.md)
+
+---
+
+## [v3.22.0] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** feat(M01): integrar vista detalle administrativo del producto segun maqueta admin 05.
+- **Hitos Clave:** Detalle de producto.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.22.0_M01_detalle_producto_frontend.md](./walkthroughs/M01/walkthrough_v3.22.0_M01_detalle_producto_frontend.md)
+
+---
+
+## [v3.21.1] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** fix(M01): fijar el menu de acciones al hacer scroll.
+- **Hitos Clave:** Fix UI.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.21.1_M01_fix_menu_acciones_frontend.md](./walkthroughs/M01/walkthrough_v3.21.1_M01_fix_menu_acciones_frontend.md)
+
+---
+
+## [v3.21.0] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** feat(M01): integrar vista editar producto y menu de acciones segun maqueta admin 04.
+- **Hitos Clave:** Edición de producto.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.21.0_M01_editar_producto_frontend.md](./walkthroughs/M01/walkthrough_v3.21.0_M01_editar_producto_frontend.md)
+
+---
+
+## [v3.20.0] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** feat(M01): montar vue-router e integrar el panel de catalogo en la app.
+- **Hitos Clave:** Enrutamiento vue-router.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.20.0_M01_vue_router_frontend.md](./walkthroughs/M01/walkthrough_v3.20.0_M01_vue_router_frontend.md)
+
+---
+
+## [v3.19.2] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** feat(M01): agregar ilustraciones de producto y logos de marca del catalogo.
+- **Hitos Clave:** Ilustraciones agregadas.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.19.2_M01_ilustraciones_logos_frontend.md](./walkthroughs/M01/walkthrough_v3.19.2_M01_ilustraciones_logos_frontend.md)
+
+---
+
+## [v3.19.1] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** refactor(M01): fijar la barra lateral del panel al hacer scroll.
+- **Hitos Clave:** Refactor UI.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.19.1_M01_fijar_barra_lateral_frontend.md](./walkthroughs/M01/walkthrough_v3.19.1_M01_fijar_barra_lateral_frontend.md)
+
+---
+
+## [v3.19.0] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** refactor(M01): carga transparente en las 8 vistas del panel de catalogo.
+- **Hitos Clave:** Refactor UI de carga.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.19.0_M01_carga_transparente_frontend.md](./walkthroughs/M01/walkthrough_v3.19.0_M01_carga_transparente_frontend.md)
+
+---
+
+## [v3.18.0] - 2026-09-09
 ### Módulo: M02 Búsqueda y navegación (Backend)
 - **Alcance:** Sexta entrega del módulo M02: facetas del catálogo (HU-BUS-02, RF-BUS-02-02). Cierra el último requisito funcional pendiente del módulo: ofrecer en cada filtro únicamente los valores que producen resultados, con su conteo. Sin cambios de esquema.
 - **Hitos Clave:** Nuevo endpoint **público** `GET /api/busqueda/facetas` que acepta los mismos parámetros que la búsqueda (término + filtros) y devuelve, por dimensión (`categorias`, `subcategorias`, `marcas`, `lineas`, `resinas`, `colores`, `presentaciones`), los valores disponibles con su número de productos. Conteo **conjuntivo** (aplica todos los filtros vigentes) mediante agregaciones `GROUP BY` con `COUNT(DISTINCT producto)` sobre la misma base filtrada de la búsqueda; solo aparecen valores con `cantidad ≥ 1` (RF-BUS-02-02). Ordenadas por frecuencia desc con desempate por nombre. Se refactorizó el armado de filtros del controlador a un helper compartido por `buscar` y `facetas`.
 - **Diferido:** (1) **conteo disyuntivo** (que una dimensión no se cuente a sí misma, estándar de e-commerce): hoy es conjuntivo; ampliar si se requiere. (2) **Faceta de color solo cuenta preparados** (variante con ese color); los entonables (carta de la marca) quedan fuera del conteo. (3) **Familia cromática:** sigue diferida (sin dato, HU-CAT-05).
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 26/26 pruebas superadas (+1 de facetas). ✅ **Validado contra PostgreSQL real** (`pintuclic-db`): las agregaciones de marca, presentación (vía variante) y subcategoría ejecutan sin errores y cuentan productos distintos correctamente (p. ej. Pintuco 2 / Interpinturas 1). Con esto, **M02 backend cubre todas sus HU funcionales** (HU-BUS-01/02/03/05/06; HU-BUS-04 descartada por el spec).
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.21.0_M02_facetas_backend.md](./walkthroughs/M02/walkthrough_v2.21.0_M02_facetas_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v3.18.0_M02_facetas_backend.md](./walkthroughs/M02/walkthrough_v3.18.0_M02_facetas_backend.md)
 
 ---
 
-## [v2.20.0] - 2026-09-09
+## [v3.17.0] - 2026-09-09
 ### Módulo: M02 Búsqueda y navegación (Backend)
 - **Alcance:** Quinta entrega del módulo M02: registro de búsquedas sin resultado (HU-BUS-06). Completa las HU funcionales del módulo. Registra de forma **anónima** los términos que no arrojan resultados (M20 / CA-BUS-06-02) y expone un listado **solo para administradores** con el permiso «Consultar estadísticas» (M17 / CA-BUS-06-03).
 - **Hitos Clave:** **BD v3.7:** nueva tabla **`busqueda_sin_resultado`** (`id_busqueda`, `termino`, `fecha`), modelo por evento (sin identidad de usuario) con índices por `fecha` y `termino`. Nuevo permiso M17 **`estadisticas.consultar`** (id 20) asignado al rol administrador. El endpoint público `GET /api/busqueda/productos` ahora **registra** el término (normalizado a minúsculas) cuando una búsqueda con texto da 0 resultados, aislado en `try/catch` para no afectar a la búsqueda (RF-BUS-01-06). Nuevo endpoint **protegido** `GET /api/busqueda/estadisticas/sin-resultado?periodo=diario|semanal|mensual|anual` (default `mensual`) que agrega por término y ordena por frecuencia (RF-BUS-06-02 / CA-BUS-06-01), sin exponer identidad.
 - **Nota de arquitectura:** el registro en runtime es un insert operacional (analítica), no auto-siembra de catálogo; no incumple la política de seed centralizado (regla #10). Toques globales autorizados por el PO: `bd/sql/schema_pintuclic.sql` (tabla), `backend/src/core/db/types.ts` (tipos) y `bd/sql/seed_pintuclic.sql` (permiso + asignación).
 - **Diferido:** retención por periodo configurable (RF-BUS-06-01: purga de eventos antiguos) — pendiente de un job/config; hoy se conservan todos los eventos.
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 25/25 pruebas superadas (+4 de HU-BUS-06). ✅ **Validado contra PostgreSQL real** (`pintuclic-db`): tabla e índices creados, permiso 20 asignado al rol administrador, y la agregación por frecuencia verificada (un término repetido aparece una sola vez con su conteo; CA-BUS-06-01). Datos de prueba eliminados tras la validación. ℹ️ `npm run db:reset` no se ejecutó por un desajuste de conexión preexistente del `setup.ts` (usuario/host); los objetos se aplicaron directamente al contenedor.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.20.0_M02_busquedas_sin_resultado_backend.md](./walkthroughs/M02/walkthrough_v2.20.0_M02_busquedas_sin_resultado_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v3.17.0_M02_busquedas_sin_resultado_backend.md](./walkthroughs/M02/walkthrough_v3.17.0_M02_busquedas_sin_resultado_backend.md)
 
 ---
 
-## [v2.19.0] - 2026-09-09
+## [v3.16.0] - 2026-09-09
 ### Módulo: M02 Búsqueda y navegación (Backend)
 - **Alcance:** Cuarta entrega del módulo M02: paginación de resultados (HU-BUS-05). Buena parte ya estaba cubierta por la paginación introducida en HU-BUS-01 (entrega por páginas con `limite`/`offset`, `total`, `pagina` y conservación de filtros/orden por ser un endpoint sin estado). Esta versión **consolida el hueco real**: los metadatos de **páginas numeradas** (RF-BUS-05-02). Sin cambios de esquema.
 - **Hitos Clave:** La respuesta de `GET /api/busqueda/productos` incorpora `total_paginas` (= `ceil(total/limite)`) junto a `total`, `pagina` y `limite`, habilitando la navegación por páginas numeradas. Una página que excede el total responde **sin error** con `items` vacío y los metadatos correctos (CA-BUS-05-04). El orden determinista (desempate estable por nombre, HU-BUS-03) garantiza que no haya reordenamiento dinámico entre páginas (RF-BUS-05-02).
 - **Estado ya cubierto por HU previas:** RF-BUS-05-01 (entrega por páginas del tamaño configurado sin cargar todo; `total` y `pagina`) y CA-BUS-05-01/02 (primera página acotada; avanzar conservando filtros y orden) provienen de HU-BUS-01/02/03. RNF-BUS-05-01 (móvil/tableta/escritorio sin scroll horizontal) y CA-BUS-05-03 son responsabilidad del frontend.
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 21/21 pruebas superadas (+3 de paginación: `total_paginas`, sin resultados y página fuera de rango). ℹ️ Sin SQL nuevo; el cálculo de páginas se valida en el suite en memoria.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.19.0_M02_paginacion_backend.md](./walkthroughs/M02/walkthrough_v2.19.0_M02_paginacion_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v3.16.0_M02_paginacion_backend.md](./walkthroughs/M02/walkthrough_v3.16.0_M02_paginacion_backend.md)
 
 ---
 
-## [v2.18.0] - 2026-09-09
+## [v3.15.0] - 2026-09-09
 ### Módulo: M02 Búsqueda y navegación (Backend)
 - **Alcance:** Tercera entrega del módulo M02: ordenamiento de resultados (HU-BUS-03). Se **extiende el mismo endpoint** `GET /api/busqueda/productos` con el parámetro `orden`, combinable con término y filtros y conservado en la paginación (CA-BUS-03-01). Sin cambios de esquema.
 - **Hitos Clave:** Nuevo parámetro `orden` con valores `relevancia` (por defecto), `precio_asc`, `precio_desc` y `novedad` (RF-BUS-03-01). La **relevancia se pondera** nombre>marca>línea>color>descripción (pesos 5/4/3/2/1) con un bonus por coincidencia exacta del nombre para priorizar el exacto sobre el aproximado (RF-BUS-03-02). Todos los criterios cierran con **desempate estable por nombre asc**, de modo que consultas idénticas mantienen el orden entre páginas (RF-BUS-03-03 / CA-BUS-03-03). El precio del producto para ordenar es el mínimo de sus variantes activas. Los productos sin coincidencia (relevancia 0) no se elevan por patrocinio (CA-BUS-03-04, ya garantizado desde HU-BUS-01).
 - **Diferido:** (1) **precio final tras descuentos + IVA** y **precio por condiciones de empresa** en el orden por precio (CA-BUS-03-05): dependen de M06 (inexistente); el orden opera sobre `variante.precio_vigente` (precio base). (2) **Novedad sin fecha:** `producto` no tiene columna de fecha de alta; se usa `id_producto` (serial) como proxy de novedad hasta que el esquema incorpore una fecha. (3) **Default "configurable"** (RF-BUS-03-01): fijo en `relevancia` hasta que exista un módulo de configuración.
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 18/18 pruebas superadas (+3 de ordenamiento: default, propagación del criterio y validación del enum). ✅ **Validado contra PostgreSQL real** (`pintuclic-db`): la relevancia ponderada y el subquery de precio mínimo ejecutan sin errores y ordenan correctamente (p. ej. `vinil` → *Viniltex* con relevancia 6.667 encabezando).
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.18.0_M02_ordenamiento_backend.md](./walkthroughs/M02/walkthrough_v2.18.0_M02_ordenamiento_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v3.15.0_M02_ordenamiento_backend.md](./walkthroughs/M02/walkthrough_v3.15.0_M02_ordenamiento_backend.md)
 
 ---
 
-## [v2.17.0] - 2026-09-09
+## [v3.14.0] - 2026-09-09
 ### Módulo: M02 Búsqueda y navegación (Backend)
 - **Alcance:** Segunda entrega del módulo M02: filtros del catálogo (HU-BUS-02). Se **extiende el mismo endpoint** `GET /api/busqueda/productos` para aceptar filtros simultáneos y multivalor (RF-BUS-02-01), combinables con el término de búsqueda y conservados en la paginación (CA-BUS-02-05). Sin cambios de esquema.
 - **Hitos Clave:** Nuevos parámetros de query `categoria`, `subcategoria`, `marca`, `linea`, `resina`, `color`, `presentacion` (multivalor: `?marca=1&marca=2` o `?marca=1,2`) y `precio_min`/`precio_max`. Cada filtro es un OR interno (`in`) y entre filtros distintos es AND; todos se resuelven con `EXISTS` sobre `producto` para devolver **productos, no variantes** (RF-BUS-02-03). El filtro de color incluye **preparados y entonables** (CA-BUS-02-08). El rango de precio inválido (mínimo > máximo) se rechaza como error de validación 400 (CA-BUS-02-06). Los filtros se aplican por igual a productos patrocinados (CA-BUS-02-09, sin tratamiento especial).
 - **Diferido:** (1) **familia cromática** (RF-BUS-02-01): las familias se difirieron en M01/HU-CAT-05, no hay dato que filtrar. (2) **Precio final tras descuentos + IVA** y **precio por condiciones de empresa** (RF-BUS-02-04 / CA-BUS-02-07): dependen de M06 (inexistente); el rango opera de momento sobre `variante.precio_vigente` (precio base). (3) **Facetas** (RF-BUS-02-02: "ofrecer solo los valores que producen resultados"): endpoint de valores disponibles pendiente; el backend ya acepta que el frontend agregue/quite filtros y responde `total=0` cuando no hay coincidencias.
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 14/14 pruebas superadas (término, paginación, propagación de filtros, parseo multivalor y validación del rango de precio). ✅ **Validado contra PostgreSQL real** (`pintuclic-db`, extensiones `unaccent`/`pg_trgm` activas): el predicado completo y las ramas `EXISTS` de filtros (precio, color preparado/entonable, presentación) ejecutan sin errores contra el esquema real. Nota: los 3 productos del seed están `publicado=f`, por lo que el endpoint público responde vacío hasta que se publique algún producto (HU-CAT-02).
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.17.0_M02_filtros_backend.md](./walkthroughs/M02/walkthrough_v2.17.0_M02_filtros_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v3.14.0_M02_filtros_backend.md](./walkthroughs/M02/walkthrough_v3.14.0_M02_filtros_backend.md)
 
 ---
 
-## [v2.16.0] - 2026-09-09
+## [v3.13.0] - 2026-09-09
 ### Módulo: M02 Búsqueda y navegación (Backend)
 - **Alcance:** Primera entrega del módulo M02: búsqueda de productos por texto libre (HU-BUS-01). Primer endpoint del módulo, **público (sin autenticación)** y resuelto en servidor (RF-BUS-01-02 / CA-BUS-01-04). Búsqueda tolerante a errores tipográficos e insensible a mayúsculas y acentos (RF-BUS-01-03).
 - **Hitos Clave:** Nuevo endpoint público `GET /api/busqueda/productos?q=&pagina=&limite=`. Busca sobre **nombre, descripción, marca, línea y color** del producto usando `unaccent` + `pg_trgm` (`word_similarity`, umbral 0.3). En color incluye tanto los **preparados** (variante con ese color) como los **entonables** (producto entonable cuyo color existe en la carta de su marca), cumpliendo RF-BUS-01-05. Cada producto aparece **una sola vez** vía subconsultas `EXISTS` (sin joins que multipliquen filas), excluye inactivos/no publicados (RF-BUS-01-04) y con término vacío devuelve el catálogo completo (RF-BUS-01-01). Resultados paginados con `total/pagina/limite` (base para HU-BUS-05) y ordenados por relevancia de nombre con desempate estable alfabético.
 - **Prerrequisito de BD (global):** habilitar las extensiones `unaccent` y `pg_trgm` en PostgreSQL (`CREATE EXTENSION IF NOT EXISTS ...`). No se modificó `bd/sql/schema_pintuclic.sql` (archivo del equipo de BD); su inclusión durable en el esquema queda pendiente de coordinación con ese equipo.
 - **Diferido:** filtros (HU-BUS-02), ordenamiento configurable por precio/novedad y relevancia ponderada completa (HU-BUS-03), metadatos de paginación numerada (HU-BUS-05) y registro de búsquedas sin resultado (HU-BUS-06). El precio real tras descuentos (M06) no aplica a esta HU.
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m02.test.ts`: 8/8 pruebas superadas (normalización del término y paginación con repositorio en memoria). ✅ **Validado contra PostgreSQL real** (`pintuclic-db`, extensiones `unaccent`/`pg_trgm` activas): `unaccent` resuelve acentos (`maxima`↔"Máxima") y `word_similarity` la tolerancia a typos (`vinil`→"Viniltex" 0.833 ≥ 0.3). Nota: los 3 productos del seed están `publicado=f`, por lo que el endpoint público responde vacío hasta que se publique algún producto (HU-CAT-02).
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v2.16.0_M02_busqueda_backend.md](./walkthroughs/M02/walkthrough_v2.16.0_M02_busqueda_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v3.13.0_M02_busqueda_backend.md](./walkthroughs/M02/walkthrough_v3.13.0_M02_busqueda_backend.md)
 
 ---
 
-## [v2.15.0] - 2026-09-09
+## [v3.12.1] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** feat(M01): montar panel de catalogo frontend con las 8 vistas admin.
+- **Hitos Clave:** Montaje de panel frontend.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.12.1_M01_montar_panel_frontend.md](./walkthroughs/M01/walkthrough_v3.12.1_M01_montar_panel_frontend.md)
+
+---
+
+## [v3.12.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Decimotercera entrega del módulo M01: productos complementarios (HU-CAT-08). Cada producto puede declarar la categoría de la que se extraen sus complementarios, y los productos pueden marcarse como patrocinados para priorizarlos.
 - **Hitos Clave:** BD v3.6: `producto` gana `id_categoria_complementaria` (FK categoría, `ON DELETE SET NULL`, RF-CAT-08-01) y `patrocinado` (BOOLEAN, RF-CAT-08-02). Nuevo endpoint **público** `GET /api/catalogo/publico/productos/:id/complementarios` que devuelve hasta 4 productos activos+publicados de la categoría configurada, **patrocinados primero**, con **fallback a patrocinados** si no hay categoría o no arroja resultados, excluyendo el propio producto (CA-CAT-08-04). La configuración (`id_categoria_complementaria`, `patrocinado`) se administra vía el update de producto, validando que la categoría exista.
 - **Diferido:** configuración de complementarios a nivel categoría (la spec permite "producto o categoría"; se implementó a nivel producto), exclusión de combos agotados (RF-CAT-08-03, depende de combos/stock — CAT-13/M05-M08) y CA-CAT-08-05 (no sugerir en el carrito → M05).
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 123/123 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed en `pintuclic-db`): columnas y FK de complementarios verificadas; 43 tablas.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.15.0_M01_complementarios_backend.md](./walkthroughs/M01/walkthrough_v2.15.0_M01_complementarios_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.12.0_M01_complementarios_backend.md](./walkthroughs/M01/walkthrough_v3.12.0_M01_complementarios_backend.md)
 
 ---
 
-## [v2.14.0] - 2026-09-09
+## [v3.11.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Duodécima entrega del módulo M01: consulta pública del catálogo (HU-CAT-06). Primeros endpoints **públicos (sin autenticación)** del módulo, que exponen únicamente elementos activos y publicados (RF-CAT-06-01, RF-CAT-09-02). Sin cambios de esquema.
 - **Hitos Clave:** Nuevos endpoints públicos `GET /api/catalogo/publico/categorias` (categorías/subcategorías con productos activos+publicados — RF-CAT-06-02, CA-CAT-06-04), `GET /api/catalogo/publico/productos?subcategoria=&q=&pagina=&limite=` (listado paginado — RNF-CAT-06-01, CA-CAT-06-05) y `GET /api/catalogo/publico/productos/:id` (ficha con variantes activas —presentación, color/base, precio, existencia—, imágenes y rendimiento; 404 "no disponible" si el producto no está activo+publicado — CA-CAT-06-02/03). Consultas de solo lectura con joins y `EXISTS`.
 - **Diferido:** RF-CAT-06-03 (carta navegable por familia cromática — familias diferidas en HU-CAT-05) y RF-CAT-06-04 (solo colores preparables sobre una base activa — depende de color↔base, HU-CAT-12 flujo 3, pendiente de RF-CAT-12-12).
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 118/118 pruebas superadas. ✅ Consultas SQL validadas contra el esquema real de `pintuclic-db` (categorías con productos, listado paginado y variantes con joins). Sin cambios de esquema (43 tablas).
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.14.0_M01_consulta_publica_backend.md](./walkthroughs/M01/walkthrough_v2.14.0_M01_consulta_publica_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.11.0_M01_consulta_publica_backend.md](./walkthroughs/M01/walkthrough_v3.11.0_M01_consulta_publica_backend.md)
 
 ---
 
-## [v2.13.0] - 2026-09-09
+## [v3.10.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Undécima entrega del módulo M01: estado y ciclo de vida del catálogo (HU-CAT-09). Buena parte de la HU ya estaba cubierta de forma transversal por las entregas previas; esta versión **consolida los huecos reales**: (1) cierra la cascada de desactivación marca→productos (posible ahora que `producto.id_marca` existe desde HU-CAT-02) y (2) agrega el aviso previo de impacto en cascada (RF-CAT-09-03) para marca y producto. **Sin cambios de esquema.**
 - **Hitos Clave:** `MarcasService.desactivar` ahora también desactiva los productos de la marca (RF-CAT-04-03, antes era un hueco). Nuevos endpoints de solo lectura `GET /api/catalogo/marcas/:id/impacto-desactivacion` (líneas, bases, colores y productos activos afectados) y `GET /api/catalogo/productos/:id/impacto-desactivacion` (variantes activas e imágenes afectadas). Métodos de conteo (`contarActivasPorMarca` / `contarActivosPorMarca`, `contarImagenes`) en los repositorios.
 - **Estado ya cubierto por HU previas:** RF-CAT-09-01 (sin borrado físico de referenciados: no hay endpoints DELETE de catálogo salvo `imagen`), RF-CAT-09-04/05/06 (reactivación verificando dependencias activas, incluida la variante entonable con base inactiva y la variante de brocha sin comprobación de base/color). RF-CAT-09-02 (exclusión del catálogo público) se aplicará en HU-CAT-06.
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 113/113 pruebas superadas. ℹ️ Sin cambios de esquema (43 tablas); la lógica de cascada e impacto se valida en el suite en memoria.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.13.0_M01_ciclo_vida_backend.md](./walkthroughs/M01/walkthrough_v2.13.0_M01_ciclo_vida_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.10.0_M01_ciclo_vida_backend.md](./walkthroughs/M01/walkthrough_v3.10.0_M01_ciclo_vida_backend.md)
 
 ---
 
-## [v2.12.0] - 2026-09-09
+## [v3.9.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Décima entrega del módulo M01: imágenes del producto (HU-CAT-07). Cargar, reemplazar, eliminar y ordenar imágenes (RF-CAT-07-01), asociarlas a una variante o color del propio producto (RF-CAT-07-02) y mantener una sola imagen principal por producto (CA-CAT-07-02). Almacenamiento en la propia infraestructura como BYTEA (RF-CAT-07-03). Con esto, el `publicar` de HU-CAT-02 ya puede exigir imagen.
 - **Hitos Clave:** BD v3.5: nueva tabla **`imagen`** (`id_producto` FK, `id_variante`/`id_color` opcionales, `datos` BYTEA, `mime_type`, `orden`, `es_principal`) con **índice único parcial** de una principal por producto. Endpoints `POST/GET /api/catalogo/productos/:idProducto/imagenes`, `GET /api/catalogo/imagenes/:id/contenido` (binario con `Cache-Control`), `PATCH/DELETE /api/catalogo/imagenes/:id`. La imagen viaja como data URL base64 (jpeg/png/webp ≤5MB, mismo validador que el logotipo de marca; sin dependencias nuevas).
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 110/110 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed en `pintuclic-db`): tabla `imagen`, FKs e índice único parcial de principal verificados; 43 tablas.
 - **Pendiente (RNF-CAT-07-01):** generación de miniaturas optimizadas — se sirve el binario con caché; las miniaturas requieren una librería de imágenes y quedan documentadas como pendientes.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.12.0_M01_imagenes_backend.md](./walkthroughs/M01/walkthrough_v2.12.0_M01_imagenes_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.9.0_M01_imagenes_backend.md](./walkthroughs/M01/walkthrough_v3.9.0_M01_imagenes_backend.md)
 
 ---
 
-## [v2.11.0] - 2026-09-09
+## [v3.8.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Novena entrega del módulo M01: se completa el **flujo 2 de HU-CAT-12** — declarar qué bases ofrece cada producto entonable (RF-CAT-12-02/03). Cierra un pendiente conocido de la v2.6.0. El flujo 3 (asociación color↔base) sigue diferido por depender de la decisión de negocio RF-CAT-12-12.
 - **Hitos Clave:** BD v3.4: nueva tabla join **`producto_base`** (`id_producto`, `id_base`). Endpoints `GET/POST/DELETE /api/catalogo/productos/:idProducto/bases`. Reglas: solo productos entonables pueden ofrecer bases (RF-CAT-12-02); la base debe ser de la marca del producto y estar activa (RF-CAT-12-03); no se puede quitar una base usada por una variante. **Acoplamiento con HU-CAT-03:** una variante entonable ahora exige que su base esté declarada en `producto_base` (además de pertenecer a la marca).
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 102/102 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed en `pintuclic-db`): tabla `producto_base` con PK compuesta y FKs verificadas; 42 tablas.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.11.0_M01_producto_base_backend.md](./walkthroughs/M01/walkthrough_v2.11.0_M01_producto_base_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.8.0_M01_producto_base_backend.md](./walkthroughs/M01/walkthrough_v3.8.0_M01_producto_base_backend.md)
 
 ---
 
-## [v2.10.0] - 2026-09-09
+## [v3.7.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Octava entrega del módulo M01: rendimiento del producto (HU-CAT-10). **Alcance aprobado por el PO: solo rendimiento**, sin catálogo genérico de atributos técnicos (RF-CAT-10-01 diferido). El rendimiento se captura en m² por galón (mínimo y máximo) y se deriva por presentación a partir del volumen, sin capturarlo una por una.
 - **Hitos Clave:** BD v3.3: `producto` gana `rendimiento_min` / `rendimiento_max` (NUMERIC, opcionales) con CHECK que exige ambos o ninguno, `> 0` y `min ≤ max` (RF-CAT-10-02/05). Endpoints `GET/PATCH /api/catalogo/productos/:idProducto/rendimiento`: el GET devuelve el rendimiento por galón y su **derivación por presentación activa** (RF-CAT-10-03, `valor × volumen / galón`). El rendimiento se incluye además en la ficha del producto. Sin tablas nuevas.
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 94/94 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed en `pintuclic-db`): columnas y CHECK de rendimiento verificados con datos semilla (Viniltex 40–45, Esmalte 15–20); 41 tablas.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.10.0_M01_rendimiento_backend.md](./walkthroughs/M01/walkthrough_v2.10.0_M01_rendimiento_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.7.0_M01_rendimiento_backend.md](./walkthroughs/M01/walkthrough_v3.7.0_M01_rendimiento_backend.md)
 
 ---
 
-## [v2.9.0] - 2026-09-09
+## [v3.6.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Séptima entrega del módulo M01: gestión de variantes (HU-CAT-03) y de presentaciones como entidad propia. La variante es el SKU vendible con precio y existencia referencial; su forma depende de la clase del producto (entonable→base, colores_fijos→color, sin_color→ninguno). Con esto queda operativo el `publicar` real de HU-CAT-02 (ya validaba variante activa). La actualización de precio/color en la ficha pública (RF-CAT-03-07) es de frontend.
 - **Hitos Clave:** BD v3.2: nueva tabla **`presentacion`** (nombre + volumen numérico, RF-CAT-03-05) y `variante` enriquecida (`+id_presentacion` obligatoria, `+id_base`, `+existencia_referencial` con CHECK ≥ 0, `+codigo_proveedor` único, y unicidad de forma `UNIQUE NULLS NOT DISTINCT (id_producto, id_base, id_color, id_presentacion)`). Endpoints `POST/GET/PATCH /api/catalogo/variantes` (+`/desactivar`, `/reactivar`), `GET /api/catalogo/productos/:idProducto/variantes`, y `POST/GET/PATCH /api/catalogo/presentaciones` (+estado). Reglas: forma por clase (RF-CAT-03-02); sin variantes idénticas (RF-CAT-03-03); base/color deben ser de la marca del producto y estar activos; existencia no negativa (RF-CAT-03-04); código de proveedor único (RF-CAT-03-06); sin borrado físico, solo desactivación (RF-CAT-03-01); reactivación condicionada a dependencias activas (RF-CAT-09-04/05).
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 86/86 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed en `pintuclic-db`): estructura de `variante` v3.2 (`uq_variante_forma NULLS NOT DISTINCT`, `uq_variante_codigo_proveedor`, CHECKs de precio/existencia, FKs a base/color/presentación), tabla `presentacion` y datos semilla verificados; 41 tablas.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.9.0_M01_variantes_backend.md](./walkthroughs/M01/walkthrough_v2.9.0_M01_variantes_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.6.0_M01_variantes_backend.md](./walkthroughs/M01/walkthrough_v3.6.0_M01_variantes_backend.md)
 
 ---
 
-## [v2.8.0] - 2026-09-09
+## [v3.5.0] - 2026-09-09
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Sexta entrega del módulo M01: gestión de productos (HU-CAT-02), con la información común independiente de las variantes, clase de color, catálogo administrable de tipos de resina y relación N:M con subcategorías. La publicación (RF-CAT-02-05) se implementa de forma parcial (valida ≥1 variante activa; la exigencia de imagen queda diferida a HU-CAT-07). Variantes en sí (HU-CAT-03) quedan fuera de esta entrega.
 - **Hitos Clave:** BD v3.1: nuevo `enum_clase_color` (`entonable | colores_fijos | sin_color`), nuevas tablas **`tipo_resina`** (catálogo administrable, RF-CAT-02-04) y **`producto_subcategoria`** (N:M, RF-CAT-02-02), y `producto` enriquecido (`id_marca` obligatoria, `id_linea`/`id_tipo_resina` opcionales, `clase_color`, `descripcion`, `estado`, `publicado`). Endpoints `POST/GET/PATCH /api/catalogo/productos` (+`/publicar`, `/despublicar`, `/desactivar`, `/reactivar`) con búsqueda `?q=&marca=`, y `POST/GET/PATCH /api/catalogo/tipos-resina` (+estado). Reglas: marca obligatoria y existente; ≥1 subcategoría; una pintura (clase ≠ `sin_color`) exige línea + resina y la línea debe ser de la marca del producto; la clase no puede cambiarse si el producto ya tiene variantes (RF-CAT-02-03, verificado contra `variante`).
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 72/72 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed en `pintuclic-db`): estructura de `producto` v3.1, `tipo_resina` y `producto_subcategoria`, FKs y datos semilla verificados; 40 tablas.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.8.0_M01_productos_backend.md](./walkthroughs/M01/walkthrough_v2.8.0_M01_productos_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.5.0_M01_productos_backend.md](./walkthroughs/M01/walkthrough_v3.5.0_M01_productos_backend.md)
 
 ---
 
-## [v2.7.0] - 2026-09-08
+## [v3.4.0] - 2026-09-08
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Quinta entrega del módulo M01: gestión administrativa de colores (HU-CAT-05), cada color asociado a la marca que efectivamente lo ofrece y con su valor cromático CIELAB obligatorio. **Alcance aprobado por el PO: sin familias cromáticas** (RF-CAT-05-03 diferido). El uso del color en carta/variantes (RF-CAT-05-04/05/06) y la asociación color↔base (RF-CAT-12-04, flujo 3 de CAT-12) quedan diferidos por depender de HU-CAT-02/03 y de la decisión de negocio RF-CAT-12-12.
 - **Hitos Clave:** Tabla `color` enriquecida (BD v3.0): ahora `id_marca` (FK marca, obligatoria), `codigo` (opcional), `cie_l/cie_a/cie_b` (CIELAB obligatorio con CHECK de rango), `estado`, y unicidad `UNIQUE(id_marca, nombre)` en lugar de nombre global. La muestra visual se **deriva del CIELAB** (`muestra_hex` sRGB) sin requerir imagen (RF-CAT-05-02). Endpoints `POST/GET/PATCH /api/catalogo/colores` (+`/desactivar`, `/reactivar`) y `GET /api/catalogo/marcas/:idMarca/colores?q=` (búsqueda por nombre/código, RF-CAT-05-01/CA-CAT-05-05). Se extendió la cascada de HU-CAT-04: desactivar una marca ahora desactiva también sus colores (RF-CAT-04-03).
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 57/57 pruebas superadas. ✅ Validado contra PostgreSQL real (reset de esquema + seed aplicados en el contenedor `pintuclic-db`): estructura de `color` v3.0, unicidad `UNIQUE(id_marca, nombre)` y CHECKs de rango CIELAB verificados, FKs de `tonos`/`variante`→`color` intactas, 38 tablas.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.7.0_M01_colores_backend.md](./walkthroughs/M01/walkthrough_v2.7.0_M01_colores_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.4.0_M01_colores_backend.md](./walkthroughs/M01/walkthrough_v3.4.0_M01_colores_backend.md)
 
 ---
 
-## [v2.6.0] - 2026-09-08
+## [v3.3.0] - 2026-09-08
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Cuarta entrega del módulo M01: registro de bases (HU-CAT-12), la entidad sobre la que se preparan los colores de un producto entonable. Solo cubre el flujo 1 del diagrama oficial (registrar/editar/consultar/desactivar bases); los otros 3 flujos (asignar bases a un producto, asociar colores a bases, retirar colores al desactivar una base) quedan documentados como pendientes por depender de HU-CAT-02/HU-CAT-05, que aún no existen.
 - **Hitos Clave:** Nueva tabla `base` (marca + nombre/código, sin tipo de resina — excluido a petición explícita del Product Owner). Endpoints `POST/GET/PATCH /api/catalogo/bases` (+`/desactivar`, `/reactivar`) y `GET /api/catalogo/marcas/:idMarca/bases`. Se corrigió además un hueco real encontrado en la cascada de HU-CAT-04: `MarcasService.desactivar` no tocaba bases (bases no existía cuando se implementó); ahora la desactivación de una marca cascada correctamente a líneas **y** bases.
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 43/43 pruebas superadas. Probado end-to-end contra PostgreSQL real (crear, duplicado, cascada de desactivación de marca verificada en `base`, reactivar).
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.6.0_M01_bases_backend.md](./walkthroughs/M01/walkthrough_v2.6.0_M01_bases_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.3.0_M01_bases_backend.md](./walkthroughs/M01/walkthrough_v3.3.0_M01_bases_backend.md)
 
 ---
 
-## [v2.5.0] - 2026-09-08
+## [v3.2.0] - 2026-09-08
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Tercera entrega del módulo M01: gestión administrativa de marcas (HU-CAT-04), con logotipo almacenado en base de datos y desactivación en cascada hacia líneas.
 - **Hitos Clave:** `marca` gana `logotipo` (BYTEA) y `logotipo_mime_type`, ambos obligatorios. Endpoints `POST/GET/PATCH /api/catalogo/marcas` (+`/desactivar`, `/reactivar`) y `GET /api/catalogo/marcas/:id/logotipo` (imagen cruda, fuera del listado JSON). El logotipo viaja como data URL base64 (sin dependencias nuevas de subida de archivos), formato jpeg/png/webp y máximo 5MB (supuesto aprobado por el Product Owner mientras no exista el "Anexo B de la Tanda 2" referenciado en la especificación).
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 35/35 pruebas superadas. Probado end-to-end contra PostgreSQL real (crear, duplicado, logotipo servido aparte, cascada de desactivación verificada en `linea`, reactivar).
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.5.0_M01_marcas_backend.md](./walkthroughs/M01/walkthrough_v2.5.0_M01_marcas_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.2.0_M01_marcas_backend.md](./walkthroughs/M01/walkthrough_v3.2.0_M01_marcas_backend.md)
 
 ---
 
-## [v2.4.0] - 2026-09-08
+## [v3.1.0] - 2026-09-08
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Segunda entrega del módulo M01: gestión administrativa de líneas comerciales (HU-CAT-11), asociadas a una marca.
 - **Hitos Clave:** Nueva tabla `marca` (mínima: nombre, estado) y endpoints `POST/GET/PATCH /api/catalogo/lineas` y `/api/catalogo/marcas/:idMarca/lineas`, protegidos por el permiso «Gestión del catálogo». `linea` ahora referencia `marca` (`id_marca`); `id_sub_subcategoria` se volvió opcional (columna remanente, no se usa en esta HU).
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 27/27 pruebas superadas.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.4.0_M01_lineas_comerciales_backend.md](./walkthroughs/M01/walkthrough_v2.4.0_M01_lineas_comerciales_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.1.0_M01_lineas_comerciales_backend.md](./walkthroughs/M01/walkthrough_v3.1.0_M01_lineas_comerciales_backend.md)
 
 ---
 
-## [v2.3.0] - 2026-09-08
+## [v3.0.0] - 2026-09-08
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Primera entrega del módulo M01: gestión administrativa de categorías y subcategorías (HU-CAT-01), con baja lógica en cascada y advertencia previa de productos afectados.
 - **Hitos Clave:** Nuevo módulo `backend/src/modules/m01-catalogo/` con endpoints `POST/GET/PATCH /api/catalogo/categorias` y `/api/catalogo/subcategorias`, protegidos por el permiso «Gestión del catálogo» (M17). Se agregaron las columnas `estado` y `orden` a `categoria` y `subcategorias` (BD v2.5), requisito bloqueante detectado y aprobado por el Product Owner antes de codificar (RF-CAT-01-04, CA-CAT-01-04).
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m01.test.ts`: 17/17 pruebas superadas.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v2.3.0_M01_categorias_subcategorias_backend.md](./walkthroughs/M01/walkthrough_v2.3.0_M01_categorias_subcategorias_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md](./walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md)
 
 ---
 
