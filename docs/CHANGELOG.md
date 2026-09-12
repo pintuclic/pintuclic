@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.27.0] - 2026-09-11
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** feat(M01): integrar soporte para `id_categoria_complementaria` y `patrocinado` en la creación de productos (HU-CAT-08).
+- **Hitos Clave:** Se agregó al `CrearProductoDto` y a la lógica `crear` en el `ProductosService`.
+- **Estado de Calidad:** Validado.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.27.0_M01_productos_complementarios_creacion_backend.md](./walkthroughs/M01/walkthrough_v3.27.0_M01_productos_complementarios_creacion_backend.md)
+
+---
+
 ## [v3.26.0] - 2026-09-11
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** feat(M01): responsive adaptado del dashboard de catalogo para telefono y tablet.

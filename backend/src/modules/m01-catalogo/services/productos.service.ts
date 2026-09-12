@@ -47,6 +47,13 @@ export class ProductosService {
     await this.validarSubcategorias(dto.id_subcategorias);
     await this.validarLineaYResina(dto.clase_color, dto.id_marca, dto.id_linea ?? null, dto.id_tipo_resina ?? null);
 
+    if (dto.id_categoria_complementaria !== undefined && dto.id_categoria_complementaria !== null) {
+      const categoria = await this.categoriasRepo.obtenerPorId(dto.id_categoria_complementaria);
+      if (!categoria) {
+        throw new AppError('La categoría complementaria indicada no existe', 404, 'CATEGORIA_NO_ENCONTRADA');
+      }
+    }
+
     const creado = await this.repo.crear(
       {
         id_marca: dto.id_marca,
@@ -55,6 +62,8 @@ export class ProductosService {
         nombre: dto.nombre,
         descripcion: dto.descripcion ?? null,
         clase_color: dto.clase_color,
+        id_categoria_complementaria: dto.id_categoria_complementaria ?? null,
+        patrocinado: dto.patrocinado ?? false,
       },
       dto.id_subcategorias
     );

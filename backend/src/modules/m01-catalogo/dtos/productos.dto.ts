@@ -32,6 +32,8 @@ export const CrearProductoDto = z.object({
   id_linea: idPositivo.optional(),
   id_tipo_resina: idPositivo.optional(),
   descripcion: descripcionSchema.optional(),
+  id_categoria_complementaria: idPositivo.nullable().optional(),
+  patrocinado: z.boolean().optional(),
 });
 export type CrearProductoDto = z.infer<typeof CrearProductoDto>;
 
