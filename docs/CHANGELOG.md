@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.32.0] - 2026-09-12
+### Integración: Core Frontend + M01 Catálogo
+- **Alcance:** Integración de `feature/core-frontend-layouts` en la rama de vistas públicas, incorporando layouts, componentes UI base, tipos globales y agregador único de rutas.
+- **Compatibilidad:** Se conservaron las rutas públicas y administrativas de M01; `/admin` redirige al dashboard de catálogo mientras se incorporan los demás módulos.
+- **Correcciones de Integración:** Se eliminó estado sin uso en `LayoutHome` y se sustituyeron colores hexadecimales inline por tokens oficiales.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite y ESLint sin errores ni advertencias.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.32.0_M01_integracion_core_frontend.md](./walkthroughs/M01/walkthrough_v3.32.0_M01_integracion_core_frontend.md)
+
+---
+
 ## [v3.31.0] - 2026-09-12
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** Calculadora pública de pintura integrada en Home, catálogo y ficha de producto para HU-CAT-06.
