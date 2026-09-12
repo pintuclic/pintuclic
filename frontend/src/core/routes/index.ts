@@ -11,14 +11,7 @@ import { dashboardCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboa
  * ==============================================================================
  */
 export const routes: RouteRecordRaw[] = [
-  {
-    path: '/',
-    name: 'Inicio',
-    component: () => import('@/modules/m02-productos/views/VistaInicio.vue'),
-  },
-
-  // M01 · Panel de catálogo (dashboard, productos, variantes, categorías,
-  // marcas, colores, búsquedas sin resultado).
+  // M01 · Storefront público y panel de catálogo.
   ...dashboardCatalogoRoutes,
 
   // Cualquier otra ruta vuelve al inicio.

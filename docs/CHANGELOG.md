@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.28.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Primera entrega del storefront público de HU-CAT-06: Home responsive conectado a categorías y productos públicos, con buscador y menú de categorías sin autenticación.
+- **Hitos Clave:** Nueva ruta pública `/`, carga paginada bajo demanda, ficha mínima de destacados para precio e imagen, estados de carga/error y modal de categorías conforme a las maquetas compartidas.
+- **Estado de Calidad:** ✅ `npm run build` y `npm run lint` sin errores; verificación visual del Home y del modal en navegador local. Integración con datos reales pendiente de disponer del backend en ejecución.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.28.0_M01_home_storefront_frontend.md](./walkthroughs/M01/walkthrough_v3.28.0_M01_home_storefront_frontend.md)
+
+---
+
 ## [v3.27.0] - 2026-09-11
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** feat(M01): integrar soporte para `id_categoria_complementaria` y `patrocinado` en la creación de productos (HU-CAT-08).

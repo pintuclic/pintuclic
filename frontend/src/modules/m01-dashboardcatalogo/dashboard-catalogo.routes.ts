@@ -15,6 +15,15 @@ import type { RouteRecordRaw } from 'vue-router';
  */
 export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
   {
+    path: '/',
+    name: 'InicioTiendaPublica',
+    component: () => import('./views/VistaInicioPublica.vue'),
+    meta: {
+      requiereAuth: false,
+      titulo: 'Pintu Clic · Todo para tu proyecto',
+    },
+  },
+  {
     path: '/admin/catalogo',
     name: 'AdminDashboardCatalogo',
     component: () => import('./views/VistaDashboardCatalogo.vue'),
