@@ -34,7 +34,7 @@
       <!-- Botón de Registro con Google (HU-CUE-02) -->
       <div class="mb-5">
         <div ref="googleBtnRef" class="w-full flex justify-center min-h-[44px]"></div>
-        <Boton v-show="!googleBotonMontado" variant="google" size="full" :disabled="cargando" @click="registrarConGoogle">
+        <Button v-show="!googleBotonMontado" variant="google" size="full" :disabled="cargando" @click="registrarConGoogle">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -42,7 +42,7 @@
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
           Registrarse con Google
-        </Boton>
+        </Button>
       </div>
 
       <div class="relative my-5">
@@ -55,11 +55,11 @@
       </div>
 
       <form @submit="onSubmit" class="flex flex-col gap-4">
-        <Entrada name="nombre" label="Nombre completo" placeholder="Ej. Juan Pérez" />
-        <Entrada name="correo" label="Correo electrónico" type="email" placeholder="correo@ejemplo.com" :icon="MailIcon" />
-        <Entrada name="telefono" label="Teléfono (WhatsApp)" placeholder="300 000 0000" :icon="PhoneIcon" />
+        <Input name="nombre" label="Nombre completo" placeholder="Ej. Juan Pérez" />
+        <Input name="correo" label="Correo electrónico" type="email" placeholder="correo@ejemplo.com" :icon="MailIcon" />
+        <Input name="telefono" label="Teléfono (WhatsApp)" placeholder="300 000 0000" :icon="PhoneIcon" />
         <div class="flex flex-col gap-1">
-          <Entrada name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
+          <Input name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
           <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
         </div>
 
@@ -75,21 +75,21 @@
           {{ errorMensaje }}
         </div>
 
-        <Boton type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
+        <Button type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
           {{ cargando ? 'Cargando...' : 'Continuar' }}
-        </Boton>
+        </Button>
       </form>
     </div>
 
     <!-- Formulario Empresa -->
     <form v-else @submit="onSubmit" class="flex flex-col gap-4">
-      <Entrada name="nombre_empresa" label="Nombre Empresa" placeholder="Ej. Pinturas S.A.S" />
-      <Entrada name="nombre_representante" label="Nombre del representante legal" placeholder="Ej. María Gómez" />
-      <Entrada name="correo_empresarial" label="Correo corporativo" type="email" placeholder="contacto@empresa.com" :icon="MailIcon" />
-      <Entrada name="telefono" label="Teléfono (WhatsApp)" placeholder="300 000 0000" :icon="PhoneIcon" />
-      <Entrada name="nit" label="NIT" placeholder="900.000.000-1" />
+      <Input name="nombre_empresa" label="Nombre Empresa" placeholder="Ej. Pinturas S.A.S" />
+      <Input name="nombre_representante" label="Nombre del representante legal" placeholder="Ej. María Gómez" />
+      <Input name="correo_empresarial" label="Correo corporativo" type="email" placeholder="contacto@empresa.com" :icon="MailIcon" />
+      <Input name="telefono" label="Teléfono (WhatsApp)" placeholder="300 000 0000" :icon="PhoneIcon" />
+      <Input name="nit" label="NIT" placeholder="900.000.000-1" />
       <div class="flex flex-col gap-1">
-        <Entrada name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
+        <Input name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
         <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
       </div>
 
@@ -105,9 +105,9 @@
         {{ errorMensaje }}
       </div>
 
-      <Boton type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
+      <Button type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
         {{ cargando ? 'Cargando...' : 'Continuar' }}
-      </Boton>
+      </Button>
     </form>
 
     <div class="mt-6 text-center text-sm">
@@ -142,12 +142,12 @@
     </div>
 
     <div class="flex flex-col gap-3 mt-2">
-      <Boton variant="primary" size="full" :disabled="cargando" @click="confirmarVinculacion">
+      <Button variant="primary" size="full" :disabled="cargando" @click="confirmarVinculacion">
         {{ cargando ? 'Vinculando...' : 'Sí, vincular y continuar' }}
-      </Boton>
-      <Boton variant="outline" size="full" :disabled="cargando" @click="cancelarVinculacion">
+      </Button>
+      <Button variant="outline" size="full" :disabled="cargando" @click="cancelarVinculacion">
         Cancelar
-      </Boton>
+      </Button>
     </div>
   </div>
 
@@ -189,9 +189,9 @@
         {{ errorPasswordLocal || errorMensaje }}
       </div>
 
-      <Boton type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
+      <Button type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
         {{ cargando ? 'Guardando...' : 'Completar registro' }}
-      </Boton>
+      </Button>
     </form>
   </div>
 </template>
@@ -203,8 +203,8 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { Mail as MailIcon, Lock as LockIcon, Phone as PhoneIcon, ShieldCheck } from 'lucide-vue-next';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
-import Entrada from '@/core/components/Entrada.vue';
-import Boton from '@/core/components/Boton.vue';
+import Input from '@/core/components/Input.vue';
+import Button from '@/core/components/Button.vue';
 import type {
   TipoCuentaRegistro,
   RegistroNaturalPayload,

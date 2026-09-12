@@ -12,8 +12,8 @@
  *
  * Responsabilidad única: identidad de marca dentro del contenido del modal.
  * No sabe nada del formulario, el paso o el flujo que lo contiene, ni del
- * cierre del modal (eso ya lo resuelve ModalBase con su botón "X" propio).
- * Por eso vive junto a ModalBase, Boton y Entrada en core/components — es
+ * cierre del modal (eso ya lo resuelve Modal con su botón "X" propio).
+ * Por eso vive junto a Modal, Button e Input en core/components — es
  * design system base, no algo específico de autenticación: cualquier modal
  * del sitio (no solo los de m04-cuentas) lo puede usar tal cual.
  */

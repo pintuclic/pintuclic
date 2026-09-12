@@ -16,9 +16,9 @@
       Hemos recibido tu solicitud de cuenta empresarial. <strong>Un administrador revisará tus datos</strong> y te notificaremos cuando esté activa.
     </p>
 
-    <Boton variant="primary" size="full" @click="$emit('finalizar')">
+    <Button variant="primary" size="full" @click="$emit('finalizar')">
       ¡Entendido, ir a inicio!
-    </Boton>
+    </Button>
   </div>
 </template>
 
@@ -26,7 +26,7 @@
 import { Check as CheckIcon } from 'lucide-vue-next';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
-import Boton from '@/core/components/Boton.vue';
+import Button from '@/core/components/Button.vue';
 import type { TipoCuentaRegistro } from '../interfaces/registro.interface';
 
 defineProps<{

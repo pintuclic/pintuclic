@@ -1,5 +1,5 @@
 <template>
-  <ModalBase :modelValue="modelValue" @update:modelValue="$emit('update:modelValue', $event)" maxWidth="lg" accent>
+  <Modal :modelValue="modelValue" @update:modelValue="$emit('update:modelValue', $event)" maxWidth="lg" accent>
     <PasoDatos
       v-if="paso === 1"
       @ir-a-login="$emit('irALogin')"
@@ -17,12 +17,12 @@
       :tipo-cuenta="tipoCuenta"
       @finalizar="onFinalizar"
     />
-  </ModalBase>
+  </Modal>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import ModalBase from '@/core/components/ModalBase.vue';
+import Modal from '@/core/components/Modal.vue';
 import PasoDatos from './PasoDatos.vue';
 import PasoVerificacion from './PasoVerificacion.vue';
 import PasoListo from './PasoListo.vue';
