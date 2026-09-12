@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.33.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Vista pública `/paleta-colores` de HU-CAT-06, construida a partir de los colores y productos publicados por la API de catálogo.
+- **Experiencia:** Hero, búsqueda por nombre, selector visual, combinador inspiracional, productos recomendados, complementarios, beneficios y navegación integrada con el storefront.
+- **Integridad de datos:** No se inventaron códigos, muestras HEX ni familias cromáticas. Los filtros por familia quedan visibles pero deshabilitados hasta que el backend exponga la clasificación pública y la compatibilidad color–base.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint y verificación visual en navegador local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.33.0_M01_paleta_colores_publica_frontend.md](./walkthroughs/M01/walkthrough_v3.33.0_M01_paleta_colores_publica_frontend.md)
+
+---
+
 ## [v3.32.0] - 2026-09-12
 ### Integración: Core Frontend + M01 Catálogo
 - **Alcance:** Integración de `feature/core-frontend-layouts` en la rama de vistas públicas, incorporando layouts, componentes UI base, tipos globales y agregador único de rutas.

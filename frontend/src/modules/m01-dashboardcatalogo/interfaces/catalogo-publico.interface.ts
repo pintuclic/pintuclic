@@ -65,3 +65,10 @@ export interface FichaProductoPublico {
 export interface ProductoDestacadoPublico extends ProductoPublicoResumen {
   readonly detalle: FichaProductoPublico | null;
 }
+
+/** Color deducido exclusivamente de variantes activas expuestas por la API pública. */
+export interface ColorPaletaPublica {
+  readonly id_color: number;
+  readonly nombre: string;
+  readonly productos: readonly ProductoDestacadoPublico[];
+}

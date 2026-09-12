@@ -28,7 +28,7 @@
           <router-link to="/catalogo" class="py-5 hover:text-action" active-class="border-b-2 border-action text-action">Productos</router-link>
           <router-link to="/catalogo" class="rounded-full bg-highlight px-2.5 py-1 font-bold text-corporate">OFERTAS</router-link>
           <a href="#servicios" class="py-5 hover:text-action">Servicios</a>
-          <a href="#categorias" class="py-5 hover:text-action">Paleta de Color</a>
+          <router-link to="/paleta-colores" class="py-5 hover:text-action" active-class="border-b-2 border-action text-action">Paleta de Color</router-link>
           <a href="#contacto" class="py-5 hover:text-action">Sobre Nosotros</a>
         </nav>
 

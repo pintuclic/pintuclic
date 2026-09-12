@@ -43,6 +43,15 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/paleta-colores',
+    name: 'PaletaColoresPublica',
+    component: () => import('./views/VistaPaletaColoresPublica.vue'),
+    meta: {
+      requiereAuth: false,
+      titulo: 'Paleta de colores · Pintu Clic',
+    },
+  },
+  {
     path: '/admin/catalogo',
     name: 'AdminDashboardCatalogo',
     component: () => import('./views/VistaDashboardCatalogo.vue'),
