@@ -148,11 +148,23 @@ ON CONFLICT (id_tipo_resina) DO NOTHING;
 
 -- 3.7 Producto (HU-CAT-02): marca obligatoria, clase de color, y línea/resina en pinturas
 -- rendimiento en m2 por galón (HU-CAT-10) solo aplica a pinturas
-INSERT INTO producto (id_producto, id_marca, id_linea, id_tipo_resina, nombre, clase_color, rendimiento_min, rendimiento_max, id_categoria_complementaria, patrocinado) VALUES
-    (1, 1, 1, 1,    'Viniltex Máxima Protección Antibacterial', 'colores_fijos', 40.00, 45.00, 2,    false),
-    (2, 1, 1, NULL, 'Kit Renovación Hogar Premium',             'sin_color',     NULL,  NULL,  NULL, false),
-    (3, 2, 2, 2,    'Esmalte Anticorrosivo Secado Rápido',      'colores_fijos', 15.00, 20.00, NULL, true)
+INSERT INTO producto (id_producto, id_marca, id_linea, id_tipo_resina, nombre, descripcion, clase_color, estado, publicado, rendimiento_min, rendimiento_max, id_categoria_complementaria, patrocinado) VALUES
+    (1, 1, 1, 1,    'Viniltex Máxima Protección Antibacterial', 'Pintura interior y exterior de alta lavabilidad con acabado mate.', 'colores_fijos', 'activo', true, 40.00, 45.00, 2,    false),
+    (2, 1, 1, NULL, 'Kit Renovación Hogar Premium',             'Kit práctico para renovar espacios interiores con acabado uniforme.', 'sin_color',     'activo', true, NULL,  NULL,  NULL, false),
+    (3, 2, 2, 2,    'Esmalte Anticorrosivo Secado Rápido',      'Esmalte de alta resistencia para proteger superficies metálicas.', 'colores_fijos', 'activo', true, 15.00, 20.00, NULL, true)
 ON CONFLICT (id_producto) DO NOTHING;
+
+-- Habilita los registros históricos del seed para el storefront público.
+-- UPDATE es idempotente y permite actualizar bases creadas con versiones previas.
+UPDATE producto
+SET descripcion = CASE id_producto
+        WHEN 1 THEN 'Pintura interior y exterior de alta lavabilidad con acabado mate.'
+        WHEN 2 THEN 'Kit práctico para renovar espacios interiores con acabado uniforme.'
+        WHEN 3 THEN 'Esmalte de alta resistencia para proteger superficies metálicas.'
+    END,
+    estado = 'activo',
+    publicado = true
+WHERE id_producto IN (1, 2, 3);
 
 -- 3.7b Producto ↔ Subcategoría (RF-CAT-02-02: al menos una subcategoría)
 INSERT INTO producto_subcategoria (id_producto, id_subcategoria) VALUES
@@ -185,7 +197,8 @@ ON CONFLICT (id_presentacion) DO NOTHING;
 INSERT INTO variante (id_variante, id_producto, id_presentacion, id_color, precio_vigente, existencia_referencial, estado) VALUES
     (1, 1, 1, 1, 85900.00,  50, 'activo'),
     (2, 1, 1, 2, 95900.00,  30, 'activo'),
-    (3, 3, 1, 3, 115000.00, 20, 'activo')
+    (3, 3, 1, 3, 115000.00, 20, 'activo'),
+    (4, 2, 3, NULL, 129900.00, 12, 'activo')
 ON CONFLICT (id_variante) DO NOTHING;
 
 -- 3.11 Características Técnicas

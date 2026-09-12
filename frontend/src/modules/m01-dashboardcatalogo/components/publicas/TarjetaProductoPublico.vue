@@ -52,16 +52,17 @@
 import { computed, ref } from 'vue';
 import { PackageOpen, ShoppingCart } from 'lucide-vue-next';
 import type { ProductoDestacadoPublico } from '../../interfaces/catalogo-publico.interface';
+import { obtenerImagenPublicaRespaldo } from '../../assets/imagenes-catalogo';
 
 const props = defineProps<{ producto: ProductoDestacadoPublico; destacado?: boolean }>();
 const emit = defineEmits<{ ver: [idProducto: number]; agregar: [idProducto: number] }>();
 const imagenConError = ref(false);
 
 const imagenVisible = computed(() => {
-  if (imagenConError.value) return null;
   const imagenes = props.producto.detalle?.imagenes ?? [];
   const principal = imagenes.find((imagen) => imagen.es_principal) ?? imagenes[0];
-  return principal?.contenido_url ?? null;
+  if (principal?.contenido_url && !imagenConError.value) return principal.contenido_url;
+  return obtenerImagenPublicaRespaldo(props.producto.id_producto);
 });
 
 const precioMinimo = computed(() => {

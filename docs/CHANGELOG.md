@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.29.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Vista de catálogo público de HU-CAT-06 con búsqueda, filtro por subcategoría, paginación y navegación hacia la ficha de producto.
+- **Datos:** El seed oficial habilita tres productos activos y publicados con descripción, precio y variante verificable para el storefront.
+- **Estado de Calidad:** Catálogo conectado exclusivamente a los endpoints públicos de M01, sin mocks de producto en Vue.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.29.0_M01_catalogo_publico_frontend.md](./walkthroughs/M01/walkthrough_v3.29.0_M01_catalogo_publico_frontend.md)
+
+---
+
 ## [v3.28.0] - 2026-09-12
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** Primera entrega del storefront público de HU-CAT-06: Home responsive conectado a categorías y productos públicos, con buscador y menú de categorías sin autenticación.

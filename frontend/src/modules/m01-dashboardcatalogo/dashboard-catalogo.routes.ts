@@ -24,6 +24,15 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/catalogo',
+    name: 'CatalogoPublico',
+    component: () => import('./views/VistaCatalogoPublico.vue'),
+    meta: {
+      requiereAuth: false,
+      titulo: 'Catálogo público · Pintu Clic',
+    },
+  },
+  {
     path: '/admin/catalogo',
     name: 'AdminDashboardCatalogo',
     component: () => import('./views/VistaDashboardCatalogo.vue'),

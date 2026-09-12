@@ -164,9 +164,9 @@
       <section id="productos" class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div class="mb-5 flex items-center justify-between">
           <h2 class="text-xl font-bold text-neutral-black">Productos destacados</h2>
-          <button type="button" class="text-sm font-semibold text-conversion-hover hover:text-conversion" @click="informarPendiente('La vista completa del catálogo será la siguiente pantalla de HU-CAT-06.')">
+          <router-link to="/catalogo" class="text-sm font-semibold text-conversion-hover hover:text-conversion">
             Ver todos <ChevronRight :size="15" class="inline" />
-          </button>
+          </router-link>
         </div>
 
         <div v-if="cargando" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5" aria-live="polite">
@@ -273,6 +273,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import {
   BadgeCheck,
   Calculator,
@@ -306,6 +307,7 @@ import { useInicioPublico } from '../composables/useInicioPublico';
 const menuCategoriasAbierto = ref(false);
 const terminoBusqueda = ref('');
 const mensaje = ref<string | null>(null);
+const router = useRouter();
 
 const {
   buscar,
@@ -356,8 +358,8 @@ function seleccionarSubcategoria(idSubcategoria: number): void {
   document.querySelector('#productos')?.scrollIntoView({ behavior: 'smooth' });
 }
 
-function verProducto(): void {
-  informarPendiente('La ficha pública del producto será incorporada cuando compartas su diseño.');
+function verProducto(idProducto: number): void {
+  void router.push({ name: 'DetalleProductoPublico', params: { productoId: idProducto } });
 }
 
 function agregarProducto(): void {
