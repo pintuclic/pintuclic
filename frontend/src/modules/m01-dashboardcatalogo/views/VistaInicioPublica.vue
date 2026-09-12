@@ -138,7 +138,7 @@
           <button
             type="button"
             class="inline-flex h-11 items-center justify-center gap-2 rounded-button bg-conversion px-7 text-sm font-semibold text-white transition-colors hover:bg-conversion-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion"
-            @click="informarPendiente('La calculadora de pintura se incorporará con su diseño correspondiente.')"
+            @click="calculadoraAbierta = true"
           >
             Calculadora <Calculator :size="18" />
           </button>
@@ -268,6 +268,12 @@
       @cerrar="menuCategoriasAbierto = false"
       @seleccionar="seleccionarSubcategoria"
     />
+    <CalculadoraPinturaPublica
+      :abierta="calculadoraAbierta"
+      :producto="productos[0]?.detalle"
+      @cerrar="calculadoraAbierta = false"
+      @agregar="agregarProducto"
+    />
   </div>
 </template>
 
@@ -300,11 +306,13 @@ import {
 } from 'lucide-vue-next';
 import logo from '@/assets/logo.png';
 import heroStorefront from '../assets/storefront/hero-storefront.png';
+import CalculadoraPinturaPublica from '../components/publicas/CalculadoraPinturaPublica.vue';
 import MenuCategoriasPublico from '../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../components/publicas/TarjetaProductoPublico.vue';
 import { useInicioPublico } from '../composables/useInicioPublico';
 
 const menuCategoriasAbierto = ref(false);
+const calculadoraAbierta = ref(false);
 const terminoBusqueda = ref('');
 const mensaje = ref<string | null>(null);
 const router = useRouter();

@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.31.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Calculadora pública de pintura integrada en Home, catálogo y ficha de producto para HU-CAT-06.
+- **Cálculo:** Valida superficie, dimensiones y cantidad con Zod; estima galones usando el rendimiento mínimo/máximo real del producto y dos manos de aplicación.
+- **Experiencia:** Modal responsive de tres etapas conforme a la maqueta, con resultado, producto recomendado y dependencia de carrito claramente delimitada.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.31.0_M01_calculadora_pintura_frontend.md](./walkthroughs/M01/walkthrough_v3.31.0_M01_calculadora_pintura_frontend.md)
+
+---
+
 ## [v3.30.0] - 2026-09-12
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** Ficha pública de producto de HU-CAT-06 con galería, descripción, variantes, precio, cantidad y productos complementarios.

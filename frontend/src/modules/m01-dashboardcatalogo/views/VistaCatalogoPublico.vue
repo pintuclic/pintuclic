@@ -21,7 +21,7 @@
             <input v-model="termino" type="search" maxlength="120" placeholder="Buscar productos, marcas, categorías..." class="h-11 w-full rounded-button border border-action bg-neutral-white pl-4 pr-14 text-sm outline-none focus:ring-2 focus:ring-action" />
             <button type="submit" class="absolute right-0 top-0 grid h-11 w-12 place-items-center rounded-r-button bg-action text-white hover:bg-action-hover" aria-label="Buscar"><Search :size="18" /></button>
           </label>
-          <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-button bg-conversion px-7 text-sm font-semibold text-white hover:bg-conversion-hover" @click="mostrarMensaje('La calculadora estará disponible en la siguiente entrega.')"><Calculator :size="18" /> Calculadora</button>
+          <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-button bg-conversion px-7 text-sm font-semibold text-white hover:bg-conversion-hover" @click="calculadoraAbierta = true"><Calculator :size="18" /> Calculadora</button>
           <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-button bg-action px-7 text-sm font-semibold text-white hover:bg-action-hover" @click="mostrarMensaje('La asesoría de color se incorporará posteriormente.')"><Palette :size="18" /> Asesoría de color</button>
         </form>
       </section>
@@ -74,6 +74,7 @@
 
     <PieTiendaPublica :categorias="categorias" />
     <MenuCategoriasPublico :abierto="menuCategoriasAbierto" :cargando="cargando" :categorias="categorias" @cerrar="menuCategoriasAbierto = false" @seleccionar="seleccionarDesdeMenu" />
+    <CalculadoraPinturaPublica :abierta="calculadoraAbierta" :producto="productos[0]?.detalle" @cerrar="calculadoraAbierta = false" @agregar="mostrarMensaje('Agregar al carrito requiere M07.')" />
   </div>
 </template>
 
@@ -82,6 +83,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Calculator, ChevronLeft, ChevronRight, CircleAlert, Palette, Search, SlidersHorizontal, X } from 'lucide-vue-next';
 import heroStorefront from '../assets/storefront/hero-storefront.png';
+import CalculadoraPinturaPublica from '../components/publicas/CalculadoraPinturaPublica.vue';
 import EncabezadoTiendaPublica from '../components/publicas/EncabezadoTiendaPublica.vue';
 import MenuCategoriasPublico from '../components/publicas/MenuCategoriasPublico.vue';
 import PieTiendaPublica from '../components/publicas/PieTiendaPublica.vue';
@@ -90,6 +92,7 @@ import { useCatalogoPublico } from '../composables/useCatalogoPublico';
 
 const router = useRouter();
 const menuCategoriasAbierto = ref(false);
+const calculadoraAbierta = ref(false);
 const mensaje = ref<string | null>(null);
 const { buscar, cargando, cargarInicio, categorias, error, irPagina, limpiar, pagina, productos, seleccionarSubcategoria, subcategoria, termino, total, totalPaginas } = useCatalogoPublico();
 

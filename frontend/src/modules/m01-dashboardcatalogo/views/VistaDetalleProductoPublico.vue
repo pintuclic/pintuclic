@@ -29,7 +29,7 @@
 
             <div class="mt-5"><h2 class="text-sm font-bold text-corporate">Elige un tamaño:</h2><div class="mt-2 grid grid-cols-2 gap-3"><button v-for="variante in presentaciones" :key="variante.id_presentacion" type="button" class="rounded-button border px-4 py-3 text-sm font-semibold" :class="varianteSeleccionada?.id_presentacion === variante.id_presentacion ? 'border-action bg-action text-white' : 'border-neutral-light'" @click="seleccionarPresentacion(variante.id_presentacion)">{{ variante.presentacion }}</button></div></div>
 
-            <button type="button" class="mt-5 flex w-full items-center justify-between rounded-button border border-neutral-light px-4 py-3 text-sm font-semibold text-corporate hover:bg-neutral-lightest" @click="mostrarMensaje('La calculadora se habilitará en la siguiente entrega.')"><span>Calcular cuánta pintura necesitas</span><Calculator :size="17" /></button>
+            <button type="button" class="mt-5 flex w-full items-center justify-between rounded-button border border-neutral-light px-4 py-3 text-sm font-semibold text-corporate hover:bg-neutral-lightest" @click="calculadoraAbierta = true"><span>Calcular cuánta pintura necesitas</span><Calculator :size="17" /></button>
 
             <div class="mt-5 grid grid-cols-[auto_1fr] gap-3"><div class="flex items-center rounded-button border border-neutral-light"><button type="button" class="px-3 py-3" aria-label="Reducir cantidad" @click="cantidad = Math.max(1, cantidad - 1)">−</button><span class="min-w-8 text-center text-sm">{{ cantidad }}</span><button type="button" class="px-3 py-3" aria-label="Aumentar cantidad" @click="cantidad += 1">+</button></div><button type="button" class="inline-flex items-center justify-center gap-2 rounded-button bg-conversion text-sm font-bold text-white hover:bg-conversion-hover" @click="mostrarMensaje('Agregar al carrito requiere la integración con M07.')"><ShoppingCart :size="17" /> Comprar</button></div>
             <p class="mt-5 flex items-center gap-2 text-xs font-semibold text-conversion-hover"><MapPin :size="14" /> Retiro hoy*</p>
@@ -44,6 +44,7 @@
 
     <PieTiendaPublica :categorias="categorias" />
     <MenuCategoriasPublico :abierto="menuCategoriasAbierto" :cargando="cargando" :categorias="categorias" @cerrar="menuCategoriasAbierto = false" @seleccionar="irSubcategoria" />
+    <CalculadoraPinturaPublica :abierta="calculadoraAbierta" :producto="producto" @cerrar="calculadoraAbierta = false" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" />
   </div>
 </template>
 
@@ -52,6 +53,7 @@ import { computed, ref, toRef } from 'vue';
 import { useRouter } from 'vue-router';
 import { ArrowLeft, Calculator, CircleAlert, MapPin, ShoppingCart, X } from 'lucide-vue-next';
 import { GALERIA_PRODUCTO_DEMO, obtenerImagenPublicaRespaldo } from '../assets/imagenes-catalogo';
+import CalculadoraPinturaPublica from '../components/publicas/CalculadoraPinturaPublica.vue';
 import EncabezadoTiendaPublica from '../components/publicas/EncabezadoTiendaPublica.vue';
 import MenuCategoriasPublico from '../components/publicas/MenuCategoriasPublico.vue';
 import PieTiendaPublica from '../components/publicas/PieTiendaPublica.vue';
@@ -63,6 +65,7 @@ const router = useRouter();
 const idProducto = computed(() => Number(props.productoId));
 const { cargando, categorias, complementarios, error, producto, varianteSeleccionada, varianteSeleccionadaId } = useDetalleProductoPublico(toRef(idProducto));
 const menuCategoriasAbierto = ref(false);
+const calculadoraAbierta = ref(false);
 const mensaje = ref<string | null>(null);
 const cantidad = ref(1);
 const indiceGaleria = ref(0);
