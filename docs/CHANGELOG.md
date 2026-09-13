@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.34.2] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Catálogo público alineado con la UI Spec oficial: encabezado, toolbar sticky, orden, vista grid/lista, sidebar y drawer móvil, estados y sección de complementos.
+- **Compatibilidad:** Se preservó la búsqueda y paginación en servidor; disponibilidad y orden visual operan únicamente sobre la página recibida, sin simular filtros que la API no soporta.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint y validación visual local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.2_M01_catalogo_ui_spec_frontend.md](./walkthroughs/M01/walkthrough_v3.34.2_M01_catalogo_ui_spec_frontend.md)
+
+---
+
 ## [v3.34.1] - 2026-09-12
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** Ajuste visual del Home y la tarjeta pública de producto conforme a la UI Spec oficial v1.0.

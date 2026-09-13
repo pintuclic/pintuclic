@@ -1,6 +1,6 @@
 <template>
-  <article class="flex min-w-0 flex-col rounded-card border border-neutral-light bg-neutral-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-4">
-    <div class="relative grid aspect-square place-items-center overflow-hidden rounded-card bg-neutral-lightest p-5">
+  <article class="min-w-0 rounded-card border border-neutral-light bg-neutral-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-4" :class="modo === 'lista' ? 'sm:grid sm:grid-cols-[180px_1fr] sm:gap-4' : 'flex flex-col'">
+    <div class="relative grid place-items-center overflow-hidden rounded-card bg-neutral-lightest p-5" :class="modo === 'lista' ? 'aspect-square sm:aspect-auto sm:min-h-48' : 'aspect-square'">
       <span
         v-if="tieneDescuentoVisual"
         class="absolute left-2 top-2 rounded-button bg-highlight px-2 py-1 text-[10px] font-bold text-corporate"
@@ -55,7 +55,7 @@ import { PackageOpen, ShoppingCart } from 'lucide-vue-next';
 import type { ProductoDestacadoPublico } from '../../interfaces/catalogo-publico.interface';
 import { obtenerImagenPublicaRespaldo } from '../../assets/imagenes-catalogo';
 
-const props = defineProps<{ producto: ProductoDestacadoPublico; destacado?: boolean }>();
+const props = withDefaults(defineProps<{ producto: ProductoDestacadoPublico; destacado?: boolean; modo?: 'grid' | 'lista' }>(), { modo: 'grid' });
 const emit = defineEmits<{ ver: [idProducto: number]; agregar: [idProducto: number] }>();
 const imagenConError = ref(false);
 
