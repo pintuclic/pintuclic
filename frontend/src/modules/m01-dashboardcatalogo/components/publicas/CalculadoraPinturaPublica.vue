@@ -1,10 +1,10 @@
 <template>
   <Teleport to="body">
     <div v-if="abierta" class="fixed inset-0 z-50 grid place-items-center bg-corporate/60 p-4" role="dialog" aria-modal="true" aria-labelledby="titulo-calculadora" @click.self="emit('cerrar')">
-      <section class="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-card bg-neutral-white shadow-xl">
+      <section class="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-modal bg-neutral-white shadow-2xl">
         <header class="flex items-start justify-between border-b border-neutral-light px-5 py-4">
           <div class="flex items-center gap-3"><span class="grid h-9 w-9 place-items-center rounded-button bg-subaction text-corporate"><Calculator :size="19" /></span><div><h2 id="titulo-calculadora" class="font-bold text-corporate">Calculadora de pintura</h2><p class="text-xs text-neutral-medium">Calcula la cantidad aproximada para tu proyecto.</p></div></div>
-          <button type="button" class="rounded p-1 text-neutral-medium hover:bg-neutral-lightest" aria-label="Cerrar calculadora" @click="emit('cerrar')"><X :size="19" /></button>
+          <button type="button" class="grid h-11 w-11 place-items-center rounded-button text-neutral-medium transition-colors hover:bg-neutral-lightest hover:text-corporate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" aria-label="Cerrar calculadora" @click="emit('cerrar')"><X :size="19" /></button>
         </header>
 
         <div class="grid grid-cols-3 border-b border-neutral-light text-center text-xs font-semibold">
@@ -17,14 +17,14 @@
           <div>
             <h3 class="text-sm font-bold text-neutral-black">¿Qué vas a pintar?</h3>
             <div class="mt-3 space-y-2">
-              <button v-for="opcion in superficies" :key="opcion.valor" type="button" class="flex w-full items-center gap-2 rounded-button border px-3 py-2.5 text-left text-sm" :class="superficie === opcion.valor ? 'border-action bg-subaction text-corporate' : 'border-neutral-light'" @click="seleccionarSuperficie(opcion.valor)"><component :is="opcion.icono" :size="17" />{{ opcion.etiqueta }}<Check v-if="superficie === opcion.valor" :size="15" class="ml-auto" /></button>
+              <button v-for="opcion in superficies" :key="opcion.valor" type="button" class="flex min-h-11 w-full items-center gap-2 rounded-button border px-3 text-left text-sm transition-all hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" :class="superficie === opcion.valor ? 'border-action bg-subaction text-corporate' : 'border-neutral-light bg-neutral-white hover:border-action hover:text-action'" @click="seleccionarSuperficie(opcion.valor)"><component :is="opcion.icono" :size="17" />{{ opcion.etiqueta }}<Check v-if="superficie === opcion.valor" :size="15" class="ml-auto" /></button>
             </div>
           </div>
 
           <div>
             <h3 class="text-sm font-bold text-neutral-black">Ingresa las medidas</h3>
-            <div class="mt-3 grid grid-cols-2 gap-3"><label class="text-xs font-semibold">Ancho (m)<input v-model.number="ancho" type="number" min="0.1" max="100" step="0.1" class="mt-1 h-10 w-full rounded-button border border-neutral-light px-3 outline-none focus:border-action" @focus="paso = 2" /></label><label class="text-xs font-semibold">Alto (m)<input v-model.number="alto" type="number" min="0.1" max="100" step="0.1" class="mt-1 h-10 w-full rounded-button border border-neutral-light px-3 outline-none focus:border-action" @focus="paso = 2" /></label></div>
-            <div class="mt-4"><p class="text-xs font-semibold">Cantidad de superficies iguales</p><div class="mt-2 inline-flex items-center rounded-button border border-neutral-light"><button type="button" class="px-3 py-2" @click="cantidad = Math.max(1, cantidad - 1)">−</button><span class="min-w-8 text-center text-sm">{{ cantidad }}</span><button type="button" class="px-3 py-2" @click="cantidad = Math.min(50, cantidad + 1)">+</button></div></div>
+            <div class="mt-3 grid grid-cols-2 gap-3"><label class="text-xs font-semibold">Ancho (m)<input v-model.number="ancho" type="number" min="0.1" max="100" step="0.1" class="mt-1 h-11 w-full rounded-input border border-neutral-light px-3 outline-none focus:border-action focus:ring-2 focus:ring-action" @focus="paso = 2" /></label><label class="text-xs font-semibold">Alto (m)<input v-model.number="alto" type="number" min="0.1" max="100" step="0.1" class="mt-1 h-11 w-full rounded-input border border-neutral-light px-3 outline-none focus:border-action focus:ring-2 focus:ring-action" @focus="paso = 2" /></label></div>
+            <div class="mt-4"><p class="text-xs font-semibold">Cantidad de superficies iguales</p><div class="mt-2 inline-flex min-h-11 items-center rounded-button border border-neutral-light"><button type="button" class="grid h-11 w-11 place-items-center hover:bg-neutral-lightest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" aria-label="Reducir cantidad" @click="cantidad = Math.max(1, cantidad - 1)">−</button><span class="min-w-8 text-center text-sm">{{ cantidad }}</span><button type="button" class="grid h-11 w-11 place-items-center hover:bg-neutral-lightest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" aria-label="Aumentar cantidad" @click="cantidad = Math.min(50, cantidad + 1)">+</button></div></div>
             <div class="mt-7 rounded-card bg-subaction p-4 text-center"><p class="text-xs font-semibold text-corporate">Área total a pintar</p><p class="mt-1 text-2xl font-extrabold text-action">{{ area.toFixed(1) }} m²</p></div>
           </div>
 
@@ -36,8 +36,8 @@
               <p class="mt-1 text-[11px] text-neutral-medium">Rendimiento estimado: {{ rendimiento.toFixed(1) }} m²/gal</p>
             </div>
             <div class="mt-4 text-center"><p class="text-xs text-neutral-medium">Necesitas aproximadamente</p><p class="mt-1 text-xl font-extrabold text-action">{{ galones }} {{ galones === 1 ? 'GALÓN' : 'GALONES' }}</p><p class="text-xs text-neutral-medium">para {{ manos }} manos</p></div>
-            <button type="button" class="mt-4 w-full rounded-button bg-action px-4 py-2.5 text-xs font-bold text-white hover:bg-action-hover" @click="calcular">Ver producto recomendado</button>
-            <button type="button" class="mt-2 w-full rounded-button bg-conversion px-4 py-2.5 text-xs font-bold text-white hover:bg-conversion-hover" @click="emit('agregar')">Agregar al carrito</button>
+            <button type="button" class="mt-4 min-h-11 w-full rounded-button bg-action px-4 text-xs font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-action-hover hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" @click="calcular">Ver producto recomendado</button>
+            <button type="button" class="mt-2 min-h-11 w-full rounded-button bg-conversion px-4 text-xs font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-conversion-hover hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion" @click="emit('agregar')">Agregar al carrito</button>
           </div>
         </div>
 

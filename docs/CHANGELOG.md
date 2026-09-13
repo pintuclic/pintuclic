@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.34.4] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Paleta pública, menú de categorías y calculadora alineados con la UI Spec oficial mediante radios, espaciado, jerarquía y estados interactivos consistentes.
+- **Accesibilidad:** Controles táctiles de al menos 44 px, focos visibles, etiquetas accesibles y estado deshabilitado explícito para la asesoría aún no disponible.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint y validación visual local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.4_M01_paleta_herramientas_ui_spec_frontend.md](./walkthroughs/M01/walkthrough_v3.34.4_M01_paleta_herramientas_ui_spec_frontend.md)
+
+---
+
 ## [v3.34.3] - 2026-09-12
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** Detalle público alineado con la UI Spec oficial: superficie en tarjeta, ambiente visual, descripción colapsable, swatches, presentaciones, controles táctiles y nota de color referencial.

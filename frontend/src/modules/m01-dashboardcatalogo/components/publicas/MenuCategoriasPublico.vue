@@ -29,7 +29,7 @@
             </div>
             <button
               type="button"
-              class="rounded-button p-2 text-neutral-medium transition-colors hover:bg-neutral-lightest hover:text-corporate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+              class="grid h-11 w-11 place-items-center rounded-button text-neutral-medium transition-colors hover:bg-neutral-lightest hover:text-corporate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
               aria-label="Cerrar categorías"
               @click="emit('cerrar')"
             >
@@ -59,7 +59,7 @@
                   >
                     <button
                       type="button"
-                      class="group flex w-full items-center justify-between rounded-button px-1 py-1 text-left text-sm text-neutral-medium transition-colors hover:text-action focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+                      class="group flex min-h-11 w-full items-center justify-between rounded-button px-2 text-left text-sm text-neutral-medium transition-colors hover:bg-subaction hover:text-action focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
                       @click="emit('seleccionar', subcategoria.id_subcategoria)"
                     >
                       {{ subcategoria.nombre }}
@@ -86,7 +86,9 @@
               </div>
               <button
                 type="button"
-                class="rounded-button bg-action px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+                disabled
+                title="La asesoría guiada estará disponible próximamente"
+                class="min-h-11 cursor-not-allowed rounded-button bg-neutral-light px-4 text-sm font-medium text-neutral-medium shadow-none"
               >
                 Encontrar pintura ideal
               </button>
