@@ -11,9 +11,15 @@
     "lint:fix": "eslint src --fix"
   },
   "dependencies": {
+    "@vee-validate/zod": "^4.15.1",
     "axios": "^1.19.0",
+    "lucide-vue-next": "^1.0.0",
+    "pinia": "^4.0.3",
+    "vee-validate": "^4.15.1",
     "vue": "^3.5.41",
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4",
+    "vue3-google-login": "^2.1.4",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

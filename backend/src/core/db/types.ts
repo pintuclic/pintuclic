@@ -1,24 +1,53 @@
 import { Generated, ColumnType, Selectable, Insertable, Updateable } from 'kysely';
 
 // ==============================================================================
-// TIPOS ENUMERADOS (ENUMs) DE POSTGRESQL (schema_pintuclic.sql)
+// TIPOS ENUMERADOS (ENUMs) DE POSTGRESQL (schema_pintuclic.sql - v2.1)
 // ==============================================================================
 
 export type EnumEstadoGeneral = 'activo' | 'inactivo';
+export type EnumClaseColor = 'entonable' | 'colores_fijos' | 'sin_color';
+
+export type EnumTipoUsuario = 'normal' | 'empresa';
 
 export type EnumEstadoUsuario = 'activo' | 'inactivo' | 'bloqueado' | 'pendiente';
 
 export type EnumEstadoProducto = 'activo' | 'inactivo' | 'agotado' | 'descontinuado';
 
-export type EnumEstadoReservacion = 'pendiente' | 'confirmada' | 'cancelada' | 'finalizada';
+export type EnumOrigenOrden = 'carrito' | 'cotizacion';
 
-export type EnumEstadoCarrito = 'activo' | 'abandonado' | 'procesado' | 'cancelado';
+export type EnumEstadoOrden = 'pendiente' | 'pagado' | 'en_preparacion' | 'enviado' | 'entregado' | 'cancelado';
 
-export type EnumEstadoPedido = 'pendiente' | 'pagado' | 'en_preparacion' | 'enviado' | 'entregado' | 'cancelado';
+export type EnumEstadoCotizacion = 'borrador' | 'enviada' | 'aprobada' | 'rechazada' | 'vencida';
 
 export type EnumEstadoPago = 'pendiente' | 'completado' | 'fallido' | 'reembolsado';
 
 export type EnumEstadoFactura = 'emitida' | 'pagada' | 'anulada';
+
+// M20 - HU-SEG-02: ciclo de vida de la sesión
+export type EnumEstadoSesion = 'activa' | 'cerrada' | 'expirada' | 'revocada';
+
+export type EnumTipoSesion = 'admin' | 'cliente';
+
+export type EnumMotivoCierreSesion =
+  | 'cierre_manual'
+  | 'inactividad'
+  | 'cambio_contrasena'
+  | 'cuenta_desactivada'
+  | 'permisos_retirados';
+
+export type EnumEstadoReservacion = 'pendiente' | 'confirmada' | 'cancelada' | 'finalizada';
+
+// M20 - HU-SEG-05: estado de solicitudes de supresión de datos personales (Habeas Data)
+export type EnumEstadoSolicitudSupresion = 'pendiente' | 'en_proceso' | 'aprobada' | 'rechazada';
+
+// M04 - HU-CUE-03 / HU-CUE-06: tipo de solicitud empresarial
+export type EnumTipoSolicitudEmpresa = 'registro' | 'ascenso_particular';
+
+// M04 - HU-CUE-03 / HU-CUE-09: estado de solicitudes corporativas y de actualización de NIT
+export type EnumEstadoSolicitudEmpresa = 'pendiente' | 'aprobada' | 'rechazada';
+
+// M04 - HU-CUE-01, HU-CUE-05, HU-CUE-06: propósito del código OTP
+export type EnumTipoCodigoOtp = 'registro' | 'recuperacion_password' | 'cambio_correo';
 
 // ==============================================================================
 // 1. MÓDULO DE DESCUENTOS, ROLES Y PERMISOS
@@ -70,12 +99,28 @@ export interface UsuarioTable {
   contrasena: string;
   id_rol: number | null;
   estado: Generated<EnumEstadoUsuario>;
+  tipo: Generated<EnumTipoUsuario>;
 }
 
 export interface UsuarioRolTable {
   id_usuario_rol: Generated<number>;
   id_usuario: number;
   id_rol: number;
+}
+
+/**
+ * Sesiones de usuario (M20 - HU-SEG-02).
+ * `id_sesion` es UUID y viaja como claim `sid` dentro del JWT.
+ */
+export interface SesionTable {
+  id_sesion: Generated<string>;
+  id_usuario: number;
+  tipo_sesion: EnumTipoSesion;
+  fecha_inicio: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_ultimo_acceso: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_expiracion: ColumnType<Date, string | Date, string | Date>;
+  estado: Generated<EnumEstadoSesion>;
+  motivo_cierre: EnumMotivoCierreSesion | null;
 }
 
 // ==============================================================================
@@ -85,12 +130,16 @@ export interface UsuarioRolTable {
 export interface CategoriaTable {
   id_categoria: Generated<number>;
   nombre: string;
+  orden: Generated<number>;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface SubcategoriasTable {
   id_subcategoria: Generated<number>;
   id_categoria: number;
   nombre: string;
+  orden: Generated<number>;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface SubSubcategoriasTable {
@@ -99,21 +148,74 @@ export interface SubSubcategoriasTable {
   nombre: string;
 }
 
+export interface MarcaTable {
+  id_marca: Generated<number>;
+  nombre: string;
+  logotipo: Buffer;
+  logotipo_mime_type: string;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
 export interface LineaTable {
   id_linea: Generated<number>;
-  id_sub_subcategoria: number;
+  id_sub_subcategoria: number | null;
+  id_marca: number;
   nombre: string;
+  gama_comercial: string | null;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
+export interface BaseTable {
+  id_base: Generated<number>;
+  id_marca: number;
+  nombre: string;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface ProductoTable {
   id_producto: Generated<number>;
-  id_linea: number;
+  id_marca: number;
+  id_linea: number | null;
+  id_tipo_resina: number | null;
   nombre: string;
+  descripcion: string | null;
+  clase_color: EnumClaseColor;
+  estado: Generated<EnumEstadoGeneral>;
+  publicado: Generated<boolean>;
+  // Rendimiento en m² por galón (HU-CAT-10). NUMERIC se devuelve como string.
+  rendimiento_min: ColumnType<string | null, number | null, number | null>;
+  rendimiento_max: ColumnType<string | null, number | null, number | null>;
+  id_categoria_complementaria: number | null;
+  patrocinado: Generated<boolean>;
+}
+
+export interface TipoResinaTable {
+  id_tipo_resina: Generated<number>;
+  nombre: string;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
+export interface ProductoSubcategoriaTable {
+  id_producto: number;
+  id_subcategoria: number;
+}
+
+export interface ProductoBaseTable {
+  id_producto: number;
+  id_base: number;
 }
 
 export interface ColorTable {
   id_color: Generated<number>;
+  id_marca: number;
   nombre: string;
+  codigo: string | null;
+  // CIELAB (RF-CAT-05-02). El driver de PostgreSQL devuelve NUMERIC como string;
+  // se admite number|string al insertar/actualizar.
+  cie_l: ColumnType<string, number | string, number | string>;
+  cie_a: ColumnType<string, number | string, number | string>;
+  cie_b: ColumnType<string, number | string, number | string>;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface TonosTable {
@@ -122,17 +224,40 @@ export interface TonosTable {
   precio: ColumnType<string, string | number, string | number>;
 }
 
+export interface PresentacionTable {
+  id_presentacion: Generated<number>;
+  nombre: string;
+  volumen: ColumnType<string, number | string, number | string>;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
 export interface VarianteTable {
   id_variante: Generated<number>;
   id_producto: number;
-  precio: ColumnType<string, string | number, string | number>;
+  id_presentacion: number;
   id_color: number | null;
+  id_base: number | null;
+  precio_vigente: ColumnType<string, string | number, string | number>;
+  existencia_referencial: Generated<number>;
+  codigo_proveedor: string | null;
+  estado: Generated<EnumEstadoProducto>;
 }
 
 export interface CaracteristicaTable {
   id_caracteristica: Generated<number>;
   id_variante: number;
   nombre: string;
+}
+
+export interface ImagenTable {
+  id_imagen: Generated<number>;
+  id_producto: number;
+  id_variante: number | null;
+  id_color: number | null;
+  datos: Buffer;
+  mime_type: string;
+  orden: Generated<number>;
+  es_principal: Generated<boolean>;
 }
 
 export interface ComboTable {
@@ -148,38 +273,60 @@ export interface VarianteComboTable {
 }
 
 // ==============================================================================
-// 4. MÓDULO DE CARRITO Y VENTAS
+// 4. MÓDULO DE CARRITO VIVO DE COMPRAS
 // ==============================================================================
 
 export interface CarritoTable {
   id_carrito: Generated<number>;
-  id_usuario: number;
-  total: ColumnType<string, string | number, string | number>;
-  estado: Generated<EnumEstadoCarrito>;
+  token_visitante: string | null;
+  id_usuario: number | null;
+  fecha_ultima_actividad: ColumnType<Date, string | Date | undefined, string | Date>;
 }
 
-export interface DetalleCarritoTable {
-  id_detalle_carrito: Generated<number>;
-  id_producto: number;
-  precio_unitario: ColumnType<string, string | number, string | number>;
+export interface LineaCarritoTable {
+  id_linea_carrito: Generated<number>;
+  id_carrito: number;
+  id_variante: number;
   cantidad: Generated<number>;
-  id_carrito: number;
 }
 
-export interface PedidoTable {
-  id_pedido: Generated<number>;
-  id_carrito: number;
+// ==============================================================================
+// 5. MÓDULO DE COTIZACIONES Y ÓRDENES (HISTÓRICO INMUTABLE)
+// ==============================================================================
+
+export interface CotizacionTable {
+  id_cotizacion: Generated<number>;
+  estado: Generated<EnumEstadoCotizacion>;
+  fecha_creacion: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+export interface OrdenTable {
+  id_orden: Generated<number>;
+  codigo_visible: string;
+  id_usuario: number;
+  origen: Generated<EnumOrigenOrden>;
+  id_cotizacion: number | null;
+  estado: Generated<EnumEstadoOrden>;
+  transaccion_pago_id: string | null;
   direccion: string;
   sub_total: ColumnType<string, string | number, string | number>;
   descuento: ColumnType<string, string | number, string | number>;
   total: ColumnType<string, string | number, string | number>;
   observaciones: string | null;
   fecha: ColumnType<Date, string | Date | undefined, string | Date>;
-  estado: Generated<EnumEstadoPedido>;
+}
+
+export interface LineaOrdenTable {
+  id_linea_orden: Generated<number>;
+  id_orden: number;
+  nombre_producto: string;
+  variante_copia: string;
+  precio_aplicado: ColumnType<string, string | number, string | number>;
+  cantidad: Generated<number>;
 }
 
 // ==============================================================================
-// 5. MÓDULO DE PAGOS Y FACTURACIÓN
+// 6. MÓDULO DE PAGOS Y FACTURACIÓN
 // ==============================================================================
 
 export interface MetodoPagoTable {
@@ -191,7 +338,7 @@ export interface MetodoPagoTable {
 
 export interface PagosTable {
   id_pago: Generated<number>;
-  id_pedido: number;
+  id_orden: number;
   id_metodo_pago: number;
   estado: Generated<EnumEstadoPago>;
   monto: ColumnType<string, string | number, string | number>;
@@ -199,13 +346,13 @@ export interface PagosTable {
 
 export interface FacturaTable {
   id_factura: Generated<number>;
-  id_pedido: number;
+  id_orden: number;
   fecha: ColumnType<Date, string | Date | undefined, string | Date>;
   estado: Generated<EnumEstadoFactura>;
 }
 
 // ==============================================================================
-// 6. MÓDULO DE SERVICIOS Y RESERVACIONES
+// 7. MÓDULO DE SERVICIOS Y RESERVACIONES
 // ==============================================================================
 
 export interface ReservacionesTable {
@@ -218,7 +365,137 @@ export interface ReservacionesTable {
 }
 
 // ==============================================================================
-// 7. INTERFAZ CENTRAL DATABASE (Única fuente de la verdad para Kysely)
+// 8. MÓDULO DE PRIVACIDAD, CONSENTIMIENTO Y HABEAS DATA (M20 - HU-SEG-05)
+// ==============================================================================
+
+export interface AvisoPrivacidadTable {
+  id_aviso_privacidad: Generated<number>;
+  version: string;
+  descripcion: string;
+  es_vigente: Generated<boolean>;
+}
+
+export interface ConsentimientoUsuarioTable {
+  id_consentimiento: Generated<number>;
+  id_usuario: number;
+  id_aviso_privacidad: number;
+  fecha: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+export interface SolicitudSupresionTable {
+  id_solicitud_supresion: Generated<number>;
+  id_usuario: number;
+  fecha_solicitud: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_resolucion: ColumnType<Date | null, string | Date | null | undefined, string | Date | null>;
+  estado: Generated<EnumEstadoSolicitudSupresion>;
+}
+
+// ==============================================================================
+// 9. MÓDULO DE CUENTAS, DIRECCIONES Y SOLICITUDES EMPRESA (M04)
+// ==============================================================================
+
+/**
+ * Libreta de direcciones guardadas por el cliente (HU-CUE-07).
+ */
+export interface DireccionClienteTable {
+  id_direccion: Generated<string>;
+  id_usuario: number;
+  direccion: string;
+  barrio: string;
+  apartamento_casa: string | null;
+  nombre_apellido: string;
+  telefono: string;
+  es_predeterminada: Generated<boolean>;
+  latitud: ColumnType<string | number | null, string | number | null | undefined, string | number | null>;
+  longitud: ColumnType<string | number | null, string | number | null | undefined, string | number | null>;
+  fecha_creacion: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_actualizacion: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+/**
+ * Solicitudes de registro y ascenso corporativo B2B sujetas a dictamen (HU-CUE-03, HU-CUE-09).
+ */
+export interface SolicitudEmpresaTable {
+  id_solicitud: Generated<string>;
+  id_usuario: number;
+  nombre_empresa: string;
+  nombre_representante: string;
+  correo_empresarial: string;
+  telefono: string;
+  nit: string;
+  tipo_solicitud: Generated<EnumTipoSolicitudEmpresa>;
+  estado: Generated<EnumEstadoSolicitudEmpresa>;
+  motivo_rechazo: string | null;
+  id_admin_revisor: number | null;
+  fecha_solicitud: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_revision: ColumnType<Date | null, string | Date | null | undefined, string | Date | null>;
+}
+
+/**
+ * Solicitudes de cambio de NIT con soporte documental (HU-CUE-09 / RF-CUE-09-07).
+ */
+export interface SolicitudActualizacionNitTable {
+  id_solicitud: Generated<string>;
+  id_usuario: number;
+  nit_anterior: string;
+  nit_nuevo: string;
+  documento_adjunto_url: string;
+  estado: Generated<EnumEstadoSolicitudEmpresa>;
+  motivo_rechazo: string | null;
+  id_admin_revisor: number | null;
+  fecha_solicitud: ColumnType<Date, string | Date | undefined, string | Date>;
+  fecha_revision: ColumnType<Date | null, string | Date | null | undefined, string | Date | null>;
+}
+
+/**
+ * Identidades federadas OAuth vinculadas a la cuenta (Google Identity - HU-CUE-02).
+ */
+export interface UsuarioIdentidadExternaTable {
+  id_identidad: Generated<number>;
+  id_usuario: number;
+  proveedor: string;
+  id_proveedor: string;
+  correo_proveedor: string | null;
+  fecha_vinculacion: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+/**
+ * Códigos de verificación OTP efímeros con expiración y reintentos (HU-CUE-01, 05, 06).
+ */
+export interface CodigoVerificacionTable {
+  id_codigo: Generated<string>;
+  correo: string;
+  codigo: string;
+  tipo: EnumTipoCodigoOtp;
+  expiracion: ColumnType<Date, string | Date, string | Date>;
+  intentos: Generated<number>;
+  max_intentos: Generated<number>;
+  datos_temporales: ColumnType<
+    Record<string, unknown> | null,
+    string | Record<string, unknown> | null | undefined,
+    string | Record<string, unknown> | null
+  >;
+  fecha_creacion: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+// ==============================================================================
+// 9B. MÓDULO DE BÚSQUEDA — ANALÍTICA (M02 - HU-BUS-06)
+// ==============================================================================
+
+/**
+ * Registro de búsquedas sin resultado (M02 - HU-BUS-06). Modelo por evento: una
+ * fila por búsqueda fallida. NO almacena identidad del usuario (M20 - HU-SEG-06 /
+ * CA-BUS-06-02). Las repeticiones y el filtro por periodo se calculan agregando
+ * por `termino` (GROUP BY) en el repositorio.
+ */
+export interface BusquedaSinResultadoTable {
+  id_busqueda: Generated<number>;
+  termino: string;
+  fecha: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+// ==============================================================================
+// 10. INTERFAZ CENTRAL DATABASE (Única fuente de la verdad para Kysely)
 // ==============================================================================
 
 export interface Database {
@@ -232,24 +509,36 @@ export interface Database {
   // Cuentas y control de acceso
   usuario: UsuarioTable;
   usuario_rol: UsuarioRolTable;
+  sesion: SesionTable;
 
   // Catálogo multinivel y variantes
   categoria: CategoriaTable;
   subcategorias: SubcategoriasTable;
   sub_subcategorias: SubSubcategoriasTable;
+  marca: MarcaTable;
   linea: LineaTable;
+  base: BaseTable;
+  tipo_resina: TipoResinaTable;
   producto: ProductoTable;
+  producto_subcategoria: ProductoSubcategoriaTable;
+  producto_base: ProductoBaseTable;
   color: ColorTable;
   tonos: TonosTable;
+  presentacion: PresentacionTable;
   variante: VarianteTable;
   caracteristica: CaracteristicaTable;
+  imagen: ImagenTable;
   combo: ComboTable;
   variante_combo: VarianteComboTable;
 
-  // Carrito y ventas
+  // Carrito vivo
   carrito: CarritoTable;
-  detalle_carrito: DetalleCarritoTable;
-  pedido: PedidoTable;
+  linea_carrito: LineaCarritoTable;
+
+  // Cotizaciones y órdenes inmutables
+  cotizacion: CotizacionTable;
+  orden: OrdenTable;
+  linea_orden: LineaOrdenTable;
 
   // Pagos y facturación
   metodo_pago: MetodoPagoTable;
@@ -258,10 +547,25 @@ export interface Database {
 
   // Servicios y reservaciones
   reservaciones: ReservacionesTable;
+
+  // Privacidad, consentimiento y habeas data (M20 - HU-SEG-05)
+  aviso_privacidad: AvisoPrivacidadTable;
+  consentimiento_usuario: ConsentimientoUsuarioTable;
+  solicitud_supresion: SolicitudSupresionTable;
+
+  // Cuentas, direcciones, identidades externas y verificación (M04)
+  direccion_cliente: DireccionClienteTable;
+  solicitud_empresa: SolicitudEmpresaTable;
+  solicitud_actualizacion_nit: SolicitudActualizacionNitTable;
+  usuario_identidad_externa: UsuarioIdentidadExternaTable;
+  codigo_verificacion: CodigoVerificacionTable;
+
+  // Analítica de búsqueda (M02 - HU-BUS-06)
+  busqueda_sin_resultado: BusquedaSinResultadoTable;
 }
 
 // ==============================================================================
-// 8. TIPOS HELPERS EXPORTADOS PARA ENTIDADES
+// 11. TIPOS HELPERS EXPORTADOS PARA ENTIDADES
 // ==============================================================================
 
 export type Descuento = Selectable<DescuentoTable>;
@@ -275,6 +579,10 @@ export type SubRolEmpresaUpdate = Updateable<SubRolEmpresaTable>;
 export type Rol = Selectable<RolTable>;
 export type NewRol = Insertable<RolTable>;
 export type RolUpdate = Updateable<RolTable>;
+
+export type Sesion = Selectable<SesionTable>;
+export type NewSesion = Insertable<SesionTable>;
+export type SesionUpdate = Updateable<SesionTable>;
 
 export type Permiso = Selectable<PermisosTable>;
 export type NewPermiso = Insertable<PermisosTable>;
@@ -304,13 +612,31 @@ export type SubSubcategoria = Selectable<SubSubcategoriasTable>;
 export type NewSubSubcategoria = Insertable<SubSubcategoriasTable>;
 export type SubSubcategoriaUpdate = Updateable<SubSubcategoriasTable>;
 
+export type Marca = Selectable<MarcaTable>;
+export type NewMarca = Insertable<MarcaTable>;
+export type MarcaUpdate = Updateable<MarcaTable>;
+
 export type Linea = Selectable<LineaTable>;
 export type NewLinea = Insertable<LineaTable>;
 export type LineaUpdate = Updateable<LineaTable>;
 
+export type Base = Selectable<BaseTable>;
+export type NewBase = Insertable<BaseTable>;
+export type BaseUpdate = Updateable<BaseTable>;
+
 export type Producto = Selectable<ProductoTable>;
 export type NewProducto = Insertable<ProductoTable>;
 export type ProductoUpdate = Updateable<ProductoTable>;
+
+export type TipoResina = Selectable<TipoResinaTable>;
+export type NewTipoResina = Insertable<TipoResinaTable>;
+export type TipoResinaUpdate = Updateable<TipoResinaTable>;
+
+export type ProductoSubcategoria = Selectable<ProductoSubcategoriaTable>;
+export type NewProductoSubcategoria = Insertable<ProductoSubcategoriaTable>;
+
+export type ProductoBase = Selectable<ProductoBaseTable>;
+export type NewProductoBase = Insertable<ProductoBaseTable>;
 
 export type Color = Selectable<ColorTable>;
 export type NewColor = Insertable<ColorTable>;
@@ -320,6 +646,10 @@ export type Tono = Selectable<TonosTable>;
 export type NewTono = Insertable<TonosTable>;
 export type TonoUpdate = Updateable<TonosTable>;
 
+export type Presentacion = Selectable<PresentacionTable>;
+export type NewPresentacion = Insertable<PresentacionTable>;
+export type PresentacionUpdate = Updateable<PresentacionTable>;
+
 export type Variante = Selectable<VarianteTable>;
 export type NewVariante = Insertable<VarianteTable>;
 export type VarianteUpdate = Updateable<VarianteTable>;
@@ -327,6 +657,10 @@ export type VarianteUpdate = Updateable<VarianteTable>;
 export type Caracteristica = Selectable<CaracteristicaTable>;
 export type NewCaracteristica = Insertable<CaracteristicaTable>;
 export type CaracteristicaUpdate = Updateable<CaracteristicaTable>;
+
+export type Imagen = Selectable<ImagenTable>;
+export type NewImagen = Insertable<ImagenTable>;
+export type ImagenUpdate = Updateable<ImagenTable>;
 
 export type Combo = Selectable<ComboTable>;
 export type NewCombo = Insertable<ComboTable>;
@@ -340,13 +674,21 @@ export type Carrito = Selectable<CarritoTable>;
 export type NewCarrito = Insertable<CarritoTable>;
 export type CarritoUpdate = Updateable<CarritoTable>;
 
-export type DetalleCarrito = Selectable<DetalleCarritoTable>;
-export type NewDetalleCarrito = Insertable<DetalleCarritoTable>;
-export type DetalleCarritoUpdate = Updateable<DetalleCarritoTable>;
+export type LineaCarrito = Selectable<LineaCarritoTable>;
+export type NewLineaCarrito = Insertable<LineaCarritoTable>;
+export type LineaCarritoUpdate = Updateable<LineaCarritoTable>;
 
-export type Pedido = Selectable<PedidoTable>;
-export type NewPedido = Insertable<PedidoTable>;
-export type PedidoUpdate = Updateable<PedidoTable>;
+export type Cotizacion = Selectable<CotizacionTable>;
+export type NewCotizacion = Insertable<CotizacionTable>;
+export type CotizacionUpdate = Updateable<CotizacionTable>;
+
+export type Orden = Selectable<OrdenTable>;
+export type NewOrden = Insertable<OrdenTable>;
+export type OrdenUpdate = Updateable<OrdenTable>;
+
+export type LineaOrden = Selectable<LineaOrdenTable>;
+export type NewLineaOrden = Insertable<LineaOrdenTable>;
+export type LineaOrdenUpdate = Updateable<LineaOrdenTable>;
 
 export type MetodoPago = Selectable<MetodoPagoTable>;
 export type NewMetodoPago = Insertable<MetodoPagoTable>;
@@ -363,3 +705,42 @@ export type FacturaUpdate = Updateable<FacturaTable>;
 export type Reservacion = Selectable<ReservacionesTable>;
 export type NewReservacion = Insertable<ReservacionesTable>;
 export type ReservacionUpdate = Updateable<ReservacionesTable>;
+
+export type AvisoPrivacidad = Selectable<AvisoPrivacidadTable>;
+export type NewAvisoPrivacidad = Insertable<AvisoPrivacidadTable>;
+export type AvisoPrivacidadUpdate = Updateable<AvisoPrivacidadTable>;
+
+export type ConsentimientoUsuario = Selectable<ConsentimientoUsuarioTable>;
+export type NewConsentimientoUsuario = Insertable<ConsentimientoUsuarioTable>;
+export type ConsentimientoUsuarioUpdate = Updateable<ConsentimientoUsuarioTable>;
+
+export type SolicitudSupresion = Selectable<SolicitudSupresionTable>;
+export type NewSolicitudSupresion = Insertable<SolicitudSupresionTable>;
+export type SolicitudSupresionUpdate = Updateable<SolicitudSupresionTable>;
+
+// M04 - Cuentas, direcciones, identidades externas y verificación
+export type DireccionCliente = Selectable<DireccionClienteTable>;
+export type NewDireccionCliente = Insertable<DireccionClienteTable>;
+export type DireccionClienteUpdate = Updateable<DireccionClienteTable>;
+
+export type SolicitudEmpresa = Selectable<SolicitudEmpresaTable>;
+export type NewSolicitudEmpresa = Insertable<SolicitudEmpresaTable>;
+export type SolicitudEmpresaUpdate = Updateable<SolicitudEmpresaTable>;
+
+export type SolicitudActualizacionNit = Selectable<SolicitudActualizacionNitTable>;
+export type NewSolicitudActualizacionNit = Insertable<SolicitudActualizacionNitTable>;
+export type SolicitudActualizacionNitUpdate = Updateable<SolicitudActualizacionNitTable>;
+
+export type UsuarioIdentidadExterna = Selectable<UsuarioIdentidadExternaTable>;
+export type NewUsuarioIdentidadExterna = Insertable<UsuarioIdentidadExternaTable>;
+export type UsuarioIdentidadExternaUpdate = Updateable<UsuarioIdentidadExternaTable>;
+
+export type CodigoVerificacion = Selectable<CodigoVerificacionTable>;
+export type NewCodigoVerificacion = Insertable<CodigoVerificacionTable>;
+export type CodigoVerificacionUpdate = Updateable<CodigoVerificacionTable>;
+
+// M02 - Analítica de búsqueda (HU-BUS-06)
+export type BusquedaSinResultado = Selectable<BusquedaSinResultadoTable>;
+export type NewBusquedaSinResultado = Insertable<BusquedaSinResultadoTable>;
+export type BusquedaSinResultadoUpdate = Updateable<BusquedaSinResultadoTable>;
+
