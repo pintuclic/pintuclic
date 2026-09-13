@@ -68,7 +68,31 @@
         <div class="flex items-center gap-6">
           
           <!-- Acciones: Mi Cuenta -->
-          <button @click="openLogin" class="flex items-center gap-2 text-neutral-dark hover:text-action transition-colors text-left cursor-pointer">
+          <div v-if="authStore.isAuthenticated" class="relative group">
+            <button class="flex items-center gap-2 text-neutral-dark hover:text-action transition-colors text-left cursor-pointer focus:outline-none">
+              <UserIcon class="w-7 h-7" />
+              <div class="hidden md:block">
+                <span class="block text-xs text-neutral-medium leading-none">Mi Cuenta</span>
+                <span class="block font-bold leading-tight">{{ authStore.user?.nombre || 'Usuario' }}</span>
+              </div>
+              <ChevronDownIcon class="w-4 h-4 ml-1 text-neutral-medium" />
+            </button>
+            
+            <!-- Dropdown Menu -->
+            <div class="absolute right-0 mt-0 w-48 bg-white rounded-lg shadow-lg border border-neutral-light overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <div class="py-1">
+                <router-link to="/perfil" class="block px-4 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest hover:text-action transition-colors">
+                  Mi Perfil
+                </router-link>
+                <div class="border-t border-neutral-lightest"></div>
+                <button @click="handleLogout" class="w-full text-left block px-4 py-2 text-sm text-[#E63946] hover:bg-neutral-lightest transition-colors font-medium">
+                  Cerrar sesión
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <button v-else @click="openLogin" class="flex items-center gap-2 text-neutral-dark hover:text-action transition-colors text-left cursor-pointer focus:outline-none">
             <UserIcon class="w-7 h-7" />
             <div class="hidden md:block">
               <span class="block text-xs text-neutral-medium leading-none">Mi Cuenta</span>
@@ -104,11 +128,7 @@
     </main>
 
     <!-- Footer base -->
-    <footer class="bg-corporate text-white py-12 mt-12">
-      <div class="max-w-[1280px] mx-auto px-4 md:px-8 text-center text-sm opacity-80">
-        &copy; 2026 PintuClic. Todos los derechos reservados.
-      </div>
-    </footer>
+    <FooterPrincipal />
 
     <!-- Modales Globales de la Tienda (Login/Registro M04) -->
     <ModalLogin 
@@ -139,10 +159,13 @@ import {
   ShoppingCart as ShoppingCartIcon
 } from 'lucide-vue-next';
 
+import FooterPrincipal from '@/core/components/FooterPrincipal.vue';
 import ModalLogin from '@/modules/m04-cuentas/components/ModalLogin.vue';
 import RegistroWizard from '@/modules/m04-cuentas/components/RegistroWizard.vue';
 import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
+import { watchEffect } from 'vue';
 
 // Estado global local del layout para modales
 const showLogin = ref(false);
@@ -150,6 +173,17 @@ const showWizard = ref(false);
 const showMobileMenu = ref(false);
 
 const router = useRouter();
+const authStore = useAuthStore();
+
+// Bloquear acceso a la vista pública para administradores
+watchEffect(() => {
+  if (authStore.isAuthenticated) {
+    const rol = authStore.user?.rol_nombre?.toLowerCase() || authStore.user?.tipo?.toLowerCase();
+    if (rol === 'administrador' || rol === 'empleado' || rol === 'admin') {
+      router.push('/admin');
+    }
+  }
+});
 
 const closeAllModals = () => {
   showLogin.value = false;
@@ -169,8 +203,15 @@ const openRegister = () => {
 const handleLoginSuccess = () => {
   console.log('Login exitoso en layout global');
   closeAllModals();
-  // Redirigir al panel de administración tras iniciar sesión
-  router.push('/admin');
+  const rol = authStore.user?.rol_nombre?.toLowerCase() || authStore.user?.tipo?.toLowerCase();
+  if (rol === 'administrador' || rol === 'empleado' || rol === 'admin') {
+    router.push('/admin');
+  }
+};
+
+const handleLogout = () => {
+  authStore.logout();
+  router.push('/');
 };
 
 const handleWizardSuccess = (tipoCuenta: TipoCuentaRegistro) => {
