@@ -114,7 +114,7 @@
               <DropletIcon class="w-4 h-4 shrink-0" />
               Colores
             </router-link>
-            <router-link to="/admin/catalogo/busquedas" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/catalogo/busquedas-sin-resultado" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <SearchIcon class="w-4 h-4 shrink-0" />
               Búsquedas
             </router-link>

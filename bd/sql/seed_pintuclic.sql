@@ -54,7 +54,9 @@ INSERT INTO permisos (id_permiso, nombre, descripcion, estado) VALUES
     (16, 'seguridad.gestionar_permisos',   'Asignar y revocar permisos individuales a empleados', 'activo'),
     (17, 'seguridad.gestionar_privacidad', 'Gestionar solicitudes de supresión y habeas data',  'activo'),
     (18, 'configuracion.ver',              'Consultar parámetros operativos del sistema',       'activo'),
-    (19, 'configuracion.editar',           'Actualizar parámetros y reglas del sistema',        'activo')
+    (19, 'configuracion.editar',           'Actualizar parámetros y reglas del sistema',        'activo'),
+    -- Analítica de Búsqueda (M02 HU-BUS-06)
+    (20, 'estadisticas.consultar',         'Consultar estadísticas de búsqueda sin resultado',  'activo')
 ON CONFLICT (id_permiso) DO NOTHING;
 
 -- 1.5 Asignación de Permisos a Roles
@@ -62,7 +64,7 @@ INSERT INTO asignacion_permiso (id_rol, id_permiso) VALUES
     (1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
     (1, 6), (1, 7), (1, 8), (1, 9), (1, 10),
     (1, 11), (1, 12), (1, 13), (1, 14), (1, 15),
-    (1, 16), (1, 17), (1, 18), (1, 19),
+    (1, 16), (1, 17), (1, 18), (1, 19), (1, 20),
     (3, 4), (3, 10)
 ON CONFLICT (id_rol, id_permiso) DO NOTHING;
 
@@ -99,7 +101,7 @@ INSERT INTO sesion (id_sesion, id_usuario, tipo_sesion, fecha_inicio, fecha_ulti
 ON CONFLICT (id_sesion) DO NOTHING;
 
 -- ==============================================================================
--- 3. MÓDULO DE CATÁLOGO, VARIANTES Y COMBOS (11 Tablas)
+-- 3. MÓDULO DE CATÁLOGO, VARIANTES Y COMBOS (13 Tablas)
 -- ==============================================================================
 
 -- 3.1 Categoría
@@ -120,40 +122,73 @@ INSERT INTO sub_subcategorias (id_sub_subcategoria, id_subcategoria, nombre) VAL
     (2, 2, 'Bases Sintéticas')
 ON CONFLICT (id_sub_subcategoria) DO NOTHING;
 
--- 3.4 Línea
-INSERT INTO linea (id_linea, id_sub_subcategoria, nombre) VALUES
-    (1, 1, 'Viniltex Avanzado'),
-    (2, 2, 'Pintulux Anticorrosivo')
+-- 3.4 Marca (HU-CAT-04 / prerrequisito de HU-CAT-11)
+INSERT INTO marca (id_marca, nombre, logotipo, logotipo_mime_type) VALUES
+    (1, 'Pintuco', decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'), 'image/png'),
+    (2, 'Interpinturas', decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'), 'image/png')
+ON CONFLICT (id_marca) DO NOTHING;
+
+-- 3.5 Línea
+INSERT INTO linea (id_linea, id_sub_subcategoria, id_marca, nombre) VALUES
+    (1, 1, 1, 'Viniltex Avanzado'),
+    (2, 2, 2, 'Pintulux Anticorrosivo')
 ON CONFLICT (id_linea) DO NOTHING;
 
--- 3.5 Producto
-INSERT INTO producto (id_producto, id_linea, nombre) VALUES
-    (1, 1, 'Viniltex Máxima Protección Antibacterial'),
-    (2, 1, 'Kit Renovación Hogar Premium'),
-    (3, 2, 'Esmalte Anticorrosivo Secado Rápido')
+-- 3.6 Base
+INSERT INTO base (id_base, id_marca, nombre) VALUES
+    (1, 1, 'Base A'),
+    (2, 1, 'Base B')
+ON CONFLICT (id_base) DO NOTHING;
+
+-- 3.6b Tipo de resina (catálogo administrable - RF-CAT-02-04)
+INSERT INTO tipo_resina (id_tipo_resina, nombre) VALUES
+    (1, 'Base Agua'),
+    (2, 'Base Aceite')
+ON CONFLICT (id_tipo_resina) DO NOTHING;
+
+-- 3.7 Producto (HU-CAT-02): marca obligatoria, clase de color, y línea/resina en pinturas
+-- rendimiento en m2 por galón (HU-CAT-10) solo aplica a pinturas
+INSERT INTO producto (id_producto, id_marca, id_linea, id_tipo_resina, nombre, clase_color, rendimiento_min, rendimiento_max, id_categoria_complementaria, patrocinado) VALUES
+    (1, 1, 1, 1,    'Viniltex Máxima Protección Antibacterial', 'colores_fijos', 40.00, 45.00, 2,    false),
+    (2, 1, 1, NULL, 'Kit Renovación Hogar Premium',             'sin_color',     NULL,  NULL,  NULL, false),
+    (3, 2, 2, 2,    'Esmalte Anticorrosivo Secado Rápido',      'colores_fijos', 15.00, 20.00, NULL, true)
 ON CONFLICT (id_producto) DO NOTHING;
 
--- 3.6 Colores Maestros
-INSERT INTO color (id_color, nombre) VALUES
-    (1, 'Blanco Puro'),
-    (2, 'Azul Océano'),
-    (3, 'Gris Titanio')
+-- 3.7b Producto ↔ Subcategoría (RF-CAT-02-02: al menos una subcategoría)
+INSERT INTO producto_subcategoria (id_producto, id_subcategoria) VALUES
+    (1, 1),
+    (2, 1),
+    (3, 2)
+ON CONFLICT (id_producto, id_subcategoria) DO NOTHING;
+
+-- 3.8 Colores por marca (HU-CAT-05): nombre + código opcional + valor CIELAB obligatorio
+INSERT INTO color (id_color, id_marca, nombre, codigo, cie_l, cie_a, cie_b) VALUES
+    (1, 1, 'Blanco Puro',  'PIN-BLA-01', 96.000,  0.000,   0.500),
+    (2, 1, 'Azul Océano',  'PIN-AZU-07', 45.000, -5.000, -35.000),
+    (3, 2, 'Gris Titanio', NULL,         60.000,  0.000,   0.000)
 ON CONFLICT (id_color) DO NOTHING;
 
--- 3.7 Tonos Derivados con recargo de precio
+-- 3.9 Tonos Derivados con recargo de precio
 INSERT INTO tonos (id_tono, id_color, precio) VALUES
     (1, 2, 15000.00),
     (2, 3, 12000.00)
 ON CONFLICT (id_tono) DO NOTHING;
 
--- 3.8 Variantes Vendibles (SKU)
-INSERT INTO variante (id_variante, id_producto, precio_vigente, estado, id_color) VALUES
-    (1, 1, 85900.00,  'activo', 1),
-    (2, 1, 95900.00,  'activo', 2),
-    (3, 3, 115000.00, 'activo', 3)
+-- 3.9b Presentaciones (HU-CAT-03, RF-CAT-03-05): entidad propia con volumen numérico
+INSERT INTO presentacion (id_presentacion, nombre, volumen) VALUES
+    (1, 'Galón',           3.785),
+    (2, 'Cuarto de Galón', 0.946),
+    (3, 'Litro',           1.000)
+ON CONFLICT (id_presentacion) DO NOTHING;
+
+-- 3.10 Variantes Vendibles (SKU) — producto + presentación (+ color si es de colores fijos)
+INSERT INTO variante (id_variante, id_producto, id_presentacion, id_color, precio_vigente, existencia_referencial, estado) VALUES
+    (1, 1, 1, 1, 85900.00,  50, 'activo'),
+    (2, 1, 1, 2, 95900.00,  30, 'activo'),
+    (3, 3, 1, 3, 115000.00, 20, 'activo')
 ON CONFLICT (id_variante) DO NOTHING;
 
--- 3.9 Características Técnicas
+-- 3.11 Características Técnicas
 INSERT INTO caracteristica (id_caracteristica, id_variante, nombre) VALUES
     (1, 1, 'Rendimiento: 40-45 m2 por galón a dos manos'),
     (2, 1, 'Acabado: Mate de alta lavabilidad sin olor'),
@@ -161,12 +196,12 @@ INSERT INTO caracteristica (id_caracteristica, id_variante, nombre) VALUES
     (4, 3, 'Protección catódica contra óxido para metales')
 ON CONFLICT (id_caracteristica) DO NOTHING;
 
--- 3.10 Combo Cabecera
+-- 3.12 Combo Cabecera
 INSERT INTO combo (id_combo, id_producto) VALUES
     (1, 2)
 ON CONFLICT (id_combo) DO NOTHING;
 
--- 3.11 Detalle de Variantes en Combo
+-- 3.13 Detalle de Variantes en Combo
 INSERT INTO variante_combo (id_variante_combo, id_variante, id_combo, cantidad) VALUES
     (1, 1, 1, 2),
     (2, 2, 1, 1)
@@ -315,10 +350,14 @@ SELECT setval('usuario_rol_id_usuario_rol_seq',                  COALESCE((SELEC
 SELECT setval('categoria_id_categoria_seq',                      COALESCE((SELECT MAX(id_categoria) FROM categoria), 1));
 SELECT setval('subcategorias_id_subcategoria_seq',              COALESCE((SELECT MAX(id_subcategoria) FROM subcategorias), 1));
 SELECT setval('sub_subcategorias_id_sub_subcategoria_seq',       COALESCE((SELECT MAX(id_sub_subcategoria) FROM sub_subcategorias), 1));
+SELECT setval('marca_id_marca_seq',                              COALESCE((SELECT MAX(id_marca) FROM marca), 1));
 SELECT setval('linea_id_linea_seq',                              COALESCE((SELECT MAX(id_linea) FROM linea), 1));
+SELECT setval('base_id_base_seq',                                COALESCE((SELECT MAX(id_base) FROM base), 1));
 SELECT setval('producto_id_producto_seq',                        COALESCE((SELECT MAX(id_producto) FROM producto), 1));
+SELECT setval('tipo_resina_id_tipo_resina_seq',                  COALESCE((SELECT MAX(id_tipo_resina) FROM tipo_resina), 1));
 SELECT setval('color_id_color_seq',                              COALESCE((SELECT MAX(id_color) FROM color), 1));
 SELECT setval('tonos_id_tono_seq',                               COALESCE((SELECT MAX(id_tono) FROM tonos), 1));
+SELECT setval('presentacion_id_presentacion_seq',                COALESCE((SELECT MAX(id_presentacion) FROM presentacion), 1));
 SELECT setval('variante_id_variante_seq',                        COALESCE((SELECT MAX(id_variante) FROM variante), 1));
 SELECT setval('caracteristica_id_caracteristica_seq',            COALESCE((SELECT MAX(id_caracteristica) FROM caracteristica), 1));
 SELECT setval('combo_id_combo_seq',                              COALESCE((SELECT MAX(id_combo) FROM combo), 1));
