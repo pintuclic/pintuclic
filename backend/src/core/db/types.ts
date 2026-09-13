@@ -5,6 +5,7 @@ import { Generated, ColumnType, Selectable, Insertable, Updateable } from 'kysel
 // ==============================================================================
 
 export type EnumEstadoGeneral = 'activo' | 'inactivo';
+export type EnumClaseColor = 'entonable' | 'colores_fijos' | 'sin_color';
 
 export type EnumTipoUsuario = 'normal' | 'empresa';
 
@@ -129,12 +130,16 @@ export interface SesionTable {
 export interface CategoriaTable {
   id_categoria: Generated<number>;
   nombre: string;
+  orden: Generated<number>;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface SubcategoriasTable {
   id_subcategoria: Generated<number>;
   id_categoria: number;
   nombre: string;
+  orden: Generated<number>;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface SubSubcategoriasTable {
@@ -143,21 +148,74 @@ export interface SubSubcategoriasTable {
   nombre: string;
 }
 
+export interface MarcaTable {
+  id_marca: Generated<number>;
+  nombre: string;
+  logotipo: Buffer;
+  logotipo_mime_type: string;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
 export interface LineaTable {
   id_linea: Generated<number>;
-  id_sub_subcategoria: number;
+  id_sub_subcategoria: number | null;
+  id_marca: number;
   nombre: string;
+  gama_comercial: string | null;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
+export interface BaseTable {
+  id_base: Generated<number>;
+  id_marca: number;
+  nombre: string;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface ProductoTable {
   id_producto: Generated<number>;
-  id_linea: number;
+  id_marca: number;
+  id_linea: number | null;
+  id_tipo_resina: number | null;
   nombre: string;
+  descripcion: string | null;
+  clase_color: EnumClaseColor;
+  estado: Generated<EnumEstadoGeneral>;
+  publicado: Generated<boolean>;
+  // Rendimiento en m² por galón (HU-CAT-10). NUMERIC se devuelve como string.
+  rendimiento_min: ColumnType<string | null, number | null, number | null>;
+  rendimiento_max: ColumnType<string | null, number | null, number | null>;
+  id_categoria_complementaria: number | null;
+  patrocinado: Generated<boolean>;
+}
+
+export interface TipoResinaTable {
+  id_tipo_resina: Generated<number>;
+  nombre: string;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
+export interface ProductoSubcategoriaTable {
+  id_producto: number;
+  id_subcategoria: number;
+}
+
+export interface ProductoBaseTable {
+  id_producto: number;
+  id_base: number;
 }
 
 export interface ColorTable {
   id_color: Generated<number>;
+  id_marca: number;
   nombre: string;
+  codigo: string | null;
+  // CIELAB (RF-CAT-05-02). El driver de PostgreSQL devuelve NUMERIC como string;
+  // se admite number|string al insertar/actualizar.
+  cie_l: ColumnType<string, number | string, number | string>;
+  cie_a: ColumnType<string, number | string, number | string>;
+  cie_b: ColumnType<string, number | string, number | string>;
+  estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface TonosTable {
@@ -166,18 +224,40 @@ export interface TonosTable {
   precio: ColumnType<string, string | number, string | number>;
 }
 
+export interface PresentacionTable {
+  id_presentacion: Generated<number>;
+  nombre: string;
+  volumen: ColumnType<string, number | string, number | string>;
+  estado: Generated<EnumEstadoGeneral>;
+}
+
 export interface VarianteTable {
   id_variante: Generated<number>;
   id_producto: number;
-  precio_vigente: ColumnType<string, string | number, string | number>;
-  estado: Generated<EnumEstadoProducto>;
+  id_presentacion: number;
   id_color: number | null;
+  id_base: number | null;
+  precio_vigente: ColumnType<string, string | number, string | number>;
+  existencia_referencial: Generated<number>;
+  codigo_proveedor: string | null;
+  estado: Generated<EnumEstadoProducto>;
 }
 
 export interface CaracteristicaTable {
   id_caracteristica: Generated<number>;
   id_variante: number;
   nombre: string;
+}
+
+export interface ImagenTable {
+  id_imagen: Generated<number>;
+  id_producto: number;
+  id_variante: number | null;
+  id_color: number | null;
+  datos: Buffer;
+  mime_type: string;
+  orden: Generated<number>;
+  es_principal: Generated<boolean>;
 }
 
 export interface ComboTable {
@@ -399,6 +479,22 @@ export interface CodigoVerificacionTable {
 }
 
 // ==============================================================================
+// 9B. MÓDULO DE BÚSQUEDA — ANALÍTICA (M02 - HU-BUS-06)
+// ==============================================================================
+
+/**
+ * Registro de búsquedas sin resultado (M02 - HU-BUS-06). Modelo por evento: una
+ * fila por búsqueda fallida. NO almacena identidad del usuario (M20 - HU-SEG-06 /
+ * CA-BUS-06-02). Las repeticiones y el filtro por periodo se calculan agregando
+ * por `termino` (GROUP BY) en el repositorio.
+ */
+export interface BusquedaSinResultadoTable {
+  id_busqueda: Generated<number>;
+  termino: string;
+  fecha: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+// ==============================================================================
 // 10. INTERFAZ CENTRAL DATABASE (Única fuente de la verdad para Kysely)
 // ==============================================================================
 
@@ -419,12 +515,19 @@ export interface Database {
   categoria: CategoriaTable;
   subcategorias: SubcategoriasTable;
   sub_subcategorias: SubSubcategoriasTable;
+  marca: MarcaTable;
   linea: LineaTable;
+  base: BaseTable;
+  tipo_resina: TipoResinaTable;
   producto: ProductoTable;
+  producto_subcategoria: ProductoSubcategoriaTable;
+  producto_base: ProductoBaseTable;
   color: ColorTable;
   tonos: TonosTable;
+  presentacion: PresentacionTable;
   variante: VarianteTable;
   caracteristica: CaracteristicaTable;
+  imagen: ImagenTable;
   combo: ComboTable;
   variante_combo: VarianteComboTable;
 
@@ -456,6 +559,9 @@ export interface Database {
   solicitud_actualizacion_nit: SolicitudActualizacionNitTable;
   usuario_identidad_externa: UsuarioIdentidadExternaTable;
   codigo_verificacion: CodigoVerificacionTable;
+
+  // Analítica de búsqueda (M02 - HU-BUS-06)
+  busqueda_sin_resultado: BusquedaSinResultadoTable;
 }
 
 // ==============================================================================
@@ -506,13 +612,31 @@ export type SubSubcategoria = Selectable<SubSubcategoriasTable>;
 export type NewSubSubcategoria = Insertable<SubSubcategoriasTable>;
 export type SubSubcategoriaUpdate = Updateable<SubSubcategoriasTable>;
 
+export type Marca = Selectable<MarcaTable>;
+export type NewMarca = Insertable<MarcaTable>;
+export type MarcaUpdate = Updateable<MarcaTable>;
+
 export type Linea = Selectable<LineaTable>;
 export type NewLinea = Insertable<LineaTable>;
 export type LineaUpdate = Updateable<LineaTable>;
 
+export type Base = Selectable<BaseTable>;
+export type NewBase = Insertable<BaseTable>;
+export type BaseUpdate = Updateable<BaseTable>;
+
 export type Producto = Selectable<ProductoTable>;
 export type NewProducto = Insertable<ProductoTable>;
 export type ProductoUpdate = Updateable<ProductoTable>;
+
+export type TipoResina = Selectable<TipoResinaTable>;
+export type NewTipoResina = Insertable<TipoResinaTable>;
+export type TipoResinaUpdate = Updateable<TipoResinaTable>;
+
+export type ProductoSubcategoria = Selectable<ProductoSubcategoriaTable>;
+export type NewProductoSubcategoria = Insertable<ProductoSubcategoriaTable>;
+
+export type ProductoBase = Selectable<ProductoBaseTable>;
+export type NewProductoBase = Insertable<ProductoBaseTable>;
 
 export type Color = Selectable<ColorTable>;
 export type NewColor = Insertable<ColorTable>;
@@ -522,6 +646,10 @@ export type Tono = Selectable<TonosTable>;
 export type NewTono = Insertable<TonosTable>;
 export type TonoUpdate = Updateable<TonosTable>;
 
+export type Presentacion = Selectable<PresentacionTable>;
+export type NewPresentacion = Insertable<PresentacionTable>;
+export type PresentacionUpdate = Updateable<PresentacionTable>;
+
 export type Variante = Selectable<VarianteTable>;
 export type NewVariante = Insertable<VarianteTable>;
 export type VarianteUpdate = Updateable<VarianteTable>;
@@ -529,6 +657,10 @@ export type VarianteUpdate = Updateable<VarianteTable>;
 export type Caracteristica = Selectable<CaracteristicaTable>;
 export type NewCaracteristica = Insertable<CaracteristicaTable>;
 export type CaracteristicaUpdate = Updateable<CaracteristicaTable>;
+
+export type Imagen = Selectable<ImagenTable>;
+export type NewImagen = Insertable<ImagenTable>;
+export type ImagenUpdate = Updateable<ImagenTable>;
 
 export type Combo = Selectable<ComboTable>;
 export type NewCombo = Insertable<ComboTable>;
@@ -606,4 +738,9 @@ export type UsuarioIdentidadExternaUpdate = Updateable<UsuarioIdentidadExternaTa
 export type CodigoVerificacion = Selectable<CodigoVerificacionTable>;
 export type NewCodigoVerificacion = Insertable<CodigoVerificacionTable>;
 export type CodigoVerificacionUpdate = Updateable<CodigoVerificacionTable>;
+
+// M02 - Analítica de búsqueda (HU-BUS-06)
+export type BusquedaSinResultado = Selectable<BusquedaSinResultadoTable>;
+export type NewBusquedaSinResultado = Insertable<BusquedaSinResultadoTable>;
+export type BusquedaSinResultadoUpdate = Updateable<BusquedaSinResultadoTable>;
 
