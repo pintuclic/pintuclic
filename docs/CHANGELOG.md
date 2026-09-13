@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.34.5] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Paleta pública ajustada a la referencia visual aprobada, con ancho de contenido uniforme, hero compacto, filtros simplificados y composición de dos columnas.
+- **Abanico:** Nuevo componente interactivo con láminas superpuestas, apertura lateral desde un pivote único, marca frontal y selección accesible de colores publicados.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint y validación visual e interactiva local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.5_M01_paleta_abanico_referencia_frontend.md](./walkthroughs/M01/walkthrough_v3.34.5_M01_paleta_abanico_referencia_frontend.md)
+
+---
+
 ## [v3.34.4] - 2026-09-12
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** Paleta pública, menú de categorías y calculadora alineados con la UI Spec oficial mediante radios, espaciado, jerarquía y estados interactivos consistentes.
