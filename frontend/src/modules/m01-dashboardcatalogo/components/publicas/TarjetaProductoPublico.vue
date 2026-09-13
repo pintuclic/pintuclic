@@ -1,5 +1,5 @@
 <template>
-  <article class="flex min-w-0 flex-col rounded-card border border-neutral-light bg-neutral-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+  <article class="flex min-w-0 flex-col rounded-card border border-neutral-light bg-neutral-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-4">
     <div class="relative grid aspect-square place-items-center overflow-hidden rounded-card bg-neutral-lightest p-5">
       <span
         v-if="tieneDescuentoVisual"
@@ -19,25 +19,26 @@
     </div>
 
     <div class="flex flex-1 flex-col pt-3">
-      <h3 class="line-clamp-2 text-sm font-bold text-neutral-black">{{ producto.nombre }}</h3>
+      <h3 class="line-clamp-2 text-sm font-semibold text-neutral-black transition-colors hover:text-action sm:text-base">{{ producto.nombre }}</h3>
+      <p class="mt-1 text-xs font-medium text-neutral-medium">Marca asociada</p>
       <p class="mt-1 line-clamp-2 min-h-10 text-xs leading-5 text-neutral-medium">
         {{ producto.detalle?.descripcion || descripcionClaseColor }}
       </p>
-      <p class="mt-2 text-base font-extrabold text-corporate">
+      <p class="mt-2 text-lg font-bold text-corporate sm:text-xl">
         {{ precioMinimo === null ? 'Consultar precio' : formatearPrecio(precioMinimo) }}
       </p>
 
       <div class="mt-3 grid grid-cols-[1fr_auto] gap-2">
         <button
           type="button"
-          class="rounded-button border border-action px-3 py-2 text-xs font-semibold text-action transition-colors hover:bg-subaction focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+          class="min-h-11 rounded-button border border-action bg-neutral-white px-3 py-2 text-xs font-medium text-action transition-all hover:-translate-y-0.5 hover:bg-action hover:text-white hover:shadow-sm active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
           @click="emit('ver', producto.id_producto)"
         >
           Ver producto
         </button>
         <button
           type="button"
-          class="grid h-9 w-9 place-items-center rounded-button bg-conversion text-white transition-all hover:bg-conversion-hover active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion"
+          class="grid h-11 w-11 place-items-center rounded-button bg-conversion text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-conversion-hover hover:shadow-md active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion"
           aria-label="Agregar producto al carrito"
           @click="emit('agregar', producto.id_producto)"
         >

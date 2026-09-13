@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.34.1] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Ajuste visual del Home y la tarjeta pública de producto conforme a la UI Spec oficial v1.0.
+- **Hitos Clave:** Jerarquía Poppins/Inter, precio destacado, grid 24/32 px, radios oficiales, áreas táctiles de 44 px y estados hover/active/focus consistentes.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite y ESLint sin errores ni advertencias.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.1_M01_home_ui_spec_frontend.md](./walkthroughs/M01/walkthrough_v3.34.1_M01_home_ui_spec_frontend.md)
+
+---
+
 ## [v3.34.0] - 2026-09-12
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** Carta de colores modal integrada en la ficha pública de producto para HU-CAT-06, con búsqueda, selección, paginación visual y conservación de la presentación compatible.

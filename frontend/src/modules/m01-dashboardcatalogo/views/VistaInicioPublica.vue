@@ -169,7 +169,7 @@
           </router-link>
         </div>
 
-        <div v-if="cargando" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5" aria-live="polite">
+        <div v-if="cargando" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5" aria-live="polite">
           <div v-for="indice in 5" :key="indice" class="h-80 animate-pulse rounded-card bg-neutral-lightest" />
         </div>
         <div v-else-if="error" class="rounded-card border border-neutral-light bg-neutral-lightest px-6 py-10 text-center">
@@ -179,7 +179,7 @@
             Reintentar
           </button>
         </div>
-        <div v-else-if="productos.length" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+        <div v-else-if="productos.length" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
           <TarjetaProductoPublico
             v-for="(producto, indice) in productos"
             :key="producto.id_producto"
@@ -201,12 +201,12 @@
             Ver categorías <ChevronRight :size="15" class="inline" />
           </button>
         </div>
-        <div v-if="categorias.length" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+        <div v-if="categorias.length" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
           <button
             v-for="(categoria, indice) in categorias.slice(0, 5)"
             :key="categoria.id_categoria"
             type="button"
-            class="group relative min-h-32 overflow-hidden rounded-card p-4 text-left text-white transition-all hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+            class="group relative min-h-32 overflow-hidden rounded-card p-4 text-left text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
             :class="claseCategoria(indice)"
             @click="seleccionarCategoria(categoria.subcategorias[0]?.id_subcategoria)"
           >
