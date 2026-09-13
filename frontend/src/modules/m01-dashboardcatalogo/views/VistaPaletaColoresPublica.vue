@@ -32,8 +32,8 @@
             </label>
           </div>
           <div class="mt-4 flex gap-8 overflow-x-auto border-b border-neutral-light text-xs font-semibold">
-            <button type="button" class="border-b-2 border-action px-1 pb-3 text-action">Todas</button>
-            <button v-for="familia in familiasPendientes" :key="familia" type="button" disabled class="cursor-not-allowed px-1 pb-3 text-neutral-dark" title="La familia cromática aún no está disponible en la API pública">{{ familia }}</button>
+            <button type="button" class="border-b-2 px-1 pb-3 transition-colors" :class="familiaSeleccionada === null ? 'border-action text-action' : 'border-transparent text-neutral-dark hover:text-action'" @click="seleccionarFamilia(null)">Todas</button>
+            <button v-for="familia in familias" :key="familia.valor" type="button" class="border-b-2 px-1 pb-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" :class="familiaSeleccionada === familia.valor ? 'border-action text-action' : 'border-transparent text-neutral-dark hover:text-action'" @click="seleccionarFamilia(familia.valor)">{{ familia.etiqueta }}</button>
           </div>
         </div>
       </section>
@@ -62,23 +62,19 @@
           </div>
 
           <div class="mt-6 flex items-center gap-4 rounded-card border border-neutral-light bg-neutral-lightest p-4">
-            <span class="h-16 w-16 shrink-0 rounded-card bg-action shadow-sm" />
-            <div><p class="text-xs text-neutral-medium">Color seleccionado</p><h3 class="text-lg font-bold text-corporate">{{ colorSeleccionado?.nombre ?? 'Sin color disponible' }}</h3><p class="text-xs text-neutral-medium">Código y muestra exacta pendientes de la API pública</p></div>
+            <span class="h-16 w-16 shrink-0 rounded-card bg-action shadow-sm" :style="{ backgroundColor: colorSeleccionado?.muestra_hex ?? undefined }" />
+            <div><p class="text-xs text-neutral-medium">Color seleccionado</p><h3 class="text-lg font-bold text-corporate">{{ colorSeleccionado?.nombre ?? 'Sin color disponible' }}</h3><p class="text-xs text-neutral-medium">{{ colorSeleccionado?.codigo ?? 'Sin código comercial' }}</p></div>
           </div>
 
           <div class="mt-4 grid gap-3 sm:grid-cols-2">
-            <div v-for="esquema in esquemas" :key="esquema.nombre" class="rounded-card border border-neutral-light p-4">
-              <h3 class="text-sm font-bold text-corporate">{{ esquema.nombre }}</h3>
-              <p class="mt-1 min-h-8 text-xs text-neutral-medium">{{ esquema.descripcion }}</p>
-              <div class="mt-4 flex h-7 overflow-hidden rounded-button"><span v-for="clase in esquema.clases" :key="clase" class="flex-1" :class="clase" /></div>
-            </div>
+            <TarjetaCombinacionColoresPublica v-for="esquema in esquemas" :key="esquema.nombre" :esquema="esquema" :color-seleccionado-id="colorSeleccionado?.id_color ?? null" @seleccionar="seleccionarColor" />
           </div>
         </article>
       </section>
 
       <section class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div class="mb-5 flex items-end justify-between"><div><h2 class="text-xl font-bold text-corporate">Productos recomendados</h2><p class="mt-1 text-xs text-neutral-medium">Opciones publicadas asociadas al color seleccionado.</p></div><router-link to="/catalogo" class="inline-flex min-h-11 items-center text-xs font-medium text-action hover:text-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action">Ver todos <ChevronRight :size="13" class="ml-1" /></router-link></div>
-        <div v-if="productosRecomendados.length" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5"><TarjetaProductoPublico v-for="producto in productosRecomendados" :key="producto.id_producto" :producto="producto" @ver="verProducto" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" /></div>
+        <div v-if="productosRecomendados.length" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5"><TarjetaProductoPublico v-for="producto in productosRecomendados" :key="producto.id_producto" :producto="producto" :muestra-color="colorSeleccionado?.muestra_hex ?? null" @ver="verProducto" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" /></div>
         <p v-else-if="!cargando" class="rounded-card bg-neutral-white p-8 text-center text-sm text-neutral-medium">No hay pinturas publicadas asociadas a este color.</p>
       </section>
 
@@ -111,17 +107,19 @@ import AbanicoColoresPublico from '../components/publicas/AbanicoColoresPublico.
 import MenuCategoriasPublico from '../components/publicas/MenuCategoriasPublico.vue';
 import PieTiendaPublica from '../components/publicas/PieTiendaPublica.vue';
 import TarjetaProductoPublico from '../components/publicas/TarjetaProductoPublico.vue';
+import TarjetaCombinacionColoresPublica from '../components/publicas/TarjetaCombinacionColoresPublica.vue';
 import { usePaletaColoresPublica } from '../composables/usePaletaColoresPublica';
+import { useCombinacionesPaleta } from '../composables/useCombinacionesPaleta';
 
 const router = useRouter();
 const menuCategoriasAbierto = ref(false);
 const mensaje = ref<string | null>(null);
-const familiasPendientes = ['Amarillos', 'Azules', 'Verdes', 'Rojos', 'Grises'] as const;
-const esquemas = [
-  { nombre: 'Complementario', descripcion: 'Contraste claro para destacar elementos del espacio.', clases: ['bg-action', 'bg-highlight'] },
-  { nombre: 'Análogos', descripcion: 'Combinación suave con tonos cercanos.', clases: ['bg-conversion', 'bg-action', 'bg-corporate'] },
-  { nombre: 'Triádico', descripcion: 'Tres acentos equilibrados para un ambiente dinámico.', clases: ['bg-action', 'bg-highlight', 'bg-conversion'] },
-  { nombre: 'Monocromático', descripcion: 'Variaciones de claridad dentro de una misma identidad.', clases: ['bg-corporate', 'bg-action-hover', 'bg-action', 'bg-subaction'] },
+const familias = [
+  { valor: 'amarillos', etiqueta: 'Amarillos' },
+  { valor: 'azules', etiqueta: 'Azules' },
+  { valor: 'verdes', etiqueta: 'Verdes' },
+  { valor: 'rojos', etiqueta: 'Rojos' },
+  { valor: 'grises', etiqueta: 'Grises' },
 ] as const;
 const beneficios = [
   { titulo: 'Asesoría experta', detalle: 'Te ayudamos a elegir', icono: Headphones },
@@ -130,7 +128,8 @@ const beneficios = [
   { titulo: 'Compra segura', detalle: 'Tus datos protegidos', icono: ShieldCheck },
 ] as const;
 
-const { cargarPaleta, cargando, categorias, colorSeleccionado, coloresFiltrados, error, productosComplementarios, productosRecomendados, seleccionarColor, termino } = usePaletaColoresPublica();
+const { cargarPaleta, cargando, categorias, colorSeleccionado, colores, coloresFiltrados, error, familiaSeleccionada, productosComplementarios, productosRecomendados, seleccionarColor, seleccionarFamilia, termino } = usePaletaColoresPublica();
+const { esquemas } = useCombinacionesPaleta(colores, colorSeleccionado);
 
 function mostrarMensaje(texto: string): void { mensaje.value = texto; }
 function verProducto(idProducto: number): void { void router.push({ name: 'DetalleProductoPublico', params: { productoId: idProducto } }); }

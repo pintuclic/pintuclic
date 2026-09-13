@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.34.6] - 2026-09-13
+### Módulo: M01 Catálogo de Productos (Backend + Frontend)
+- **Alcance parcial:** Avance funcional de la paleta pública de HU-CAT-06; la vista continúa en iteración visual y no se declara terminada.
+- **Hitos Clave:** La API expone código, muestra cromática y familia de cada variante; la interfaz habilita filtros, abanico móvil, combinaciones interactivas y muestras en productos recomendados.
+- **Estado de Calidad:** ✅ Backend TypeScript, ESLint y 123 pruebas M01; frontend TypeScript/Vite y ESLint sin errores ni advertencias.
+- 🔗 **Walkthrough Backend:** [walkthroughs/M01/walkthrough_v3.34.6_M01_paleta_interactiva_backend.md](./walkthroughs/M01/walkthrough_v3.34.6_M01_paleta_interactiva_backend.md)
+- 🔗 **Walkthrough Frontend:** [walkthroughs/M01/walkthrough_v3.34.6_M01_paleta_interactiva_frontend.md](./walkthroughs/M01/walkthrough_v3.34.6_M01_paleta_interactiva_frontend.md)
+
+---
+
 ## [v3.34.5] - 2026-09-12
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** Paleta pública ajustada a la referencia visual aprobada, con ancho de contenido uniforme, hero compacto, filtros simplificados y composición de dos columnas.

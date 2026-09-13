@@ -33,6 +33,9 @@ export interface VariantePublica {
   readonly volumen: number;
   readonly id_color: number | null;
   readonly color: string | null;
+  readonly codigo_color?: string | null;
+  readonly muestra_hex?: string | null;
+  readonly familia_color?: string | null;
   readonly id_base: number | null;
   readonly base: string | null;
   readonly precio_vigente: number;
@@ -70,5 +73,8 @@ export interface ProductoDestacadoPublico extends ProductoPublicoResumen {
 export interface ColorPaletaPublica {
   readonly id_color: number;
   readonly nombre: string;
+  readonly codigo: string | null;
+  readonly muestra_hex: string | null;
+  readonly familia: string | null;
   readonly productos: readonly ProductoDestacadoPublico[];
 }

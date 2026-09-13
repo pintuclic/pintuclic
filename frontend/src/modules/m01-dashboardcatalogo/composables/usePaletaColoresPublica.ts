@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { normalizarBusquedaCatalogoPublico } from '../dtos/catalogo-publico.dto';
 import type {
   CategoriaPublica,
@@ -14,12 +14,19 @@ export function usePaletaColoresPublica() {
   const categorias = ref<CategoriaPublica[]>([]);
   const productos = ref<ProductoDestacadoPublico[]>([]);
   const termino = ref('');
+  const familiaSeleccionada = ref<string | null>(null);
   const colorSeleccionadoId = ref<number | null>(null);
   const cargando = ref(true);
   const error = ref<string | null>(null);
 
   const colores = computed<ColorPaletaPublica[]>(() => {
-    const indice = new Map<number, { nombre: string; productos: ProductoDestacadoPublico[] }>();
+    const indice = new Map<number, {
+      nombre: string;
+      codigo: string | null;
+      muestra_hex: string | null;
+      familia: string | null;
+      productos: ProductoDestacadoPublico[];
+    }>();
 
     productos.value.forEach((producto) => {
       producto.detalle?.variantes.forEach((variante) => {
@@ -31,20 +38,29 @@ export function usePaletaColoresPublica() {
           }
           return;
         }
-        indice.set(variante.id_color, { nombre: variante.color, productos: [producto] });
+        indice.set(variante.id_color, {
+          nombre: variante.color,
+          codigo: variante.codigo_color ?? null,
+          muestra_hex: variante.muestra_hex ?? null,
+          familia: variante.familia_color ?? null,
+          productos: [producto],
+        });
       });
     });
 
     return [...indice.entries()]
-      .map(([id_color, valor]) => ({ id_color, nombre: valor.nombre, productos: valor.productos }))
+      .map(([id_color, valor]) => ({ id_color, ...valor }))
       .sort((primero, segundo) => primero.nombre.localeCompare(segundo.nombre, 'es'));
   });
 
   const coloresFiltrados = computed(() => {
     const { q } = normalizarBusquedaCatalogoPublico(termino.value);
     const normalizado = q.toLocaleLowerCase('es');
-    if (!normalizado) return colores.value;
-    return colores.value.filter((color) => color.nombre.toLocaleLowerCase('es').includes(normalizado));
+    return colores.value.filter((color) => {
+      if (familiaSeleccionada.value && color.familia !== familiaSeleccionada.value) return false;
+      if (!normalizado) return true;
+      return `${color.nombre} ${color.codigo ?? ''}`.toLocaleLowerCase('es').includes(normalizado);
+    });
   });
 
   const colorSeleccionado = computed(
@@ -91,6 +107,17 @@ export function usePaletaColoresPublica() {
     colorSeleccionadoId.value = idColor;
   }
 
+  function seleccionarFamilia(familia: string | null): void {
+    familiaSeleccionada.value = familia;
+    colorSeleccionadoId.value = coloresFiltrados.value[0]?.id_color ?? null;
+  }
+
+  watch(termino, () => {
+    if (!coloresFiltrados.value.some((color) => color.id_color === colorSeleccionadoId.value)) {
+      colorSeleccionadoId.value = coloresFiltrados.value[0]?.id_color ?? null;
+    }
+  });
+
   onMounted(() => { void cargarPaleta(); });
 
   return {
@@ -98,11 +125,14 @@ export function usePaletaColoresPublica() {
     cargando,
     categorias,
     colorSeleccionado,
+    colores,
     coloresFiltrados,
     error,
+    familiaSeleccionada,
     productosComplementarios,
     productosRecomendados,
     seleccionarColor,
+    seleccionarFamilia,
     termino,
   };
 }

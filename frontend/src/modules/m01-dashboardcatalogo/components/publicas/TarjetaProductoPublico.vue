@@ -16,6 +16,12 @@
         @error="imagenConError = true"
       />
       <PackageOpen v-else :size="54" class="text-neutral-light" aria-hidden="true" />
+      <span
+        v-if="muestraColor"
+        class="absolute bottom-2 right-2 h-8 w-8 rounded-full border-4 border-neutral-white shadow-md"
+        :style="{ backgroundColor: muestraColor }"
+        aria-hidden="true"
+      />
     </div>
 
     <div class="flex flex-1 flex-col pt-3">
@@ -55,7 +61,12 @@ import { PackageOpen, ShoppingCart } from 'lucide-vue-next';
 import type { ProductoDestacadoPublico } from '../../interfaces/catalogo-publico.interface';
 import { obtenerImagenPublicaRespaldo } from '../../assets/imagenes-catalogo';
 
-const props = withDefaults(defineProps<{ producto: ProductoDestacadoPublico; destacado?: boolean; modo?: 'grid' | 'lista' }>(), { modo: 'grid' });
+const props = withDefaults(defineProps<{
+  producto: ProductoDestacadoPublico;
+  destacado?: boolean;
+  modo?: 'grid' | 'lista';
+  muestraColor?: string | null;
+}>(), { modo: 'grid', muestraColor: null });
 const emit = defineEmits<{ ver: [idProducto: number]; agregar: [idProducto: number] }>();
 const imagenConError = ref(false);
 
