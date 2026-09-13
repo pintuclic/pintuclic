@@ -25,7 +25,10 @@
             <p class="mt-2 text-2xl font-extrabold text-corporate">{{ precioActual }}</p>
             <div class="mt-5 rounded-card border border-neutral-light p-4"><h2 class="text-sm font-bold text-corporate">Descripción</h2><p class="mt-2 text-sm leading-6 text-neutral-medium">{{ producto.descripcion || 'Producto de calidad para completar tu proyecto.' }}</p></div>
 
-            <div v-if="colores.length" class="mt-5"><h2 class="text-sm font-bold text-corporate">Elige un color:</h2><div class="mt-2 flex flex-wrap gap-2"><button v-for="(variante, indice) in colores" :key="variante.id_variante" type="button" class="rounded-full border px-3 py-2 text-xs font-semibold" :class="varianteSeleccionadaId === variante.id_variante ? 'border-action bg-subaction text-corporate' : 'border-neutral-light'" @click="varianteSeleccionadaId = variante.id_variante"><span class="mr-1 inline-block h-3 w-3 rounded-full align-middle" :class="claseMuestra(indice)" />{{ variante.color }}</button></div></div>
+            <div v-if="colores.length" class="mt-5">
+              <div class="flex items-center justify-between gap-3"><h2 class="text-sm font-bold text-corporate">Elige un color:</h2><button type="button" class="inline-flex items-center gap-1.5 rounded-button px-2 py-1 text-xs font-semibold text-action transition-colors hover:bg-subaction focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" @click="cartaColoresAbierta = true"><Palette :size="15" /> Ver carta de colores</button></div>
+              <div class="mt-2 flex flex-wrap gap-2"><button v-for="(variante, indice) in colores" :key="variante.id_variante" type="button" class="rounded-full border px-3 py-2 text-xs font-semibold" :class="varianteSeleccionadaId === variante.id_variante ? 'border-action bg-subaction text-corporate' : 'border-neutral-light'" @click="varianteSeleccionadaId = variante.id_variante"><span class="mr-1 inline-block h-3 w-3 rounded-full align-middle" :class="claseMuestra(indice)" />{{ variante.color }}</button></div>
+            </div>
 
             <div class="mt-5"><h2 class="text-sm font-bold text-corporate">Elige un tamaño:</h2><div class="mt-2 grid grid-cols-2 gap-3"><button v-for="variante in presentaciones" :key="variante.id_presentacion" type="button" class="rounded-button border px-4 py-3 text-sm font-semibold" :class="varianteSeleccionada?.id_presentacion === variante.id_presentacion ? 'border-action bg-action text-white' : 'border-neutral-light'" @click="seleccionarPresentacion(variante.id_presentacion)">{{ variante.presentacion }}</button></div></div>
 
@@ -45,15 +48,17 @@
     <PieTiendaPublica :categorias="categorias" />
     <MenuCategoriasPublico :abierto="menuCategoriasAbierto" :cargando="cargando" :categorias="categorias" @cerrar="menuCategoriasAbierto = false" @seleccionar="irSubcategoria" />
     <CalculadoraPinturaPublica :abierta="calculadoraAbierta" :producto="producto" @cerrar="calculadoraAbierta = false" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" />
+    <CartaColoresProductoPublica v-if="producto" :abierta="cartaColoresAbierta" :nombre-producto="producto.nombre" :variantes="producto.variantes" :variante-seleccionada-id="varianteSeleccionadaId" @cerrar="cartaColoresAbierta = false" @seleccionar="seleccionarDesdeCarta" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, toRef } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowLeft, Calculator, CircleAlert, MapPin, ShoppingCart, X } from 'lucide-vue-next';
+import { ArrowLeft, Calculator, CircleAlert, MapPin, Palette, ShoppingCart, X } from 'lucide-vue-next';
 import { GALERIA_PRODUCTO_DEMO, obtenerImagenPublicaRespaldo } from '../assets/imagenes-catalogo';
 import CalculadoraPinturaPublica from '../components/publicas/CalculadoraPinturaPublica.vue';
+import CartaColoresProductoPublica from '../components/publicas/CartaColoresProductoPublica.vue';
 import EncabezadoTiendaPublica from '../components/publicas/EncabezadoTiendaPublica.vue';
 import MenuCategoriasPublico from '../components/publicas/MenuCategoriasPublico.vue';
 import PieTiendaPublica from '../components/publicas/PieTiendaPublica.vue';
@@ -66,6 +71,7 @@ const idProducto = computed(() => Number(props.productoId));
 const { cargando, categorias, complementarios, error, producto, varianteSeleccionada, varianteSeleccionadaId } = useDetalleProductoPublico(toRef(idProducto));
 const menuCategoriasAbierto = ref(false);
 const calculadoraAbierta = ref(false);
+const cartaColoresAbierta = ref(false);
 const mensaje = ref<string | null>(null);
 const cantidad = ref(1);
 const indiceGaleria = ref(0);
@@ -92,6 +98,7 @@ function seleccionarPresentacion(idPresentacion: number): void {
   const opciones = producto.value?.variantes.filter((item) => item.id_presentacion === idPresentacion) ?? [];
   varianteSeleccionadaId.value = (opciones.find((item) => item.id_color === colorActual) ?? opciones[0])?.id_variante ?? null;
 }
+function seleccionarDesdeCarta(idVariante: number): void { varianteSeleccionadaId.value = idVariante; }
 function irProducto(id: number): void { indiceGaleria.value = 0; cantidad.value = 1; void router.push({ name: 'DetalleProductoPublico', params: { productoId: id } }); }
 function irSubcategoria(id: number): void { menuCategoriasAbierto.value = false; void router.push({ name: 'CatalogoPublico', query: { subcategoria: id } }); }
 </script>

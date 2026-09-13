@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.34.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Carta de colores modal integrada en la ficha pública de producto para HU-CAT-06, con búsqueda, selección, paginación visual y conservación de la presentación compatible.
+- **Integridad:** La interfaz utiliza únicamente variantes públicas del producto, no expone la base al cliente y diferencia claramente las muestras ilustrativas de los datos aún ausentes en la API.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint y verificación visual e interactiva en navegador local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.0_M01_carta_colores_producto_frontend.md](./walkthroughs/M01/walkthrough_v3.34.0_M01_carta_colores_producto_frontend.md)
+
+---
+
 ## [v3.33.0] - 2026-09-12
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** Vista pública `/paleta-colores` de HU-CAT-06, construida a partir de los colores y productos publicados por la API de catálogo.
