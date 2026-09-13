@@ -16,6 +16,7 @@ services:
       retries: 10
 
   backend:
+    image: pintuclic-backend:local
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -26,6 +27,8 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgres://${POSTGRES_USER:?Defina POSTGRES_USER}:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:?Defina POSTGRES_DB}
+    volumes:
+      - ./bd/sql:/bd/sql:ro,Z
     depends_on:
       db:
         condition: service_healthy
@@ -33,6 +36,7 @@ services:
       - "${BACKEND_PORT:-3000}:3000"
 
   frontend:
+    image: pintuclic-frontend:local
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -44,7 +48,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "${FRONTEND_PORT:-80}:80"
+      - "${FRONTEND_PORT:-8080}:80"
 
 volumes:
   pgdata:

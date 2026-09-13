@@ -1,15 +1,18 @@
 # ------------------------------------------------------------------------------
-# Fase 1: Build (Compilación de Vue y TypeScript a JavaScript estático con Vite)
+# Fase 1: Build (Vue y TypeScript a JavaScript estático con Vite usando pnpm)
 # ------------------------------------------------------------------------------
 FROM node:22-alpine AS build
 
 WORKDIR /app
 
+# Activar pnpm mediante corepack (sin npm y con versión fija)
+RUN corepack enable && corepack prepare pnpm@12.4.1 --activate
+
 # Copiar manifiestos de dependencias
 COPY package.json package-lock.json ./
 
-# Instalar dependencias mediante npm ci de forma determinística y rápida
-RUN npm ci
+# Convertir package-lock.json a pnpm-lock.yaml e instalar de forma determinística
+RUN pnpm import && pnpm install --frozen-lockfile
 
 # Copiar archivos del proyecto (excluyendo lo indicado en .dockerignore)
 COPY . .
@@ -21,8 +24,8 @@ ENV VITE_API_URL=$VITE_API_URL
 ARG VITE_GOOGLE_CLIENT_ID=""
 ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
-# Compilación de producción (vue-tsc y vite build) generando /app/dist
-RUN npm run build
+# Compilación de producción de Vite (genera /app/dist)
+RUN pnpm exec vite build
 
 # ------------------------------------------------------------------------------
 # Fase 2: Servidor Web Nginx de Producción
