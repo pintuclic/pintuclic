@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.34.7] - 2026-09-13
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Uniformidad estructural del storefront de HU-CAT-06 mediante un encabezado público compartido y un ancho máximo común para Home, Catálogo, Detalle y Paleta.
+- **Hitos Clave:** Home conserva sus anclas internas; el encabezado unifica el alcance de envíos y sus estados accesibles; Paleta adopta `max-w-7xl` en todas sus secciones principales.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint, `git diff --check` y comprobación visual local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.7_M01_encabezado_ancho_storefront_frontend.md](./walkthroughs/M01/walkthrough_v3.34.7_M01_encabezado_ancho_storefront_frontend.md)
+
+---
+
 ## [v3.34.6] - 2026-09-13
 ### Módulo: M01 Catálogo de Productos (Backend + Frontend)
 - **Alcance parcial:** Avance funcional de la paleta pública de HU-CAT-06; la vista continúa en iteración visual y no se declara terminada.

@@ -3,7 +3,7 @@
     <EncabezadoTiendaPublica @abrir-categorias="menuCategoriasAbierto = true" @informar="mostrarMensaje" />
 
     <main>
-      <section class="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
+      <section class="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
         <nav class="mb-4 text-xs text-neutral-medium" aria-label="Migas de pan">
           <router-link to="/" class="hover:text-action">Inicio</router-link>
           <ChevronRight :size="13" class="mx-1 inline" aria-hidden="true" />
@@ -21,7 +21,7 @@
         </div>
       </section>
 
-      <section class="mx-auto max-w-6xl px-4 py-5 sm:px-6">
+      <section class="mx-auto max-w-7xl px-4 py-5 sm:px-6">
         <div class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="flex items-center gap-2 text-base font-bold text-corporate"><Droplets :size="19" class="text-action" /> Filtrar por familia de color</h2>
@@ -38,7 +38,7 @@
         </div>
       </section>
 
-      <section class="mx-auto grid max-w-6xl gap-6 px-4 sm:px-6 md:grid-cols-2">
+      <section class="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 md:grid-cols-2">
         <article class="rounded-card border border-neutral-light bg-neutral-white p-6 shadow-sm">
           <h2 class="text-xl font-bold text-corporate">Paleta de colores</h2>
           <p class="mt-1 text-xs text-neutral-medium">Selecciona un color disponible para consultar productos compatibles.</p>
@@ -72,19 +72,19 @@
         </article>
       </section>
 
-      <section class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <div class="mb-5 flex items-end justify-between"><div><h2 class="text-xl font-bold text-corporate">Productos recomendados</h2><p class="mt-1 text-xs text-neutral-medium">Opciones publicadas asociadas al color seleccionado.</p></div><router-link to="/catalogo" class="inline-flex min-h-11 items-center text-xs font-medium text-action hover:text-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action">Ver todos <ChevronRight :size="13" class="ml-1" /></router-link></div>
         <div v-if="productosRecomendados.length" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5"><TarjetaProductoPublico v-for="producto in productosRecomendados" :key="producto.id_producto" :producto="producto" :muestra-color="colorSeleccionado?.muestra_hex ?? null" @ver="verProducto" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" /></div>
         <p v-else-if="!cargando" class="rounded-card bg-neutral-white p-8 text-center text-sm text-neutral-medium">No hay pinturas publicadas asociadas a este color.</p>
       </section>
 
-      <section class="mx-auto max-w-6xl px-4 pb-14 sm:px-6">
+      <section class="mx-auto max-w-7xl px-4 pb-14 sm:px-6">
         <h2 class="text-xl font-bold text-corporate">Productos que podrían interesarte</h2>
         <p class="mt-1 text-xs text-neutral-medium">Herramientas y accesorios para completar tu proyecto.</p>
         <div v-if="productosComplementarios.length" class="mt-5 grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5"><TarjetaProductoPublico v-for="producto in productosComplementarios" :key="producto.id_producto" :producto="producto" @ver="verProducto" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" /></div>
       </section>
 
-      <section id="servicios" class="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
+      <section id="servicios" class="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
         <div class="grid grid-cols-2 divide-x divide-y divide-neutral-light rounded-card border border-neutral-light bg-neutral-white sm:grid-cols-4 sm:divide-y-0">
           <div v-for="beneficio in beneficios" :key="beneficio.titulo" class="flex items-center gap-3 px-4 py-5 sm:justify-center"><component :is="beneficio.icono" :size="25" class="shrink-0 text-conversion" /><div><p class="text-xs font-bold text-corporate">{{ beneficio.titulo }}</p><p class="text-[10px] text-neutral-medium">{{ beneficio.detalle }}</p></div></div>
         </div>

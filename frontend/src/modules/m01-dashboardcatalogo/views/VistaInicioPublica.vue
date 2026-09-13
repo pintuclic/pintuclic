@@ -1,70 +1,6 @@
 <template>
   <div class="min-h-screen bg-neutral-white text-neutral-dark">
-    <header>
-      <div class="hidden bg-corporate text-white lg:block">
-        <div class="mx-auto flex max-w-7xl items-center justify-center gap-8 px-6 py-1.5 text-[11px]">
-          <span class="flex items-center gap-1.5"><MapPin :size="12" /> Envíos a todo el Caquetá</span>
-          <span class="flex items-center gap-1.5"><BadgeCheck :size="12" /> Productos de calidad</span>
-          <span class="flex items-center gap-1.5"><Headphones :size="12" /> Asesoría experta</span>
-          <span class="flex items-center gap-1.5"><CircleHelp :size="12" /> ¿Necesitas ayuda?</span>
-          <span class="flex items-center gap-1.5"><Phone :size="12" /> 322 123 4567</span>
-        </div>
-      </div>
-
-      <div class="border-b border-neutral-light bg-neutral-white">
-        <div class="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
-          <router-link to="/" class="shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action">
-            <img :src="logo" alt="Pintu Clic" class="h-11 w-auto object-contain" />
-          </router-link>
-
-          <button
-            type="button"
-            class="flex items-center gap-2 rounded-button bg-action px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action sm:px-5"
-            @click="menuCategoriasAbierto = true"
-          >
-            <Menu :size="18" aria-hidden="true" />
-            <span class="hidden sm:inline">Categorías</span>
-            <ChevronDown :size="14" aria-hidden="true" />
-          </button>
-
-          <nav class="hidden flex-1 items-center justify-center gap-6 text-xs font-medium lg:flex" aria-label="Navegación principal">
-            <a href="#inicio" class="border-b-2 border-action py-5 text-action">Inicio</a>
-            <a href="#productos" class="py-5 text-neutral-dark transition-colors hover:text-action">Productos</a>
-            <a href="#productos" class="rounded-full bg-highlight px-2.5 py-1 font-bold text-corporate">OFERTAS</a>
-            <a href="#servicios" class="py-5 text-neutral-dark transition-colors hover:text-action">Servicios</a>
-            <router-link to="/paleta-colores" class="py-5 text-neutral-dark transition-colors hover:text-action" active-class="border-b-2 border-action text-action">Paleta de Color</router-link>
-            <a href="#contacto" class="py-5 text-neutral-dark transition-colors hover:text-action">Sobre Nosotros</a>
-          </nav>
-
-          <div class="ml-auto flex items-center gap-2 sm:gap-5">
-            <button
-              type="button"
-              class="flex items-center gap-2 rounded-button p-2 text-corporate transition-colors hover:bg-neutral-lightest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-              @click="informarPendiente('La conexión con Mi cuenta pertenece a M04 y se incorporará en su integración.')"
-            >
-              <UserRound :size="20" aria-hidden="true" />
-              <span class="hidden text-left text-[11px] leading-tight md:block">
-                <strong class="block">Mi cuenta</strong>
-                Iniciar sesión
-              </span>
-            </button>
-            <button
-              type="button"
-              class="relative flex items-center gap-2 rounded-button p-2 text-corporate transition-colors hover:bg-neutral-lightest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-              aria-label="Ver carrito"
-              @click="informarPendiente('El carrito pertenece a M07 y se conectará cuando ese módulo esté disponible.')"
-            >
-              <ShoppingCart :size="21" aria-hidden="true" />
-              <span class="absolute right-0 top-0 grid h-4 min-w-4 place-items-center rounded-full bg-highlight px-1 text-[9px] font-bold text-corporate">0</span>
-              <span class="hidden text-left text-[11px] leading-tight xl:block">
-                <strong class="block">Carrito</strong>
-                $0
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
+    <EncabezadoTiendaPublica :en-inicio="true" @abrir-categorias="menuCategoriasAbierto = true" @informar="informarPendiente" />
 
     <main id="inicio">
       <section class="mx-auto max-w-7xl px-4 pt-5 sm:px-6 sm:pt-8">
@@ -281,18 +217,13 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
-  BadgeCheck,
   Calculator,
-  ChevronDown,
   ChevronRight,
   CircleAlert,
-  CircleHelp,
   CreditCard,
-  Headphones,
   LoaderCircle,
   Mail,
   MapPin,
-  Menu,
   PackageCheck,
   Palette,
   Phone,
@@ -301,12 +232,12 @@ import {
   ShieldCheck,
   ShoppingCart,
   Truck,
-  UserRound,
   X,
 } from 'lucide-vue-next';
 import logo from '@/assets/logo.png';
 import heroStorefront from '../assets/storefront/hero-storefront.png';
 import CalculadoraPinturaPublica from '../components/publicas/CalculadoraPinturaPublica.vue';
+import EncabezadoTiendaPublica from '../components/publicas/EncabezadoTiendaPublica.vue';
 import MenuCategoriasPublico from '../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../components/publicas/TarjetaProductoPublico.vue';
 import { useInicioPublico } from '../composables/useInicioPublico';
