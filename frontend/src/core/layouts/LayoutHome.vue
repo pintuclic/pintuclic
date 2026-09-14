@@ -170,7 +170,6 @@ import { watchEffect } from 'vue';
 // Estado global local del layout para modales
 const showLogin = ref(false);
 const showWizard = ref(false);
-const showMobileMenu = ref(false);
 
 const router = useRouter();
 const authStore = useAuthStore();
