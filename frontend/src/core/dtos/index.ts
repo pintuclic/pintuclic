@@ -1,1 +1,0 @@
-export * from './seguridad.dto';
