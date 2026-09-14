@@ -58,7 +58,7 @@
 import { ref, computed, onUnmounted } from 'vue';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
-import Button from '@/core/components/Button.vue';
+import { Button } from '@/core/components';
 import { useCuentas } from '../composables/useCuentas';
 
 const props = defineProps<{

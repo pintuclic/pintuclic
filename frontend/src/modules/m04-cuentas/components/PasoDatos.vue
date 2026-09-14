@@ -203,8 +203,7 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { Mail as MailIcon, Lock as LockIcon, Phone as PhoneIcon, ShieldCheck } from 'lucide-vue-next';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
-import Input from '@/core/components/Input.vue';
-import Button from '@/core/components/Button.vue';
+import { Input, Button } from '@/core/components';
 import type {
   TipoCuentaRegistro,
   RegistroNaturalPayload,

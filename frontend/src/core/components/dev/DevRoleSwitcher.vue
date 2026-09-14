@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useAuth } from '../auth/useAuth';
+import { useAuth } from '@/core/auth/useAuth';
 
 const { currentUser, currentRole, simularUsuario, logout, can } = useAuth();
 const isExpanded = ref(true);

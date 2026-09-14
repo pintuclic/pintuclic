@@ -159,7 +159,7 @@ import {
   ShoppingCart as ShoppingCartIcon
 } from 'lucide-vue-next';
 
-import FooterPrincipal from '@/core/components/FooterPrincipal.vue';
+import { FooterPrincipal } from '@/core/components';
 import ModalLogin from '@/modules/m04-cuentas/components/ModalLogin.vue';
 import RegistroWizard from '@/modules/m04-cuentas/components/RegistroWizard.vue';
 import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
