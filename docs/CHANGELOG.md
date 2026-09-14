@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.34.10] - 2026-09-14
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Corrección visual:** El panel preliminar reemplaza los selects deshabilitados por secciones compactas con buscador, checkboxes, muestras circulares y rango de precio, siguiendo el mockup del catálogo.
+- **Datos provisionales:** Marcas, colores, familias y presentaciones visibles se deducen de la página pública cargada; la aplicación completa continúa pendiente de facetas M02.
+- **Estado de Calidad:** ESLint, TypeScript/Vite y validación visual local superados.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.10_M01_corregir_diseno_filtros_frontend.md](./walkthroughs/M01/walkthrough_v3.34.10_M01_corregir_diseno_filtros_frontend.md)
+
+---
+
 ## [v3.34.9] - 2026-09-14
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** El catálogo público presenta la estructura completa de filtros avanzados exigida por HU-BUS-02 como vista preliminar.

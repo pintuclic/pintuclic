@@ -34,25 +34,42 @@
         <aside class="bg-neutral-white p-6" :class="filtrosMovilAbiertos ? 'fixed inset-y-0 left-0 z-50 block w-[min(88vw,320px)] overflow-y-auto shadow-2xl' : 'hidden lg:sticky lg:top-24 lg:block lg:h-fit lg:rounded-card lg:border lg:border-neutral-light lg:shadow-sm'">
           <div class="flex items-center justify-between gap-2"><h2 class="flex items-center gap-2 text-base font-semibold text-neutral-black"><SlidersHorizontal :size="18" class="text-action" /> Filtros</h2><button type="button" class="min-h-11 px-2 text-xs font-medium text-action hover:text-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" @click="limpiarFiltros">Limpiar todo</button><button type="button" class="grid h-11 w-11 place-items-center rounded-button text-neutral-medium hover:bg-neutral-lightest lg:hidden" aria-label="Cerrar filtros" @click="filtrosMovilAbiertos = false"><X :size="18" /></button></div>
           <fieldset class="mt-6 border-t border-neutral-light pt-5"><legend class="text-base font-semibold text-neutral-black">Categorías</legend><label class="mt-4 flex min-h-11 cursor-pointer items-center gap-3 text-sm text-neutral-dark transition-colors hover:text-action"><input type="radio" name="categoria" :checked="subcategoria === undefined" class="h-4 w-4 accent-action" @change="seleccionarFiltro(undefined)" /> Todos <span class="ml-auto text-xs text-neutral-medium">({{ total }})</span></label><template v-for="categoria in categorias" :key="categoria.id_categoria"><p class="mt-4 text-xs font-semibold uppercase tracking-wide text-corporate">{{ categoria.nombre }}</p><label v-for="item in categoria.subcategorias" :key="item.id_subcategoria" class="mt-1 flex min-h-11 cursor-pointer items-center gap-3 text-sm text-neutral-dark transition-colors hover:text-action"><input type="radio" name="categoria" :checked="subcategoria === item.id_subcategoria" class="h-4 w-4 accent-action" @change="seleccionarFiltro(item.id_subcategoria)" /> {{ item.nombre }}</label></template></fieldset>
-          <div class="mt-6 rounded-card border border-action bg-subaction p-3 text-xs leading-5 text-corporate" role="note">
-            Vista preliminar. Los filtros avanzados se conectarán al servicio de búsqueda M02.
-          </div>
-          <fieldset class="mt-6 space-y-4 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-base font-semibold text-neutral-black">Filtros avanzados</legend>
-            <label class="block text-xs font-semibold text-neutral-dark">Marca<select class="mt-2 h-11 w-full cursor-not-allowed rounded-input border border-neutral-light bg-neutral-lightest px-3 text-sm text-neutral-medium"><option>Todas las marcas</option></select></label>
-            <label class="block text-xs font-semibold text-neutral-dark">Línea<select class="mt-2 h-11 w-full cursor-not-allowed rounded-input border border-neutral-light bg-neutral-lightest px-3 text-sm text-neutral-medium"><option>Todas las líneas</option></select></label>
-            <label class="block text-xs font-semibold text-neutral-dark">Tipo de resina<select class="mt-2 h-11 w-full cursor-not-allowed rounded-input border border-neutral-light bg-neutral-lightest px-3 text-sm text-neutral-medium"><option>Todos los tipos</option></select></label>
-            <label class="block text-xs font-semibold text-neutral-dark">Color<select class="mt-2 h-11 w-full cursor-not-allowed rounded-input border border-neutral-light bg-neutral-lightest px-3 text-sm text-neutral-medium"><option>Todos los colores</option></select></label>
-            <label class="block text-xs font-semibold text-neutral-dark">Familia cromática<select class="mt-2 h-11 w-full cursor-not-allowed rounded-input border border-neutral-light bg-neutral-lightest px-3 text-sm text-neutral-medium"><option>Todas las familias</option></select></label>
-            <label class="block text-xs font-semibold text-neutral-dark">Presentación<select class="mt-2 h-11 w-full cursor-not-allowed rounded-input border border-neutral-light bg-neutral-lightest px-3 text-sm text-neutral-medium"><option>Todas las presentaciones</option></select></label>
-            <div>
-              <p class="text-xs font-semibold text-neutral-dark">Rango de precio</p>
-              <div class="mt-2 grid grid-cols-2 gap-2">
-                <label><span class="sr-only">Precio mínimo</span><input type="number" min="0" placeholder="Mínimo" class="h-11 w-full cursor-not-allowed rounded-input border border-neutral-light bg-neutral-lightest px-3 text-sm placeholder:text-neutral-medium" /></label>
-                <label><span class="sr-only">Precio máximo</span><input type="number" min="0" placeholder="Máximo" class="h-11 w-full cursor-not-allowed rounded-input border border-neutral-light bg-neutral-lightest px-3 text-sm placeholder:text-neutral-medium" /></label>
-              </div>
+          <fieldset class="mt-6 border-t border-neutral-light pt-5" disabled>
+            <legend class="text-sm font-semibold text-neutral-black">Marca</legend>
+            <label class="relative mt-3 block"><span class="sr-only">Buscar marca</span><Search :size="14" class="pointer-events-none absolute left-3 top-3.5 text-neutral-medium" /><input type="search" placeholder="Buscar marca..." class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white pl-9 pr-3 text-xs placeholder:text-neutral-medium" /></label>
+            <label class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark"><input type="checkbox" class="h-4 w-4 rounded accent-action" /> Marcas publicadas <span class="ml-auto text-neutral-medium">{{ cantidadMarcasDisponibles }}</span></label>
+          </fieldset>
+          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
+            <legend class="text-sm font-semibold text-neutral-black">Línea</legend>
+            <label class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-medium"><input type="checkbox" class="h-4 w-4 rounded accent-action" /> Opciones al conectar M02</label>
+          </fieldset>
+          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
+            <legend class="text-sm font-semibold text-neutral-black">Tipo de resina</legend>
+            <label class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-medium"><input type="checkbox" class="h-4 w-4 rounded accent-action" /> Opciones al conectar M02</label>
+          </fieldset>
+          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
+            <legend class="text-sm font-semibold text-neutral-black">Color</legend>
+            <label v-for="color in muestrasColorDisponibles" :key="color.id" class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark"><input type="checkbox" class="h-4 w-4 rounded accent-action" /><span class="h-4 w-4 shrink-0 rounded-full border border-neutral-light" :style="{ backgroundColor: color.hex }" />{{ color.nombre }}</label>
+            <p v-if="!muestrasColorDisponibles.length" class="mt-2 text-xs text-neutral-medium">Sin muestras en esta página.</p>
+          </fieldset>
+          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
+            <legend class="text-sm font-semibold text-neutral-black">Familia cromática</legend>
+            <label v-for="familia in familiasDisponibles" :key="familia" class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark"><input type="checkbox" class="h-4 w-4 rounded accent-action" />{{ familia }}</label>
+            <p v-if="!familiasDisponibles.length" class="mt-2 text-xs text-neutral-medium">Sin familias en esta página.</p>
+          </fieldset>
+          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
+            <legend class="text-sm font-semibold text-neutral-black">Presentación</legend>
+            <label v-for="presentacion in presentacionesDisponibles" :key="presentacion" class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark"><input type="checkbox" class="h-4 w-4 rounded accent-action" />{{ presentacion }}</label>
+            <p v-if="!presentacionesDisponibles.length" class="mt-2 text-xs text-neutral-medium">Sin presentaciones en esta página.</p>
+          </fieldset>
+          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
+            <legend class="text-sm font-semibold text-neutral-black">Rango de precio</legend>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              <label><span class="sr-only">Precio mínimo</span><input type="number" min="0" placeholder="Mínimo" class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-3 text-xs placeholder:text-neutral-medium" /></label>
+              <label><span class="sr-only">Precio máximo</span><input type="number" min="0" placeholder="Máximo" class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-3 text-xs placeholder:text-neutral-medium" /></label>
             </div>
           </fieldset>
+          <p class="mt-5 rounded-card bg-neutral-lightest p-3 text-[11px] leading-4 text-neutral-medium" role="note">Vista preliminar: los valores completos, conteos y aplicación simultánea se conectarán con las facetas de M02.</p>
           <fieldset class="mt-6 border-t border-neutral-light pt-5"><legend class="text-base font-semibold text-neutral-black">Disponibilidad</legend><label class="mt-3 flex min-h-11 cursor-pointer items-center gap-3 text-sm text-neutral-dark transition-colors hover:text-action"><input v-model="soloDisponibles" type="checkbox" class="h-4 w-4 rounded accent-action" /> Con existencia</label></fieldset>
           <button type="button" class="mt-6 min-h-11 w-full rounded-button bg-action px-4 text-sm font-medium text-white shadow-sm transition-all hover:bg-action-hover hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action lg:hidden" @click="filtrosMovilAbiertos = false">Aplicar filtros</button>
         </aside>
@@ -106,6 +123,18 @@ const productosVisibles = computed(() => {
   if (orden.value === 'precio_desc') return filtrados.sort((a, b) => precioMinimo(b) - precioMinimo(a));
   return filtrados;
 });
+const cantidadMarcasDisponibles = computed(() => new Set(productos.value.map((producto) => producto.id_marca)).size);
+const muestrasColorDisponibles = computed(() => {
+  const colores = new Map<number, { id: number; nombre: string; hex: string }>();
+  productos.value.forEach((producto) => producto.detalle?.variantes.forEach((variante) => {
+    if (variante.id_color !== null && variante.color && variante.muestra_hex && !colores.has(variante.id_color)) {
+      colores.set(variante.id_color, { id: variante.id_color, nombre: variante.color, hex: variante.muestra_hex });
+    }
+  }));
+  return [...colores.values()].slice(0, 5);
+});
+const familiasDisponibles = computed(() => [...new Set(productos.value.flatMap((producto) => producto.detalle?.variantes.map((variante) => variante.familia_color).filter((familia): familia is string => Boolean(familia)) ?? []))].slice(0, 5));
+const presentacionesDisponibles = computed(() => [...new Set(productos.value.flatMap((producto) => producto.detalle?.variantes.map((variante) => variante.presentacion) ?? []))].slice(0, 5));
 const rangoInicio = computed(() => total.value === 0 ? 0 : ((pagina.value - 1) * 8) + 1);
 const rangoFin = computed(() => Math.min(pagina.value * 8, total.value));
 
