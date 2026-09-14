@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.34.8] - 2026-09-13
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance en revisión:** La Paleta pública adopta un abanico de láminas físicas y un combinador visual compacto, conservando la selección reactiva de HU-CAT-06.
+- **Integridad visual:** Seis colores por lámina, armonías 2/4/3/5 con código revelado en hover, Tailwind y tokens oficiales; las muestras cromáticas continúan proviniendo de la API.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint, `git diff --check` y validación interactiva local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.8_M01_abanico_laminas_fisicas_frontend.md](./walkthroughs/M01/walkthrough_v3.34.8_M01_abanico_laminas_fisicas_frontend.md)
+
+---
+
 ## [v3.34.7] - 2026-09-13
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance:** Uniformidad estructural del storefront de HU-CAT-06 mediante un encabezado público compartido y un ancho máximo común para Home, Catálogo, Detalle y Paleta.

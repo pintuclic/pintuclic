@@ -55,18 +55,24 @@
           </div>
         </article>
 
-        <article class="rounded-card border border-neutral-light bg-neutral-white p-6 shadow-sm">
-          <div class="flex items-start justify-between gap-4">
-            <div><h2 class="text-xl font-bold text-corporate">Combinador de colores</h2><p class="mt-1 text-xs text-neutral-medium">Inspiración visual basada en el color seleccionado.</p></div>
-            <button type="button" class="min-h-11 rounded-button bg-neutral-lightest px-3 text-xs font-medium text-corporate transition-all hover:-translate-y-0.5 hover:bg-subaction hover:shadow-sm active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" @click="mostrarMensaje('Los ambientes fotográficos se incorporarán con la fuente pública de imágenes de color.')">Cambiar ambiente</button>
+        <article class="flex flex-col rounded-card border border-neutral-light bg-neutral-white p-6 shadow-sm lg:p-8">
+          <header>
+            <h2 class="text-xl font-bold text-corporate">Combinador de colores</h2>
+            <p class="mt-1 text-sm leading-5 text-neutral-medium">A partir del color seleccionado te sugerimos combinaciones que armonizan.</p>
+          </header>
+
+          <div class="mt-6 flex items-center gap-5 rounded-card border border-neutral-light bg-neutral-lightest p-4 shadow-sm">
+            <span class="h-16 w-16 shrink-0 rounded-card border border-neutral-light bg-action shadow-inner transition-colors duration-300" :style="{ backgroundColor: colorSeleccionado?.muestra_hex ?? undefined }" />
+            <div>
+              <p class="text-xs text-neutral-medium">Color seleccionado</p>
+              <h3 class="text-lg font-bold text-corporate">{{ colorSeleccionado?.nombre ?? 'Sin color disponible' }}</h3>
+              <p class="text-xs font-semibold uppercase tracking-wide text-neutral-medium">
+                {{ colorSeleccionado?.codigo ?? 'Sin código comercial' }}<template v-if="colorSeleccionado?.muestra_hex"> · {{ colorSeleccionado.muestra_hex }}</template>
+              </p>
+            </div>
           </div>
 
-          <div class="mt-6 flex items-center gap-4 rounded-card border border-neutral-light bg-neutral-lightest p-4">
-            <span class="h-16 w-16 shrink-0 rounded-card bg-action shadow-sm" :style="{ backgroundColor: colorSeleccionado?.muestra_hex ?? undefined }" />
-            <div><p class="text-xs text-neutral-medium">Color seleccionado</p><h3 class="text-lg font-bold text-corporate">{{ colorSeleccionado?.nombre ?? 'Sin color disponible' }}</h3><p class="text-xs text-neutral-medium">{{ colorSeleccionado?.codigo ?? 'Sin código comercial' }}</p></div>
-          </div>
-
-          <div class="mt-4 grid gap-3 sm:grid-cols-2">
+          <div class="mt-6 grid flex-1 gap-4 sm:grid-cols-2">
             <TarjetaCombinacionColoresPublica v-for="esquema in esquemas" :key="esquema.nombre" :esquema="esquema" :color-seleccionado-id="colorSeleccionado?.id_color ?? null" @seleccionar="seleccionarColor" />
           </div>
         </article>
