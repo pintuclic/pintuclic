@@ -4,6 +4,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.29.0] - 2026-09-14
+### Módulo: M05 Carrito de Compras (Backend)
+- **Alcance:** Implementación completa de la capa backend del módulo M05 — Carrito de Compras. Cubre carrito persistente para visitantes anónimos (por `token_visitante`), gestión de ítems con acumulación y límites, fusión inteligente al autenticarse y revalidación de stock/precios antes del checkout.
+- **Hitos Clave:**
+  - 8 endpoints REST: carrito visitante (GET, POST, PATCH, DELETE por variante) y carrito cliente autenticado (GET, POST, DELETE, fusión, revalidación).
+  - Arquitectura completa en capas: interfaces de dominio, DTOs Zod v4, repositorios Kysely tipados, servicio con lógica de negocio y controlador Express.
+  - Rutas de cliente protegidas con `guardas.sesionVigente()` de M20. `id_usuario` extraído exclusivamente de `res.locals.usuario` (JWT), nunca del body.
+- **Estado de Calidad:** `npx tsc --noEmit` → 0 errores ✅ · `npm run lint` → 0 errores, 0 warnings ✅ · 21/21 pruebas unitarias superadas ✅.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v3.29.0_M05_carrito_backend.md](./walkthroughs/M05/walkthrough_v3.29.0_M05_carrito_backend.md)
+
+---
+
 ## [v3.28.0] - 2026-09-13
 ### Core: Layouts Globales, Enrutador Central y Sincronización con M01 Catálogo (Frontend)
 - **Alcance General:** Incremento **MINOR (v3.28.0)** que formaliza la arquitectura visual y estructural de layouts del frontend para Pintu Clic. Unifica los layouts globales (`LayoutHome`, `LayoutAdmin`, `LayoutAcceso`, `FooterPrincipal`), sincroniza el enrutamiento central con el módulo completo de catálogo `M01` recién integrado en `develop` y resuelve conflictos de merge en el contenedor raíz.

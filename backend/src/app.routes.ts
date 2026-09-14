@@ -7,6 +7,7 @@ import { notificacionesRoutes } from './modules/m18-notificaciones/notificacione
 import { cuentasRoutes } from './modules/m04-cuentas/cuentas.routes';
 import { catalogoRoutes } from './modules/m01-catalogo/m01.routes';
 import { busquedaRoutes } from './modules/m02-busqueda/m02.routes';
+import { carritoRoutes } from './modules/m05-carritodecompras/m05.routes';
 
 const appRouter = Router();
 
@@ -30,6 +31,7 @@ appRouter.use('/notificaciones', notificacionesRoutes);
 appRouter.use('/cuentas', cuentasRoutes);
 appRouter.use('/catalogo', catalogoRoutes);
 appRouter.use('/busqueda', busquedaRoutes);
+appRouter.use('/carrito', carritoRoutes);
 
 export default appRouter;
 
