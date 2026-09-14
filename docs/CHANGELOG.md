@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.34.9] - 2026-09-14
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** El catálogo público presenta la estructura completa de filtros avanzados exigida por HU-BUS-02 como vista preliminar.
+- **Integración pendiente:** Marca, línea, resina, color, familia cromática, presentación y precio quedan deshabilitados hasta consumir las facetas y la búsqueda paginada de M02; no se hardcodearon catálogos.
+- **Estado de Calidad:** ESLint, TypeScript/Vite y verificación visual local.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.9_M01_filtros_catalogo_estaticos_frontend.md](./walkthroughs/M01/walkthrough_v3.34.9_M01_filtros_catalogo_estaticos_frontend.md)
+
+---
+
 ## [v3.34.8] - 2026-09-13
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Alcance en revisión:** La Paleta pública adopta un abanico de láminas físicas y un combinador visual compacto, conservando la selección reactiva de HU-CAT-06.
