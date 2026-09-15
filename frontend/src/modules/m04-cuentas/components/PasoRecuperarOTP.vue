@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { AlertCircle as AlertCircleIcon } from 'lucide-vue-next';
-import Boton from '@/core/components/buttons/Button.vue';
+import Button from '@/core/components/buttons/Button.vue';
 
 const props = defineProps<{
   correo: string;

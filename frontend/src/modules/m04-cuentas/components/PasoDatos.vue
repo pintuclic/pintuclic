@@ -32,11 +32,11 @@
     <!-- Formulario Natural -->
     <div v-if="activeTab === 'natural'">
       <form @submit="onSubmit" class="flex flex-col gap-4">
-        <Entrada name="nombre" label="Nombre completo" placeholder="Ej. Juan Pérez" />
-        <Entrada name="correo" label="Correo electrónico" type="email" placeholder="correo@ejemplo.com" :icon="MailIcon" />
-        <Entrada name="telefono" label="Teléfono (WhatsApp)" placeholder="300 000 0000" :icon="PhoneIcon" />
+        <Input name="nombre" label="Nombre completo" placeholder="Ej. Juan Pérez" />
+        <Input name="correo" label="Correo electrónico" type="email" placeholder="correo@ejemplo.com" :icon="MailIcon" />
+        <Input name="telefono" label="Teléfono (WhatsApp)" placeholder="300 000 0000" :icon="PhoneIcon" />
         <div class="flex flex-col gap-1">
-          <Entrada name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
+          <Input name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
           <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
         </div>
 
@@ -84,13 +84,13 @@
 
     <!-- Formulario Empresa -->
     <form v-else @submit="onSubmit" class="flex flex-col gap-4">
-      <Entrada name="nombre_empresa" label="Nombre Empresa" placeholder="Ej. Pinturas S.A.S" />
-      <Entrada name="nombre_representante" label="Nombre del representante legal" placeholder="Ej. María Gómez" />
-      <Entrada name="correo_empresarial" label="Correo corporativo" type="email" placeholder="contacto@empresa.com" :icon="MailIcon" />
-      <Entrada name="telefono" label="Teléfono (WhatsApp)" placeholder="300 000 0000" :icon="PhoneIcon" />
-      <Entrada name="nit" label="NIT" placeholder="900.000.000-1" />
+      <Input name="nombre_empresa" label="Nombre Empresa" placeholder="Ej. Pinturas S.A.S" />
+      <Input name="nombre_representante" label="Nombre del representante legal" placeholder="Ej. María Gómez" />
+      <Input name="correo_empresarial" label="Correo corporativo" type="email" placeholder="contacto@empresa.com" :icon="MailIcon" />
+      <Input name="telefono" label="Teléfono (WhatsApp)" placeholder="300 000 0000" :icon="PhoneIcon" />
+      <Input name="nit" label="NIT" placeholder="900.000.000-1" />
       <div class="flex flex-col gap-1">
-        <Entrada name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
+        <Input name="contrasena" label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" :icon="LockIcon" />
         <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
       </div>
 
@@ -204,8 +204,8 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { Mail as MailIcon, Lock as LockIcon, Phone as PhoneIcon, ShieldCheck } from 'lucide-vue-next';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
-import Entrada from '@/core/components/forms/Input.vue';
-import Boton from '@/core/components/buttons/Button.vue';
+import Input from '@/core/components/forms/Input.vue';
+import Button from '@/core/components/buttons/Button.vue';
 import type {
   TipoCuentaRegistro,
   RegistroNaturalPayload,

@@ -7,7 +7,7 @@
 
     <form @submit="onSubmit" class="space-y-4">
       <div>
-        <Entrada
+        <Input
           name="contrasena_nueva"
           label="Nueva Contraseña"
           type="password"
@@ -37,8 +37,8 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { Lock as LockIcon, AlertCircle as AlertCircleIcon } from 'lucide-vue-next';
 import { CuentasService } from '../services/cuentas.service';
-import Boton from '@/core/components/buttons/Button.vue';
-import Entrada from '@/core/components/forms/Input.vue';
+import Button from '@/core/components/buttons/Button.vue';
+import Input from '@/core/components/forms/Input.vue';
 
 const props = defineProps<{
   correo: string;

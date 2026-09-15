@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import ModalBase from '@/core/components/overlays/Modal.vue';
+import Modal from '@/core/components/overlays/Modal.vue';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
 import PasoRecuperarCorreo from './PasoRecuperarCorreo.vue';

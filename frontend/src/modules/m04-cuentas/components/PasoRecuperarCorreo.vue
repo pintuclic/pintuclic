@@ -8,7 +8,7 @@
     </div>
 
     <form @submit="onSubmit" class="space-y-4">
-      <Entrada
+      <Input
         name="correo"
         label="Correo Electrónico"
         type="email"
@@ -36,8 +36,8 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { Mail as MailIcon, AlertCircle as AlertCircleIcon } from 'lucide-vue-next';
 import { CuentasService } from '../services/cuentas.service';
-import Boton from '@/core/components/buttons/Button.vue';
-import Entrada from '@/core/components/forms/Input.vue';
+import Button from '@/core/components/buttons/Button.vue';
+import Input from '@/core/components/forms/Input.vue';
 
 const emit = defineEmits<{
   'solicitado': [correo: string];

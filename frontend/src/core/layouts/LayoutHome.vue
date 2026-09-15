@@ -134,13 +134,20 @@
     <ModalLogin 
       v-model="showLogin" 
       @goToRegister="openRegister" 
+      @goToRecover="openRecover"
       @success="handleLoginSuccess" 
     />
     
     <RegistroWizard 
       v-model="showWizard" 
-      @irALogin="openLogin" 
+      @irALogin="openLogin"
+
       @exito="handleWizardSuccess" 
+    />
+
+    <RecuperarPasswordWizard 
+      v-model="showRecover" 
+      @openLogin="openLogin" 
     />
   </div>
 </template>
@@ -162,6 +169,7 @@ import {
 import { FooterPrincipal } from '@/core/components';
 import ModalLogin from '@/modules/m04-cuentas/components/ModalLogin.vue';
 import RegistroWizard from '@/modules/m04-cuentas/components/RegistroWizard.vue';
+import RecuperarPasswordWizard from '@/modules/m04-cuentas/components/RecuperarPasswordWizard.vue';
 import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
@@ -170,6 +178,7 @@ import { watchEffect } from 'vue';
 // Estado global local del layout para modales
 const showLogin = ref(false);
 const showWizard = ref(false);
+const showRecover = ref(false);
 
 
 const router = useRouter();
@@ -198,6 +207,11 @@ const openLogin = () => {
 const openRegister = () => {
   closeAllModals();
   showWizard.value = true;
+};
+
+const openRecover = () => {
+  showLogin.value = false;
+  showRecover.value = true;
 };
 
 const handleLoginSuccess = () => {

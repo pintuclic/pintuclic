@@ -10,7 +10,7 @@
       </div>
 
       <form @submit="onSubmit" class="flex flex-col gap-5">
-        <Entrada
+        <Input
           name="correo"
           label="Correo electrónico"
           type="email"
@@ -19,7 +19,7 @@
         />
         
         <div class="flex flex-col gap-1.5">
-          <Entrada
+          <Input
             name="contrasena"
             label="Contraseña"
             type="password"
@@ -160,10 +160,10 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { useCuentas } from '../composables/useCuentas';
 import { loginSchema, validarContrasenaConConfirmacion } from '../dtos';
 import { Mail as MailIcon, Lock as LockIcon, ShieldCheck } from 'lucide-vue-next';
-import ModalBase from '@/core/components/overlays/Modal.vue';
+import Modal from '@/core/components/overlays/Modal.vue';
 import EncabezadoModal from './EncabezadoModal.vue';
-import Entrada from '@/core/components/forms/Input.vue';
-import Boton from '@/core/components/buttons/Button.vue';
+import Input from '@/core/components/forms/Input.vue';
+import Button from '@/core/components/buttons/Button.vue';
 
 const props = defineProps<{
   modelValue: boolean;
