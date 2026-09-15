@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
-import { dashboardCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboard-catalogo.routes';
 
 export const routes: RouteRecordRaw[] = [
   // 1. Portal Público / Tienda (LayoutHome)
@@ -14,32 +13,33 @@ export const routes: RouteRecordRaw[] = [
         name: 'Inicio',
         component: () => import('@/modules/m02-productos/views/VistaInicio.vue'),
       },
+      {
+        path: 'perfil',
+        name: 'Perfil',
+        component: () => import('@/modules/m04-cuentas/views/VistaPerfil.vue'),
+      }
     ],
   },
 
-  // 2. Módulo M01: Panel Administrativo de Catálogo
-  ...dashboardCatalogoRoutes,
-
-  // Redirección y alias para enlaces directos de catálogo
-  {
-    path: '/admin/catalogo/busquedas',
-    redirect: '/admin/catalogo/busquedas-sin-resultado',
-  },
-
-  // Redirección raíz de administración al dashboard principal
+  // 2. Panel Administrativo (LayoutAdmin puro, sin M01 inyectado)
   {
     path: '/admin',
     name: 'Administracion',
-    redirect: '/admin/catalogo',
+    component: () => import('@/core/layouts/LayoutAdmin.vue'),
+    children: [
+      // Aquí los equipos inyectarán sus vistas posteriormente
+    ],
   },
 
-  // 3. Layout de Acceso / Auth independiente (para vistas de login/recuperación fullscreen si aplica)
+  // 3. Layout de Acceso / Auth independiente
   {
     path: '/acceso',
     name: 'Acceso',
     component: () => import('@/core/layouts/LayoutAcceso.vue'),
     children: []
   },
+  
+  // 4. Fallback: Cualquier ruta no reconocida redirige al inicio
   {
     path: '/:pathMatch(.*)*',
     redirect: '/',

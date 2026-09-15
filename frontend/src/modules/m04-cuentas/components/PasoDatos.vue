@@ -31,7 +31,6 @@
 
     <!-- Formulario Natural -->
     <div v-if="activeTab === 'natural'">
-<<<<<<< HEAD
       <!-- Botón de Registro con Google (HU-CUE-02) -->
       <div class="mb-5">
         <div ref="googleBtnRef" class="w-full flex justify-center min-h-[44px]"></div>
@@ -55,8 +54,6 @@
         </div>
       </div>
 
-=======
->>>>>>> 1df6738 (chore(M04): guardar progreso de modales y componentes antes de rama core)
       <form @submit="onSubmit" class="flex flex-col gap-4">
         <Input name="nombre" label="Nombre completo" placeholder="Ej. Juan Pérez" />
         <Input name="correo" label="Correo electrónico" type="email" placeholder="correo@ejemplo.com" :icon="MailIcon" />
