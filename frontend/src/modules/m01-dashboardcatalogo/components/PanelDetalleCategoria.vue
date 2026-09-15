@@ -60,7 +60,9 @@
         @ordenar="(c) => $emit('ordenar', c)"
         @buscar="(t) => $emit('buscar', t)"
         @filtrar-tipo="(v) => $emit('filtrar-tipo', v)"
+        @editar="(id) => $emit('editar', id)"
         @menu="(id) => $emit('menu-elemento', id)"
+        @seleccion="(ids) => $emit('seleccion-elementos', ids)"
       />
     </template>
   </section>
@@ -92,5 +94,6 @@ defineEmits<{
   (e: 'ordenar', campo: CampoOrdenElementoCategoria): void;
   (e: 'buscar', texto: string): void;
   (e: 'filtrar-tipo', valor: string): void;
+  (e: 'seleccion-elementos', ids: string[]): void;
 }>();
 </script>

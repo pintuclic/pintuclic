@@ -1,43 +1,36 @@
 <template>
-  <section
-    class="rounded-card border border-neutral-light bg-neutral-white shadow-sm"
-    aria-label="Listado de líneas comerciales"
+  <TablaBase
+    etiqueta="Listado de líneas comerciales"
+    :cargando="cargando"
+    :vacio="!items.length"
+    mensaje-vacio="No hay líneas comerciales que coincidan con los filtros aplicados."
+    :filas-skeleton="pagina.porPagina"
+    alto-fila-skeleton="h-14"
   >
-    <!-- Encabezado: total + orden -->
-    <header class="flex flex-col gap-3 border-b border-neutral-light p-4 sm:flex-row sm:items-center sm:justify-between">
-      <p class="text-sm font-semibold text-neutral-black">
-        {{ formatearNumero(pagina.total) }} líneas comerciales encontradas
-      </p>
-      <label class="flex items-center gap-2 text-xs font-medium text-neutral-medium">
-        Ordenar por
-        <select
-          :value="orden"
-          class="rounded-input border border-neutral-light bg-neutral-white px-2.5 py-1.5 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30"
-          @change="$emit('ordenar', ($event.target as HTMLSelectElement).value as OrdenLineas)"
-        >
-          <option value="recientes">Más recientes</option>
-          <option value="nombre_asc">Nombre A–Z</option>
-          <option value="nombre_desc">Nombre Z–A</option>
-          <option value="productos_desc">Más productos</option>
-        </select>
-      </label>
-    </header>
+    <template #encabezado>
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm font-semibold text-neutral-black">
+          {{ formatearNumero(pagina.total) }} líneas comerciales encontradas
+        </p>
+        <label class="flex items-center gap-2 text-xs font-medium text-neutral-medium">
+          Ordenar por
+          <select
+            :value="orden"
+            class="rounded-input border border-neutral-light bg-neutral-white px-2.5 py-1.5 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30"
+            @change="$emit('ordenar', ($event.target as HTMLSelectElement).value as OrdenLineas)"
+          >
+            <option value="recientes">Más recientes</option>
+            <option value="nombre_asc">Nombre A–Z</option>
+            <option value="nombre_desc">Nombre Z–A</option>
+            <option value="productos_desc">Más productos</option>
+          </select>
+        </label>
+      </div>
+    </template>
 
-    <!-- Carga -->
-    <div v-if="cargando" class="space-y-3 p-5">
-      <div v-for="n in pagina.porPagina" :key="n" class="h-14 animate-pulse rounded-input bg-neutral-lightest" />
-    </div>
-
-    <!-- Vacío -->
-    <p v-else-if="!items.length" class="p-10 text-center text-sm text-neutral-medium">
-      No hay líneas comerciales que coincidan con los filtros aplicados.
-    </p>
-
-    <!-- Tabla -->
-    <div v-else class="overflow-x-auto">
-      <table class="w-full min-w-[920px] text-left text-sm">
+    <table class="w-full min-w-[920px] text-left text-sm">
         <thead>
-          <tr class="border-b border-neutral-light bg-neutral-lightest text-xs uppercase tracking-wide text-neutral-medium">
+          <tr :class="CLASE_ENCABEZADO_TABLA">
             <th scope="col" class="w-10 px-4 py-3">
               <input
                 type="checkbox"
@@ -135,23 +128,24 @@
           </tr>
         </tbody>
       </table>
-    </div>
 
-    <PaginacionTabla
-      v-if="items.length"
-      :pagina="pagina.pagina"
-      :por-pagina="pagina.porPagina"
-      :total="pagina.total"
-      :total-paginas="pagina.totalPaginas"
-      etiqueta="líneas comerciales"
-      @ir-pagina="(n) => $emit('ir-pagina', n)"
-    />
-  </section>
+    <template #pie>
+      <PaginacionTabla
+        :pagina="pagina.pagina"
+        :por-pagina="pagina.porPagina"
+        :total="pagina.total"
+        :total-paginas="pagina.totalPaginas"
+        etiqueta="líneas comerciales"
+        @ir-pagina="(n) => $emit('ir-pagina', n)"
+      />
+    </template>
+  </TablaBase>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Rows3, Pencil, MoreVertical } from 'lucide-vue-next';
+import TablaBase, { CLASE_ENCABEZADO_TABLA } from './TablaBase.vue';
 import PaginacionTabla from './PaginacionTabla.vue';
 import { useFormatoCatalogo } from '../composables/useFormatoCatalogo';
 import type { EstadoLinea, LineaListado, OrdenLineas, PaginaLineas } from '../interfaces';
@@ -162,11 +156,12 @@ const props = defineProps<{
   cargando?: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'editar', linea: LineaListado): void;
   (e: 'desactivar', linea: LineaListado): void;
   (e: 'ordenar', orden: OrdenLineas): void;
   (e: 'ir-pagina', numero: number): void;
+  (e: 'seleccion', ids: string[]): void;
 }>();
 
 const { formatearNumero, formatearFechaHora } = useFormatoCatalogo();
@@ -179,14 +174,19 @@ const algunoSeleccionado = computed(() => seleccionados.value.size > 0);
 const todosSeleccionados = computed(
   () => items.value.length > 0 && items.value.every((l) => seleccionados.value.has(l.id))
 );
+function notificar(): void {
+  emit('seleccion', [...seleccionados.value]);
+}
 function alternarUno(id: string, marcado: boolean): void {
   const copia = new Set(seleccionados.value);
   if (marcado) copia.add(id);
   else copia.delete(id);
   seleccionados.value = copia;
+  notificar();
 }
 function alternarTodos(marcado: boolean): void {
   seleccionados.value = marcado ? new Set(items.value.map((l) => l.id)) : new Set();
+  notificar();
 }
 
 // Estados con tokens oficiales del design system (sin rojo/morado arbitrarios).

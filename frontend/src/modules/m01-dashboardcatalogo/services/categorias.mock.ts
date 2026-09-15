@@ -117,23 +117,41 @@ export const ARBOL_CATEGORIAS_DEMO: CategoriaConHijos[] = SEMILLA.map((cat, i) =
   };
 });
 
-/** Detalle del panel derecho para una categoría raíz. */
+/** Detalle del panel derecho para una categoría raíz o una subcategoría. */
 export function detalleCategoriaDemo(id: string): DetalleCategoria | null {
   const cat = ARBOL_CATEGORIAS_DEMO.find((c) => c.id === id);
-  const semilla = SEMILLA.find((s) => s.slug === id);
-  if (!cat || !semilla) return null;
+  if (cat) {
+    const semilla = SEMILLA.find((s) => s.slug === id);
+    if (!semilla) return null;
 
-  const { hijos, ...nodo } = cat;
+    const { hijos, ...nodo } = cat;
+    return {
+      categoria: nodo,
+      descripcion: semilla.descripcion,
+      totalProductos: cat.productosAsociados,
+      totalSubcategorias: hijos.length,
+      nivel: 1,
+      ordenVisualizacion: cat.orden,
+      elementos: [nodo, ...hijos],
+    };
+  }
 
-  return {
-    categoria: nodo,
-    descripcion: semilla.descripcion,
-    totalProductos: cat.productosAsociados,
-    totalSubcategorias: hijos.length,
-    nivel: 1,
-    ordenVisualizacion: cat.orden,
-    elementos: [nodo, ...hijos],
-  };
+  // No es una categoría raíz: buscarla entre las subcategorías de cada una.
+  for (const raiz of ARBOL_CATEGORIAS_DEMO) {
+    const sub = raiz.hijos.find((h) => h.id === id);
+    if (!sub) continue;
+    return {
+      categoria: sub,
+      descripcion: `Subcategoría de ${raiz.nombre}. Agrupa los productos de "${sub.nombre}" dentro del catálogo de ${raiz.nombre}.`,
+      totalProductos: sub.productosAsociados,
+      totalSubcategorias: 0,
+      nivel: 2,
+      ordenVisualizacion: sub.orden,
+      elementos: [sub],
+    };
+  }
+
+  return null;
 }
 
 /** Primera categoría seleccionada por defecto al abrir la vista. */

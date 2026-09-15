@@ -1,27 +1,21 @@
 <template>
-  <section
-    class="rounded-card border border-neutral-light bg-neutral-white shadow-sm"
-    aria-label="Listado de colores"
+  <TablaBase
+    etiqueta="Listado de colores"
+    :cargando="cargando"
+    :vacio="!items.length"
+    mensaje-vacio="No hay colores que coincidan con los filtros aplicados."
+    :filas-skeleton="pagina.porPagina"
   >
-    <header class="border-b border-neutral-light p-4">
+    <template #encabezado>
       <h2 class="text-base font-semibold text-neutral-black">Listado de colores</h2>
       <p class="mt-0.5 text-sm text-neutral-medium">
         Gestiona todos los colores disponibles en tu catálogo.
       </p>
-    </header>
+    </template>
 
-    <div v-if="cargando" class="space-y-3 p-5">
-      <div v-for="n in pagina.porPagina" :key="n" class="h-11 animate-pulse rounded-input bg-neutral-lightest" />
-    </div>
-
-    <p v-else-if="!items.length" class="p-10 text-center text-sm text-neutral-medium">
-      No hay colores que coincidan con los filtros aplicados.
-    </p>
-
-    <div v-else class="overflow-x-auto">
-      <table class="w-full min-w-[820px] text-left text-sm">
+    <table class="w-full min-w-[820px] text-left text-sm">
         <thead>
-          <tr class="border-b border-neutral-light text-xs uppercase tracking-wide text-neutral-medium">
+          <tr :class="CLASE_ENCABEZADO_TABLA">
             <th scope="col" class="w-16 px-4 py-3 font-semibold">Muestra</th>
             <th scope="col" class="px-3 py-3 font-semibold">Nombre del color</th>
             <th scope="col" class="px-3 py-3 font-semibold">Código</th>
@@ -46,7 +40,15 @@
                 aria-hidden="true"
               />
             </td>
-            <td class="px-3 py-3 font-medium text-neutral-black">{{ color.nombre }}</td>
+            <td class="px-3 py-3 font-medium text-neutral-black">
+              <button
+                type="button"
+                class="block text-left font-medium text-neutral-black hover:text-action"
+                @click="$emit('editar', color.id)"
+              >
+                {{ color.nombre }}
+              </button>
+            </td>
             <td class="px-3 py-3 font-mono text-xs text-neutral-dark">{{ color.codigo ?? '—' }}</td>
             <td class="px-3 py-3 text-neutral-dark">{{ color.marca }}</td>
             <td class="px-3 py-3">
@@ -81,7 +83,9 @@
                 type="button"
                 class="grid h-8 w-8 place-items-center rounded-button text-neutral-medium hover:bg-neutral-light"
                 :aria-label="`Acciones de ${color.nombre}`"
-                @click="$emit('menu', color.id)"
+                :aria-expanded="colorActivo?.id === color.id"
+                aria-haspopup="menu"
+                @click.stop="(e) => abrirMenu(color, e, (c) => c.id)"
               >
                 <MoreVertical class="h-4 w-4" aria-hidden="true" />
               </button>
@@ -89,37 +93,86 @@
           </tr>
         </tbody>
       </table>
-    </div>
 
-    <PaginacionTabla
-      v-if="items.length"
-      :pagina="pagina.pagina"
-      :por-pagina="pagina.porPagina"
-      :total="pagina.total"
-      :total-paginas="pagina.totalPaginas"
-      etiqueta="colores"
-      @ir-pagina="(n) => $emit('ir-pagina', n)"
-    />
-  </section>
+      <!-- Menú de acciones de fila con position: fixed -->
+      <template v-if="colorActivo">
+        <div
+          ref="menu-flotante"
+          class="fixed z-30 w-44 overflow-hidden rounded-card border border-neutral-light bg-neutral-white py-1 text-left shadow-lg"
+          :style="{ top: `${posMenu.top}px`, left: `${posMenu.left}px` }"
+          role="menu"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
+            @click="ejecutar('editar')"
+          >
+            <Pencil class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
+            Editar color
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
+            @click="ejecutar('copiar')"
+          >
+            <Copy class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
+            Copiar valor
+          </button>
+        </div>
+      </template>
+
+    <template #pie>
+      <PaginacionTabla
+        :pagina="pagina.pagina"
+        :por-pagina="pagina.porPagina"
+        :total="pagina.total"
+        :total-paginas="pagina.totalPaginas"
+        etiqueta="colores"
+        @ir-pagina="(n) => $emit('ir-pagina', n)"
+      />
+    </template>
+  </TablaBase>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Copy, Check, MoreVertical } from 'lucide-vue-next';
+import { Copy, Check, MoreVertical, Pencil } from 'lucide-vue-next';
+import TablaBase, { CLASE_ENCABEZADO_TABLA } from './TablaBase.vue';
 import PaginacionTabla from './PaginacionTabla.vue';
-import type { PaginaColores } from '../interfaces';
+import { useMenuFlotante } from '../composables/useMenuFlotante';
+import type { ColorListado, PaginaColores } from '../interfaces';
 
 const props = defineProps<{
   pagina: PaginaColores;
   cargando?: boolean;
 }>();
 
-defineEmits<{
-  (e: 'menu', id: string): void;
+const emit = defineEmits<{
+  (e: 'editar', id: string): void;
   (e: 'ir-pagina', numero: number): void;
 }>();
 
 const items = computed(() => props.pagina.items);
+
+const {
+  activo: colorActivo,
+  pos: posMenu,
+  abrir: abrirMenu,
+  cerrar: cerrarMenu,
+} = useMenuFlotante<ColorListado>();
+
+function ejecutar(accion: 'editar' | 'copiar'): void {
+  const item = colorActivo.value;
+  cerrarMenu();
+  if (!item) return;
+  if (accion === 'editar') {
+    emit('editar', item.id);
+  } else if (accion === 'copiar') {
+    void copiar(item.valorCromatico);
+  }
+}
 
 const copiado = ref<string | null>(null);
 async function copiar(hex: string): Promise<void> {

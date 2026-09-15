@@ -63,9 +63,16 @@
           <li v-for="sub in cat.hijos" :key="sub.id">
             <button
               type="button"
-              class="flex w-full items-center gap-2 rounded-button py-1.5 pl-3 pr-2 text-left text-sm text-neutral-medium hover:bg-neutral-lightest hover:text-neutral-dark"
+              class="flex w-full items-center gap-2 rounded-button py-1.5 pl-3 pr-2 text-left text-sm"
+              :class="
+                sub.id === seleccionadaId
+                  ? 'bg-subaction text-corporate font-medium'
+                  : 'text-neutral-medium hover:bg-neutral-lightest hover:text-neutral-dark'
+              "
+              :aria-current="sub.id === seleccionadaId ? 'true' : undefined"
+              @click="$emit('seleccionar', sub.id)"
             >
-              <span class="h-1 w-1 rounded-full bg-neutral-light" aria-hidden="true" />
+              <span class="h-1 w-1 rounded-full bg-current" aria-hidden="true" />
               {{ sub.nombre }}
             </button>
           </li>

@@ -1,40 +1,33 @@
 <template>
-  <section
-    class="rounded-card border border-neutral-light bg-neutral-white shadow-sm"
-    aria-label="Actividad reciente del catálogo"
+  <TablaBase
+    etiqueta="Actividad reciente del catálogo"
+    :cargando="cargando"
+    :vacio="!registros.length"
+    mensaje-vacio="Aún no hay actividad registrada en el catálogo."
+    alto-fila-skeleton="h-10"
   >
-    <header class="flex items-start justify-between gap-4 border-b border-neutral-light p-5">
-      <div>
-        <h2 class="text-lg font-semibold text-neutral-black">Actividad reciente</h2>
-        <p class="mt-0.5 text-sm text-neutral-medium">
-          Últimas acciones realizadas en el catálogo.
-        </p>
+    <template #encabezado>
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-semibold text-neutral-black">Actividad reciente</h2>
+          <p class="mt-0.5 text-sm text-neutral-medium">
+            Últimas acciones realizadas en el catálogo.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="inline-flex shrink-0 items-center gap-1 rounded-button border border-neutral-light px-3 py-1.5 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
+          @click="$emit('verTodo')"
+        >
+          Ver toda la actividad
+          <ArrowRight class="h-4 w-4" aria-hidden="true" />
+        </button>
       </div>
-      <button
-        type="button"
-        class="inline-flex shrink-0 items-center gap-1 rounded-button border border-neutral-light px-3 py-1.5 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-        @click="$emit('verTodo')"
-      >
-        Ver toda la actividad
-        <ArrowRight class="h-4 w-4" aria-hidden="true" />
-      </button>
-    </header>
+    </template>
 
-    <!-- Estado de carga -->
-    <div v-if="cargando" class="space-y-3 p-5">
-      <div v-for="n in 6" :key="n" class="h-10 animate-pulse rounded-input bg-neutral-lightest" />
-    </div>
-
-    <!-- Estado vacío -->
-    <p v-else-if="!registros.length" class="p-8 text-center text-sm text-neutral-medium">
-      Aún no hay actividad registrada en el catálogo.
-    </p>
-
-    <!-- Tabla -->
-    <div v-else class="overflow-x-auto">
-      <table class="w-full min-w-[640px] text-left text-sm">
+    <table class="w-full min-w-[640px] text-left text-sm">
         <thead>
-          <tr class="border-b border-neutral-light text-xs uppercase tracking-wide text-neutral-medium">
+          <tr :class="CLASE_ENCABEZADO_TABLA">
             <th scope="col" class="px-5 py-3 font-semibold">Fecha y hora</th>
             <th scope="col" class="px-5 py-3 font-semibold">Usuario</th>
             <th scope="col" class="px-5 py-3 font-semibold">Acción</th>
@@ -68,12 +61,12 @@
           </tr>
         </tbody>
       </table>
-    </div>
-  </section>
+  </TablaBase>
 </template>
 
 <script setup lang="ts">
 import { ArrowRight } from 'lucide-vue-next';
+import TablaBase, { CLASE_ENCABEZADO_TABLA } from './TablaBase.vue';
 import { useFormatoCatalogo } from '../composables/useFormatoCatalogo';
 import type { EstadoActividad, RegistroActividad } from '../interfaces';
 
