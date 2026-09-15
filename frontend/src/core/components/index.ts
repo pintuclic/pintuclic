@@ -43,8 +43,5 @@ export { default as Table } from './data-display/Table.vue';
 export { default as Badge } from './data-display/Badge.vue';
 export { default as Avatar } from './data-display/Avatar.vue';
 
-// 7. Piezas estructurales y de layout
-export { default as FooterPrincipal } from './layout/FooterPrincipal.vue';
-
 // 8. Herramientas de soporte y depuración interna
 export { default as DevRoleSwitcher } from './dev/DevRoleSwitcher.vue';

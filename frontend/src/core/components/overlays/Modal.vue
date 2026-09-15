@@ -4,9 +4,8 @@
       <!-- Overlay -->
       <div class="absolute inset-0 bg-neutral-black/50 backdrop-blur-sm" @click="close"></div>
       
-      <!-- Modal Content -->
       <div 
-        class="relative bg-white rounded-modal shadow-xl w-full max-h-[90vh] flex flex-col overflow-hidden"
+        class="relative bg-white rounded-xl shadow-xl w-full max-h-[90vh] flex flex-col overflow-hidden"
         :class="maxWidthClass"
       >
         <!--
