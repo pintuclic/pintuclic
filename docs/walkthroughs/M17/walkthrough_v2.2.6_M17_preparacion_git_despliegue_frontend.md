@@ -4,13 +4,13 @@
 
 - Versión: v2.2.6, PATCH. Fecha: 14/09/2026. Responsable: Codex.
 - Alcance: M17 frontend y configuración compartida de Git, CI y despliegue.
-- Autorización: el usuario pidió resolver las diferencias detectadas y recibir el informe antes de subir. No se autoriza push en esta entrega.
+- Autorización inicial: preparar las diferencias e informar antes de subir. Después de recibir el informe, el usuario autorizó publicar en `pintuclic/pintuclic:feature/m17-permisos-roles`.
 
 ## 2. Historias y comportamiento
 
 Se conserva la interfaz móvil v2.2.5. Los servicios usados por HU-ADM-01/02/04/05/06 consultan la API real y propagan sus errores. Se retiran el flag demo, el snapshot de datos y su generador, las escrituras en memoria y el historial de actividad simulado. Esto no certifica nuevas HUs ni sustituye la auditoría del servidor.
 
-La integración anterior y la adaptación móvil se registran primero en un commit local v2.2.5. La preparación v2.2.6 incorpora versión de release verificable, validaciones de CI, guía de despliegue y exclusión de respaldos/temporales. La reconciliación de historiales preserva los commits del sitio estático y mantiene el árbol modular en la rama de trabajo; main remoto no se modifica.
+La integración anterior y la adaptación móvil se registraron en el commit v2.2.5. La preparación v2.2.6 incorpora versión de release verificable, validaciones de CI, guía de despliegue y exclusión de respaldos/temporales. La publicación al repositorio del equipo parte de su historial modular compartido; no incorpora la reconciliación con el sitio estático del repositorio personal.
 
 ## 3. Reglas y políticas
 
@@ -19,7 +19,7 @@ La integración anterior y la adaptación móvil se registran primero en un comm
 - HU-SEG-06: pruebas derivadas del SQL central solo extraen datos públicos. No se incorporan secretos a los paquetes.
 - M18: los envíos siguen siendo responsabilidad del backend y SMTP.
 - Guía de mocks: SQL central es el origen; no quedan fixtures JSON de runtime.
-- Convención Git: commits locales con tipo, alcance y versión; ningún push, force push, tag remoto o despliegue.
+- Convención Git: commits con tipo, alcance y versión; publicación autorizada únicamente en `feature/m17-permisos-roles`, sin force push, etiquetas remotas ni despliegue de main.
 
 ## 4. Validaciones
 
@@ -43,7 +43,7 @@ Las pruebas frontend verifican contratos HTTP incluso con el antiguo flag demo a
 
 ## 5. Dependencias y despliegue
 
-`DEPLOY.md` documenta el stack modular, configuración de servidor, preparación de esquema, seed exclusivo de pruebas, dominio/TLS, controles de salud y reversión. El sitio estático de main requería otra configuración Dokploy; la propuesta de integración cambia el tipo de aplicación y necesita preparar el servidor antes de desplegar.
+`DEPLOY.md` documenta el stack modular, configuración de servidor, preparación de esquema, seed exclusivo de pruebas, dominio/TLS, controles de salud y reversión. El destino posterior indicado por el usuario es el repositorio modular del equipo; las observaciones del informe anterior sobre el sitio estático correspondían al remoto personal y no describen este destino.
 
 Calidad usa Node 22, npm ci, lint sin advertencias, pruebas M17 y compilación frontend/backend. Deploy y Zip Release dependen de Calidad y solo ejecutan en main. No se aprovisionaron runner, secretos, dominio ni PostgreSQL.
 
@@ -58,4 +58,14 @@ Calidad usa Node 22, npm ci, lint sin advertencias, pruebas M17 y compilación f
 
 ## 7. Entrega
 
-Versión sincronizada en v2.2.6. La subida queda pendiente de que el usuario reciba y apruebe el informe. Los archivos históricos del sitio estático siguen disponibles en Git; no se borran respaldos del disco ni se tocan archivos de `docs/reviews/`.
+Versión sincronizada en v2.2.6. El usuario recibió el informe y autorizó la publicación en el repositorio del equipo. No se borran respaldos del disco ni se modifican archivos de `docs/reviews/`.
+
+### Destino de publicación
+
+- Repositorio: `https://github.com/pintuclic/pintuclic.git`.
+- Rama: `feature/m17-permisos-roles`; carpeta de interés del usuario: `frontend/`.
+- Base remota comprobada: `864c9e2`.
+- Dependencias integradas: seis commits existentes de `feature/core-frontend-layouts` hasta `81504da`.
+- Entrega: `41bcc88` (v2.2.5), `6081037` (v2.2.6) y el ajuste documental del destino.
+- Historial personal excluido: el merge `b02d13f` no forma parte de esta publicación.
+- El avance es fast-forward y no modifica main. Calidad se ejecuta en la rama; Deploy y Zip Release continúan limitados a main.

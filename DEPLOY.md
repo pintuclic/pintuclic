@@ -1,21 +1,21 @@
 # Despliegue de Pintu Clic — Aplicación modular
 
-Esta entrega usa Vue, Express y PostgreSQL. Sustituye la configuración del sitio estático en la rama propuesta; la aplicación anterior se conserva en el historial Git. No debe desplegarse como si fuera el antiguo Dockerfile de la raíz.
+Esta entrega usa Vue, Express y PostgreSQL. Su destino autorizado es el repositorio `pintuclic/pintuclic`, rama `feature/m17-permisos-roles`. La carpeta `frontend/` forma parte del stack completo; el servidor se despliega con el compose de la raíz.
 
 ## 1. Entrega mediante Git
 
-1. Trabajar en `codex/m17-core-frontend-layouts` y registrar únicamente código, recursos y documentación del alcance aprobado.
+1. Preparar la entrega contra `feature/m17-permisos-roles` y registrar únicamente código, recursos y documentación del alcance aprobado.
 2. Ejecutar las validaciones indicadas abajo y sincronizar versión, lockfile, CHANGELOG y walkthrough.
-3. Informar al responsable antes del push. Esta preparación no autoriza publicar ni desplegar.
-4. Tras su aprobación, publicar únicamente la rama de trabajo, sin `--force`:
+3. El usuario autorizó publicar en esa rama después del informe de preparación. Integrar a main o desplegar el servidor sigue siendo una operación separada.
+4. Publicar únicamente la referencia de destino, sin `--force`. `equipo` debe apuntar a `https://github.com/pintuclic/pintuclic.git`:
 
 ```bash
-git push -u origin codex/m17-core-frontend-layouts
+git push equipo HEAD:refs/heads/feature/m17-permisos-roles
 ```
 
-5. Revisar la propuesta de integración contra `main`. La sustitución del sitio estático por el proyecto modular requiere revisar el cambio completo antes de integrarlo.
+5. Revisar la propuesta de integración contra `main` antes de desplegar el servidor.
 
-La integración local de historiales mantiene el árbol modular y registra ambos padres; el sitio anterior sigue recuperable desde su commit y su rama local de respaldo. No se reescribe `main` ni el historial remoto.
+La base remota de M17, `864c9e2`, es ancestro de la entrega. Se incluyen los seis commits existentes de layouts/core hasta `81504da`, necesarios para las vistas de M17, y los commits `41bcc88` y `6081037` de integración y preparación. No se incorpora el merge `b02d13f` ni el historial del repositorio personal. No se reescribe main ni se fuerza la rama remota.
 
 ## 2. Validaciones
 
@@ -73,4 +73,4 @@ Zip Release usa exactamente `frontend/package.json`, exige coincidencia con pack
 
 ## 7. Reversión
 
-Para cambios dentro de la aplicación modular, seleccionar el commit conocido anterior, restaurar su configuración compatible y reconstruir el stack tras revisar compatibilidad del esquema. La transición inicial desde el sitio estático debe conservar su aplicación/configuración en el servidor hasta verificar la nueva: volver al sitio anterior requiere su configuración estática de Dokploy, no ejecutar ese commit con el compose modular. Un cambio de Git no revierte por sí mismo una migración de base de datos.
+Seleccionar el commit conocido anterior, restaurar su configuración compatible y reconstruir el stack tras revisar compatibilidad del esquema. Un cambio de Git no revierte por sí mismo una migración de base de datos. Publicar esta rama solo ejecuta Calidad; no inicia el workflow Deploy, limitado a main.
