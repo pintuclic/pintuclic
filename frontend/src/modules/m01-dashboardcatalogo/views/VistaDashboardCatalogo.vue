@@ -1,60 +1,48 @@
 <template>
-  <div class="flex min-h-screen bg-neutral-lightest">
-    <BarraLateralAdmin item-activo="dashboard" @navegar="irA" />
+  <DisenoAdmin>
+    <div class="space-y-8 p-6 lg:p-8">
+      <header class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-neutral-black sm:text-3xl">
+            ¡Hola, {{ primerNombre }}! <span aria-hidden="true">👋</span>
+          </h1>
+          <p class="mt-1 text-sm text-neutral-medium">
+            Aquí tienes un resumen de tu catálogo. Todo en orden para seguir pintando grandes proyectos.
+          </p>
+        </div>
+        <div class="text-sm text-neutral-medium sm:text-right">
+          <p class="font-medium capitalize text-neutral-dark">{{ fechaLegible }}</p>
+          <p>Pintu Clic Admin</p>
+        </div>
+      </header>
 
-    <div class="flex min-w-0 flex-1 flex-col">
-      <BarraSuperiorAdmin
-        v-model:termino-busqueda="terminoBusqueda"
-        seccion="Dashboard"
-        :nombre-usuario="nombreUsuario"
-        rol-usuario="Administrador"
-        :notificaciones="3"
+      <p
+        v-if="error"
+        class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
+      >
+        {{ error }}
+      </p>
+
+      <PanelMetricas :metricas="metricas" :cargando="cargando && !cargado" />
+
+      <PanelAccesosRapidos
+        :accesos="accesosRapidos"
+        @navegar="irA"
+        @ver-mas="irA('/admin/catalogo/acciones')"
       />
 
-      <main class="flex-1 space-y-8 p-6 lg:p-8">
-        <header class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-neutral-black sm:text-3xl">
-              ¡Hola, {{ primerNombre }}! <span aria-hidden="true">👋</span>
-            </h1>
-            <p class="mt-1 text-sm text-neutral-medium">
-              Aquí tienes un resumen de tu catálogo. Todo en orden para seguir pintando grandes proyectos.
-            </p>
-          </div>
-          <div class="text-sm text-neutral-medium sm:text-right">
-            <p class="font-medium capitalize text-neutral-dark">{{ fechaLegible }}</p>
-            <p>Pintu Clic Admin</p>
-          </div>
-        </header>
-
-        <p
-          v-if="error"
-          class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
-        >
-          {{ error }}
-        </p>
-
-        <PanelMetricas :metricas="metricas" :cargando="cargando && !cargado" />
-
-        <PanelAccesosRapidos
-          :accesos="accesosRapidos"
-          @navegar="irA"
-          @ver-mas="irA('/admin/catalogo/acciones')"
-        />
-
-        <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <div class="xl:col-span-2">
-            <TablaActividadReciente
-              :registros="actividadReciente"
-              :cargando="cargando && !cargado"
-              @ver-todo="irA('/admin/catalogo/actividad')"
-            />
-          </div>
-          <GraficoEstadoCatalogo :estado="estadoCatalogo" :cargando="cargando && !cargado" />
+      <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div class="xl:col-span-2">
+          <TablaActividadReciente
+            :registros="actividadReciente"
+            :cargando="cargando && !cargado"
+            @ver-todo="irA('/admin/catalogo/actividad')"
+          />
         </div>
-      </main>
+        <GraficoEstadoCatalogo :estado="estadoCatalogo" :cargando="cargando && !cargado" />
+      </div>
     </div>
-  </div>
+  </DisenoAdmin>
 </template>
 
 <script setup lang="ts">
@@ -71,9 +59,8 @@
  * Permiso requerido: «Gestión del catálogo» (M17), revalidado en el servidor.
  * ==============================================================================
  */
-import { computed, ref } from 'vue';
-import BarraLateralAdmin from '../components/BarraLateralAdmin.vue';
-import BarraSuperiorAdmin from '../components/BarraSuperiorAdmin.vue';
+import { computed } from 'vue';
+import DisenoAdmin from '@/core/layouts/DisenoAdmin.vue';
 import PanelMetricas from '../components/PanelMetricas.vue';
 import PanelAccesosRapidos from '../components/PanelAccesosRapidos.vue';
 import TablaActividadReciente from '../components/TablaActividadReciente.vue';
@@ -92,10 +79,8 @@ const {
   estadoCatalogo,
 } = useDashboardCatalogo();
 
-const terminoBusqueda = ref('');
 
-// Navegación del panel: la provee `VistaPanelCatalogo.vue` (shell) mientras no
-// exista `vue-router` montado.
+// Navegación del panel: la provee el router (dashboardCatalogoRoutes).
 const { irA } = usePanelNavegacion();
 
 // TODO(M04): tomar el nombre real desde el store de sesión cuando el panel

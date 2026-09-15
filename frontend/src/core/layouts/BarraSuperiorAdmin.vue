@@ -74,6 +74,15 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * ==============================================================================
+ * BARRA SUPERIOR DEL PANEL ADMINISTRATIVO (chrome compartido)
+ * Ubicación: src/core/layouts/BarraSuperiorAdmin.vue
+ *
+ * Migas, buscador, notificaciones y perfil. Montada una sola vez por
+ * `DisenoAdmin.vue`; `seccion` llega derivada de `route.meta.titulo`.
+ * ==============================================================================
+ */
 import { computed } from 'vue';
 import { ChevronRight, ChevronDown, Search, Bell, Menu } from 'lucide-vue-next';
 import { useMenuMovil } from '../composables/useMenuMovil';

@@ -1,84 +1,81 @@
 <template>
-  <div class="flex min-h-screen bg-neutral-lightest">
-    <BarraLateralAdmin item-activo="categorias" @navegar="irA" />
+  <DisenoAdmin>
+    <div class="space-y-6 p-6 lg:p-8">
+      <EncabezadoSeccion
+        titulo="Categorías y subcategorías"
+        descripcion="Organiza y gestiona la estructura de tu catálogo. Crea, edita y ordena categorías para una mejor experiencia de navegación."
+      >
+        <template #acciones>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
+            @click="irA('/admin/catalogo/categorias/subcategorias/nueva')"
+          >
+            <Plus class="h-4 w-4" aria-hidden="true" />
+            Nueva subcategoría
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover"
+            @click="irA('/admin/catalogo/categorias/nueva')"
+          >
+            <Plus class="h-4 w-4" aria-hidden="true" />
+            Nueva categoría
+          </button>
+        </template>
+      </EncabezadoSeccion>
 
-    <div class="flex min-w-0 flex-1 flex-col">
-      <BarraSuperiorAdmin
-        v-model:termino-busqueda="busquedaGlobal"
-        seccion="Categorías"
-        nombre-usuario="Carlos Álvarez"
-        rol-usuario="Administrador"
-        :notificaciones="3"
-      />
+      <p
+        v-if="error"
+        class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
+      >
+        {{ error }}
+      </p>
 
-      <main class="flex-1 space-y-6 p-6 lg:p-8">
-        <EncabezadoSeccion
-          titulo="Categorías y subcategorías"
-          descripcion="Organiza y gestiona la estructura de tu catálogo. Crea, edita y ordena categorías para una mejor experiencia de navegación."
-        >
-          <template #acciones>
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-              @click="irA('/admin/catalogo/categorias/subcategorias/nueva')"
-            >
-              <Plus class="h-4 w-4" aria-hidden="true" />
-              Nueva subcategoría
-            </button>
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover"
-              @click="irA('/admin/catalogo/categorias/nueva')"
-            >
-              <Plus class="h-4 w-4" aria-hidden="true" />
-              Nueva categoría
-            </button>
-          </template>
-        </EncabezadoSeccion>
+      <!--
+        Sin sticky/fixed a propósito: el árbol y el panel de detalle se
+        desplazan junto con el resto de la página, como cualquier contenido
+        normal. `min-w-0` evita que la tabla de elementos empuje el ancho de
+        la columna y genere scroll horizontal.
+      -->
+      <div class="flex flex-col gap-6 lg:flex-row">
+        <ArbolCategorias
+          :arbol="arbolFiltrado"
+          :seleccionada-id="seleccionadaId"
+          :expandidas="expandidas"
+          :busqueda="busquedaArbol"
+          :cargando="cargando"
+          class="min-w-0 lg:w-80 lg:shrink-0"
+          @seleccionar="seleccionar"
+          @alternar="alternarExpandida"
+          @buscar="buscarEnArbol"
+        />
 
-        <p
-          v-if="error"
-          class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
-        >
-          {{ error }}
-        </p>
-
-        <!--
-          Sin sticky/fixed a propósito: el árbol y el panel de detalle se
-          desplazan junto con el resto de la página, como cualquier contenido
-          normal. `min-w-0` evita que la tabla de elementos empuje el ancho de
-          la columna y genere scroll horizontal.
-        -->
-        <div class="flex flex-col gap-6 lg:flex-row">
-          <ArbolCategorias
-            :arbol="arbolFiltrado"
-            :seleccionada-id="seleccionadaId"
-            :expandidas="expandidas"
-            :busqueda="busquedaArbol"
-            :cargando="cargando"
-            class="min-w-0 lg:w-80 lg:shrink-0"
-            @seleccionar="seleccionar"
-            @alternar="alternarExpandida"
-            @buscar="buscarEnArbol"
-          />
-
-          <PanelDetalleCategoria
-            :detalle="detalle"
-            :elementos="elementosFiltrados"
-            :filtros="filtrosElementos"
-            :total-elementos="totalElementos"
-            :cargando="cargandoDetalle"
-            class="min-w-0 flex-1"
-            @editar="(id) => irA(`/admin/catalogo/categorias/${id}/editar`)"
-            @menu="pedirDesactivar"
-            @menu-elemento="pedirDesactivar"
-            @ordenar="ordenarElementosPor"
-            @buscar="(t) => aplicarFiltroElementos({ busqueda: t })"
-            @filtrar-tipo="onFiltrarTipo"
-          />
-        </div>
-      </main>
+        <PanelDetalleCategoria
+          :detalle="detalle"
+          :elementos="elementosFiltrados"
+          :filtros="filtrosElementos"
+          :total-elementos="totalElementos"
+          :cargando="cargandoDetalle"
+          class="min-w-0 flex-1"
+          @editar="(id) => irA(`/admin/catalogo/categorias/${id}/editar`)"
+          @menu="pedirDesactivar"
+          @menu-elemento="pedirDesactivar"
+          @ordenar="ordenarElementosPor"
+          @buscar="(t) => aplicarFiltroElementos({ busqueda: t })"
+          @filtrar-tipo="onFiltrarTipo"
+          @seleccion-elementos="(ids) => (seleccionados = ids)"
+        />
+      </div>
     </div>
+
+    <BarraAccionesMasivas
+      :cantidad="seleccionados.length"
+      @limpiar="seleccionados = []"
+      @activar-lote="() => {}"
+      @desactivar-lote="() => {}"
+      @exportar-lote="() => {}"
+    />
 
     <!-- ADMIN 12 - Modal desactivar categoría/subcategoría -->
     <div
@@ -189,7 +186,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </DisenoAdmin>
 </template>
 
 <script setup lang="ts">
@@ -205,14 +202,14 @@
  * Permiso requerido: «Gestión del catálogo» (M17), revalidado en el servidor.
  * ==============================================================================
  */
-import { ref } from 'vue';
+import { onUnmounted, ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, AlertTriangle, Info, X, Layers, Eye, Power } from 'lucide-vue-next';
-import BarraLateralAdmin from '../components/BarraLateralAdmin.vue';
-import BarraSuperiorAdmin from '../components/BarraSuperiorAdmin.vue';
+import DisenoAdmin from '@/core/layouts/DisenoAdmin.vue';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import ArbolCategorias from '../components/ArbolCategorias.vue';
 import PanelDetalleCategoria from '../components/PanelDetalleCategoria.vue';
+import BarraAccionesMasivas from '../components/BarraAccionesMasivas.vue';
 import { useCategorias } from '../composables/useCategorias';
 import { useProductosStore } from '../store/productos.store';
 import type { TipoNodoCategoria } from '../interfaces';
@@ -242,8 +239,8 @@ const {
   formatearNumero,
 } = useCategorias();
 
-const busquedaGlobal = ref('');
 const entiendoImpacto = ref(false);
+const seleccionados = ref<string[]>([]);
 
 function onFiltrarTipo(valor: string): void {
   const tipo = valor === '' ? null : (valor as TipoNodoCategoria);
@@ -254,11 +251,13 @@ function onFiltrarTipo(valor: string): void {
 // de navegar (el listado real vive en VistaProductos / useProductos).
 const productosStore = useProductosStore();
 
-/** «Ver productos afectados»: filtra el listado por la categoría del modal. */
+/** «Ver productos afectados»: filtra el listado por la categoría y cierra el modal (el store no se resetea solo al navegar). */
 function verProductosAfectados(): void {
   if (impactoDesactivar.value) {
     void productosStore.aplicarFiltros({ categoriaId: impactoDesactivar.value.id });
   }
+  cancelarDesactivar();
+  entiendoImpacto.value = false;
   irA('/admin/catalogo/productos');
 }
 
@@ -268,4 +267,11 @@ async function onConfirmarDesactivar(): Promise<void> {
 }
 
 const { irA } = usePanelNavegacion();
+
+// El modal de desactivar vive en el store (Pinia, no se resetea al desmontar
+// la vista): si el usuario sale por cualquier otro camino con el modal
+// abierto, lo cerramos para no encontrarlo reaparecido al volver.
+onUnmounted(() => {
+  cancelarDesactivar();
+});
 </script>

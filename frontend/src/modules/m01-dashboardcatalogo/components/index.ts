@@ -1,9 +1,10 @@
-// Chrome del panel + primitivas (compartido entre vistas)
-export { default as BarraLateralAdmin } from './BarraLateralAdmin.vue';
-export { default as BarraSuperiorAdmin } from './BarraSuperiorAdmin.vue';
+// Primitivas compartidas entre vistas
+// (el chrome del panel — barra lateral / superior — vive en core/layouts/DisenoAdmin.vue)
 export { default as EncabezadoSeccion } from './EncabezadoSeccion.vue';
 export { default as PaginacionTabla } from './PaginacionTabla.vue';
+export { default as TablaBase } from './TablaBase.vue';
 export { default as TarjetaEstadistica } from './TarjetaEstadistica.vue';
+export { default as BarraAccionesMasivas } from './BarraAccionesMasivas.vue';
 
 // Vista: Dashboard de catálogo (ADMIN 01)
 export { default as GraficoEstadoCatalogo } from './GraficoEstadoCatalogo.vue';

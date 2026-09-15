@@ -3,8 +3,8 @@ import type { Ref } from 'vue';
 
 /**
  * ==============================================================================
- * M01 - ESTADO DEL MENÚ LATERAL EN MÓVIL / TABLET
- * Ubicación: src/modules/m01-dashboardcatalogo/composables/useMenuMovil.ts
+ * ESTADO DEL MENÚ LATERAL EN MÓVIL / TABLET (panel administrativo)
+ * Ubicación: src/core/composables/useMenuMovil.ts
  *
  * En escritorio (lg+) la barra lateral es fija y siempre visible. Por debajo de
  * ese punto se comporta como un panel deslizable (off-canvas) que se abre con el
@@ -13,8 +13,7 @@ import type { Ref } from 'vue';
  *
  * El estado se comparte como singleton a nivel de módulo para que la barra
  * superior (que tiene el botón) y la barra lateral (que se muestra/oculta)
- * hablen entre sí sin tener que cablear props a través de las 14 vistas del
- * panel. Cada vista simplemente monta ambas barras como hasta ahora.
+ * hablen entre sí sin cablear props a través de `DisenoAdmin.vue`.
  * ==============================================================================
  */
 const abierto: Ref<boolean> = ref(false);

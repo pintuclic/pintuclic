@@ -1,71 +1,67 @@
 <template>
-  <div class="flex min-h-screen bg-neutral-lightest">
-    <BarraLateralAdmin item-activo="productos" @navegar="irA" />
+  <DisenoAdmin>
+    <div class="space-y-6 p-6 lg:p-8">
+      <EncabezadoSeccion
+        titulo="Gestión de productos"
+        descripcion="Administra tu catálogo de productos: agrega, edita y organiza todos tus productos en un solo lugar."
+      >
+        <template #acciones>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-button bg-conversion px-4 py-2 text-sm font-medium text-neutral-white transition-colors hover:bg-conversion-hover focus:outline-none focus:ring-2 focus:ring-conversion focus:ring-offset-2"
+            @click="irA('/admin/catalogo/productos/nuevo')"
+          >
+            <Plus class="h-4 w-4" aria-hidden="true" />
+            Nuevo producto
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark transition-colors hover:bg-neutral-lightest focus:outline-none focus:ring-2 focus:ring-action focus:ring-offset-2"
+            @click="irA('/admin/catalogo/productos/exportar')"
+          >
+            <Download class="h-4 w-4" aria-hidden="true" />
+            Exportar
+          </button>
+        </template>
+      </EncabezadoSeccion>
 
-    <div class="flex min-w-0 flex-1 flex-col">
-      <BarraSuperiorAdmin
-        v-model:termino-busqueda="busquedaGlobal"
-        seccion="Productos"
-        nombre-usuario="Carlos Álvarez"
-        rol-usuario="Administrador"
-        :notificaciones="3"
+      <p
+        v-if="error"
+        class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
+      >
+        {{ error }}
+      </p>
+
+      <FiltrosProductos
+        :filtros="filtros"
+        :opciones="opcionesFiltro"
+        :hay-filtros-activos="hayFiltrosActivos"
+        @cambiar="aplicarFiltros"
+        @limpiar="limpiarFiltros"
       />
 
-      <main class="flex-1 space-y-6 p-6 lg:p-8">
-        <EncabezadoSeccion
-          titulo="Gestión de productos"
-          descripcion="Administra tu catálogo de productos: agrega, edita y organiza todos tus productos en un solo lugar."
-        >
-          <template #acciones>
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-button bg-conversion px-4 py-2 text-sm font-medium text-neutral-white transition-colors hover:bg-conversion-hover focus:outline-none focus:ring-2 focus:ring-conversion focus:ring-offset-2"
-              @click="irA('/admin/catalogo/productos/nuevo')"
-            >
-              <Plus class="h-4 w-4" aria-hidden="true" />
-              Nuevo producto
-            </button>
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark transition-colors hover:bg-neutral-lightest focus:outline-none focus:ring-2 focus:ring-action focus:ring-offset-2"
-              @click="irA('/admin/catalogo/productos/exportar')"
-            >
-              <Download class="h-4 w-4" aria-hidden="true" />
-              Exportar
-            </button>
-          </template>
-        </EncabezadoSeccion>
-
-        <p
-          v-if="error"
-          class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
-        >
-          {{ error }}
-        </p>
-
-        <FiltrosProductos
-          :filtros="filtros"
-          :opciones="opcionesFiltro"
-          :hay-filtros-activos="hayFiltrosActivos"
-          @cambiar="aplicarFiltros"
-          @limpiar="limpiarFiltros"
-        />
-
-        <TablaProductos
-          v-if="pagina"
-          :pagina="pagina"
-          :filtros="filtros"
-          :cargando="cargando"
-          @ordenar="ordenarPor"
-          @ir-pagina="irAPagina"
-          @abrir="(id) => irA(`/admin/catalogo/productos/${id}`)"
-          @editar="(id) => irA(`/admin/catalogo/productos/${id}/editar`)"
-          @duplicar="() => irA('/admin/catalogo/productos/nuevo')"
-          @seleccion="onSeleccion"
-        />
-      </main>
+      <TablaProductos
+        v-if="pagina"
+        :pagina="pagina"
+        :filtros="filtros"
+        :cargando="cargando"
+        @ordenar="ordenarPor"
+        @ir-pagina="irAPagina"
+        @abrir="(id) => irA(`/admin/catalogo/productos/${id}`)"
+        @editar="(id) => irA(`/admin/catalogo/productos/${id}/editar`)"
+        @duplicar="() => irA('/admin/catalogo/productos/nuevo')"
+        @seleccion="onSeleccion"
+      />
     </div>
-  </div>
+
+    <BarraAccionesMasivas
+      :cantidad="seleccionados.length"
+      @limpiar="seleccionados = []"
+      @activar-lote="() => {}"
+      @desactivar-lote="() => {}"
+      @exportar-lote="() => irA('/admin/catalogo/productos/exportar')"
+    />
+  </DisenoAdmin>
 </template>
 
 <script setup lang="ts">
@@ -84,11 +80,11 @@
 import { ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, Download } from 'lucide-vue-next';
-import BarraLateralAdmin from '../components/BarraLateralAdmin.vue';
-import BarraSuperiorAdmin from '../components/BarraSuperiorAdmin.vue';
+import DisenoAdmin from '@/core/layouts/DisenoAdmin.vue';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import FiltrosProductos from '../components/FiltrosProductos.vue';
 import TablaProductos from '../components/TablaProductos.vue';
+import BarraAccionesMasivas from '../components/BarraAccionesMasivas.vue';
 import { useProductos } from '../composables/useProductos';
 
 const {
@@ -104,12 +100,11 @@ const {
   limpiarFiltros,
 } = useProductos();
 
-const busquedaGlobal = ref('');
 const seleccionados = ref<string[]>([]);
 function onSeleccion(ids: string[]): void {
   seleccionados.value = ids;
 }
 
-// Navegación provisional hasta montar el router del panel admin.
+// Navegación del panel: la provee el router (dashboardCatalogoRoutes).
 const { irA } = usePanelNavegacion();
 </script>

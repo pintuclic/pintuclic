@@ -1,20 +1,14 @@
-import { inject, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import type { InjectionKey, Ref } from 'vue';
 
 /**
  * ==============================================================================
  * M01 - NAVEGACIÓN INTERNA DEL PANEL DE CATÁLOGO
  * Ubicación: src/modules/m01-dashboardcatalogo/composables/usePanelNavegacion.ts
  *
- * Mientras el panel administrativo no monte `vue-router`, `VistaPanelCatalogo.vue`
- * actúa de "shell": mantiene la vista activa y la cambia con `<component :is>`.
- * Este composable expone esa API a cualquier vista/componente por `inject`.
- *
- * Si una vista se monta suelta (sin shell) pero hay `vue-router` montado
- * —el caso real: `dashboardCatalogoRoutes` registra cada vista con su URL—,
- * `irA()` navega por URL real con `router.push`. Si tampoco hay router
- * (tests, render aislado), `irA()` es inerte.
+ * `dashboardCatalogoRoutes` registra cada vista con su URL real bajo
+ * `/admin/catalogo/**`; `irA()` traduce el destino (path o clave corta) a esa
+ * URL y navega con `router.push`. Si no hay router montado (tests, render
+ * aislado), `irA()` es inerte.
  * ==============================================================================
  */
 
@@ -33,28 +27,17 @@ export type ClaveVistaPanel =
   | 'lineas'
   | 'linea-formulario'
   | 'colores'
+  | 'color-formulario'
   | 'busquedas';
 
 export interface PanelNavegacion {
-  /** Vista actualmente visible en el shell. */
-  vistaActiva: Ref<ClaveVistaPanel>;
-  /** Parámetro de ruta (p. ej. el id de producto al editar). */
-  parametro: Ref<string | null>;
   /** Navega a una ruta interna del panel; acepta el path completo o la clave. */
   irA: (destino: string) => void;
 }
 
-export const NAV_PANEL_CATALOGO = Symbol('nav-panel-catalogo') as InjectionKey<PanelNavegacion>;
-
 export function usePanelNavegacion(): PanelNavegacion {
-  const shell = inject(NAV_PANEL_CATALOGO, null);
-  if (shell) return shell;
-
-  // Sin shell: las vistas están montadas por `vue-router` (una URL por vista).
   const router = useRouter();
   return {
-    vistaActiva: ref<ClaveVistaPanel>('dashboard'),
-    parametro: ref<string | null>(null),
     irA: (destino: string): void => {
       const { clave, parametro } = resolverRutaPanel(destino);
       if (!clave || !router) return;
@@ -64,7 +47,7 @@ export function usePanelNavegacion(): PanelNavegacion {
 }
 
 /**
- * Inverso de `resolverRutaPanel`: traduce la clave del shell (y su parámetro)
+ * Inverso de `resolverRutaPanel`: traduce la clave de vista (y su parámetro)
  * al `path` real registrado en `dashboardCatalogoRoutes`.
  */
 export function rutaRealPanel(
@@ -113,6 +96,10 @@ export function rutaRealPanel(
         : '/admin/catalogo/lineas/nueva';
     case 'colores':
       return '/admin/catalogo/colores';
+    case 'color-formulario':
+      return parametro
+        ? `/admin/catalogo/colores/${parametro}/editar`
+        : '/admin/catalogo/colores/nuevo';
     case 'busquedas':
       return '/admin/catalogo/busquedas-sin-resultado';
     case 'dashboard':
@@ -122,9 +109,9 @@ export function rutaRealPanel(
 }
 
 /**
- * Traduce un path interno (`/admin/catalogo/...`) o una clave a la vista del
- * shell y su parámetro. Devuelve `clave: null` para rutas sin vista propia
- * (reportes, configuración, acciones de fila…): en ese caso el shell no cambia.
+ * Traduce un path interno (`/admin/catalogo/...`) o una clave a la vista y
+ * su parámetro. Devuelve `clave: null` para rutas sin vista propia
+ * (reportes, configuración, acciones de fila…): en ese caso `irA()` no navega.
  */
 export function resolverRutaPanel(destino: string): {
   clave: ClaveVistaPanel | null;
@@ -182,7 +169,12 @@ export function resolverRutaPanel(destino: string): {
     return { clave: 'marca-detalle', parametro: marcaDetalle[1] };
   }
   if (ruta.startsWith('marcas')) return { clave: 'marcas', parametro: null };
+
+  if (ruta === 'colores/nuevo') return { clave: 'color-formulario', parametro: null };
+  const colorEdicion = ruta.match(/^colores\/([^/]+)\/editar$/);
+  if (colorEdicion?.[1]) return { clave: 'color-formulario', parametro: colorEdicion[1] };
   if (ruta.startsWith('colores')) return { clave: 'colores', parametro: null };
+
   if (ruta.startsWith('busquedas')) return { clave: 'busquedas', parametro: null };
 
   return { clave: null, parametro: null };
