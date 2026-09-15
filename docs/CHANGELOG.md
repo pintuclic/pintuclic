@@ -4,6 +4,37 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.2.5] - 2026-09-14
+### Módulo: M17 — Adaptación móvil del panel administrativo
+- **Alcance:** Menú móvil con cierre y control de foco, listados en fichas verticales, paginación adaptable y formularios ajustados a pantallas pequeñas. Cambios en core autorizados explícitamente por el usuario.
+- **Calidad:** Build y TypeScript correctos, ESLint sin errores ni advertencias, ocho pruebas M17 correctas y 49 comprobaciones de tamaño entre 320 y 1440 px sin desbordamiento del contenido.
+- **Walkthrough:** [Adaptación móvil de administración](./walkthroughs/M17/walkthrough_v2.2.5_M17_responsivo_movil_frontend.md).
+
+## [v2.2.4] - 2026-09-14
+### Módulo: M17 — Perfil único en administración
+- **Alcance:** Se quitó la entrada duplicada «Administrador» del menú; «Mi perfil» queda como única vista y la URL anterior redirige a ella.
+- **Calidad:** Compilación, ESLint, pruebas M17 y navegación local verificadas.
+- **Walkthrough:** [Consolidación de Mi perfil](./walkthroughs/M17/walkthrough_v2.2.4_M17_perfil_unico_frontend.md).
+
+## [v2.2.3] - 2026-09-14
+### Módulo: M17 — Transición del drawer global
+- **Alcance:** El panel lateral de clientes se desliza desde la derecha al abrirse y sale hacia la derecha al cerrarse; respeta la preferencia de movimiento reducido.
+- **Calidad:** Compilación, ESLint, pruebas de M17 y apertura/cierre en navegador local verificados.
+- **Walkthrough:** [Transición del drawer](./walkthroughs/M17/walkthrough_v2.2.3_M17_transicion_drawer_frontend.md).
+
+## [v2.2.2] - 2026-09-14
+### Módulo: M17 — Componentes visuales compartidos
+- **Alcance:** Se completó `IconButton` en el design system global y se sustituyeron las acciones de icono duplicadas en la lista de empleados y clientes; el alta rápida del dashboard usa el botón global.
+- **Calidad:** Compilación, ESLint y pruebas M17 verificadas. Sin cambios en contratos HTTP ni backend.
+- **Walkthrough:** [Clasificación de componentes globales y M17](./walkthroughs/M17/walkthrough_v2.2.2_M17_componentes_globales_frontend.md).
+
+## [v2.2.1] - 2026-09-14
+### Módulo: M17 — Integración local con core y layouts
+- **Alcance:** Recuperación del frontend local M17 sobre `feature/core-frontend-layouts`, con UI reutilizable en las categorías de `core/components`, rutas bajo `/admin`, estado Pinia y DTOs de módulo que reutilizan validaciones globales.
+- **Calidad:** Compilación de producción y TypeScript correctos, ESLint sin advertencias, ocho pruebas correctas; alta de empleado y ficha de cliente verificadas en navegador en modo demo.
+- **Entrega:** Cambios exclusivamente locales, stash original conservado y sin push.
+- **Walkthrough:** [Integración de M17 con core y layouts](./walkthroughs/M17/walkthrough_v2.2.1_M17_integracion_core_layouts_frontend.md).
+
 ## [v2.2.0] - 2026-09-07
 ### Arquitectura Global: Estandarización de DTOs en Frontend (Globales vs Locales y Erradicación Inline)
 - **Alcance General:** Salto a versión **MINOR (v2.2.0)** que formaliza la arquitectura de **DTOs (Data Transfer Objects) en el Frontend**, documentándola en `frontend/infraestructura.md` y `AGENTS.md` (Directiva 12). Se define la separación estricta entre **DTOs Globales (`src/core/dtos/`)**, **DTOs Locales de Módulo (`src/modules/m[xx]/dtos/`)** y **Contratos Estáticos (`interfaces/`)**, eliminando al 100% las declaraciones de esquemas Zod inline en componentes `.vue`.

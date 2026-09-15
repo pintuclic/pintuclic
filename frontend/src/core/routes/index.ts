@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
+import { m17Routes } from '@/modules/m17-permisos/m17.routes';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -19,7 +20,7 @@ const routes: RouteRecordRaw[] = [
     name: 'Administracion',
     component: () => import('@/core/layouts/LayoutAdmin.vue'),
     children: [
-      // Aqui los otros equipos inyectaran sus vistas
+      ...m17Routes,
     ]
   },
   {

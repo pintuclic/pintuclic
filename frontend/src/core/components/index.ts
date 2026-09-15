@@ -48,3 +48,6 @@ export { default as FooterPrincipal } from './layout/FooterPrincipal.vue';
 
 // 8. Herramientas de soporte y depuración interna
 export { default as DevRoleSwitcher } from './dev/DevRoleSwitcher.vue';
+
+export { default as Icon } from './data-display/Icon.vue';
+export { default as PageHeader } from './layout/PageHeader.vue';

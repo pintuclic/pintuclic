@@ -1,5 +1,26 @@
 # 🛡️ Módulo M17 - Administración, Empleados y Permisos (Frontend)
 
+## Integración local vigente — v2.2.5
+
+El módulo se monta bajo `/admin` dentro de `core/layouts/LayoutAdmin.vue` y usa el router global de `core/routes/index.ts`. No crea otro router ni duplica el layout.
+
+- Adaptación móvil: menú accesible con cierre al navegar, listados con `Table mobile-cards` por debajo de 640 px, paginación y formularios apilados. Ver [walkthrough v2.2.5](../../../../docs/walkthroughs/M17/walkthrough_v2.2.5_M17_responsivo_movil_frontend.md).
+
+- UI compartida: importar desde `@/core/components`; botones, tablas, badges, iconos, modales, drawer, paginación, mensajes y encabezados residen en sus categorías de core.
+- Las acciones de icono de empleados y clientes usan `IconButton` global de `core/components/buttons/`, tanto para enlaces como para botones.
+- La ficha lateral de cliente usa el `Drawer` global, que entra desde la derecha y anima su salida antes de cerrar.
+- El menú administrativo tiene una sola entrada de perfil, `/admin/perfil`; la ruta histórica `/admin/administrador` redirige allí.
+- UI de negocio: `components/EstadoBadge.vue` y `components/StatusModal.vue` permanecen en M17.
+- Estado: Pinia en `store/useM17.ts`. Contratos sin runtime en `interfaces/`; validaciones en `dtos/`; llamadas HTTP en `services/` usando Axios global.
+- Para ejecutar, usar la carpeta `frontend/` de la raíz. `npm run dev`; abrir `/admin`. Activar `VITE_M17_DEMO=true` únicamente en la terminal de desarrollo para probar sin backend. Por defecto se consulta la sesión real en `/seguridad/sesion`.
+- Verificación: `npm run build`, `npm run lint -- --max-warnings=0` y `npm run test:m17`.
+- [Mapa completo de archivos y respaldo local](../../../../docs/walkthroughs/M17/walkthrough_v2.2.1_M17_integracion_core_layouts_frontend.md).
+- [Clasificación actual de componentes globales y propios de M17](../../../../docs/walkthroughs/M17/walkthrough_v2.2.2_M17_componentes_globales_frontend.md).
+- [Transición del drawer global de clientes](../../../../docs/walkthroughs/M17/walkthrough_v2.2.3_M17_transicion_drawer_frontend.md).
+- [Consolidación de la vista Mi perfil](../../../../docs/walkthroughs/M17/walkthrough_v2.2.4_M17_perfil_unico_frontend.md).
+
+**Nota sobre la guía histórica siguiente:** describe el simulador de autenticación originalmente previsto por la rama. La integración actual de M17 utiliza la sesión del servicio y el flag de demo indicado arriba; no depende del widget `DevRoleSwitcher` ni toma sus perfiles simulados como autorización real.
+
 Este directorio contiene la interfaz gráfica, componentes y servicios del **Módulo M17**, responsable de la gestión de cuentas de empleados, activación/desactivación y la administración de permisos individuales granulares (**HU-ADM-01 a HU-ADM-06**).
 
 ---

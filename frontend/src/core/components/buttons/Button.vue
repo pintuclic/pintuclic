@@ -1,7 +1,7 @@
 <template>
   <button
     :class="[
-      'inline-flex items-center justify-center font-heading font-medium rounded-button transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer',
+      'inline-flex gap-2 items-center justify-center font-heading font-medium rounded-button transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer',
       variantClasses[variant],
       sizeClasses[size],
       { '!bg-neutral-light !text-neutral-medium !border-neutral-light cursor-not-allowed shadow-none': disabled },
@@ -11,16 +11,19 @@
     :type="type"
     @click="$emit('click', $event)"
   >
+    <Icon v-if="icon" :name="icon" />
     <slot />
   </button>
 </template>
 
 <script setup lang="ts">
+import Icon from "../data-display/Icon.vue";
 defineProps({
+  icon: { type: String, default: "" },
   variant: {
     type: String,
     default: 'primary',
-    validator: (value: string) => ['primary', 'secondary', 'outline', 'text', 'google'].includes(value),
+    validator: (value: string) => ['primary', 'secondary', 'outline', 'text', 'google', 'action', 'green', 'ghost', 'danger'].includes(value),
   },
   size: {
     type: String,
@@ -44,6 +47,11 @@ defineProps({
 defineEmits(['click']);
 
 const variantClasses: Record<string, string> = {
+  action: 'bg-action hover:bg-action-hover text-neutral-white focus:ring-action',
+  green: 'bg-conversion hover:bg-conversion-hover text-neutral-white focus:ring-conversion',
+  ghost: 'bg-transparent text-neutral-medium hover:bg-subaction/50 focus:ring-action',
+  danger: 'bg-highlight/10 text-neutral-dark hover:bg-highlight/20 focus:ring-highlight',
+
   primary: 'bg-corporate hover:bg-corporate/90 text-white focus:ring-corporate',
   secondary: 'bg-subaction hover:bg-subaction/80 text-corporate focus:ring-corporate',
   outline: 'border border-neutral-light bg-transparent hover:bg-neutral-lightest text-corporate focus:ring-corporate',

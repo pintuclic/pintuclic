@@ -1,0 +1,101 @@
+import { defineStore, storeToRefs } from "pinia";
+import { computed, reactive } from "vue";
+import axios from "axios";
+import { service, demo } from "../services/m17.service";
+import type { Actividad, Persona, Permiso, Sesion } from "../interfaces";
+export const useM17Store = defineStore("m17", () => {
+const state = reactive({
+  employees: [] as Persona[],
+  clients: [] as Persona[],
+  catalog: [] as Permiso[],
+  activity: [] as Actividad[],
+  session: null as Sesion | null,
+  loading: false,
+  ready: false,
+  error: "",
+  toast: "",
+});
+let toastTimer: ReturnType<typeof setTimeout>;
+function message(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    if (error.response?.status === 401) {
+      state.session = null;
+      state.ready = false;
+      state.employees = [];
+      state.clients = [];
+      state.catalog = [];
+      state.error =
+        "La sesión ha finalizado. Inicia sesión de nuevo para continuar.";
+      return state.error;
+    }
+    if (error.response?.status === 403) {
+      state.ready = false;
+      state.employees = [];
+      state.clients = [];
+      state.catalog = [];
+      state.error =
+        "Acceso denegado. Tu sesión permanece abierta. Actualiza para consultar tus accesos vigentes.";
+      return state.error;
+    }
+    if (!error.response)
+      return "No se pudo conectar con el servidor. Comprueba la conexión y vuelve a intentar.";
+    return error.response.data?.message || "No se pudo guardar el cambio.";
+  }
+  return error instanceof Error
+    ? error.message
+    : "No se pudo completar la operación.";
+}
+function notify(text: string) {
+  state.toast = text;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (state.toast = ""), 6000);
+}
+function record(accion: string, entidad: string) {
+  if (demo)
+    state.activity.unshift({
+      id: Date.now(),
+      fecha: new Date().toISOString(),
+      accion,
+      entidad,
+    });
+}
+  const isAdmin = computed(() => state.session?.id_rol === 1);
+  const canAttend = computed(
+    () => isAdmin.value || !!state.session?.permisos.includes("personal.ver"),
+  );
+  async function refresh() {
+    state.loading = true;
+    state.error = "";
+    try {
+      state.session = await service.session();
+      const results = await Promise.all([
+        isAdmin.value ? service.employees() : Promise.resolve([]),
+        canAttend.value ? service.clients() : Promise.resolve([]),
+        isAdmin.value ? service.catalog() : Promise.resolve([]),
+      ]);
+      [state.employees, state.clients, state.catalog] = results;
+      state.ready = true;
+    } catch (e) {
+      state.error = message(e);
+      if (axios.isAxiosError(e) && e.response?.status === 401) {
+        state.session = null;
+        state.employees = [];
+        state.clients = [];
+        state.catalog = [];
+        state.ready = false;
+      }
+    } finally {
+      state.loading = false;
+    }
+  }
+  return { state, isAdmin, canAttend, refresh, message, notify, record };
+});
+
+export function useM17() {
+  const store = useM17Store();
+  const { isAdmin, canAttend } = storeToRefs(store);
+  return { state: store.state, isAdmin, canAttend, refresh: store.refresh, demo };
+}
+export function message(error: unknown) { return useM17Store().message(error); }
+export function notify(text: string) { useM17Store().notify(text); }
+export function record(action: string, entity: string) { useM17Store().record(action, entity); }

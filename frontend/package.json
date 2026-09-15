@@ -1,14 +1,15 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.2.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint src",
-    "lint:fix": "eslint src --fix"
+    "lint:fix": "eslint src --fix",
+    "test:m17": "node --experimental-strip-types --test src/modules/m17-permisos/tests/*.test.mjs"
   },
   "dependencies": {
     "@vee-validate/zod": "^4.15.1",

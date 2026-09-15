@@ -1,13 +1,14 @@
 <template>
   <Teleport to="body">
-    <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <!-- Overlay -->
-      <div class="absolute inset-0 bg-neutral-black/50 backdrop-blur-sm" @click="close"></div>
+    <dialog ref="dialog" :aria-labelledby="title ? titleId : undefined"
+      class="fixed inset-0 m-auto max-h-none border-0 bg-transparent p-4 backdrop:bg-neutral-black/50 backdrop:backdrop-blur-sm"
+      :class="[maxWidthClass, modelValue ? 'w-full' : 'hidden']"
+      @cancel.prevent="close"
+      @click="$event.target === $event.currentTarget && close()">
       
       <!-- Modal Content -->
-      <div 
-        class="relative bg-white rounded-modal shadow-xl w-full max-h-[90vh] flex flex-col overflow-hidden"
-        :class="maxWidthClass"
+      <div v-if="modelValue"
+        class="relative bg-white rounded-modal shadow-xl w-full max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden"
       >
         <!--
           Franja decorativa de marca (Guía UI 4.2): degradado arcoíris tomado
@@ -24,28 +25,34 @@
 
         <!-- Close Button -->
         <button 
+          type="button"
+          aria-label="Cerrar ventana"
           @click="close"
           class="absolute top-4 right-4 p-1 rounded-full text-neutral-medium hover:bg-neutral-lightest hover:text-neutral-dark transition-colors z-10 cursor-pointer"
         >
           <XIcon class="w-5 h-5" />
         </button>
         
-        <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scrollbar">
+        <div class="p-4 sm:p-6 md:p-8 min-h-0 flex-1 overflow-y-auto custom-scrollbar">
+          <h2 v-if="title" :id="titleId" class="mb-5 pr-8 text-xl font-bold text-corporate">{{ title }}</h2>
           <slot></slot>
         </div>
       </div>
-    </div>
+    </dialog>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted, onUnmounted } from 'vue';
+import { computed, watch, onBeforeUnmount, nextTick, ref, useId } from 'vue';
 import { X as XIcon } from 'lucide-vue-next';
 
+const titleId = useId();
 const props = defineProps({
+  title: { type: String, default: "" },
+  wide: { type: Boolean, default: false },
   modelValue: {
     type: Boolean,
-    required: true
+    default: true
   },
   maxWidth: {
     type: String,
@@ -68,7 +75,7 @@ const maxWidthClass = computed(() => {
     xl: 'max-w-xl',
     '2xl': 'max-w-2xl' // good for register if needed
   };
-  return map[props.maxWidth];
+  return props.wide ? 'max-w-3xl' : map[props.maxWidth];
 });
 
 const close = () => {
@@ -76,22 +83,34 @@ const close = () => {
   emit('close');
 };
 
-const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && props.modelValue) {
-    close();
-  }
-};
-
-watch(() => props.modelValue, (isOpen) => {
+const dialog = ref<HTMLDialogElement>();
+let previousOverflow = '';
+let locked = false;
+let disposed = false;
+function unlock() {
+  if (locked) document.body.style.overflow = previousOverflow;
+  locked = false;
+}
+watch(() => props.modelValue, async (isOpen) => {
+  await nextTick();
+  if (disposed || props.modelValue !== isOpen) return;
   if (isOpen) {
-    document.body.style.overflow = 'hidden';
+    if (!locked) {
+      previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      locked = true;
+    }
+    if (!dialog.value?.open) dialog.value?.showModal();
   } else {
-    document.body.style.overflow = '';
+    dialog.value?.close();
+    unlock();
   }
+}, { immediate: true, flush: 'post' });
+onBeforeUnmount(() => {
+  disposed = true;
+  dialog.value?.close();
+  unlock();
 });
-
-onMounted(() => document.addEventListener('keydown', handleKeydown));
-onUnmounted(() => document.removeEventListener('keydown', handleKeydown));
 </script>
 
 <style>
