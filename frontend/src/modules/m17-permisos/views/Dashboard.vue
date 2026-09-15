@@ -6,7 +6,7 @@ import { useM17 } from "../store/useM17";
 import Badge from "../components/EstadoBadge.vue";
 const EmployeeForm = defineAsyncComponent(() => import("./EmployeeForm.vue"));
 const creatingEmployee = ref(false);
-const { state, demo } = useM17();
+const { state } = useM17();
 const columns = [
   { key: 'cliente', label: 'Cliente' },
   { key: 'tipo', label: 'Tipo de cuenta' },
@@ -227,11 +227,7 @@ const quick = [
       >
         <Icon name="info" />
         <p>
-          {{
-            demo
-              ? "Vista de demostración. Los cambios se conservan solo durante esta sesión."
-              : "Las operaciones se validan en el servidor con la sesión vigente."
-          }}
+          Las operaciones se validan en el servidor con la sesión vigente.
         </p>
       </div>
     </section>

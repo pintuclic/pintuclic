@@ -14,7 +14,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  quality:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/quality.yml
   deploy:
+    needs: quality
+    if: github.ref == 'refs/heads/main'
     runs-on: [self-hosted, linux, x64]
     steps:
       - name: Checkout
@@ -32,7 +37,9 @@ jobs:
           fi
 
       - name: Levantar contenedores con Docker Compose
-        run: docker compose up -d --build
+        run: |
+          docker compose config --quiet
+          docker compose up -d --build
 
       - name: Verificar salud del backend
         run: |
@@ -50,5 +57,17 @@ jobs:
           echo "Backend no respondio a tiempo" >&2
           exit 1
 
-      - name: Limpiar imagenes de docker sin usar
-        run: docker image prune -f
+      - name: Verificar frontend y proxy API
+        run: |
+          set -a
+          source .env
+          set +a
+          URL="http://localhost:${FRONTEND_PORT:-80}"
+          for i in $(seq 1 30); do
+            if curl -fsS "$URL/admin" >/dev/null && curl -fsS "$URL/api/health" >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Frontend o proxy API no respondió correctamente" >&2
+          exit 1

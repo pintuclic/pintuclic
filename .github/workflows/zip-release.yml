@@ -2,64 +2,51 @@ name: Zip Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
 
 jobs:
-  build:
+  quality:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/quality.yml
+  release:
+    needs: quality
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Determinar versión
-        id: version
-        run: |
-          LATEST=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -z "$LATEST" ]; then
-            VERSION="0.1.0"
-          else
-            BASE=${LATEST%.*}
-            PATCH=${LATEST##*.}
-            VERSION="$BASE.$((PATCH + 1))"
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "VERSIÓN: $VERSION (última: ${LATEST:-ninguna})"
-
-      - name: Generar notas de cambios
-        id: notes
-        run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -n "$PREV_TAG" ]; then
-            RANGE="$PREV_TAG..HEAD"
-          else
-            RANGE="HEAD"
-          fi
-          {
-            echo "# Cambios de ${{ steps.version.outputs.version }}"
-            echo ""
-            git log --oneline "$RANGE" | sed 's/^/- /'
-          } > RELEASE_NOTES.md
-          echo "::group::Notas de cambios"
-          cat RELEASE_NOTES.md
-          echo "::endgroup::"
-
-      - name: Comprimir repositorio
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          git archive --format=zip --output="/tmp/pintuclic-$VERSION.zip" HEAD
-
-      - name: Publicar Release
-        uses: softprops/action-gh-release@v2
+      - uses: actions/setup-node@v4
         with:
-          tag_name: ${{ steps.version.outputs.version }}
-          target_commitish: main
+          node-version: '22'
+      - name: Verificar versión y generar notas del changelog
+        id: version
+        run: node .github/scripts/check-release.mjs --notes
+      - name: Proteger etiqueta existente
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git rev-parse --verify "refs/tags/$TAG" >/dev/null 2>&1; then
+            test "$(git rev-list -n 1 "$TAG")" = "$GITHUB_SHA" || { echo "La versión ya pertenece a otro commit"; exit 1; }
+          fi
+      - name: Comprimir exclusivamente archivos versionados
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: git archive --format=zip --output="/tmp/pintuclic-$VERSION.zip" "$GITHUB_SHA"
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           name: pintuclic-${{ steps.version.outputs.version }}
           body_path: RELEASE_NOTES.md
           files: /tmp/pintuclic-${{ steps.version.outputs.version }}.zip

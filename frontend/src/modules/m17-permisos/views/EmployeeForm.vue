@@ -8,7 +8,7 @@ import {
   onBeforeRouteLeave,
 } from "vue-router";
 import { service } from "../services/m17.service";
-import { message, notify, record, useM17 } from "../store/useM17";
+import { message, notify, useM17 } from "../store/useM17";
 import { crearEmpleadoSchema, actualizarEmpleadoSchema } from "../dtos/empleado.dto";
 const route = useRoute();
 const router = useRouter();
@@ -76,10 +76,6 @@ async function submit() {
       id = await service.create(result.data);
     }
     saved.value = true;
-    record(
-      editing.value ? "Empleado actualizado" : "Empleado creado",
-      form.nombre.trim(),
-    );
     await refresh();
     notify(
       editing.value

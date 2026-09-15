@@ -1,4 +1,6 @@
 ## Docker
+La aplicación actual es modular (Vue, Express y PostgreSQL). Consulta [DEPLOY.md](./DEPLOY.md) para entrega Git, validaciones, configuración de servidor, Docker Compose, Dokploy y releases.
+
 Configurar las credenciales (obligatorias):
 ```bash
 cp .env.example .env

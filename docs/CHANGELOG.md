@@ -4,6 +4,13 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.2.6] - 2026-09-14
+### Módulo: M17 e integración de entrega
+- **Alcance:** Se retira la demostración en memoria de M17 para consumir exclusivamente la API; los datos de prueba siguen en SQL central. Se prepara la entrega Git conservando los historiales existentes.
+- **Hitos:** CI con Node 22 y validación previa a despliegue/release; versión de release sincronizada con paquete, lockfile, changelog y walkthrough; guía de transición a Docker Compose y exclusión de temporales.
+- **Calidad:** Instalación limpia con Node 22; lint y compilación frontend/backend correctos, ocho pruebas M17 y cuatro de releases correctas. Docker/servidor no verificados; aviso moderado preexistente de `qs` en backend documentado.
+- **Walkthrough:** [Preparación de Git y despliegue](./walkthroughs/M17/walkthrough_v2.2.6_M17_preparacion_git_despliegue_frontend.md).
+
 ## [v2.2.5] - 2026-09-14
 ### Módulo: M17 — Adaptación móvil del panel administrativo
 - **Alcance:** Menú móvil con cierre y control de foco, listados en fichas verticales, paginación adaptable y formularios ajustados a pantallas pequeñas. Cambios en core autorizados explícitamente por el usuario.

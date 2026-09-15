@@ -3,11 +3,13 @@ import assert from 'node:assert/strict';
 import { createServer } from 'vite';
 import { createPinia, setActivePinia } from 'pinia';
 import { createRouter, createMemoryHistory } from 'vue-router';
+import { seedAccounts } from './seed-reader.mjs';
 
 test('integración: rutas bajo /admin, DTOs compartidos y aislamiento de Pinia', async () => {
+  const storage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: { getItem: () => null } });
   const vite = await createServer({
     mode: 'test',
-    define: { 'import.meta.env.VITE_M17_DEMO': JSON.stringify('true') },
     server: { middlewareMode: true, watch: null, ws: false },
   });
   try {
@@ -46,6 +48,13 @@ test('integración: rutas bajo /admin, DTOs compartidos y aislamiento de Pinia',
     assert.equal(cambiarContrasenaSchema.safeParse({ current: 'Anterior1', next: 'corta', repeat: 'corta' }).success, false);
 
     const { useM17Store, useM17 } = await vite.ssrLoadModule('/src/modules/m17-permisos/store/useM17.ts');
+    const admin = seedAccounts().find(account => account.id_rol === 1);
+    assert.ok(admin);
+    const { apiClient } = await vite.ssrLoadModule('/src/core/api/axios.ts');
+    apiClient.defaults.adapter = async config => ({
+      data: { success: true, data: config.url === '/seguridad/sesion' ? { id_usuario: admin.id_usuario, id_rol: admin.id_rol, permisos: [] } : [] },
+      status: 200, statusText: 'OK', headers: {}, config,
+    });
     setActivePinia(createPinia());
     const first = useM17Store();
     const facade = useM17();
@@ -66,5 +75,7 @@ test('integración: rutas bajo /admin, DTOs compartidos y aislamiento de Pinia',
     assert.equal(second.state.error, '');
   } finally {
     await vite.close();
+    if (storage) Object.defineProperty(globalThis, 'localStorage', storage);
+    else delete globalThis.localStorage;
   }
 });

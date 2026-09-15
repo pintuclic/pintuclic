@@ -4,7 +4,7 @@ import { ref, reactive } from "vue";
 import { service } from "../services/m17.service";
 import { useM17, message, notify } from "../store/useM17";
 import { cambiarContrasenaSchema } from "../dtos/perfil.dto";
-const { state, isAdmin, demo, refresh } = useM17();
+const { state, isAdmin, refresh } = useM17();
 const form = reactive({ current: "", next: "", repeat: "" });
 const busy = ref(false);
 const error = ref("");
@@ -39,10 +39,6 @@ async function logout() {
   busy.value = true;
   error.value = "";
   try {
-    if (demo) {
-      window.location.reload();
-      return;
-    }
     await service.logout();
     logoutConfirm.value = false;
     await refresh();
@@ -86,14 +82,14 @@ const input =
           </div>
           <div class="flex justify-between">
             <dt class="text-neutral-medium">Entorno</dt>
-            <dd>{{ demo ? "Demostración" : "Servidor" }}</dd>
+            <dd>Servidor</dd>
           </div>
         </dl>
         <Button variant="outline"
           icon="logout"
           class="mt-6 w-full"
           @click="logoutConfirm = true"
-          >{{ demo ? "Reiniciar demostración" : "Cerrar sesión" }}</Button
+          >Cerrar sesión</Button
         >
       </section>
       <div
@@ -123,13 +119,7 @@ const input =
             El cambio cerrará todas las sesiones de esta cuenta.
           </p>
         </header>
-        <fieldset :disabled="demo || busy" class="grid min-w-0 grid-cols-1 gap-5 p-4 sm:p-6">
-          <p
-            v-if="demo"
-            class="rounded-lg bg-subaction/40 p-4 text-sm leading-6 text-corporate"
-          >
-            El cambio de contraseña se habilita al conectar una sesión real.
-          </p>
+        <fieldset :disabled="busy" class="grid min-w-0 grid-cols-1 gap-5 p-4 sm:p-6">
           <label class="text-sm font-semibold"
             >Contraseña actual<input
               v-model="form.current"
@@ -170,7 +160,7 @@ const input =
             type="submit"
             variant="action"
             icon="lock"
-            :disabled="demo || busy"
+            :disabled="busy"
             >Actualizar contraseña</Button
           >
         </footer>
@@ -178,44 +168,8 @@ const input =
       <section
         class="rounded-xl border border-neutral-light bg-neutral-white p-4 sm:p-6"
       >
-        <h2 class="font-bold text-corporate">
-          {{
-            demo ? "Actividad de esta demostración" : "Auditoría de la cuenta"
-          }}
-        </h2>
-        <p v-if="!demo" class="mt-3 text-sm leading-6 text-neutral-medium">
-          La consulta del historial de auditoría no está expuesta por el backend
-          actual.
-        </p>
-        <p
-          v-else-if="!state.activity.length"
-          class="mt-3 text-sm text-neutral-medium"
-        >
-          Los cambios que realices aparecerán aquí durante esta sesión.
-        </p>
-        <ul v-else class="mt-4 divide-y divide-neutral-light">
-          <li
-            v-for="entry in state.activity.slice(0, 10)"
-            :key="entry.id"
-            class="flex items-start gap-3 py-4"
-          >
-            <Icon name="clock" class="mt-0.5 h-4 w-4 shrink-0 text-action" />
-            <div>
-              <p class="text-sm font-semibold text-corporate">
-                {{ entry.accion }}
-              </p>
-              <p class="mt-1 text-xs text-neutral-medium">
-                {{ entry.entidad }} ·
-                {{
-                  new Date(entry.fecha).toLocaleTimeString("es-CO", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                }}
-              </p>
-            </div>
-          </li>
-        </ul>
+        <h2 class="font-bold text-corporate">Auditoría de la cuenta</h2>
+        <p class="mt-3 text-sm leading-6 text-neutral-medium">La consulta del historial de auditoría no está expuesta por el backend actual.</p>
       </section>
     </div>
   </div>
@@ -235,20 +189,14 @@ const input =
     </div></Modal
   ><Modal
     v-if="logoutConfirm"
-    :title="demo ? 'Reiniciar demostración' : 'Cerrar sesión'"
+    title="Cerrar sesión"
     @close="!busy && (logoutConfirm = false)"
     ><p class="text-sm leading-6">
-      {{
-        demo
-          ? "Se descartarán los empleados y cambios creados durante esta demostración."
-          : "Tendrás que iniciar sesión de nuevo para acceder al panel."
-      }}
+      Tendrás que iniciar sesión de nuevo para acceder al panel.
     </p>
     <div class="mt-6 flex flex-col justify-end gap-3 sm:flex-row">
       <Button variant="outline" :disabled="busy" @click="logoutConfirm = false">Cancelar</Button
-      ><Button variant="action" :disabled="busy" @click="logout">{{
-        demo ? "Reiniciar" : "Cerrar sesión"
-      }}</Button>
+      ><Button variant="action" :disabled="busy" @click="logout">Cerrar sesión</Button>
     </div></Modal
   >
 </template>

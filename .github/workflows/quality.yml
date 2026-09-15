@@ -1,0 +1,64 @@
+name: Calidad
+
+on:
+  push:
+    branches: ['codex/**', 'feature/**']
+  pull_request:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: node .github/scripts/check-release.mjs
+      - run: node --test .github/scripts/check-release.test.mjs
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run lint -- --max-warnings=0
+        working-directory: frontend
+      - run: npm run test:m17
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+        env:
+          VITE_API_URL: /api
+      - name: Construir imagen frontend
+        run: docker build --build-arg VITE_API_URL=/api -t pintuclic-frontend-check ./frontend
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+        working-directory: backend
+      - run: npm run lint -- --max-warnings=0
+        working-directory: backend
+      - run: npx tsc --noEmit
+        working-directory: backend
+      - run: npm run build
+        working-directory: backend
+      - name: Pruebas M04
+        working-directory: backend
+        run: |
+          node dist/modules/m04-cuentas/__tests__/m04.test.js | tee "$RUNNER_TEMP/m04-tests.log"
+          if grep -Fq '[FAIL]' "$RUNNER_TEMP/m04-tests.log"; then exit 1; fi
+          grep -Eq 'Superadas: [1-9][0-9]* \| Fallidas: 0' "$RUNNER_TEMP/m04-tests.log"
+      - name: Pruebas M18 con transporte simulado
+        working-directory: backend
+        run: node dist/modules/m18-notificaciones/__tests__/m18.test.js
+      - name: Construir imagen backend
+        run: docker build -t pintuclic-backend-check ./backend

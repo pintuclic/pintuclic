@@ -1,14 +1,13 @@
 import { defineStore, storeToRefs } from "pinia";
 import { computed, reactive } from "vue";
 import axios from "axios";
-import { service, demo } from "../services/m17.service";
-import type { Actividad, Persona, Permiso, Sesion } from "../interfaces";
+import { service } from "../services/m17.service";
+import type { Persona, Permiso, Sesion } from "../interfaces";
 export const useM17Store = defineStore("m17", () => {
 const state = reactive({
   employees: [] as Persona[],
   clients: [] as Persona[],
   catalog: [] as Permiso[],
-  activity: [] as Actividad[],
   session: null as Sesion | null,
   loading: false,
   ready: false,
@@ -50,15 +49,6 @@ function notify(text: string) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => (state.toast = ""), 6000);
 }
-function record(accion: string, entidad: string) {
-  if (demo)
-    state.activity.unshift({
-      id: Date.now(),
-      fecha: new Date().toISOString(),
-      accion,
-      entidad,
-    });
-}
   const isAdmin = computed(() => state.session?.id_rol === 1);
   const canAttend = computed(
     () => isAdmin.value || !!state.session?.permisos.includes("personal.ver"),
@@ -88,14 +78,13 @@ function record(accion: string, entidad: string) {
       state.loading = false;
     }
   }
-  return { state, isAdmin, canAttend, refresh, message, notify, record };
+  return { state, isAdmin, canAttend, refresh, message, notify };
 });
 
 export function useM17() {
   const store = useM17Store();
   const { isAdmin, canAttend } = storeToRefs(store);
-  return { state: store.state, isAdmin, canAttend, refresh: store.refresh, demo };
+  return { state: store.state, isAdmin, canAttend, refresh: store.refresh };
 }
 export function message(error: unknown) { return useM17Store().message(error); }
 export function notify(text: string) { useM17Store().notify(text); }
-export function record(action: string, entity: string) { useM17Store().record(action, entity); }

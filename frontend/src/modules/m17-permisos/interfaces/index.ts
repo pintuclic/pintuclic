@@ -32,12 +32,6 @@ export interface Sesion {
   permisos: string[];
   tipo_sesion?: string;
 }
-export interface Actividad {
-  id: number;
-  fecha: string;
-  accion: string;
-  entidad: string;
-}
 export interface Respuesta<T> {
   success: boolean;
   data: T;

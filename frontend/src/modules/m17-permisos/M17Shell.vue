@@ -3,14 +3,14 @@ import { computed, onMounted, onBeforeUnmount } from 'vue';
 import { RouterView, RouterLink, useRoute } from 'vue-router';
 import { Button, Icon, Toast } from '@/core/components';
 import { useM17 } from './store/useM17';
-const { state, isAdmin, canAttend, refresh, demo } = useM17();
+const { state, isAdmin, canAttend, refresh } = useM17();
 const route = useRoute();
 const allowed = computed(() => route.path === '/admin/perfil' ||
   (route.path.startsWith('/admin/clientes') ? canAttend.value : isAdmin.value));
 let interval: ReturnType<typeof setInterval> | undefined;
 onMounted(() => {
   void refresh();
-  if (!demo) interval = setInterval(() => {
+  interval = setInterval(() => {
     if (document.visibilityState === 'visible') void refresh();
   }, 60000);
 });
@@ -18,7 +18,6 @@ onBeforeUnmount(() => clearInterval(interval));
 </script>
 <template>
   <div>
-    <p v-if="demo" class="mb-5 rounded-lg bg-subaction p-3 text-center text-xs text-corporate">Demostración interactiva · Datos de prueba · Los cambios no se envían al servidor</p>
     <div v-if="state.error" role="alert" class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-highlight/20 bg-neutral-white p-5">
       <p>{{ state.error }}</p><Button variant="outline" icon="refresh" :disabled="state.loading" @click="refresh">Volver a intentar</Button>
     </div>

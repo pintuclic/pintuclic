@@ -3,7 +3,7 @@ import { Button, Modal } from "@/core/components";
 import { computed, ref } from "vue";
 import type { Persona } from "../interfaces";
 import { service } from "../services/m17.service";
-import { message, notify, record, useM17 } from "../store/useM17";
+import { message, notify, useM17 } from "../store/useM17";
 import { cambioEstadoSchema } from "../dtos/estado.dto";
 const props = defineProps<{
   person: Persona;
@@ -31,7 +31,6 @@ async function save() {
     const result = cambioEstadoSchema.safeParse({ active: active.value, reason: reason.value });
     if (!result.success) throw new Error(result.error.issues[0]?.message);
     await service.status(props.kind, props.person, reason.value.trim());
-    record(action.value, props.person.nombre);
     await refresh();
     notify("Estado actualizado correctamente.");
     emit("saved");

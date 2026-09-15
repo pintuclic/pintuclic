@@ -4,7 +4,7 @@ import { computed, ref, watch } from "vue";
 import { RouterLink, useRoute, onBeforeRouteLeave } from "vue-router";
 import type { Permiso } from "../interfaces";
 import { service } from "../services/m17.service";
-import { message, notify, record, useM17 } from "../store/useM17";
+import { message, notify, useM17 } from "../store/useM17";
 import {
   reserved,
   dependentPermissions,
@@ -123,7 +123,6 @@ async function save() {
   error.value = "";
   try {
     await service.savePermissions(employeeId.value, selected.value);
-    record("Permisos actualizados", employee.value.nombre);
     initial.value = [...selected.value];
     inverse.value = "";
     await load();

@@ -2,8 +2,8 @@
 import { Button, Icon, Modal, PageHeader } from "@/core/components";
 import { computed, onMounted, ref } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
-import { service, demo } from "../services/m17.service";
-import { message, notify, record } from "../store/useM17";
+import { service } from "../services/m17.service";
+import { message, notify } from "../store/useM17";
 import type { Parametro } from "../interfaces";
 const rows = ref<Parametro[]>([]);
 const initial = ref<Parametro[]>([]);
@@ -49,7 +49,6 @@ async function save() {
     for (const p of [...changed.value]) {
       const old = initial.value.find((x) => x.clave === p.clave);
       await service.parameter({ clave: p.clave, valor: Number(p.valor) });
-      record("Parámetro actualizado", `${p.clave}: ${old?.valor} → ${p.valor}`);
       if (old) old.valor = p.valor;
     }
     confirm.value = false;
@@ -90,39 +89,8 @@ onBeforeRouteLeave(
       <div class="p-6">
         <p v-if="loading" role="status">Cargando configuración…</p>
         <p v-else-if="!rows.length" class="text-sm text-neutral-medium">
-          {{
-            demo
-              ? "La demostración no precarga parámetros: sus valores se consultan en el backend real."
-              : "El servidor no devolvió parámetros disponibles."
-          }}
+          El servidor no devolvió parámetros disponibles.
         </p>
-        <div
-          v-if="demo && !rows.length && !loading"
-          class="mt-6 divide-y divide-neutral-light"
-        >
-          <div v-for="(m, key) in meta" :key="key" class="py-5">
-            <label
-              :for="`preview-${key}`"
-              class="text-sm font-semibold text-corporate"
-              >{{ m.label }}</label
-            >
-            <div class="mt-3 flex flex-wrap items-center gap-3">
-              <input
-                :id="`preview-${key}`"
-                disabled
-                placeholder="Sin conexión"
-                class="w-40 rounded-lg border border-neutral-light bg-neutral-lightest px-4 py-3 text-sm"
-              /><span class="text-sm text-neutral-medium">{{ m.unit }}</span>
-            </div>
-            <p class="mt-2 text-xs text-neutral-medium">
-              Valor por defecto documentado:
-              {{ m.default.toLocaleString("es-CO") }}. Rango:
-              {{ m.min.toLocaleString("es-CO") }}–{{
-                m.max.toLocaleString("es-CO")
-              }}.
-            </p>
-          </div>
-        </div>
         <div
           v-for="p in rows"
           :key="p.clave"
