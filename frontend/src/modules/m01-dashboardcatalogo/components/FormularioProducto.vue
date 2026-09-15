@@ -349,7 +349,7 @@
       <GaleriaImagenesProducto
         :imagenes="formulario.imagenes"
         :error="erroresValidacion.imagenes"
-        @agregar="agregarImagen(`imagen-${formulario.imagenes.length + 1}.jpg`)"
+        @agregar="(archivo) => agregarImagen(archivo.nombre, archivo.url)"
         @quitar="quitarImagen"
         @principal="marcarImagenPrincipal"
       />

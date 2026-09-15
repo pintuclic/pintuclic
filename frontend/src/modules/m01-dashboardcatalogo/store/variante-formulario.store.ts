@@ -75,12 +75,21 @@ export const useVarianteFormularioStore = defineStore('m01-variante-formulario',
 
   const checklist = computed<SeccionChecklistVariante[]>(() => {
     const f = formulario.value;
-    const baseOColor = Boolean(f.base) || Boolean(f.colorId);
+    const producto = productoAsociado.value;
+    const requierePresentacion = producto?.requierePresentacion ?? true;
+    const requiereColor = producto?.requiereColor ?? true;
+    const requiereDimensiones = producto?.requiereDimensiones ?? true;
+    const baseOColor = !requiereColor || Boolean(f.base) || Boolean(f.colorId);
     return [
       { clave: 'producto', etiqueta: 'Producto asociado', completa: Boolean(f.productoId), opcional: false },
-      { clave: 'presentacion', etiqueta: 'Presentación y unidad', completa: Boolean(f.presentacion && f.unidadMedida), opcional: false },
-      { clave: 'base', etiqueta: 'Base / entonado', completa: baseOColor, opcional: false },
-      { clave: 'color', etiqueta: 'Color asociado', completa: baseOColor, opcional: false },
+      {
+        clave: 'presentacion',
+        etiqueta: 'Presentación y unidad',
+        completa: !requierePresentacion || Boolean(f.presentacion && f.unidadMedida),
+        opcional: false,
+      },
+      { clave: 'base', etiqueta: 'Base / entonado', completa: baseOColor, opcional: !requiereColor },
+      { clave: 'color', etiqueta: 'Color asociado', completa: baseOColor, opcional: !requiereColor },
       { clave: 'codigos', etiqueta: 'Códigos e identificación', completa: f.sku.trim().length > 0, opcional: false },
       {
         clave: 'comercial',
@@ -98,7 +107,12 @@ export const useVarianteFormularioStore = defineStore('m01-variante-formulario',
       {
         clave: 'dimensiones',
         etiqueta: 'Dimensiones / peso',
-        completa: f.pesoKg !== null || f.altoCm !== null || f.anchoCm !== null || f.profundidadCm !== null,
+        completa:
+          !requiereDimensiones ||
+          f.pesoKg !== null ||
+          f.altoCm !== null ||
+          f.anchoCm !== null ||
+          f.profundidadCm !== null,
         opcional: true,
       },
       { clave: 'imagenes', etiqueta: 'Imágenes', completa: f.imagenes.length > 0, opcional: true },
@@ -160,20 +174,42 @@ export const useVarianteFormularioStore = defineStore('m01-variante-formulario',
     cargando.value = false;
   }
 
-  /** Aplica cambios y ajusta la unidad cuando se elige un color con familia distinta. */
+  /**
+   * Aplica cambios al formulario. Al cambiar de producto, normaliza los campos
+   * que no aplican a ese producto (p. ej. una herramienta no tiene presentación
+   * en galones ni base/color) para que no queden huérfanos ni bloqueen el
+   * checklist de publicación.
+   */
   function actualizar(parcial: Partial<FormularioVariante>): void {
-    formulario.value = { ...formulario.value, ...parcial };
-    for (const campo of Object.keys(parcial)) delete erroresValidacion.value[campo];
+    let cambios: Partial<FormularioVariante> = parcial;
+    if ('productoId' in parcial) {
+      const producto = opciones.value.productos.find((p) => p.valor === parcial.productoId) ?? null;
+      if (producto && !producto.requierePresentacion) {
+        cambios = { ...cambios, presentacion: 'unica', unidadMedida: 'unidad' };
+      } else if (formulario.value.presentacion === 'unica') {
+        // Vuelve a un producto que sí necesita presentación: limpia el valor
+        // "sentinela" que se puso al pasar por un producto sin presentación.
+        cambios = { ...cambios, presentacion: '', unidadMedida: '' };
+      }
+      if (producto && !producto.requiereColor) {
+        cambios = { ...cambios, base: '', colorId: null };
+      }
+      if (producto && !producto.requiereDimensiones) {
+        cambios = { ...cambios, pesoKg: null, altoCm: null, anchoCm: null, profundidadCm: null };
+      }
+    }
+    formulario.value = { ...formulario.value, ...cambios };
+    for (const campo of Object.keys(cambios)) delete erroresValidacion.value[campo];
   }
 
   function definirColor(colorId: string | null): void {
     actualizar({ colorId });
   }
 
-  function agregarImagen(nombre: string): void {
+  function agregarImagen(nombre: string, url = ''): void {
     const nueva = {
       id: `img-${Date.now()}`,
-      url: '',
+      url,
       nombre,
       esPrincipal: formulario.value.imagenes.length === 0,
     };

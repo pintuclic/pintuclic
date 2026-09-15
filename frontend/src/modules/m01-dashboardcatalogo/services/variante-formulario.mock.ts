@@ -18,10 +18,10 @@ import { GALERIA_PRODUCTO_DEMO } from '../assets/imagenes-catalogo';
 
 export const OPCIONES_FORMULARIO_VARIANTE_DEMO: OpcionesFormularioVariante = {
   productos: [
-    { valor: 'viniltex-advanced', etiqueta: 'Viniltex Advanced', sku: 'VIN-ADV-001', marca: 'Pintuco', linea: 'Pinturas interiores' },
-    { valor: 'pintura-acrilica-premium', etiqueta: 'Pintura Acrílica Premium', sku: 'PIN-ACR-001', marca: 'Pintuco', linea: 'Premium' },
-    { valor: 'brocha-premium', etiqueta: 'Brocha Premium 3"', sku: 'BRO-PRM-003', marca: 'Pintuco', linea: 'Profesional' },
-    { valor: 'taladro-20v', etiqueta: 'Taladro Inalámbrico 20V', sku: 'TAL-20V-001', marca: 'DeWalt', linea: '20V MAX' },
+    { valor: 'viniltex-advanced', etiqueta: 'Viniltex Advanced', sku: 'VIN-ADV-001', marca: 'Pintuco', linea: 'Pinturas interiores', requierePresentacion: true, requiereColor: true, requiereDimensiones: true },
+    { valor: 'pintura-acrilica-premium', etiqueta: 'Pintura Acrílica Premium', sku: 'PIN-ACR-001', marca: 'Pintuco', linea: 'Premium', requierePresentacion: true, requiereColor: true, requiereDimensiones: true },
+    { valor: 'brocha-premium', etiqueta: 'Brocha Premium 3"', sku: 'BRO-PRM-003', marca: 'Pintuco', linea: 'Profesional', requierePresentacion: false, requiereColor: false, requiereDimensiones: false },
+    { valor: 'taladro-20v', etiqueta: 'Taladro Inalámbrico 20V', sku: 'TAL-20V-001', marca: 'DeWalt', linea: '20V MAX', requierePresentacion: false, requiereColor: false, requiereDimensiones: false },
   ],
   presentaciones: [
     { valor: '1-4-galon', etiqueta: '1/4 galón' },

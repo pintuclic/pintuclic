@@ -263,11 +263,11 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
     actualizar({ etiquetas: formulario.value.etiquetas.filter((t) => t !== texto) });
   }
 
-  /** Alta de imagen simulada (el upload real es HU-CAT-07, endpoint aparte). */
-  function agregarImagen(nombre: string): void {
+  /** El archivo se lee en el navegador (data URL); el upload al backend es HU-CAT-07, endpoint aparte. */
+  function agregarImagen(nombre: string, url = ''): void {
     const nueva = {
       id: `img-${Date.now()}`,
-      url: '',
+      url,
       nombre,
       esPrincipal: formulario.value.imagenes.length === 0,
     };

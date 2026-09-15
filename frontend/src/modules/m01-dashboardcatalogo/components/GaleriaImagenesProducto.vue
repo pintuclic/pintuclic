@@ -47,14 +47,20 @@
         </div>
       </figure>
 
-      <button
-        type="button"
-        class="flex aspect-square flex-col items-center justify-center gap-1 rounded-input border border-dashed border-neutral-light text-neutral-medium hover:border-action hover:text-action"
-        @click="$emit('agregar')"
+      <label
+        class="relative flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-input border border-dashed border-neutral-light text-neutral-medium hover:border-action hover:text-action"
       >
         <Plus class="h-5 w-5" aria-hidden="true" />
         <span class="text-xs font-medium">Añadir más</span>
-      </button>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          @click="guardarPosicionScroll"
+          @change="onSeleccionarArchivos"
+        />
+      </label>
     </div>
 
     <p v-if="error" class="mt-2 flex items-center gap-1 text-xs font-medium text-neutral-black" role="alert">
@@ -77,9 +83,49 @@ defineProps<{
   error?: string;
 }>();
 
-defineEmits<{
-  (e: 'agregar'): void;
+const emit = defineEmits<{
+  (e: 'agregar', archivo: { nombre: string; url: string }): void;
   (e: 'quitar', id: string): void;
   (e: 'principal', id: string): void;
 }>();
+
+/**
+ * Posición de scroll justo antes de abrir el selector de archivos del sistema.
+ * Al cerrarse el diálogo, algunos navegadores desplazan la página hacia el
+ * input (aunque esté invisible), dejando un salto/espacio en blanco. La
+ * capturamos aquí (antes de que el diálogo nativo abra) para poder
+ * restaurarla después, sin importar qué haga el navegador mientras tanto.
+ */
+let posicionScrollPrevia = 0;
+let contenedorScroll: Element | null = null;
+
+function guardarPosicionScroll(evento: Event): void {
+  const input = evento.target as HTMLInputElement;
+  contenedorScroll = input.closest('main') ?? document.scrollingElement;
+  posicionScrollPrevia = contenedorScroll?.scrollTop ?? 0;
+}
+
+function restaurarPosicionScroll(): void {
+  if (contenedorScroll) contenedorScroll.scrollTop = posicionScrollPrevia;
+}
+
+/** Lee cada archivo elegido como data URL para previsualizarlo (sin backend de upload aún: HU-CAT-07). */
+function onSeleccionarArchivos(evento: Event): void {
+  const input = evento.target as HTMLInputElement;
+  const archivos = input.files ? Array.from(input.files) : [];
+
+  for (const archivo of archivos) {
+    const lector = new FileReader();
+    lector.onload = () => {
+      emit('agregar', { nombre: archivo.name, url: String(lector.result ?? '') });
+      requestAnimationFrame(restaurarPosicionScroll);
+    };
+    lector.readAsDataURL(archivo);
+  }
+
+  input.value = '';
+  input.blur();
+  restaurarPosicionScroll();
+  requestAnimationFrame(restaurarPosicionScroll);
+}
 </script>

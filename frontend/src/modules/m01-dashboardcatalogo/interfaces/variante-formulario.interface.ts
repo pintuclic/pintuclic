@@ -94,6 +94,12 @@ export interface OpcionProductoVariante extends OpcionSelect {
   sku: string;
   marca: string;
   linea: string | null;
+  /** false en productos sin contenido líquido (herramientas, equipos): oculta "Presentación y unidad". */
+  requierePresentacion: boolean;
+  /** false en productos sin base/color (herramientas, equipos): oculta "Base y color". */
+  requiereColor: boolean;
+  /** false en productos sin dimensiones logísticas propias: oculta "Dimensiones / peso". */
+  requiereDimensiones: boolean;
 }
 
 /** Catálogos que llenan los selectores del formulario de variante. */
