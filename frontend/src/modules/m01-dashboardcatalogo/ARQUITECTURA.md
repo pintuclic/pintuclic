@@ -58,7 +58,7 @@ graph LR
 | Regla de Oro de color (solo tokens) | Únicamente `corporate / action / conversion / highlight / subaction / neutral-*`. Sin hex arbitrarios ni colores Tailwind ajenos. Los hex de **color de producto** son dato de catálogo (derivado de CIELAB) y van por `:style` — único uso permitido de estilo inline dinámico. |
 | Utility-first, sin CSS por módulo | Sin hojas `.css` ni `<style>` con clases propias. |
 | Estados interactivos y responsivo mobile-first | `hover:` / `focus-visible:` en todo clickeable; rejillas `grid-cols-1 … xl:grid-cols-*`. |
-| Aislamiento del módulo | **No toca** `tailwind.config.ts`, `style.css`, `main.ts`, `App.vue` ni otros módulos. Solo **lee** de `@/core` (`api/axios`, tokens). |
+| Aislamiento del módulo | **No toca** `tailwind.config.ts`, `style.css`, `main.ts`, `App.vue` ni otros módulos. Lee de `@/core` (`api/axios`, tokens) y, desde la migración a `DisenoAdmin.vue` (§5), también **aporta** el chrome del panel a `core/layouts/` + `core/composables/` y registra sus rutas en `core/routes/index.ts` — es el único punto donde M01 escribe fuera de sí mismo, documentado aquí para no romper el aislamiento del resto. |
 | Validar antes de delegar en el servicio | Formularios (`producto-formulario`, `marca`) validan con su DTO antes de llamar al service. |
 
 ---
@@ -99,8 +99,8 @@ Instancia del diagrama de `infraestructura.md` §2 para este módulo:
 
 ```mermaid
 graph TD
-    A[Empleado interactúa en el panel] --> S[VistaPanelCatalogo · shell]
-    S -->|component :is| B[VistaXxx.vue]
+    A[Empleado interactúa en el panel] --> S[vue-router · match de ruta]
+    S -->|monta| B[VistaXxx.vue, envuelta en DisenoAdmin]
     B -->|acción / filtro| C(useXxx · composable)
     C --> P[useXxx Store · Pinia]
     P -->|petición tipada| D[XxxService · axios del módulo]
@@ -135,30 +135,34 @@ graph TD
 
 ## 5. Modelo de navegación
 
-`vue-router` **aún no está montado** en la app (`App.vue` renderiza `VistaInicio`).
-Para no tocar archivos fuera del módulo, la navegación se resuelve dentro de M01:
+`vue-router` **ya está montado** (`core/routes/index.ts` agrega
+`...dashboardCatalogoRoutes`, una URL real por vista bajo `/admin/catalogo`).
+Cada vista se envuelve a sí misma en `<DisenoAdmin>` — el layout compartido del
+panel (barra lateral agrupada/colapsable + barra superior), en
+`core/layouts/DisenoAdmin.vue` — con el mismo patrón que `DisenoTienda.vue`:
+un `<slot>`, no `<router-view>` anidado.
 
 ```mermaid
 graph LR
-    SL[BarraLateralAdmin] -->|emit navegar path| V[VistaXxx]
-    V -->|irA path| N[usePanelNavegacion · inject]
-    N --> SH[VistaPanelCatalogo · shell]
-    SH -->|resolverRutaPanel| SH
-    SH -->|component :is + :key| V2[nueva VistaXxx]
+    R[vue-router] -->|match /admin/catalogo/...| V[VistaXxx.vue]
+    V -->|se envuelve en| DA[DisenoAdmin]
+    DA --> SL[BarraLateralAdmin · core/layouts]
+    DA --> ST[BarraSuperiorAdmin · core/layouts]
+    V -->|irA path, botones internos| N[usePanelNavegacion]
+    N -->|router.push| R
 ```
 
-- `VistaPanelCatalogo.vue` mantiene `vistaActiva` + `parametro` y hace
-  `<component :is>`. `provide` la API `{ vistaActiva, parametro, irA }`.
-- `usePanelNavegacion()` la inyecta; si no hay shell devuelve una implementación
-  **inerte** (una vista suelta sigue funcionando).
-- `resolverRutaPanel('/admin/catalogo/...')` traduce path → clave de vista +
-  parámetro (p. ej. `productos/:id/editar` → `producto-formulario` + id).
-- `:key` en el `<component>` fuerza el remonte al cambiar de vista/parámetro
-  (recarga de datos).
-
-**Migración a router (sin cambiar las vistas):** montar `vue-router`, registrar
-`...dashboardCatalogoRoutes`, y hacer que `usePanelNavegacion().irA` delegue en
-`router.push()`. `VistaPanelCatalogo` pasa a ser un *layout* con `<router-view>`.
+- `BarraLateralAdmin` / `BarraSuperiorAdmin` viven en `core/layouts/` (no en el
+  módulo): son el chrome compartido de todo el panel admin, no solo de M01.
+  `core/layouts/DisenoAdmin.vue` los monta una sola vez y deriva la miga de la
+  barra superior de `route.meta.titulo`.
+- `usePanelNavegacion().irA()` sigue existiendo y se usa para la navegación
+  **interna** de cada vista (botones «Cancelar», «Editar», filas de tabla…):
+  delega en `router.push()`. El modo "shell / `inject`" (previo a montar
+  `vue-router`) ya se retiró del composable — no quedaba código muerto que
+  mantener.
+- `dashboard-catalogo.routes.ts` declara `meta.titulo` en cada ruta,
+  justo lo que `DisenoAdmin` lee para la miga.
 
 ---
 
@@ -188,13 +192,18 @@ Endpoints previstos (aún no implementados por el backend de M01):
 
 **Lo que el módulo toca**
 
-- Crea y modifica solo archivos bajo `src/modules/m01-dashboardcatalogo/`.
-- **Lee** (nunca modifica) de `@/core`: `api/axios` (instancia + interceptor JWT),
-  `theme/colors.ts` (tokens, vía Tailwind), `assets/logo.png`.
+- Crea y modifica casi todo bajo `src/modules/m01-dashboardcatalogo/`.
+- **Lee** de `@/core`: `api/axios` (instancia + interceptor JWT), `theme/colors.ts`
+  (tokens, vía Tailwind), `assets/logo.png`.
+- **Excepción documentada (desde la migración a `DisenoAdmin.vue`, §5, decisión #5):**
+  `core/layouts/DisenoAdmin.vue`, `core/layouts/BarraLateralAdmin.vue`,
+  `core/layouts/BarraSuperiorAdmin.vue`, `core/composables/useMenuMovil.ts` y la
+  entrada de `dashboardCatalogoRoutes` en `core/routes/index.ts` son mantenidos
+  por M01 porque hoy es el único módulo admin con vistas reales; otros módulos
+  (M02/M04/M17) los reusan sin duplicarlos cuando tengan sus propias vistas.
 
-**Lo que NO toca** (confirmado en el commit `feat(M01) [v2.3.0]`):
-`tailwind.config.ts`, `style.css`, `main.ts`, `App.vue`, `core/router/`, ni
-`m02-productos` u otros módulos. Push aislado.
+**Lo que NO toca:** `tailwind.config.ts`, `style.css`, `main.ts`, `App.vue`, ni
+archivos de otros módulos (`m02-productos`, `m04-cuentas`, `m17-permisos`).
 
 **Datos de ejemplo (`*.mock.ts`)**
 
@@ -215,8 +224,8 @@ Endpoints previstos (aún no implementados por el backend de M01):
 | 1 | Añadir `composables/` a las capas del módulo | Aísla el manejo de errores de Axios y el estado de petición de los componentes (patrón de `m04-cuentas`). | Lógica de carga en cada vista. |
 | 2 | Stores Pinia por vista, no uno global de catálogo | Caché de sesión acotada; menos acoplamiento; se libera al salir. | Store monolítico `useCatalogoStore`. |
 | 3 | Mock con *fallback* en el store, no un flag de entorno | La UI es revisable hoy sin backend y sin build especial; la transición es automática. | `if (import.meta.env.DEV)` disperso. |
-| 4 | `usePanelNavegacion` + shell, sin montar `vue-router` | No tocar `main.ts`/`App.vue` → push del módulo 100 % aislado; las vistas no cambian al migrar. | Editar `App.vue` (rompe aislamiento). |
-| 5 | `BarraLateralAdmin` / `BarraSuperiorAdmin` dentro del módulo | El layout admin compartido (`core/layouts/DisenoAdmin.vue`) no existe aún; el módulo debe ser autocontenido. | Bloquear M01 hasta tener el layout. |
+| 4 | `usePanelNavegacion` + shell, sin montar `vue-router` (superado: `vue-router` ya está montado, ver §5) | No tocar `main.ts`/`App.vue` → push del módulo 100 % aislado; las vistas no cambian al migrar. | Editar `App.vue` (rompe aislamiento). |
+| 5 | `BarraLateralAdmin` / `BarraSuperiorAdmin` movidos a `core/layouts/`, con `DisenoAdmin.vue` como layout compartido | Dejaron de ser exclusivas de M01: el sidebar ahora agrupa "Gestión Administrativa" (M04/M17, enlaces aún sin conectar) y "Gestión de Catálogo". Se necesitaba un único punto para que otros módulos admin lo reusen. | Mantenerlas duplicadas por módulo. |
 | 6 | Envoltorio `ApiResponse<T>` local en `interfaces/api.interface.ts` | Igual contrato que el resto del sistema sin depender de un tipo global inexistente. | Importar de un `core/interfaces` que no existe. |
 | 7 | Inline de componentes triviales (badges, barra de acciones, tarjetas de un solo uso) | Coste/beneficio: menos archivos, misma legibilidad. Se extrae solo con reuso o lógica. | 33+ componentes, varios de 1 `<span>`. |
 
@@ -225,8 +234,10 @@ Endpoints previstos (aún no implementados por el backend de M01):
 ## 9. Puntos de integración pendientes
 
 1. **Endpoints de M01** en el backend (`/api/catalogo/*`) → retirar mocks.
-2. **`vue-router`** montado + `dashboardCatalogoRoutes` registradas + `irA` → `router.push()`.
-3. **`core/layouts/DisenoAdmin.vue`** compartido con M02 → mover `BarraLateralAdmin` / `BarraSuperiorAdmin`.
-4. **Sesión (M04):** nombre y permisos reales desde el store de autenticación (hoy `Carlos Álvarez` fijo).
-5. **Subida de imágenes/logos (HU-CAT-07):** endpoint propio; los componentes actuales son marcadores.
-6. **`CHANGELOG.md` + walkthrough** de la versión (fuera del módulo; commit administrativo aparte).
+2. ~~`vue-router` montado + `dashboardCatalogoRoutes` registradas + `irA` → `router.push()`~~ — **hecho**.
+3. ~~`core/layouts/DisenoAdmin.vue` compartido → mover `BarraLateralAdmin` / `BarraSuperiorAdmin`~~ — **hecho**.
+4. **Acciones masivas reales** (`BarraAccionesMasivas.vue`, ya conectada en Productos/Variantes/Líneas/Categorías): "Activar"/"Desactivar" en lote son no-op hasta que exista el endpoint de baja lógica en lote; "Exportar" reutiliza rutas de exportación individuales que tampoco existen aún en el backend.
+5. **Sesión (M04):** nombre y permisos reales desde el store de autenticación (hoy `Carlos Álvarez` fijo).
+6. **Subida de imágenes/logos (HU-CAT-07):** endpoint propio; los componentes actuales son marcadores.
+7. **Enlaces sin conectar en "Gestión Administrativa"** (Usuarios, Roles, Aprobación de Empresas): apuntan a rutas que M04/M17 aún no registran.
+8. **`CHANGELOG.md` + walkthrough** de la versión (fuera del módulo; commit administrativo aparte).

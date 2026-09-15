@@ -10,14 +10,16 @@ visual para Figma.
 - **Permiso M17:** `GESTION_CATALOGO` (categorías, líneas, marcas, colores, bases…) y
   `GESTION_PRODUCTOS` (productos, variantes, imágenes) — revalidados **siempre** en el servidor.
 - **Rama:** `feature/m01-dashboard-catalogo`
-- **Tamaño:** 8 vistas + 1 shell · 28 componentes · ~102 archivos
+- **Tamaño:** 16 vistas · 32 componentes · ~175 archivos
 
-> **Navegación entre vistas** (mientras no haya `vue-router` montado): la abre
-> `views/VistaPanelCatalogo.vue`, un *shell* que mantiene la vista activa y la
-> cambia con `<component :is>` cuando se llama a `irA()` (provisto por
-> `composables/usePanelNavegacion.ts`). Pulsar un ítem del menú lateral, un botón
-> «Nuevo…», «Editar» o una fila cambia de pantalla sin recargar. Todo vive dentro
-> del módulo: no toca `main.ts` ni `App.vue`.
+> **Layout y navegación:** cada vista se monta directamente en su ruta
+> (`dashboard-catalogo.routes.ts`, agregadas en `core/routes/index.ts`) y se
+> envuelve a sí misma en `<DisenoAdmin>…</DisenoAdmin>` (`core/layouts/DisenoAdmin.vue`),
+> el layout compartido del panel administrativo: barra lateral agrupada/colapsable
+> + barra superior + contenido. `irA()` (provisto por
+> `composables/usePanelNavegacion.ts`) sigue usándose para la navegación interna
+> de cada vista (botones «Cancelar», «Editar», filas de tabla…) y delega en
+> `router.push()`.
 
 ---
 
@@ -42,10 +44,10 @@ m01-dashboardcatalogo/
 ## 2. Flujo de datos (todas las vistas siguen el mismo patrón)
 
 ```
-views/VistaPanelCatalogo.vue  (shell: provide(NAV) + <component :is>)
-  │  renderiza la vista activa
+core/layouts/DisenoAdmin.vue  (barra lateral + barra superior + <slot>)
+  │  envuelve
   ▼
-views/VistaXxx.vue  ── irA() ──►  usePanelNavegacion() ──►  shell cambia de vista
+views/VistaXxx.vue  ── irA() ──►  usePanelNavegacion() ──►  router.push()
   │  usa
   ▼
 composables/useXxx.ts ──────────────┐  (expone estado + acciones + formateadores)
@@ -176,7 +178,7 @@ si autocargar en `onMounted`, y añade los formateadores de presentación. Barre
 | Archivo | Qué expone |
 | :--- | :--- |
 | `useFormatoCatalogo.ts` | **Sin estado.** `formatearNumero`, `formatearFecha`, `formatearFechaHora`, `formatearVariacion`, `formatearPorcentaje` (Intl `es-CO`). Lo usan también componentes hoja. |
-| `usePanelNavegacion.ts` | Navegación interna del panel. `inject` de la API `{ vistaActiva, parametro, irA }` que provee el shell; si no hay shell devuelve una versión inerte. Exporta también `resolverRutaPanel(path)` (traduce `/admin/catalogo/...` → clave de vista + parámetro) y el tipo `ClaveVistaPanel`. |
+| `usePanelNavegacion.ts` | Navegación interna del panel: `irA(destino)` traduce el path/clave a la URL real de `dashboardCatalogoRoutes` y navega con `router.push()` (inerte si no hay router, p. ej. en tests). Exporta también `resolverRutaPanel(path)` (traduce `/admin/catalogo/...` → clave de vista + parámetro) y el tipo `ClaveVistaPanel`. |
 | `useDashboardCatalogo.ts` | Estado del dashboard + `refrescar()` + formateadores. Autocarga. |
 | `useProductos.ts` | Listado de productos: estado + `aplicarFiltros`, `ordenarPor`, `irAPagina`, `limpiarFiltros`. Autocarga. |
 | `useProductoFormulario.ts` | Formulario de producto: **no autocarga** (la vista llama `inicializar(id?)` cuando conoce la ruta). Expone todo el estado, getters y acciones del store. |
@@ -194,13 +196,11 @@ si autocargar en `onMounted`, y añade los formateadores de presentación. Barre
 
 ## 8. `views/` — pantallas con ruta
 
-Cada `.vue` es una pantalla completa: monta `BarraLateralAdmin` + `BarraSuperiorAdmin`,
-consume su composable y compone los `components/`. La navegación entre pantallas es
-provisional (`irA()` guarda la ruta en un ref) hasta montar el router del panel admin.
+Cada `.vue` es una pantalla completa: se envuelve en `<DisenoAdmin>` (barra lateral +
+barra superior, en `core/layouts/`), consume su composable y compone los `components/`.
 
 | Archivo | Maqueta | Ruta | Qué contiene |
 | :--- | :--- | :--- | :--- |
-| `VistaPanelCatalogo.vue` | — (shell) | `/admin/catalogo` (entrada) | Mantiene la vista activa y la cambia con `<component :is>`. `provide` la API de navegación. `:key` fuerza el remonte al cambiar de vista o parámetro. Pasa `productoId` a la vista de formulario. |
 | `VistaDashboardCatalogo.vue` | ADMIN 01 | `/admin/catalogo` | Saludo + fecha (inline), 5 KPIs, accesos rápidos, tabla de actividad reciente y rosco de estado del catálogo. |
 | `VistaProductos.vue` | ADMIN 02 | `/admin/catalogo/productos` | Encabezado con «Nuevo producto» / «Exportar», barra de filtros (categoría, marca, línea, estado, tipo de color), tabla con orden y paginación. |
 | `VistaProductoFormulario.vue` | ADMIN 03 + ADMIN 04 | `/admin/catalogo/productos/nuevo` y `/…/:productoId/editar` | Enlace «Volver» + título, `FormularioProducto` (9 secciones), aside contextual: en **crear** vista previa + checklist; en **editar** vista previa con metadatos + tarjetas «Variantes y relacionados» e «Historial / auditoría» (inline), acciones de cabecera (Ver en catálogo / Duplicar) y barra fija Cancelar / Desactivar / Guardar cambios. |
@@ -219,12 +219,14 @@ provisional (`irA()` guarda la ruta en un ref) hasta montar el router del panel 
 
 Reciben `props`, emiten eventos, no conocen el store. Agrupados por dónde se usan.
 
+> El chrome del panel (barra lateral, barra superior) ya no vive aquí: es
+> `core/layouts/DisenoAdmin.vue` (+ `BarraLateralAdmin.vue` / `BarraSuperiorAdmin.vue`
+> / `useMenuMovil.ts` en `core/`), compartido con el resto de módulos admin.
+
 ### Compartidos / primitivas
 
 | Componente | Qué hace |
 | :--- | :--- |
-| `BarraLateralAdmin.vue` | Menú lateral del panel (logo, ítems de navegación, promo). `item-activo` marca el actual; emite `navegar`. Usado por las 8 vistas. |
-| `BarraSuperiorAdmin.vue` | Barra superior (breadcrumb por `seccion`, buscador global con `v-model:termino-busqueda`, notificaciones, usuario). Usado por las 8 vistas. |
 | `EncabezadoSeccion.vue` | Título + descripción + slot `#acciones`. Usado por 6 vistas. |
 | `PaginacionTabla.vue` | «Mostrando X a Y de Z» + botones de página con elipsis. Prop `etiqueta` para el sustantivo. Usado por 4 tablas. |
 | `TarjetaEstadistica.vue` | Tile KPI: etiqueta, valor, icono y línea de variación opcional (`+n% / -n% / 0%` con flecha). Usado por 4 vistas (11+ instancias). |
@@ -335,12 +337,15 @@ backend** deben exigir. `main.ts` monta el router con estas rutas vía
   «datos de ejemplo».
 - **Router del panel:** ✅ integrado. `main.ts` monta `vue-router` con
   `core/routes/index.ts`, que agrega `...dashboardCatalogoRoutes` (una URL por vista,
-  bajo `/admin/catalogo`). `usePanelNavegacion().irA` delega en `router.push()` cuando
-  no hay shell (traducción clave→path en `rutaRealPanel`). El shell
-  `VistaPanelCatalogo.vue` queda como alternativa sin router. Las vistas no cambiaron:
-  siguen llamando a `irA()`.
-- **Layout admin:** `BarraLateralAdmin` / `BarraSuperiorAdmin` deberían moverse a
-  `core/layouts/DisenoAdmin.vue` cuando exista, para compartirlo con otros módulos.
+  bajo `/admin/catalogo`). `usePanelNavegacion().irA` delega en `router.push()`
+  (traducción clave→path en `rutaRealPanel`).
+- **Layout admin:** ✅ integrado. `BarraLateralAdmin.vue` / `BarraSuperiorAdmin.vue` /
+  `useMenuMovil.ts` se movieron a `core/layouts/` y `core/composables/`;
+  `core/layouts/DisenoAdmin.vue` es el layout compartido (mismo patrón que
+  `DisenoTienda.vue`: cada vista se envuelve en `<DisenoAdmin>` con un `<slot>`,
+  no `<router-view>` anidado). El grupo «Gestión Administrativa» del menú (Usuarios,
+  Roles, Aprobación de Empresas) queda con enlaces sin conectar hasta que esos
+  módulos tengan vista propia.
 - **Sesión (M04):** el nombre de usuario está fijo (`Carlos Álvarez`) hasta que el
   panel comparta el store de autenticación.
 - **Subida de imágenes/logos (HU-CAT-07):** los componentes son marcadores; el
