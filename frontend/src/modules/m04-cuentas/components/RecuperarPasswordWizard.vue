@@ -1,5 +1,5 @@
 <template>
-  <ModalBase :modelValue="modelValue" @update:modelValue="handleCerrar" maxWidth="md" accent>
+  <Modal :modelValue="modelValue" @update:modelValue="handleCerrar" maxWidth="md" accent>
     <div class="flex flex-col h-full relative">
       <!-- El componente ModalBase ya nos da un padding y estructura, 
            así que renderizamos directamente el contenido del paso aquí -->
@@ -44,12 +44,12 @@
         </div>
       </div>
     </div>
-  </ModalBase>
+  </Modal>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import ModalBase from '@/core/components/ModalBase.vue';
+import ModalBase from '@/core/components/overlays/Modal.vue';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
 import PasoRecuperarCorreo from './PasoRecuperarCorreo.vue';

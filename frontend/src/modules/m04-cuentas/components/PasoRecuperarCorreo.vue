@@ -22,9 +22,9 @@
         <p>{{ errorMsg }}</p>
       </div>
 
-      <Boton type="submit" variant="primary" size="full" class="mt-6" :disabled="isSubmitting">
+      <Button type="submit" variant="primary" size="full" class="mt-6" :disabled="isSubmitting">
         {{ isSubmitting ? 'Procesando...' : 'Enviar código' }}
-      </Boton>
+      </Button>
     </form>
   </div>
 </template>
@@ -36,8 +36,8 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 import { Mail as MailIcon, AlertCircle as AlertCircleIcon } from 'lucide-vue-next';
 import { CuentasService } from '../services/cuentas.service';
-import Boton from '@/core/components/Boton.vue';
-import Entrada from '@/core/components/Entrada.vue';
+import Boton from '@/core/components/buttons/Button.vue';
+import Entrada from '@/core/components/forms/Input.vue';
 
 const emit = defineEmits<{
   'solicitado': [correo: string];

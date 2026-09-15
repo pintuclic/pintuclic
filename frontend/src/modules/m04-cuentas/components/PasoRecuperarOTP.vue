@@ -30,16 +30,16 @@
       <p>{{ errorMsg }}</p>
     </div>
 
-    <Boton type="button" variant="primary" size="full" :disabled="!isComplete || isLoading" @click="verificarCodigo">
+    <Button type="button" variant="primary" size="full" :disabled="!isComplete || isLoading" @click="verificarCodigo">
       {{ isLoading ? 'Verificando...' : 'Verificar código' }}
-    </Boton>
+    </Button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { AlertCircle as AlertCircleIcon } from 'lucide-vue-next';
-import Boton from '@/core/components/Boton.vue';
+import Boton from '@/core/components/buttons/Button.vue';
 
 const props = defineProps<{
   correo: string;
