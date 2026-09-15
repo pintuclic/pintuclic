@@ -38,14 +38,12 @@ export const routes: RouteRecordRaw[] = [
     path: '/acceso',
     name: 'Acceso',
     component: () => import('@/core/layouts/LayoutAcceso.vue'),
-    children: [],
+    children: []
   },
-
-  // 4. Fallback: Cualquier ruta no reconocida redirige al inicio
   {
     path: '/:pathMatch(.*)*',
     redirect: '/',
-  },
+  }
 ];
 
 const router = createRouter({

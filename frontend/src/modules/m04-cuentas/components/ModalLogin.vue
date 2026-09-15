@@ -171,10 +171,8 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { useCuentas } from '../composables/useCuentas';
 import { loginSchema, validarContrasenaConConfirmacion } from '../dtos';
 import { Mail as MailIcon, Lock as LockIcon, ShieldCheck } from 'lucide-vue-next';
-import Modal from '@/core/components/Modal.vue';
+import { Modal, Input, Button } from '@/core/components';
 import EncabezadoModal from './EncabezadoModal.vue';
-import Input from '@/core/components/Input.vue';
-import Button from '@/core/components/Button.vue';
 
 const props = defineProps<{
   modelValue: boolean;

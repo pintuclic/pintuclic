@@ -26,7 +26,7 @@
 import { Check as CheckIcon } from 'lucide-vue-next';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
-import Button from '@/core/components/Button.vue';
+import { Button } from '@/core/components';
 import type { TipoCuentaRegistro } from '../interfaces/registro.interface';
 
 defineProps<{
