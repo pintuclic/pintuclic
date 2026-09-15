@@ -4,12 +4,12 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
-## [v3.29.0] - 2026-09-15
+## [v3.30.0] - 2026-09-15
 ### Módulo: M08 Orden de Venta (Backend)
 - **Alcance:** Primera entrega del backend de M08. El cliente consulta su sección de pedidos (en curso / finalizados, con buscador) y el detalle de un pedido propio; el personal autorizado localiza órdenes por código visible. La creación de órdenes y el ciclo de estados quedan bloqueados por el esquema de BD (ver walkthrough).
 - **Hitos Clave:** `GET /api/ordenes/mis-pedidos`, `GET /api/ordenes/mis-pedidos/:codigo` y `GET /api/ordenes/gestion/:codigo` (permiso `ventas.ver`). Una orden ajena responde igual que una inexistente y el intento queda registrado (M20). Router pendiente de montar en `app.routes.ts`. CA: 8 cumplidos, 6 parciales y 16 bloqueados.
 - **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m08.test.ts`: 18/18. ⚠️ Pendiente validar contra PostgreSQL real.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v3.29.0_M08_consulta_ordenes_backend.md](./walkthroughs/M08/walkthrough_v3.29.0_M08_consulta_ordenes_backend.md)
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v3.30.0_M08_consulta_ordenes_backend.md](./walkthroughs/M08/walkthrough_v3.30.0_M08_consulta_ordenes_backend.md)
 
 ---
 

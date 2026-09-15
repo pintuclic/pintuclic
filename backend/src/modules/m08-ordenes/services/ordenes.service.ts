@@ -20,7 +20,7 @@ import {
 
 /**
  * ⚠️ PROVISIONAL: la BD solo admite los estados de `enum_estado_orden`, que no coinciden
- * con la máquina de estados del diagrama (bloqueo documentado en el walkthrough v3.29.0).
+ * con la máquina de estados del diagrama (bloqueo documentado en el walkthrough v3.30.0).
  * Cuando se alinee el esquema, este mapa es el único punto a actualizar; al ser un
  * `Record` exhaustivo, TypeScript obliga a clasificar cualquier estado nuevo.
  */

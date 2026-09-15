@@ -2,7 +2,7 @@
 
 ## 1. METADATOS DE LA IMPLEMENTACIÓN
 
-* **Versión Generada:** `v3.29.0`
+* **Versión Generada:** `v3.30.0`
 * **Tipo de Incremento:** `MINOR`
 * **Módulo de Origen:** `M08 - Orden de venta`
 * **Fecha de Entrega:** `15/09/2026`
@@ -186,8 +186,8 @@ Resumen: **8 cumplidos · 6 parciales · 16 bloqueados** (30 CA en total). La su
 | **[NUEVO]** | `backend/src/modules/m08-ordenes/controllers/ordenes.controller.ts` | Transporte HTTP y delegación. |
 | **[NUEVO]** | `backend/src/modules/m08-ordenes/m08.routes.ts` | Composición del módulo, guardas M20 y constante `PERMISO_VER_ORDENES`. |
 | **[NUEVO]** | `backend/src/modules/m08-ordenes/__tests__/m08.test.ts` | 18 pruebas en memoria. |
-| **[NUEVO]** | `docs/walkthroughs/M08/walkthrough_v3.29.0_M08_consulta_ordenes_backend.md` | Este documento. |
-| **[MODIFICADO]** | `docs/CHANGELOG.md` | Entrada `v3.29.0`. |
+| **[NUEVO]** | `docs/walkthroughs/M08/walkthrough_v3.30.0_M08_consulta_ordenes_backend.md` | Este documento. |
+| **[MODIFICADO]** | `docs/CHANGELOG.md` | Entrada `v3.30.0`. |
 
 Ningún archivo de otro módulo ni compartido (`app.routes.ts`, `core/db/types.ts`, `bd/sql/*`) fue modificado.
 
