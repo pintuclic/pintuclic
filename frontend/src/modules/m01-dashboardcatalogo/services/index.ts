@@ -22,6 +22,8 @@ export * from './marca-detalle.service';
 export * from './marca-detalle.mock';
 export * from './colores.service';
 export * from './colores.mock';
+export * from './color-formulario.service';
+export * from './color-formulario.mock';
 export * from './busquedas.service';
 export * from './busquedas.mock';
 export * from './lineas.service';

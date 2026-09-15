@@ -226,6 +226,27 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/admin/catalogo/colores/nuevo',
+    name: 'AdminColorNuevo',
+    component: () => import('./views/VistaColorFormulario.vue'),
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Crear color',
+    },
+  },
+  {
+    path: '/admin/catalogo/colores/:colorId/editar',
+    name: 'AdminColorEditar',
+    component: () => import('./views/VistaColorFormulario.vue'),
+    props: true,
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Editar color',
+    },
+  },
+  {
     path: '/admin/catalogo/busquedas-sin-resultado',
     name: 'AdminBusquedasSinResultado',
     component: () => import('./views/VistaBusquedas.vue'),
