@@ -1,67 +1,65 @@
 <template>
-  <DisenoAdmin>
-    <div class="space-y-6 p-6 lg:p-8">
-      <EncabezadoSeccion
-        titulo="Gestión de productos"
-        descripcion="Administra tu catálogo de productos: agrega, edita y organiza todos tus productos en un solo lugar."
-      >
-        <template #acciones>
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-button bg-conversion px-4 py-2 text-sm font-medium text-neutral-white transition-colors hover:bg-conversion-hover focus:outline-none focus:ring-2 focus:ring-conversion focus:ring-offset-2"
-            @click="irA('/admin/catalogo/productos/nuevo')"
-          >
-            <Plus class="h-4 w-4" aria-hidden="true" />
-            Nuevo producto
-          </button>
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark transition-colors hover:bg-neutral-lightest focus:outline-none focus:ring-2 focus:ring-action focus:ring-offset-2"
-            @click="irA('/admin/catalogo/productos/exportar')"
-          >
-            <Download class="h-4 w-4" aria-hidden="true" />
-            Exportar
-          </button>
-        </template>
-      </EncabezadoSeccion>
+  <div class="space-y-6 p-6 lg:p-8">
+    <EncabezadoSeccion
+      titulo="Gestión de productos"
+      descripcion="Administra tu catálogo de productos: agrega, edita y organiza todos tus productos en un solo lugar."
+    >
+      <template #acciones>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-button bg-conversion px-4 py-2 text-sm font-medium text-neutral-white transition-colors hover:bg-conversion-hover focus:outline-none focus:ring-2 focus:ring-conversion focus:ring-offset-2"
+          @click="irA('/admin/catalogo/productos/nuevo')"
+        >
+          <Plus class="h-4 w-4" aria-hidden="true" />
+          Nuevo producto
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark transition-colors hover:bg-neutral-lightest focus:outline-none focus:ring-2 focus:ring-action focus:ring-offset-2"
+          @click="irA('/admin/catalogo/productos/exportar')"
+        >
+          <Download class="h-4 w-4" aria-hidden="true" />
+          Exportar
+        </button>
+      </template>
+    </EncabezadoSeccion>
 
-      <p
-        v-if="error"
-        class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
-      >
-        {{ error }}
-      </p>
+    <p
+      v-if="error"
+      class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
+    >
+      {{ error }}
+    </p>
 
-      <FiltrosProductos
-        :filtros="filtros"
-        :opciones="opcionesFiltro"
-        :hay-filtros-activos="hayFiltrosActivos"
-        @cambiar="aplicarFiltros"
-        @limpiar="limpiarFiltros"
-      />
-
-      <TablaProductos
-        v-if="pagina"
-        :pagina="pagina"
-        :filtros="filtros"
-        :cargando="cargando"
-        @ordenar="ordenarPor"
-        @ir-pagina="irAPagina"
-        @abrir="(id) => irA(`/admin/catalogo/productos/${id}`)"
-        @editar="(id) => irA(`/admin/catalogo/productos/${id}/editar`)"
-        @duplicar="() => irA('/admin/catalogo/productos/nuevo')"
-        @seleccion="onSeleccion"
-      />
-    </div>
-
-    <BarraAccionesMasivas
-      :cantidad="seleccionados.length"
-      @limpiar="seleccionados = []"
-      @activar-lote="() => {}"
-      @desactivar-lote="() => {}"
-      @exportar-lote="() => irA('/admin/catalogo/productos/exportar')"
+    <FiltrosProductos
+      :filtros="filtros"
+      :opciones="opcionesFiltro"
+      :hay-filtros-activos="hayFiltrosActivos"
+      @cambiar="aplicarFiltros"
+      @limpiar="limpiarFiltros"
     />
-  </DisenoAdmin>
+
+    <TablaProductos
+      v-if="pagina"
+      :pagina="pagina"
+      :filtros="filtros"
+      :cargando="cargando"
+      @ordenar="ordenarPor"
+      @ir-pagina="irAPagina"
+      @abrir="(id) => irA(`/admin/catalogo/productos/${id}`)"
+      @editar="(id) => irA(`/admin/catalogo/productos/${id}/editar`)"
+      @duplicar="() => irA('/admin/catalogo/productos/nuevo')"
+      @seleccion="onSeleccion"
+    />
+  </div>
+
+  <BarraAccionesMasivas
+    :cantidad="seleccionados.length"
+    @limpiar="seleccionados = []"
+    @activar-lote="() => {}"
+    @desactivar-lote="() => {}"
+    @exportar-lote="() => irA('/admin/catalogo/productos/exportar')"
+  />
 </template>
 
 <script setup lang="ts">
@@ -80,7 +78,6 @@
 import { ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, Download } from 'lucide-vue-next';
-import DisenoAdmin from '@/core/layouts/DisenoAdmin.vue';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import FiltrosProductos from '../components/FiltrosProductos.vue';
 import TablaProductos from '../components/TablaProductos.vue';

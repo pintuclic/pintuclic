@@ -1,5 +1,5 @@
 // Primitivas compartidas entre vistas
-// (el chrome del panel — barra lateral / superior — vive en core/layouts/DisenoAdmin.vue)
+// (el chrome del panel admin — sidebar/topbar — vive en core/layouts/LayoutAdmin.vue)
 export { default as EncabezadoSeccion } from './EncabezadoSeccion.vue';
 export { default as PaginacionTabla } from './PaginacionTabla.vue';
 export { default as TablaBase } from './TablaBase.vue';

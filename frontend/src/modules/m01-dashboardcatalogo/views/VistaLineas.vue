@@ -1,162 +1,160 @@
 <template>
-  <DisenoAdmin>
-    <div class="space-y-6 p-6 lg:p-8">
-      <EncabezadoSeccion
-        titulo="Gestión de líneas comerciales"
-        descripcion="Organiza y administra las líneas comerciales de tus marcas. Define gamas, asocia productos y gestiona su visibilidad."
-      >
-        <template #acciones>
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-button bg-conversion px-4 py-2 text-sm font-medium text-neutral-white transition-colors hover:bg-conversion-hover focus:outline-none focus:ring-2 focus:ring-conversion focus:ring-offset-2"
-            @click="irA('/admin/catalogo/lineas/nueva')"
-          >
-            <Plus class="h-4 w-4" aria-hidden="true" />
-            Nueva línea
-          </button>
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark transition-colors hover:bg-neutral-lightest focus:outline-none focus:ring-2 focus:ring-action focus:ring-offset-2"
-            @click="irA('/admin/catalogo/lineas/exportar')"
-          >
-            <Download class="h-4 w-4" aria-hidden="true" />
-            Exportar
-          </button>
-        </template>
-      </EncabezadoSeccion>
-
-      <p
-        v-if="error"
-        class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
-      >
-        {{ error }}
-      </p>
-
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <article
-          v-for="kpi in kpis"
-          :key="kpi.etiqueta"
-          class="flex items-center gap-3 rounded-card border border-neutral-light bg-neutral-white p-4 shadow-sm"
+  <div class="space-y-6 p-6 lg:p-8">
+    <EncabezadoSeccion
+      titulo="Gestión de líneas comerciales"
+      descripcion="Organiza y administra las líneas comerciales de tus marcas. Define gamas, asocia productos y gestiona su visibilidad."
+    >
+      <template #acciones>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-button bg-conversion px-4 py-2 text-sm font-medium text-neutral-white transition-colors hover:bg-conversion-hover focus:outline-none focus:ring-2 focus:ring-conversion focus:ring-offset-2"
+          @click="irA('/admin/catalogo/lineas/nueva')"
         >
-          <span
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-card"
-            :class="kpi.clasesIcono"
-          >
-            <component :is="kpi.icono" class="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div class="min-w-0">
-            <p class="text-2xl font-bold leading-tight text-neutral-black tabular-nums">
-              {{ formatearNumero(kpi.valor) }}
-            </p>
-            <p class="text-sm font-medium text-neutral-dark">{{ kpi.etiqueta }}</p>
-            <p class="truncate text-xs text-neutral-medium">{{ kpi.subtitulo }}</p>
-          </div>
-        </article>
-      </div>
+          <Plus class="h-4 w-4" aria-hidden="true" />
+          Nueva línea
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark transition-colors hover:bg-neutral-lightest focus:outline-none focus:ring-2 focus:ring-action focus:ring-offset-2"
+          @click="irA('/admin/catalogo/lineas/exportar')"
+        >
+          <Download class="h-4 w-4" aria-hidden="true" />
+          Exportar
+        </button>
+      </template>
+    </EncabezadoSeccion>
 
-      <!-- Filtros -->
-      <section
-        class="rounded-card border border-neutral-light bg-neutral-white p-4 shadow-sm"
-        aria-label="Filtros de líneas comerciales"
+    <p
+      v-if="error"
+      class="rounded-card border border-neutral-light bg-neutral-white px-4 py-3 text-sm text-neutral-dark"
+    >
+      {{ error }}
+    </p>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <article
+        v-for="kpi in kpis"
+        :key="kpi.etiqueta"
+        class="flex items-center gap-3 rounded-card border border-neutral-light bg-neutral-white p-4 shadow-sm"
       >
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div class="relative flex-1">
-            <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-medium" aria-hidden="true" />
-            <input
-              :value="filtros.busqueda"
-              type="search"
-              placeholder="Buscar por nombre de línea, marca o gama…"
-              class="w-full rounded-input border border-neutral-light bg-neutral-lightest py-2 pl-9 pr-3 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30"
-              aria-label="Buscar líneas comerciales"
-              @input="onBuscar(($event.target as HTMLInputElement).value)"
-            />
-          </div>
-          <button
-            type="button"
-            class="inline-flex items-center gap-1.5 self-start rounded-button px-3 py-2 text-sm font-medium text-action hover:bg-subaction disabled:cursor-not-allowed disabled:text-neutral-medium disabled:hover:bg-transparent sm:self-auto"
-            :disabled="!hayFiltrosActivos"
-            @click="limpiarFiltros"
-          >
-            <FilterX class="h-4 w-4" aria-hidden="true" />
-            Limpiar filtros
-          </button>
+        <span
+          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-card"
+          :class="kpi.clasesIcono"
+        >
+          <component :is="kpi.icono" class="h-5 w-5" aria-hidden="true" />
+        </span>
+        <div class="min-w-0">
+          <p class="text-2xl font-bold leading-tight text-neutral-black tabular-nums">
+            {{ formatearNumero(kpi.valor) }}
+          </p>
+          <p class="text-sm font-medium text-neutral-dark">{{ kpi.etiqueta }}</p>
+          <p class="truncate text-xs text-neutral-medium">{{ kpi.subtitulo }}</p>
         </div>
-
-        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <label class="flex flex-col gap-1 text-xs font-medium text-neutral-medium">
-            Marca
-            <select
-              :value="filtros.marca ?? ''"
-              class="rounded-input border border-neutral-light bg-neutral-white px-2.5 py-2 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30"
-              @change="aplicarFiltros({ marca: opcionONull(($event.target as HTMLSelectElement).value) })"
-            >
-              <option value="">Todas las marcas</option>
-              <option v-for="op in opcionesFiltro.marcas" :key="op.valor" :value="op.etiqueta">
-                {{ op.etiqueta }}
-              </option>
-            </select>
-          </label>
-
-          <label class="flex flex-col gap-1 text-xs font-medium text-neutral-medium">
-            Estado
-            <select
-              :value="filtros.estado ?? ''"
-              class="rounded-input border border-neutral-light bg-neutral-white px-2.5 py-2 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30"
-              @change="aplicarFiltros({ estado: onEstado(($event.target as HTMLSelectElement).value) })"
-            >
-              <option value="">Todos los estados</option>
-              <option value="activa">Activa</option>
-              <option value="pausada">Pausada</option>
-              <option value="inactiva">Inactiva</option>
-            </select>
-          </label>
-
-          <label class="flex flex-col gap-1 text-xs font-medium text-neutral-medium">
-            Segmento / Categoría
-            <select
-              :value="filtros.segmento ?? ''"
-              class="rounded-input border border-neutral-light bg-neutral-white px-2.5 py-2 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30"
-              @change="aplicarFiltros({ segmento: opcionONull(($event.target as HTMLSelectElement).value) })"
-            >
-              <option value="">Todos los segmentos</option>
-              <option v-for="op in opcionesFiltro.segmentos" :key="op.valor" :value="op.etiqueta">
-                {{ op.etiqueta }}
-              </option>
-            </select>
-          </label>
-        </div>
-      </section>
-
-      <TablaLineas
-        v-if="pagina"
-        :pagina="pagina"
-        :orden="filtros.orden"
-        :cargando="cargando"
-        @editar="(linea) => irA(`/admin/catalogo/lineas/${linea.id}/editar`)"
-        @desactivar="(linea) => (lineaADesactivar = linea)"
-        @ordenar="(orden) => aplicarFiltros({ orden })"
-        @ir-pagina="irAPagina"
-        @seleccion="(ids) => (seleccionados = ids)"
-      />
+      </article>
     </div>
 
-    <!-- ADMIN 17 - Modal desactivar línea -->
-    <ModalDesactivarLinea
-      v-if="lineaADesactivar"
-      :linea="lineaADesactivar"
-      @cerrar="lineaADesactivar = null"
-      @ver-dependencias="(linea) => irA(`/admin/catalogo/lineas/${linea.id}/editar`)"
-      @confirmar="onDesactivar"
-    />
+    <!-- Filtros -->
+    <section
+      class="rounded-card border border-neutral-light bg-neutral-white p-4 shadow-sm"
+      aria-label="Filtros de líneas comerciales"
+    >
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div class="relative flex-1">
+          <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-medium" aria-hidden="true" />
+          <input
+            :value="filtros.busqueda"
+            type="search"
+            placeholder="Buscar por nombre de línea, marca o gama…"
+            class="w-full rounded-input border border-neutral-light bg-neutral-lightest py-2 pl-9 pr-3 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30"
+            aria-label="Buscar líneas comerciales"
+            @input="onBuscar(($event.target as HTMLInputElement).value)"
+          />
+        </div>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 self-start rounded-button px-3 py-2 text-sm font-medium text-action hover:bg-subaction disabled:cursor-not-allowed disabled:text-neutral-medium disabled:hover:bg-transparent sm:self-auto"
+          :disabled="!hayFiltrosActivos"
+          @click="limpiarFiltros"
+        >
+          <FilterX class="h-4 w-4" aria-hidden="true" />
+          Limpiar filtros
+        </button>
+      </div>
 
-    <BarraAccionesMasivas
-      :cantidad="seleccionados.length"
-      @limpiar="seleccionados = []"
-      @activar-lote="() => {}"
-      @desactivar-lote="() => {}"
-      @exportar-lote="() => irA('/admin/catalogo/lineas/exportar')"
+      <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <label class="flex flex-col gap-1 text-xs font-medium text-neutral-medium">
+          Marca
+          <select
+            :value="filtros.marca ?? ''"
+            class="rounded-input border border-neutral-light bg-neutral-white px-2.5 py-2 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30"
+            @change="aplicarFiltros({ marca: opcionONull(($event.target as HTMLSelectElement).value) })"
+          >
+            <option value="">Todas las marcas</option>
+            <option v-for="op in opcionesFiltro.marcas" :key="op.valor" :value="op.etiqueta">
+              {{ op.etiqueta }}
+            </option>
+          </select>
+        </label>
+
+        <label class="flex flex-col gap-1 text-xs font-medium text-neutral-medium">
+          Estado
+          <select
+            :value="filtros.estado ?? ''"
+            class="rounded-input border border-neutral-light bg-neutral-white px-2.5 py-2 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30"
+            @change="aplicarFiltros({ estado: onEstado(($event.target as HTMLSelectElement).value) })"
+          >
+            <option value="">Todos los estados</option>
+            <option value="activa">Activa</option>
+            <option value="pausada">Pausada</option>
+            <option value="inactiva">Inactiva</option>
+          </select>
+        </label>
+
+        <label class="flex flex-col gap-1 text-xs font-medium text-neutral-medium">
+          Segmento / Categoría
+          <select
+            :value="filtros.segmento ?? ''"
+            class="rounded-input border border-neutral-light bg-neutral-white px-2.5 py-2 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30"
+            @change="aplicarFiltros({ segmento: opcionONull(($event.target as HTMLSelectElement).value) })"
+          >
+            <option value="">Todos los segmentos</option>
+            <option v-for="op in opcionesFiltro.segmentos" :key="op.valor" :value="op.etiqueta">
+              {{ op.etiqueta }}
+            </option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <TablaLineas
+      v-if="pagina"
+      :pagina="pagina"
+      :orden="filtros.orden"
+      :cargando="cargando"
+      @editar="(linea) => irA(`/admin/catalogo/lineas/${linea.id}/editar`)"
+      @desactivar="(linea) => (lineaADesactivar = linea)"
+      @ordenar="(orden) => aplicarFiltros({ orden })"
+      @ir-pagina="irAPagina"
+      @seleccion="(ids) => (seleccionados = ids)"
     />
-  </DisenoAdmin>
+  </div>
+
+  <!-- ADMIN 17 - Modal desactivar línea -->
+  <ModalDesactivarLinea
+    v-if="lineaADesactivar"
+    :linea="lineaADesactivar"
+    @cerrar="lineaADesactivar = null"
+    @ver-dependencias="(linea) => irA(`/admin/catalogo/lineas/${linea.id}/editar`)"
+    @confirmar="onDesactivar"
+  />
+
+  <BarraAccionesMasivas
+    :cantidad="seleccionados.length"
+    @limpiar="seleccionados = []"
+    @activar-lote="() => {}"
+    @desactivar-lote="() => {}"
+    @exportar-lote="() => irA('/admin/catalogo/lineas/exportar')"
+  />
 </template>
 
 <script setup lang="ts">
@@ -176,7 +174,6 @@ import { computed, ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, Download, Search, FilterX, Boxes, Tag, Layers, Settings } from 'lucide-vue-next';
 import type { Component } from 'vue';
-import DisenoAdmin from '@/core/layouts/DisenoAdmin.vue';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import TablaLineas from '../components/TablaLineas.vue';
 import ModalDesactivarLinea from '../components/ModalDesactivarLinea.vue';

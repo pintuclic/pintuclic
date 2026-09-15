@@ -1,3 +1,4 @@
+import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import { dashboardCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboard-catalogo.routes';
 
@@ -6,21 +7,51 @@ import { dashboardCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboa
  * RUTAS DE LA APLICACIÓN
  * Ubicación: src/core/routes/index.ts
  *
- * Cada módulo exporta su propio arreglo de rutas y aquí se agregan con spread.
- * `main.ts` monta el router con este arreglo.
+ * Árbol de rutas con tres layouts raíz (LayoutHome, LayoutAdmin, LayoutAcceso).
+ * Cada módulo admin cuelga sus vistas como `children` de `/admin`; como esas
+ * rutas ya traen path absoluto (p. ej. `/admin/catalogo/productos`), vue-router
+ * las resuelve igual sin necesidad de reescribirlas como relativas.
  * ==============================================================================
  */
-export const routes: RouteRecordRaw[] = [
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'Inicio',
-    component: () => import('@/modules/m02-productos/views/VistaInicio.vue'),
+    name: 'Tienda',
+    component: () => import('@/core/layouts/LayoutHome.vue'),
+    children: [
+      {
+        path: '',
+        name: 'Inicio',
+        component: () => import('@/modules/m02-productos/views/VistaInicio.vue'),
+      },
+    ],
   },
-
-  // M01 · Panel de catálogo (dashboard, productos, variantes, categorías,
-  // marcas, colores, búsquedas sin resultado).
-  ...dashboardCatalogoRoutes,
-
-  // Cualquier otra ruta vuelve al inicio.
-  { path: '/:pathMatch(.*)*', redirect: '/' },
+  {
+    path: '/admin',
+    name: 'Administracion',
+    component: () => import('@/core/layouts/LayoutAdmin.vue'),
+    children: [
+      // M01 · Panel de catálogo (dashboard, productos, variantes, categorías,
+      // marcas, colores, búsquedas sin resultado).
+      ...dashboardCatalogoRoutes,
+    ],
+  },
+  {
+    path: '/acceso',
+    name: 'Acceso',
+    component: () => import('@/core/layouts/LayoutAcceso.vue'),
+    children: [],
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/',
+  },
 ];
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+  scrollBehavior: () => ({ top: 0 }),
+});
+
+export default router;
