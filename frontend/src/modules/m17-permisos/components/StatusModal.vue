@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, Modal } from "@/core/components";
+import { Button, Modal, Textarea } from "@/core/components";
 import { computed, ref } from "vue";
 import type { Persona } from "../interfaces";
 import { service } from "../services/m17.service";
@@ -58,18 +58,15 @@ async function save() {
             : "La cuenta volverá a estar activa."
         }}
       </p>
-      <label v-if="active" class="mt-5 block text-sm font-semibold"
-        >Motivo <span class="text-neutral-dark">*</span
-        ><textarea
+      <Textarea v-if="active" label="Motivo *"
           v-model="reason"
           required
           minlength="10"
           maxlength="500"
           rows="4"
-          class="mt-2 w-full rounded-lg border border-neutral-light p-3 font-normal"
+          class="mt-5"
           placeholder="Describe el motivo (mínimo 10 caracteres)"
-        ></textarea>
-      </label>
+        ></Textarea>
       <p v-if="error" role="alert" class="mt-4 text-sm text-neutral-dark">
         {{ error }}
       </p>

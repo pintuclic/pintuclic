@@ -5,7 +5,7 @@
       :class="[maxWidthClass, modelValue ? 'w-full' : 'hidden']"
       @cancel.prevent="close"
       @click="$event.target === $event.currentTarget && close()">
-      
+
       <!-- Modal Content -->
       <div v-if="modelValue"
         class="relative bg-white rounded-modal shadow-xl w-full max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden"
@@ -24,7 +24,7 @@
         />
 
         <!-- Close Button -->
-        <button 
+        <button
           type="button"
           aria-label="Cerrar ventana"
           @click="close"
@@ -32,9 +32,13 @@
         >
           <XIcon class="w-5 h-5" />
         </button>
-        
+
         <div class="p-4 sm:p-6 md:p-8 min-h-0 flex-1 overflow-y-auto custom-scrollbar">
-          <h2 v-if="title" :id="titleId" class="mb-5 pr-8 text-xl font-bold text-corporate">{{ title }}</h2>
+          <div v-if="brandHeader" class="flex items-center gap-3 mb-6">
+            <img :src="logoSrc" alt="PintuClic" class="w-9 h-9 rounded-lg object-contain" />
+            <span class="text-lg font-heading font-bold text-corporate">PintuClic</span>
+          </div>
+          <h2 v-if="title" :id="titleId" class="mb-5 pr-8 font-title text-xl font-bold text-corporate">{{ title }}</h2>
           <slot></slot>
         </div>
       </div>
@@ -45,14 +49,21 @@
 <script setup lang="ts">
 import { computed, watch, onBeforeUnmount, nextTick, ref, useId } from 'vue';
 import { X as XIcon } from 'lucide-vue-next';
+import logoSrc from '@/assets/logo.png';
 
 const titleId = useId();
 const props = defineProps({
-  title: { type: String, default: "" },
-  wide: { type: Boolean, default: false },
   modelValue: {
     type: Boolean,
     default: true
+  },
+  title: {
+    type: String,
+    default: ''
+  },
+  wide: {
+    type: Boolean,
+    default: false
   },
   maxWidth: {
     type: String,
@@ -62,18 +73,23 @@ const props = defineProps({
   accent: {
     type: Boolean,
     default: false
+  },
+  brandHeader: {
+    type: Boolean,
+    default: false
   }
 });
 
 const emit = defineEmits(['update:modelValue', 'close']);
 
 const maxWidthClass = computed(() => {
+  if (props.wide) return 'max-w-3xl';
   const map: Record<string, string> = {
     sm: 'max-w-sm',
-    md: 'max-w-md', // ~448px, perfect for login
-    lg: 'max-w-lg', // ~512px
+    md: 'max-w-md',
+    lg: 'max-w-lg',
     xl: 'max-w-xl',
-    '2xl': 'max-w-2xl' // good for register if needed
+    '2xl': 'max-w-2xl'
   };
   return props.wide ? 'max-w-3xl' : map[props.maxWidth];
 });

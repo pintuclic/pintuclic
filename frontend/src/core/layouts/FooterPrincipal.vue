@@ -2,7 +2,7 @@
   <footer class="bg-corporate text-neutral-white pt-12 pb-6 px-6 lg:px-12 w-full mt-auto">
     <div class="max-w-7xl mx-auto">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-        
+
         <!-- Columna 1: Logo y texto -->
         <div class="flex flex-col gap-4">
           <img :src="logoSrc" alt="Pintu Clic" class="h-12 object-contain self-start" />
@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { 
+import {
   Facebook as FacebookIcon,
   Instagram as InstagramIcon,
   Youtube as YoutubeIcon,

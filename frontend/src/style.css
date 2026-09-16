@@ -5,18 +5,25 @@
   /* Colors based on GUIA_COLORES.md */
   --color-corporate: #002855;
   --color-corporate-dark: #002855;
-  
+
   --color-action: #0877E8;
   --color-action-hover: #0661BF;
-  
+
   --color-subaction: #DAEEFC;
-  
+
   --color-conversion: #41BF5A;
   --color-conversion-hover: #1B6D24;
   --color-conversion-accent: #3CB148;
-  
+
   --color-highlight: #FFC107;
-  
+
+  --color-danger: #E63946;
+  --color-danger-hover: #D62828;
+  --color-danger-subtle: #FDEDEE;
+
+  --color-offer: #E63946;
+  --color-offer-hover: #D62839;
+
   --color-neutral-white: #FFFFFF;
   --color-neutral-lightest: #F7F8FA;
   --color-neutral-light: #E5E7EB;

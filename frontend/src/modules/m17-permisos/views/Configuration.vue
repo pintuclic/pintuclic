@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, Icon, Modal, PageHeader } from "@/core/components";
+import { Button, Icon, Modal, PageHeader, Input } from "@/core/components";
 import { computed, onMounted, ref } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
 import { service } from "../services/m17.service";
@@ -80,7 +80,7 @@ onBeforeRouteLeave(
       <header class="flex items-center gap-3 border-b border-neutral-light p-4 sm:p-6">
         <Icon name="lock" class="text-action" />
         <div>
-          <h2 class="font-bold text-corporate">Acceso y seguridad</h2>
+          <h2 class="font-title font-bold text-corporate">Acceso y seguridad</h2>
           <p class="mt-1 text-xs text-neutral-medium">
             Parámetros disponibles en el servicio M17
           </p>
@@ -103,7 +103,7 @@ onBeforeRouteLeave(
             {{ p.descripcion }}
           </p>
           <div class="mt-4 flex flex-wrap items-center gap-3">
-            <input
+            <Input
               :id="p.clave"
               v-model="p.valor"
               type="number"
@@ -112,7 +112,7 @@ onBeforeRouteLeave(
               :min="meta[p.clave]?.min"
               :max="meta[p.clave]?.max"
               :disabled="busy || !meta[p.clave]"
-              class="w-40 rounded-lg border border-neutral-light px-4 py-3 text-sm"
+              class="w-40"
             /><span class="text-sm text-neutral-medium">{{
               meta[p.clave]?.unit
             }}</span
@@ -158,14 +158,14 @@ onBeforeRouteLeave(
     <aside class="space-y-5">
       <div class="rounded-xl border border-neutral-light bg-neutral-white p-4 sm:p-6">
         <Icon name="shield" class="mb-4 h-8 w-8 text-action" />
-        <h2 class="font-bold text-corporate">Administración exclusiva</h2>
+        <h2 class="font-title font-bold text-corporate">Administración exclusiva</h2>
         <p class="mt-3 text-sm leading-6 text-neutral-medium">
           Solo el administrador puede cambiar estos valores. Revisa el alcance
           antes de confirmar.
         </p>
       </div>
       <div class="rounded-xl border border-highlight/40 bg-highlight/10 p-5">
-        <h3 class="text-sm font-bold text-corporate">
+        <h3 class="font-title text-sm font-bold text-corporate">
           Integración pendiente
         </h3>
         <p class="mt-2 text-sm leading-6 text-neutral-medium">

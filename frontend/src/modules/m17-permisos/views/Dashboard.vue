@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { Table, Button, Icon } from "@/core/components";
+import { Table, Button, Icon, Badge, PageHeader, IconButton } from "@/core/components";
 import { computed, defineAsyncComponent, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { useM17 } from "../store/useM17";
-import Badge from "../components/EstadoBadge.vue";
 const EmployeeForm = defineAsyncComponent(() => import("./EmployeeForm.vue"));
 const creatingEmployee = ref(false);
 const { state } = useM17();
@@ -79,15 +78,7 @@ const quick = [
 ];
 </script>
 <template>
-  <div class="mb-7 flex flex-wrap items-start justify-between gap-4">
-    <div>
-      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-corporate">
-        ¡Hola, administrador! <span class="text-2xl">👋</span>
-      </h1>
-      <p class="mt-2 text-sm text-neutral-medium">
-        Aquí tienes un resumen de tu equipo y los accesos de Pintu Clic.
-      </p>
-    </div>
+  <PageHeader title="¡Hola, administrador! 👋" description="Aquí tienes un resumen de tu equipo y los accesos de Pintu Clic.">
     <p class="text-left sm:text-right text-sm leading-6 text-neutral-medium">
       {{
         new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(
@@ -95,7 +86,7 @@ const quick = [
         )
       }}<br />Pintu Clic Admin
     </p>
-  </div>
+  </PageHeader>
   <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     <RouterLink
       v-for="m in metrics"
@@ -114,7 +105,7 @@ const quick = [
     >
   </div>
   <section class="my-7">
-    <h2 class="mb-4 text-lg font-bold text-corporate">Accesos rápidos</h2>
+    <h2 class="font-title mb-4 text-lg font-bold text-corporate">Accesos rápidos</h2>
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <div
         v-for="q in quick"
@@ -128,7 +119,7 @@ const quick = [
             ><Icon :name="q.icon"
           /></span>
           <div>
-            <h3 class="text-sm font-semibold text-corporate">
+            <h3 class="font-title text-sm font-semibold text-corporate">
               {{ q.label }}
             </h3>
             <p class="mt-1 text-sm leading-5 text-neutral-medium">
@@ -144,12 +135,13 @@ const quick = [
           custom-class="min-h-10 text-sm font-semibold hover:opacity-80"
           @click="creatingEmployee = true"
         >{{ q.label }}</Button>
-        <RouterLink
+        <Button
           v-else
+          variant="outline"
+          size="full"
+          custom-class="min-h-10 text-sm font-semibold"
           :to="q.to"
-          class="flex min-h-10 items-center justify-center rounded-lg text-sm font-semibold transition hover:opacity-80"
-          :class="q.color"
-          >{{ q.label }}</RouterLink
+          >{{ q.label }}</Button
         >
       </div>
     </div>
@@ -160,7 +152,7 @@ const quick = [
     >
       <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 class="text-lg font-bold text-corporate">
+          <h2 class="font-title text-lg font-bold text-corporate">
             Clientes de tu comercio
           </h2>
           <p class="mt-1 text-sm text-neutral-medium">
@@ -174,7 +166,7 @@ const quick = [
         /></RouterLink>
       </div>
       <div class="overflow-x-auto">
-        <Table mobile-cards :rows="state.clients.slice(0, 5)" :columns="columns" row-key="id_usuario" caption="Clientes de tu comercio">
+        <Table mobile-cards :rows="state.clients.slice(0, 5)" :columns="columns" row-key="id_usuario" caption="Clientes de tu comercio" :loading="state.loading">
           <template #cell-cliente="{ row: p }">
                 <p class="font-semibold text-corporate">{{ p.nombre }}</p>
                 <p class="mt-1 text-xs text-neutral-medium">{{ p.correo }}</p>
@@ -184,12 +176,7 @@ const quick = [
               </template>
           <template #cell-estado="{ row: p }"><Badge :estado="p.estado" table /></template>
           <template #cell-accion="{ row: p }">
-                <RouterLink
-                  :to="`/admin/clientes/${p.id_usuario}`"
-                  :aria-label="`Ver ${p.nombre}`"
-                  class="text-action"
-                  ><Icon name="chevron"
-                /></RouterLink>
+                <IconButton icon="chevron" tone="action" :label="`Ver ${p.nombre}`" :to="`/admin/clientes/${p.id_usuario}`" />
               </template>
           <template #empty>No hay clientes registrados.</template>
         </Table>
@@ -202,7 +189,7 @@ const quick = [
     <section
       class="rounded-xl border border-neutral-light/80 bg-neutral-white p-5"
     >
-      <h2 class="text-lg font-bold text-corporate">Control de acceso</h2>
+      <h2 class="font-title text-lg font-bold text-corporate">Control de acceso</h2>
       <p class="mt-1 text-sm text-neutral-medium">Administración protegida.</p>
       <div
         class="mx-auto my-6 flex h-36 w-36 flex-col items-center justify-center rounded-full border-[14px] border-conversion/20 border-t-conversion text-corporate"

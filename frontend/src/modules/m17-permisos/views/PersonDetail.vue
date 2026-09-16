@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { Button, Icon, PageHeader } from "@/core/components";
+import { Button, Icon, PageHeader, Badge } from "@/core/components";
 import { onMounted, ref, computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { service } from "../services/m17.service";
 import { message, useM17 } from "../store/useM17";
 import type { Persona } from "../interfaces";
-import Badge from "../components/EstadoBadge.vue";
 import StatusModal from "../components/StatusModal.vue";
 const props = defineProps<{ kind: "empleados" | "clientes"; personId?: number; compact?: boolean }>();
 const route = useRoute();
@@ -83,7 +82,7 @@ onMounted(load);
             ><Icon :name="employee ? 'user' : 'building'" class="h-7 w-7"
           /></span>
           <div>
-            <h2 class="text-lg font-bold text-corporate">
+            <h2 class="font-title text-lg font-bold text-corporate">
               Datos de la cuenta
             </h2>
             <p class="mt-1 text-sm text-neutral-medium">
@@ -122,8 +121,8 @@ onMounted(load);
       <aside
         class="rounded-xl border border-neutral-light bg-neutral-white p-4 sm:p-6"
       >
-        <h2 class="mb-4 font-bold text-corporate">Estado de la cuenta</h2>
-        <Badge :estado="person.estado" />
+        <h2 class="font-title mb-4 font-bold text-corporate">Estado de la cuenta</h2>
+        <Badge :estado="person.estado" :dot="true" />
         <p class="mt-4 text-sm leading-6 text-neutral-medium">
           {{
             person.estado === "activo"
@@ -145,7 +144,7 @@ onMounted(load);
         class="rounded-xl border border-neutral-light bg-neutral-white p-4 sm:p-6"
         :class="compact ? '' : 'xl:col-span-2'"
       >
-        <h2 class="text-lg font-bold text-corporate">
+        <h2 class="font-title text-lg font-bold text-corporate">
           Historial comercial
         </h2>
         <p class="mt-3 text-sm leading-6 text-neutral-medium">

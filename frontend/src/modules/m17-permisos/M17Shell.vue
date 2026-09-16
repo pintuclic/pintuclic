@@ -25,12 +25,12 @@ onBeforeUnmount(() => clearInterval(interval));
     <template v-else-if="state.ready">
       <RouterView v-if="allowed" v-slot="{ Component }"><component :is="Component" :key="route.path" /></RouterView>
       <div v-else class="rounded-xl bg-neutral-white p-10 text-center">
-        <Icon name="lock" class="mx-auto mb-4 h-10 w-10 text-action" /><h1 class="text-2xl font-bold text-corporate">Acceso denegado</h1>
+        <Icon name="lock" class="mx-auto mb-4 h-10 w-10 text-action" /><h1 class="font-title text-2xl font-bold text-corporate">Acceso denegado</h1>
         <p class="my-4 text-neutral-medium">Puedes continuar en una sección permitida.</p><RouterLink to="/admin/perfil" class="text-action">Ir a mi perfil</RouterLink>
       </div>
     </template>
     <div v-else-if="!state.loading" class="rounded-xl bg-neutral-white p-10 text-center">
-      <h1 class="text-2xl font-bold text-corporate">{{ state.session ? 'No se pudo cargar el panel' : 'Inicia sesión para continuar' }}</h1>
+      <h1 class="font-title text-2xl font-bold text-corporate">{{ state.session ? 'No se pudo cargar el panel' : 'Inicia sesión para continuar' }}</h1>
       <p class="mt-3 text-neutral-medium">{{ state.session ? 'Actualiza para volver a consultar tus accesos.' : 'Accede desde el inicio de sesión de Pintu Clic y vuelve a este panel.' }}</p>
       <RouterLink v-if="!state.session" to="/" class="mt-4 inline-block text-action">Ir al inicio</RouterLink>
     </div>

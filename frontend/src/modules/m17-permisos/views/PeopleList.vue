@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { Table, Paginacion, Button, IconButton, Icon, Drawer, PageHeader } from "@/core/components";
+import { Table, Paginacion, Button, IconButton, Icon, Drawer, PageHeader, Badge, Input, Select } from "@/core/components";
 import { computed, defineAsyncComponent, ref, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useM17 } from "../store/useM17";
 import type { TableColumn } from "@/core/types/table.type";
 import type { Persona } from "../interfaces";
-import Badge from "../components/EstadoBadge.vue";
 import StatusModal from "../components/StatusModal.vue";
 const PersonDetail = defineAsyncComponent(() => import("./PersonDetail.vue"));
 const viewingClient = ref<number | null>(null);
@@ -133,35 +132,24 @@ function exportCsv() {
     <div
       class="flex flex-col items-stretch gap-4 border-b border-neutral-light p-4 sm:flex-row sm:flex-wrap sm:items-end sm:p-5"
     >
-      <label class="min-w-0 flex-1 text-xs font-semibold text-corporate sm:min-w-48"
-        >Buscar {{ isEmployees ? "empleado" : "cliente"
-        }}<span
-          class="mt-2 flex items-center gap-2 rounded-lg border border-neutral-light px-3"
-          ><Icon name="search" class="text-neutral-medium" /><input
-            v-model="q"
-            placeholder="Nombre o correo electrónico"
-            class="min-w-0 w-full bg-transparent py-3 text-base sm:text-sm font-normal outline-none" /></span></label
-      ><label class="text-xs font-semibold text-corporate"
-        >Estado<select
+      <Input v-model="q" :label="`Buscar ${isEmployees ? 'empleado' : 'cliente'}`" icon="search"
+        placeholder="Nombre o correo electrónico" class="min-w-0 flex-1 sm:min-w-48" /><Select label="Estado"
           v-model="status"
-          class="mt-2 block w-full rounded-lg border border-neutral-light bg-neutral-white p-3 text-base sm:text-sm font-normal sm:min-w-40"
+          class="sm:w-48"
         >
           <option value="">Todos los estados</option>
           <option value="activo">Activo</option>
           <option value="inactivo">Inactivo</option>
           <option value="bloqueado">Bloqueado</option>
           <option value="pendiente">Pendiente</option>
-        </select></label
-      ><label v-if="!isEmployees" class="text-xs font-semibold text-corporate"
-        >Tipo<select
+        </Select><Select v-if="!isEmployees" label="Tipo"
           v-model="type"
-          class="mt-2 block w-full rounded-lg border border-neutral-light bg-neutral-white p-3 text-base sm:text-sm font-normal"
+          class="sm:w-48"
         >
           <option value="">Todos los tipos</option>
           <option value="normal">Persona natural</option>
           <option value="empresa">Empresa</option>
-        </select></label
-      ><Button variant="outline"
+        </Select><Button variant="outline"
         icon="refresh"
         aria-label="Actualizar listado"
         :disabled="state.loading"
@@ -270,7 +258,7 @@ function exportCsv() {
     modal
     @close="creatingEmployee = false"
   />
-  <Drawer v-if="viewingClient !== null && !isEmployees" title="Ficha del cliente" @close="viewingClient = null">
-    <PersonDetail :key="viewingClient" kind="clientes" :person-id="viewingClient" compact />
+  <Drawer :model-value="viewingClient !== null && !isEmployees" title="Ficha del cliente" @close="viewingClient = null">
+    <PersonDetail v-if="viewingClient !== null" :key="viewingClient" kind="clientes" :person-id="viewingClient" compact />
   </Drawer>
 </template>

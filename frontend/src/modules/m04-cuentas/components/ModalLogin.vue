@@ -1,7 +1,7 @@
 <template>
   <Modal :modelValue="modelValue" @update:modelValue="cerrarModal" maxWidth="md" accent>
     <EncabezadoModal />
-    
+
     <!-- 1. VISTA ESTÁNDAR: INICIO DE SESIÓN -->
     <div v-if="vistaActual === 'login'">
       <div class="text-center mb-8">
@@ -17,7 +17,7 @@
           placeholder="ejemplo@correo.com"
           :icon="MailIcon"
         />
-        
+
         <div class="flex flex-col gap-1.5">
           <Input
             name="contrasena"
@@ -27,9 +27,9 @@
             :icon="LockIcon"
           />
           <div class="flex justify-end mt-1">
-            <a href="#" class="text-sm font-semibold text-action hover:underline">
+            <button type="button" class="text-sm font-semibold text-action hover:underline cursor-pointer" @click="$emit('goToRecover')">
               ¿Olvidaste tu contraseña?
-            </a>
+            </button>
           </div>
         </div>
 
@@ -37,12 +37,12 @@
           {{ errorMensaje }}
         </div>
 
-        <Button type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
+        <Button type="submit" variant="corporate" size="full" class="mt-2" :disabled="cargando">
           {{ cargando ? 'Iniciando...' : 'Iniciar sesión' }}
         </Button>
       </form>
 
-      <div class="mt-6">
+      <div class="mt-5">
         <div class="relative">
           <div class="absolute inset-0 flex items-center">
             <div class="w-full border-t border-neutral-light"></div>
@@ -52,8 +52,8 @@
           </div>
         </div>
 
-        <div class="mt-6">
-          <div ref="googleBtnRef" class="w-full flex justify-center min-h-[44px]"></div>
+        <div class="mt-5">
+          <div v-show="googleBotonMontado" ref="googleBtnRef" class="w-full flex justify-center"></div>
           <Button v-show="!googleBotonMontado" variant="google" size="full" :disabled="cargando" @click="loginWithGoogle">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -61,7 +61,7 @@
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            Google
+            Iniciar sesión con Google
           </Button>
         </div>
       </div>
@@ -98,7 +98,7 @@
       </div>
 
       <div class="flex flex-col gap-3 mt-2">
-        <Button variant="primary" size="full" :disabled="cargando" @click="confirmarVinculacion">
+        <Button variant="corporate" size="full" :disabled="cargando" @click="confirmarVinculacion">
           {{ cargando ? 'Vinculando...' : 'Sí, vincular cuenta' }}
         </Button>
         <Button variant="outline" size="full" :disabled="cargando" @click="cancelarVinculacion">
@@ -145,7 +145,7 @@
           {{ errorPasswordLocal || errorMensaje }}
         </div>
 
-        <Button type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
+        <Button type="submit" variant="corporate" size="full" class="mt-2" :disabled="cargando">
           {{ cargando ? 'Guardando...' : 'Completar y acceder' }}
         </Button>
       </form>
@@ -160,17 +160,20 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { useCuentas } from '../composables/useCuentas';
 import { loginSchema, validarContrasenaConConfirmacion } from '../dtos';
 import { Mail as MailIcon, Lock as LockIcon, ShieldCheck } from 'lucide-vue-next';
-import { Modal, Input, Button } from '@/core/components';
+import Modal from '@/core/components/overlays/Modal.vue';
 import EncabezadoModal from './EncabezadoModal.vue';
+import Input from '@/core/components/forms/Input.vue';
+import Button from '@/core/components/buttons/Button.vue';
 
 const props = defineProps<{
   modelValue: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: boolean): void;
-  (e: 'goToRegister'): void;
-  (e: 'success'): void;
+  'update:modelValue': [value: boolean];
+  'goToRegister': [];
+  'goToRecover': [];
+  'success': [];
 }>();
 
 type VistaModal = 'login' | 'vincular_google' | 'completar_password';

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Button, Icon, Modal, PageHeader } from "@/core/components";
+import { Button, Icon, Modal, PageHeader, Input, Select, Checkbox } from "@/core/components";
 import { computed, ref, watch } from "vue";
-import { RouterLink, useRoute, onBeforeRouteLeave } from "vue-router";
+import { useRoute, onBeforeRouteLeave } from "vue-router";
 import type { Permiso } from "../interfaces";
 import { service } from "../services/m17.service";
 import { message, notify, useM17 } from "../store/useM17";
@@ -181,27 +181,22 @@ onBeforeRouteLeave(
     class="rounded-xl border border-neutral-light bg-neutral-white px-6 py-16 text-center"
   >
     <Icon name="users" class="mx-auto mb-4 h-12 w-12 text-action" />
-    <h2 class="text-xl font-bold text-corporate">
+    <h2 class="font-title text-xl font-bold text-corporate">
       Primero, agrega a tu equipo
     </h2>
     <p class="mt-3 text-sm text-neutral-medium">
       Necesitas un empleado registrado para asignarle permisos.
     </p>
-    <RouterLink
-      to="/admin/empleados/nuevo"
-      class="mt-6 inline-flex items-center gap-2 rounded-lg bg-action px-5 py-3 text-sm font-semibold text-neutral-white hover:bg-action/90"
-      ><Icon name="plus" />Crear empleado</RouterLink
-    >
+    <Button to="/admin/empleados/nuevo" variant="action" icon="plus" class="mt-6">Crear empleado</Button>
   </div>
   <template v-else
     ><section
       class="mb-6 rounded-xl border border-neutral-light bg-neutral-white p-4 sm:p-6"
     >
-      <label class="block text-sm font-semibold text-corporate"
-        >Seleccionar empleado<select
-          :value="employeeId"
+      <Select label="Seleccionar empleado"
+          :model-value="employeeId"
           :disabled="busy"
-          class="mt-3 w-full max-w-xl rounded-lg border border-neutral-light bg-neutral-white p-3 text-sm font-normal"
+          class="mt-3 max-w-xl"
           @change="choose"
         >
           <option :value="0">Elige un empleado</option>
@@ -212,8 +207,7 @@ onBeforeRouteLeave(
           >
             {{ p.nombre }} · {{ p.correo }}
           </option>
-        </select></label
-      >
+        </Select>
     </section>
     <p
       v-if="error"
@@ -242,15 +236,8 @@ onBeforeRouteLeave(
         <div
           class="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-light p-4 sm:p-6"
         >
-          <h2 class="font-bold text-corporate">Permisos disponibles</h2>
-          <label
-            class="flex min-w-0 w-full items-center gap-2 rounded-lg border border-neutral-light px-3 sm:w-auto"
-            ><Icon name="search" class="h-4 w-4 text-neutral-medium" /><input
-              v-model="filter"
-              aria-label="Filtrar permisos"
-              placeholder="Buscar permiso…"
-              class="min-w-0 w-full py-3 text-base outline-none sm:w-44 sm:text-sm"
-          /></label>
+          <h2 class="font-title font-bold text-corporate">Permisos disponibles</h2>
+          <Input v-model="filter" icon="search" aria-label="Filtrar permisos" placeholder="Buscar permiso…" class="sm:w-56" />
         </div>
         <fieldset
           v-for="[area, permissions] in groups"
@@ -263,20 +250,11 @@ onBeforeRouteLeave(
           >
             {{ areaNames[area] || area }}
           </legend>
-          <label
-            v-for="p in permissions"
+          <Checkbox v-for="p in permissions"
             :key="p.nombre"
             class="clear-both flex items-start gap-3 rounded-lg px-2 py-3 hover:bg-neutral-lightest"
             :class="reserved(p.nombre) ? 'opacity-60' : ''"
-            ><input
-              type="checkbox"
-              :checked="selected.includes(p.nombre)"
-              :disabled="reserved(p.nombre)"
-              class="mt-1 h-4 w-4 shrink-0 accent-action"
-              @change="
-                toggle(p.nombre, ($event.target as HTMLInputElement).checked)
-              "
-            /><span class="min-w-0 [overflow-wrap:anywhere]"
+            :model-value="selected.includes(p.nombre)" :disabled="reserved(p.nombre)" @update:model-value="toggle(p.nombre, $event)"><span class="min-w-0 [overflow-wrap:anywhere]"
               ><span class="block text-sm font-medium">{{
                 p.descripcion || p.nombre
               }}</span
@@ -286,8 +264,7 @@ onBeforeRouteLeave(
                   reserved(p.nombre) ? " · Exclusivo del administrador" : ""
                 }}</span
               ></span
-            ></label
-          >
+            ></Checkbox>
         </fieldset>
         <p
           v-if="!groups.length"
@@ -301,7 +278,7 @@ onBeforeRouteLeave(
           class="rounded-xl border border-neutral-light bg-neutral-white p-4 sm:p-6"
         >
           <Icon name="shield" class="mb-4 h-8 w-8 text-action" />
-          <h2 class="font-bold text-corporate">{{ employee.nombre }}</h2>
+          <h2 class="font-title font-bold text-corporate">{{ employee.nombre }}</h2>
           <p class="mt-1 break-all text-xs text-neutral-medium">
             {{ employee.correo }}
           </p>
@@ -346,20 +323,20 @@ onBeforeRouteLeave(
     <section
       class="mt-6 rounded-xl border border-neutral-light bg-neutral-white p-4 sm:p-6"
     >
-      <h2 class="font-bold text-corporate">¿Quién tiene este permiso?</h2>
+      <h2 class="font-title font-bold text-corporate">¿Quién tiene este permiso?</h2>
       <p class="mt-2 text-sm text-neutral-medium">
         Consulta los empleados con un acceso específico.
       </p>
-      <select
+      <Select
         v-model="inverse"
         aria-label="Permiso para consultar empleados"
-        class="mt-4 w-full max-w-xl rounded-lg border border-neutral-light bg-neutral-white p-3 text-sm"
+        class="mt-4 max-w-xl"
       >
         <option value="">Seleccionar permiso</option>
         <option v-for="p in state.catalog" :key="p.nombre" :value="p.nombre">
           {{ p.descripcion || p.nombre }}
         </option>
-      </select>
+      </Select>
       <p v-if="inverseBusy" class="mt-4 text-sm" role="status">
         Consultando accesos…
       </p>

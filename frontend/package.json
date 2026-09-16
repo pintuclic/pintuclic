@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "2.2.6",
+  "version": "2.5.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "test:m17": "node --experimental-strip-types --test src/modules/m17-permisos/tests/*.test.mjs"
+    "test:m17": "node --experimental-strip-types --test src/modules/m17-permisos/tests/*.test.mjs",
+    "test:core": "node --test src/core/components/forms/tests/*.test.mjs"
   },
   "dependencies": {
     "@vee-validate/zod": "^4.15.1",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, Icon, Modal, PageHeader } from "@/core/components";
+import { Button, Icon, Modal, PageHeader, Input } from "@/core/components";
 import { computed, onMounted, reactive, ref } from "vue";
 import {
   RouterLink,
@@ -94,8 +94,6 @@ async function submit() {
     busy.value = false;
   }
 }
-const input =
-  "mt-2 w-full rounded-lg border border-neutral-light bg-neutral-white px-4 py-3 text-base sm:text-sm font-normal disabled:bg-neutral-lightest disabled:text-neutral-medium";
 </script>
 <template>
   <component :is="modal ? Modal : 'div'" v-bind="modal ? {title: 'Crear empleado', wide: true} : {}" @close="cancel">
@@ -131,7 +129,7 @@ const input =
     <section class="rounded-xl border border-neutral-light bg-neutral-white">
       <div class="border-b border-neutral-light p-4 sm:p-6">
         <h2
-          class="flex items-center gap-3 text-lg font-bold text-corporate"
+          class="font-title flex items-center gap-3 text-lg font-bold text-corporate"
         >
           <Icon name="user" class="text-action" />Información del empleado
         </h2>
@@ -140,56 +138,43 @@ const input =
         </p>
       </div>
       <div class="grid min-w-0 grid-cols-1 gap-6 p-4 sm:p-6 sm:grid-cols-2">
-        <label class="text-sm font-semibold sm:col-span-2"
-          >Nombre completo <span class="text-neutral-dark">*</span
-          ><input
-            v-model="form.nombre"
+        <div class="text-sm font-semibold sm:col-span-2"
+          ><Input label="Nombre completo *" v-model="form.nombre"
             :autofocus="modal"
             required
             minlength="2"
             maxlength="150"
             autocomplete="name"
             placeholder="Ej. Ana María Pérez"
-            :class="input" /></label
-        ><label class="text-sm font-semibold"
-          >Documento de identidad
-          <span v-if="!editing" class="text-neutral-dark">*</span
-          ><input
-            v-model="form.doc_identidad"
+             /></div><div class="text-sm font-semibold"
+          ><Input :label="editing ? 'Documento de identidad' : 'Documento de identidad *'" v-model="form.doc_identidad"
             :required="!editing"
             :disabled="editing"
             minlength="5"
             maxlength="20"
             inputmode="numeric"
             placeholder="Número de documento"
-            :class="input" /></label
-        ><label class="text-sm font-semibold"
-          >Teléfono <span class="text-neutral-dark">*</span
-          ><input
-            v-model="form.telefono"
+             /></div><div class="text-sm font-semibold"
+          ><Input label="Teléfono *" v-model="form.telefono"
             required
             maxlength="20"
             type="tel"
             autocomplete="tel"
             placeholder="Ej. 300 123 4567"
-            :class="input" /></label
-        ><label class="text-sm font-semibold sm:col-span-2"
-          >Correo electrónico <span class="text-neutral-dark">*</span
-          ><input
-            v-model="form.correo"
+             /></div><div class="text-sm font-semibold sm:col-span-2"
+          ><Input label="Correo electrónico *" v-model="form.correo"
             required
             :disabled="editing"
             type="email"
             maxlength="150"
             autocomplete="email"
             placeholder="nombre@correo.com"
-            :class="input"
+
           /><span class="mt-2 block text-xs font-normal text-neutral-medium">{{
             editing
               ? "El correo y el documento no se pueden modificar desde este formulario."
               : "El correo debe ser único en Pintu Clic."
-          }}</span></label
-        >
+          }}</span></div>
         <p
           v-if="error"
           role="alert"
@@ -212,7 +197,7 @@ const input =
       <section
         class="rounded-xl border border-neutral-light bg-neutral-white p-4 sm:p-6"
       >
-        <h2 class="font-bold text-corporate">Resumen de la cuenta</h2>
+        <h2 class="font-title font-bold text-corporate">Resumen de la cuenta</h2>
         <div
           class="my-5 flex h-14 w-14 items-center justify-center rounded-full bg-subaction text-action"
         >
@@ -237,7 +222,7 @@ const input =
       </section>
       <section class="rounded-xl border border-action/10 bg-subaction/40 p-5">
         <Icon name="shield" class="mb-3 text-action" />
-        <h3 class="text-sm font-bold text-corporate">Accesos a su medida</h3>
+        <h3 class="font-title text-sm font-bold text-corporate">Accesos a su medida</h3>
         <p class="mt-2 text-sm leading-6 text-neutral-medium">
           Después de crear la cuenta, selecciona los permisos que necesita.
           Puedes cambiarlos cuando quieras.

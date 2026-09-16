@@ -1,6 +1,6 @@
 # M17 — Administración, empleados y permisos
 
-## Entrega vigente: v2.2.6
+## Entrega vigente: v2.5.0
 
 El módulo vive bajo `/admin`, dentro de `core/layouts/LayoutAdmin.vue`. Usa componentes globales, Pinia, DTOs dedicados y el cliente Axios compartido.
 
@@ -13,12 +13,14 @@ El módulo vive bajo `/admin`, dentro de `core/layouts/LayoutAdmin.vue`. Usa com
 
 ## Validación
 
-Desde `frontend/`: `npm run lint -- --max-warnings=0`, `npm run test:m17`, `npm run build`.
+Desde `frontend/`: `npm run lint -- --max-warnings=0`, `npm run test:core`, `npm run test:m17`, `npm run build`.
 
 El perfil consulta la sesión real. El historial de auditoría depende de que backend exponga la consulta correspondiente. Los pedidos y cotizaciones de clientes siguen dependiendo de sus módulos comerciales.
 
 ## Documentación
 
+- [Controles oficiales del Core v2.5.0](../../../../docs/walkthroughs/M17/walkthrough_v2.5.0_M17_controles_core_frontend.md).
+- [Integración con Core v2.4.1](../../../../docs/walkthroughs/M17/walkthrough_v2.4.1_M17_sincronizacion_core_frontend.md).
 - [Adaptación móvil v2.2.5](../../../../docs/walkthroughs/M17/walkthrough_v2.2.5_M17_responsivo_movil_frontend.md).
 - [Preparación Git y despliegue v2.2.6](../../../../docs/walkthroughs/M17/walkthrough_v2.2.6_M17_preparacion_git_despliegue_frontend.md).
 - [Despliegue del proyecto modular](../../../../DEPLOY.md).

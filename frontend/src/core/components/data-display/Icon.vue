@@ -1,16 +1,16 @@
-<script setup lang="ts">
-import { computed } from "vue";
+﻿<script setup lang="ts">
+import { computed } from 'vue';
 import {
   House, Users, ShieldCheck, Settings, UserRound, Search, Plus,
   ArrowRight, ArrowLeft, ChevronRight, ChevronDown, Pencil, Power,
   Check, X, Mail, Phone, LockKeyhole, Clock, Info, LayoutGrid,
   Download, Funnel, Menu, LogOut, Building2, KeyRound, Eye, Copy,
   RefreshCw, Bell,
-} from "lucide-vue-next";
-import type { Component } from "vue";
+} from 'lucide-vue-next';
+import type { Component } from 'vue';
 
 const props = defineProps<{ name: string }>();
-// Explicit imports keep the existing names without bundling the full catalog.
+
 const icons: Record<string, Component> = {
   home: House,
   users: Users,
@@ -44,11 +44,13 @@ const icons: Record<string, Component> = {
   refresh: RefreshCw,
   bell: Bell,
 };
-const icon = computed(() => icons[props.name] ?? LayoutGrid);
+
+const iconComponent = computed(() => icons[props.name] ?? LayoutGrid);
 </script>
+
 <template>
   <component
-    :is="icon"
+    :is="iconComponent"
     class="h-5 w-5 shrink-0"
     :size="20"
     :stroke-width="1.8"

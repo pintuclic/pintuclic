@@ -4,6 +4,48 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.5.1] - 2026-09-15
+### Módulo: M17 — Actualización del menú Core
+- **Alcance:** Merge de `f1ce953` de Core, cuyo único archivo de código modificado es LayoutAdmin; enlaces de M17 y catálogo actualizados sin duplicar perfil ni configuración.
+- **Calidad:** ESLint sin errores ni advertencias, TypeScript/build y pruebas Core/M17 correctos. Se conserva el manejo de foco móvil.
+- **Walkthrough:** [Actualización del menú Core](./walkthroughs/M17/walkthrough_v2.5.1_M17_merge_menu_core_frontend.md).
+
+## [v2.5.0] - 2026-09-15
+### Módulo: M17 y controles oficiales del Core
+- **Alcance:** Select, Textarea y Checkbox compartidos funcionales; Input conserva VeeValidate de M04 y admite v-model independiente. Cambios de Core autorizados expresamente por el usuario.
+- **Hitos:** M17 usa controles y badges oficiales, títulos Poppins y estilos de controles Inter; se conserva la confirmación para retirar permisos dependientes.
+- **Calidad:** ESLint sin errores ni advertencias, TypeScript y build correctos; nueve pruebas de Core/M17 y comprobaciones en navegador de edición, restablecimiento, bloqueo y confirmación.
+- **Walkthrough:** [Controles Core y limpieza M17](./walkthroughs/M17/walkthrough_v2.5.0_M17_controles_core_frontend.md).
+
+## [v2.4.1] - 2026-09-15
+### Módulo: M17 — Sincronización con Core Frontend
+- **Alcance:** Integración de los commits oficiales del Core conservando las rutas M17 bajo `/admin` y la accesibilidad del panel. Cambios compartidos y de M04 autorizados expresamente por el usuario.
+- **Hitos:** Consumo directo de Badge, PageHeader, Button e IconButton; adaptación al Drawer oficial; correcciones de tipado OTP, navegación RouterLink y tokens de estado.
+- **Calidad:** ESLint sin errores ni advertencias, TypeScript y build correctos, ocho pruebas M17 y comprobaciones de render SSR correctas.
+- **Walkthrough:** [Sincronización con Core](./walkthroughs/M17/walkthrough_v2.4.1_M17_sincronizacion_core_frontend.md).
+
+## [v2.4.0] - 2026-09-15
+### Módulo: Core Frontend (Layouts)
+- **Alcance General:** Salto a versión **MINOR (v2.4.0)**. Se importaron los componentes globales de `feature/m04-cuentas-auth-perfil` hacia `feature/core-frontend-layouts`.
+- **Hitos Clave Frontend:**
+  - **Botones y Tablas:** Corrección en renderizado del `:key` en `Table.vue` y estilos del botón outline en `Button.vue`.
+  - **Layouts y Modales:** Inyección de modales de autenticación y confirmación de "Cerrar sesión" en `LayoutHome.vue` y `LayoutAdmin.vue`.
+  - **Enrutador Central:** Refactorización de `routes/index.ts` usando el patrón de Layouts globales, en lugar de importar explícitamente M01.
+- **Estado:** ✅ Validado. Cambios sincronizados.
+
+## [v2.3.0] - 2026-09-15
+### Módulo: Core Frontend (Design System Components)
+- **Alcance General:** Salto a versión **MINOR (v2.3.0)** con la estabilización, implementación y centralización de los componentes visuales core del frontend en la rama `feature/core-frontend-layouts`, unificando el diseño de botones, tarjetas, inputs, tablas y modales para que todos los módulos utilicen la misma fuente y se erradique la duplicidad de componentes.
+- **Hitos Clave Frontend:**
+  - **Tipografías y Tailwind:** Inyección de `Inter` (sans) y `Poppins` (title) en `tailwind.config.ts`.
+  - **Componentes Base (Botones):** Refactorización completa de `Button.vue` e `IconButton.vue` para soportar las variantes oficiales (`action`, `corporate`, `outline`, etc.) y consumir la librería `lucide-vue-next` dinámicamente mediante la prop `icon`, protegiendo el `index.ts` y evitando crear archivos innecesarios.
+  - **Formularios y Tarjetas (`GrupoOpciones.vue` y `Card.vue`):** Implementación del diseño interactivo de tarjeta seleccionable (check y borde activo) en `GrupoOpciones.vue` e implementación de un contenedor de tarjetas limpio en `Card.vue`.
+  - **Tablas y Paginación (M17/M01):** Consolidación de `Table.vue` con soporte para diseño adaptativo (mobile-cards) y `Paginacion.vue` estándar, reemplazando las tablas dispares de los módulos.
+  - **Modales y Drawers:** Verificación de `Modal.vue` con la franja de gradiente corporativa e implementación de un `Drawer.vue` lateral con transiciones.
+  - **Corrección Arquitectónica:** Migración y corrección de `FooterPrincipal.vue` (removido erróneamente de `components/layout/` hacia la carpeta correcta `src/core/layouts/`).
+  - 🔗 **Walkthrough Técnico Frontend Core:** [walkthrough_v2.3.0_core_design_system_frontend.md](./walkthroughs/core/walkthrough_v2.3.0_core_design_system_frontend.md)
+- **Estado:** ✅ Validado. Componentes implementados estrictamente sobre `src/core/components/` sin afectar otras ramas.
+
 ## [v2.2.6] - 2026-09-14
 ### Módulo: M17 e integración de entrega
 - **Alcance:** Se retira la demostración en memoria de M17 para consumir exclusivamente la API; los datos de prueba siguen en SQL central. Se prepara la entrega Git conservando los historiales existentes.

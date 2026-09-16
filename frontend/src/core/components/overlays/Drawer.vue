@@ -1,75 +1,122 @@
+<template>
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition-opacity ease-linear duration-300 motion-reduce:transition-none"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity ease-linear duration-300 motion-reduce:transition-none"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="modelValue" class="fixed inset-0 z-40 bg-neutral-dark/50 backdrop-blur-sm" @click="close"></div>
+    </Transition>
+
+    <Transition
+      enter-active-class="transform transition ease-in-out duration-300 motion-reduce:transition-none"
+      enter-from-class="translate-x-full"
+      enter-to-class="translate-x-0"
+      leave-active-class="transform transition ease-in-out duration-300 motion-reduce:transition-none"
+      leave-from-class="translate-x-0"
+      leave-to-class="translate-x-full"
+    >
+      <div
+        v-if="modelValue"
+        ref="panel"
+        tabindex="-1"
+        :aria-labelledby="titleId"
+        @keydown.esc.stop="close"
+        @keydown.tab="trapFocus"
+        class="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-white shadow-xl"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-light bg-neutral-lightest/30">
+          <h2 :id="titleId" class="text-lg font-semibold font-title text-corporate">{{ title }}</h2>
+          <IconButton
+            :icon="X"
+            label="Cerrar panel"
+            tone="neutral"
+            @click="close"
+          />
+        </div>
+
+        <div class="relative flex-1 overflow-y-auto p-6">
+          <slot />
+        </div>
+
+        <div v-if="$slots.footer" class="border-t border-neutral-light p-4 bg-neutral-lightest/50">
+          <slot name="footer" />
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+</template>
+
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, useId } from "vue";
-import Icon from "../data-display/Icon.vue";
-defineProps<{ title: string }>();
-const emit = defineEmits<{ close: [] }>();
+import { watch, ref, useId, nextTick, onBeforeUnmount } from 'vue';
+import { X } from 'lucide-vue-next';
+import IconButton from '../buttons/IconButton.vue';
+
+const props = defineProps<{
+  modelValue: boolean;
+  title: string;
+}>();
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: boolean): void;
+  (e: 'close'): void;
+}>();
+
+const close = () => {
+  emit('update:modelValue', false);
+  emit('close');
+};
+
+const panel = ref<HTMLElement>();
 const titleId = useId();
-const dialog = ref<HTMLDialogElement>();
-const entered = ref(false);
-const closing = ref(false);
-let previous: HTMLElement | null = null;
-let previousOverflow = "";
-let enterFrame = 0;
-let settleFrame = 0;
-let closeTimer = 0;
+let previousFocus: HTMLElement | null = null;
+let previousOverflow = '';
+let locked = false;
+let disposed = false;
 
-function finishClose() {
-  if (!closing.value) return;
-  window.clearTimeout(closeTimer);
-  emit("close");
-}
-
-function requestClose() {
-  if (closing.value) return;
-  closing.value = true;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    finishClose();
-    return;
-  }
-  entered.value = false;
-  closeTimer = window.setTimeout(finishClose, 360);
-}
-
-onMounted(() => {
-  previous = document.activeElement as HTMLElement;
-  previousOverflow = document.body.style.overflow;
-  document.body.style.overflow = "hidden";
-  dialog.value?.showModal();
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    entered.value = true;
-    return;
-  }
-  enterFrame = window.requestAnimationFrame(() => {
-    settleFrame = window.requestAnimationFrame(() => {
-      if (!closing.value) entered.value = true;
-    });
-  });
-});
-onBeforeUnmount(() => {
-  window.cancelAnimationFrame(enterFrame);
-  window.cancelAnimationFrame(settleFrame);
-  window.clearTimeout(closeTimer);
-  dialog.value?.close();
+function restore() {
+  if (!locked) return;
   document.body.style.overflow = previousOverflow;
-  previous?.focus();
+  previousFocus?.focus();
+  locked = false;
+}
+
+function trapFocus(event: KeyboardEvent) {
+  const elements = Array.from(panel.value?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]') ?? [])
+    .filter(element => element.getClientRects().length > 0);
+  const first = elements[0];
+  const last = elements.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last?.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first?.focus();
+  }
+}
+
+watch(() => props.modelValue, async (isOpen) => {
+  await nextTick();
+  if (disposed || props.modelValue !== isOpen) return;
+  if (isOpen) {
+    if (!locked) {
+      previousFocus = document.activeElement as HTMLElement;
+      previousOverflow = document.body.style.overflow;
+      locked = true;
+    }
+    document.body.style.overflow = 'hidden';
+    panel.value?.querySelector<HTMLElement>('button')?.focus();
+  } else {
+    restore();
+  }
+}, { immediate: true, flush: 'post' });
+onBeforeUnmount(() => {
+  disposed = true;
+  restore();
 });
 </script>
-<template>
-  <dialog
-    ref="dialog"
-    :aria-labelledby="titleId"
-    class="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-2xl overflow-y-auto border-0 border-l border-neutral-light bg-neutral-lightest p-0 text-neutral-dark shadow-xl transition-transform duration-300 ease-out motion-reduce:transition-none backdrop:bg-corporate/35 backdrop:transition-opacity backdrop:duration-300"
-    :class="entered ? 'translate-x-0 backdrop:opacity-100' : 'translate-x-full backdrop:opacity-0'"
-    @cancel.prevent="requestClose"
-    @click="($event.target === $event.currentTarget) && requestClose()"
-    @transitionend.self="finishClose"
-  >
-    <header class="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-neutral-light bg-neutral-white px-6 py-5">
-      <h2 :id="titleId" class="text-xl font-bold text-corporate">{{ title }}</h2>
-      <button type="button" aria-label="Cerrar panel" class="rounded-lg p-2 text-action hover:bg-subaction/50" @click="requestClose">
-        <Icon name="close" />
-      </button>
-    </header>
-    <div class="p-5 sm:p-6"><slot /></div>
-  </dialog>
-</template>
