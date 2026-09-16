@@ -11,7 +11,7 @@
       <input 
         v-for="(_, index) in code" 
         :key="index"
-        :ref="el => inputs[index] = el"
+        :ref="el => setInputRef(el, index)"
         v-model="code[index]"
         type="text"
         inputmode="numeric"
@@ -53,6 +53,10 @@ const code = ref(Array(6).fill(''));
 const inputs = ref<(HTMLInputElement | null)[]>([]);
 const errorMsg = ref('');
 const isLoading = ref(false);
+
+const setInputRef = (el: unknown, index: number) => {
+  inputs.value[index] = (el as HTMLInputElement) ?? null;
+};
 
 const isComplete = computed(() => code.value.every(d => d !== ''));
 

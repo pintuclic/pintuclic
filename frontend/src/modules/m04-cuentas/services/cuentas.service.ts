@@ -18,6 +18,10 @@ import type {
   PerfilUsuarioResponse,
 } from "../interfaces/registro.interface";
 import type { ActualizarPerfilDTO, AscensoEmpresaDTO } from "../dtos";
+import type {
+  SolicitudEmpresa,
+  DictamenSolicitudPayload,
+} from "../interfaces/admin.interface";
 
 export const CuentasService = {
   async login(payload: LoginPayload): Promise<ApiResponse<ResultadoLogin>> {
@@ -139,6 +143,48 @@ export const CuentasService = {
   ): Promise<ApiResponse<{ mensaje: string }>> {
     const { data } = await apiClient.post<ApiResponse<{ mensaje: string }>>(
       "/cuentas/perfil/solicitar-empresa",
+      payload,
+    );
+    return data;
+  },
+
+  async solicitarCambioCorreo(
+    nuevoCorreo: string,
+    contrasenaActual: string,
+  ): Promise<ApiResponse<{ mensaje: string }>> {
+    const { data } = await apiClient.post<ApiResponse<{ mensaje: string }>>(
+      "/cuentas/perfil/cambiar-correo/solicitar",
+      { nuevoCorreo, contrasenaActual },
+    );
+    return data;
+  },
+
+  async confirmarCambioCorreo(
+    nuevoCorreo: string,
+    codigo: string,
+  ): Promise<ApiResponse<{ mensaje: string; nuevoCorreo: string }>> {
+    const { data } = await apiClient.post<
+      ApiResponse<{ mensaje: string; nuevoCorreo: string }>
+    >("/cuentas/perfil/cambiar-correo/confirmar", { nuevoCorreo, codigo });
+    return data;
+  },
+
+  // ==============================================================================
+  // MÉTODOS DE ADMINISTRACIÓN (HU-CUE-09)
+  // ==============================================================================
+  async listarSolicitudesEmpresa(): Promise<ApiResponse<SolicitudEmpresa[]>> {
+    const { data } = await apiClient.get<ApiResponse<SolicitudEmpresa[]>>(
+      "/cuentas/admin/solicitudes-empresa",
+    );
+    return data;
+  },
+
+  async dictaminarSolicitudEmpresa(
+    idSolicitud: string,
+    payload: DictamenSolicitudPayload,
+  ): Promise<ApiResponse<SolicitudEmpresa>> {
+    const { data } = await apiClient.post<ApiResponse<SolicitudEmpresa>>(
+      `/cuentas/admin/solicitudes-empresa/${idSolicitud}/dictamen`,
       payload,
     );
     return data;

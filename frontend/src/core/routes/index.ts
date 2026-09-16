@@ -26,7 +26,16 @@ export const routes: RouteRecordRaw[] = [
     path: '/admin',
     name: 'Administracion',
     component: () => import('@/core/layouts/LayoutAdmin.vue'),
-    children: []
+    children: [
+      {
+        path: 'solicitudes',
+        name: 'AdminSolicitudesEmpresa',
+        component: () =>
+          import(
+            '@/modules/m04-cuentas/views/admin/VistaAprobacionEmpresas.vue'
+          ),
+      },
+    ],
   },
 
   // 3. Layout de Acceso / Auth independiente

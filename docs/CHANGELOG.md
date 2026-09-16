@@ -4,6 +4,20 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.29.0] - 2026-09-16
+
+### Módulo: M04 Cuentas, Autenticación y Perfil (Frontend)
+- **Alcance General:** Incremento **MINOR (v3.29.0)** que implementa la aprobación administrativa de cuentas empresa (`HU-CUE-09`), la reestructuración responsiva del perfil de usuario y el flujo de verificación para cambio seguro de correo electrónico (`HU-CUE-06` / `HU-CUE-01`), con adopción integral de los componentes globales del Design System Pintuclic (`@/core/components`).
+- **Hitos Clave de Implementación:**
+  - **Aprobación de Cuentas Empresa (`VistaAprobacionEmpresas.vue`):** Erradicación total de HTML nativo (`<table>`, `<button>`). Implementación del componente `<Table>` con soporte responsivo automático (`mobile-cards`), `TableColumn` fuertemente tipado, clave de fila `row-key="id_solicitud"`, badges semánticos (`Badge`) y modal de dictamen (`Modal`, `Button`) con motivo de rechazo obligatorio según `RF-CUE-09-05`.
+  - **Perfil de Usuario Responsivo y Cambio Seguro de Correo (`VistaPerfil.vue`):** Reestructuración de la vista con CSS Grid responsivo (`order-1`, `order-2`, `order-3` en móvil). Campo de documento de identidad bloqueado contra edición indebida con tooltip explicativo. Implementación de flujo de seguridad de cambio de correo que exige la contraseña actual (`contrasenaActual`), consume `POST /cuentas/perfil/cambiar-correo/solicitar` y valida el código OTP de 6 dígitos con `POST /cuentas/perfil/cambiar-correo/confirmar` actualizando el store reactivo de Pinia.
+  - **Componente Reutilizable de Verificación (`PasoVerificacion.vue`):** Adaptado para admitir el prop `isCambioCorreo`, omitir la barra de pasos de registro cuando aplica y emitir el código OTP digitado hacia el componente padre.
+  - **Servicios y Tipado Centralizado (`cuentas.service.ts`, `admin.interface.ts`):** Nuevos métodos cliente `solicitarCambioCorreo`, `confirmarCambioCorreo`, `listarSolicitudesEmpresa` y `dictaminarSolicitudEmpresa`. Contratos de interfaz tipados sin `any`.
+  - **Enrutamiento Administrativo Central (`src/core/routes/index.ts`):** Montaje formal de la ruta `/admin/empresas` bajo `LayoutAdmin`.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M04/walkthrough_v3.29.0_M04_aprobacion_empresas_perfil_cambio_correo_frontend.md](./walkthroughs/M04/walkthrough_v3.29.0_M04_aprobacion_empresas_perfil_cambio_correo_frontend.md)
+
+---
+
 ## [v3.28.0] - 2026-09-13
 ### Core: Layouts Globales, Enrutador Central y Sincronización con M01 Catálogo (Frontend)
 - **Alcance General:** Incremento **MINOR (v3.28.0)** que formaliza la arquitectura visual y estructural de layouts del frontend para Pintu Clic. Unifica los layouts globales (`LayoutHome`, `LayoutAdmin`, `LayoutAcceso`, `FooterPrincipal`), sincroniza el enrutamiento central con el módulo completo de catálogo `M01` recién integrado en `develop` y resuelve conflictos de merge en el contenedor raíz.

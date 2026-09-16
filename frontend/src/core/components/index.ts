@@ -43,6 +43,7 @@ export { default as Table } from './data-display/Table.vue';
 export { default as Badge } from './data-display/Badge.vue';
 export { default as Avatar } from './data-display/Avatar.vue';
 export { default as Icon } from './data-display/Icon.vue';
+export type { TableColumn } from '../types/table.type';
 
 // 7. Piezas estructurales y de layout
 export { default as PageHeader } from './layout/PageHeader.vue';

@@ -25,6 +25,19 @@ export const actualizarPerfilSchema = z.object({
     .min(2)
     .max(150)
     .optional(),
+  correo: z
+    .string()
+    .trim()
+    .email('Formato de correo inválido')
+    .optional(),
+  ciudad: z
+    .string()
+    .trim()
+    .optional(),
+  direccion: z
+    .string()
+    .trim()
+    .optional(),
 });
 
 export type ActualizarPerfilDTO = z.infer<typeof actualizarPerfilSchema>;

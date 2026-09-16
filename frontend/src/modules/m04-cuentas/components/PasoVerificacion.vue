@@ -1,6 +1,6 @@
 <template>
   <EncabezadoModal />
-  <PasosProgreso :pasos="['Datos', 'Verificación', 'Listo']" :paso-actual="2" />
+  <PasosProgreso v-if="!isCambioCorreo" :pasos="['Datos', 'Verificación', 'Listo']" :paso-actual="2" />
 
   <div class="text-center mb-8">
     <h2 class="text-2xl font-bold text-corporate mb-2">Verifica tu correo</h2>
@@ -30,12 +30,12 @@
 
     <!-- Franja informativa oficial con tokens de conversión -->
     <div class="w-full rounded-input bg-conversion/10 border border-conversion/30 px-4 py-3 text-sm text-neutral-dark text-center">
-      El código expira en 15 minutos. Tu cuenta se activa al confirmarlo.
+      El código expira en 15 minutos. {{ isCambioCorreo ? 'Tu nuevo correo se activará al confirmarlo.' : 'Tu cuenta se activa al confirmarlo.' }}
     </div>
 
     <div class="w-full">
       <Button type="submit" variant="corporate" size="full" :disabled="!otpCompleto || cargando">
-        {{ cargando ? 'Verificando...' : 'Verificar y crear cuenta' }}
+        {{ cargando ? 'Verificando...' : (isCambioCorreo ? 'Verificar y cambiar correo' : 'Verificar y crear cuenta') }}
       </Button>
     </div>
   </form>
@@ -63,10 +63,11 @@ import { useCuentas } from '../composables/useCuentas';
 
 const props = defineProps<{
   correo: string;
+  isCambioCorreo?: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'verificado'): void;
+  (e: 'verificado', codigo?: string): void;
   (e: 'volver'): void;
 }>();
 
@@ -109,6 +110,11 @@ async function onVerificarSubmit() {
 
   const codigoStr = otp.value.join('');
   limpiarErrores();
+
+  if (props.isCambioCorreo) {
+    emit('verificado', codigoStr);
+    return;
+  }
 
   const resultado = await verificarCodigoActivacion({
     correo: props.correo,

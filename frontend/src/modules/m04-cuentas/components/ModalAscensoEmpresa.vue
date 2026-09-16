@@ -12,6 +12,7 @@
     <form v-else @submit.prevent="handleSubmit" class="flex flex-col gap-5 mt-4">
       <Input
         id="nombre_empresa"
+        name="nombre_empresa"
         label="Razón Social / Nombre de Empresa"
         v-model="formData.nombre_empresa"
         :error="errores.nombre_empresa"
@@ -20,6 +21,7 @@
 
       <Input
         id="nit"
+        name="nit"
         label="NIT o RUT"
         v-model="formData.nit"
         :error="errores.nit"
@@ -28,6 +30,7 @@
 
       <Input
         id="nombre_representante"
+        name="nombre_representante"
         label="Nombre del Representante Legal"
         v-model="formData.nombre_representante"
         :error="errores.nombre_representante"
@@ -35,6 +38,7 @@
 
       <Input
         id="telefono"
+        name="telefono"
         label="Teléfono de Contacto"
         v-model="formData.telefono"
         :error="errores.telefono"

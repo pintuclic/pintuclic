@@ -89,6 +89,7 @@ export interface UsuarioSeguro {
   tipo: string;
   id_rol: number | null;
   rol_nombre: string | null;
+  foto_url?: string | null;
 }
 
 export interface SesionEmitida {
