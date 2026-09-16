@@ -56,17 +56,29 @@
               <LayoutDashboardIcon class="w-4 h-4 shrink-0" />
               Dashboard
             </router-link>
-            <router-link to="/admin/usuarios" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/empleados" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <UsersIcon class="w-4 h-4 shrink-0" />
-              Usuarios / Personal
+              Personal / Empleados
             </router-link>
-            <router-link to="/admin/roles" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/permisos" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <KeyIcon class="w-4 h-4 shrink-0" />
               Roles y Permisos
+            </router-link>
+            <router-link to="/admin/clientes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+              <UsersIcon class="w-4 h-4 shrink-0" />
+              Clientes
             </router-link>
             <router-link to="/admin/solicitudes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <BuildingIcon class="w-4 h-4 shrink-0" />
               Aprobación Empresas
+            </router-link>
+            <router-link to="/admin/perfil" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+              <UserIcon class="w-4 h-4 shrink-0" />
+              Mi Perfil
+            </router-link>
+            <router-link to="/admin/configuracion" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+              <SettingsIcon class="w-4 h-4 shrink-0" />
+              Configuración
             </router-link>
           </div>
         </div>
@@ -94,7 +106,7 @@
           </button>
           
           <div v-show="catalogoAbierto && !isSidebarCollapsed" class="flex flex-col mt-1 mb-2 ml-4 pl-4 border-l border-subaction gap-1">
-            <router-link to="/admin/catalogo/productos" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-neutral-white bg-action transition-colors">
+            <router-link to="/admin/catalogo/productos" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <PackageIcon class="w-4 h-4 shrink-0" />
               Productos
             </router-link>
@@ -105,6 +117,10 @@
             <router-link to="/admin/catalogo/categorias" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <LayoutGridIcon class="w-4 h-4 shrink-0" />
               Categorías
+            </router-link>
+            <router-link to="/admin/catalogo/lineas" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+              <GitCommitIcon class="w-4 h-4 shrink-0" />
+              Líneas
             </router-link>
             <router-link to="/admin/catalogo/marcas" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <TagIcon class="w-4 h-4 shrink-0" />
@@ -118,14 +134,6 @@
               <SearchIcon class="w-4 h-4 shrink-0" />
               Búsquedas
             </router-link>
-            <router-link to="/admin/catalogo/reportes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <BarChart3Icon class="w-4 h-4 shrink-0" />
-              Reportes
-            </router-link>
-            <router-link to="/admin/catalogo/configuracion" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <SettingsIcon class="w-4 h-4 shrink-0" />
-              Configuración
-            </router-link>
           </div>
         </div>
 
@@ -135,7 +143,7 @@
       <div class="border-t border-subaction p-4">
         <button 
           @click="handleLogout" 
-          class="flex items-center justify-center gap-2 rounded-button bg-neutral-lightest hover:bg-[#E63946] hover:text-white text-[#E63946] py-2 transition-colors font-medium cursor-pointer"
+          class="flex items-center justify-center gap-2 rounded-button bg-neutral-lightest hover:bg-danger hover:text-white text-danger py-2 transition-colors font-medium cursor-pointer"
           :class="isSidebarCollapsed ? 'w-12 h-12 mx-auto px-0 rounded-full' : 'w-full px-4'"
           title="Cerrar sesión"
         >
@@ -175,6 +183,18 @@
       </main>
       
     </div>
+
+    <!-- Modal Confirmación Cerrar Sesión -->
+    <Modal v-model="showLogoutConfirm" maxWidth="sm">
+      <div class="text-center py-4">
+        <h3 class="text-xl font-bold text-corporate mb-2">¿Cerrar sesión?</h3>
+        <p class="text-neutral-medium text-sm mb-6">¿Estás seguro de que deseas salir de tu cuenta?</p>
+        <div class="flex gap-3 justify-center">
+          <button class="flex-1 py-2 px-4 rounded-lg border border-neutral-light text-neutral-dark font-semibold hover:bg-neutral-lightest transition-colors cursor-pointer" @click="showLogoutConfirm = false">Cancelar</button>
+          <button class="flex-1 py-2 px-4 rounded-lg bg-danger text-white font-semibold hover:bg-danger-hover transition-colors cursor-pointer" @click="confirmLogout">Aceptar</button>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -183,6 +203,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import logoSrc from '@/assets/Pintu_Transparent.png';
+import Modal from '@/core/components/overlays/Modal.vue';
 import { 
   Shield as ShieldIcon,
   Users as UsersIcon,
@@ -196,12 +217,13 @@ import {
   Tag as TagIcon,
   Droplet as DropletIcon,
   Search as SearchIcon,
-  BarChart3 as BarChart3Icon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
   LogOut as LogOutIcon,
   ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  User as UserIcon,
+  GitCommit as GitCommitIcon
 } from 'lucide-vue-next';
 
 const adminAbierto = ref(false);
@@ -209,12 +231,25 @@ const catalogoAbierto = ref(true);
 
 const isSidebarCollapsed = ref(false);
 const isMobileSidebarOpen = ref(false);
+const showLogoutConfirm = ref(false);
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 const handleLogout = () => {
+  showLogoutConfirm.value = true;
+};
+
+const confirmLogout = () => {
+  showLogoutConfirm.value = false;
   authStore.logout();
   router.push('/');
 };
 </script>
+
+<style scoped>
+nav a.router-link-exact-active {
+  background-color: var(--color-action);
+  color: var(--color-neutral-white);
+}
+</style>

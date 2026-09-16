@@ -12,7 +12,7 @@
       
       <!-- Stepper Header -->
       <div class="pt-2 pb-6">
-        <PasosProgreso v-if="pasoActual > 0 && pasoActual < 3" :paso-actual="pasoActual" :total-pasos="3" :etiquetas="['', 'Verificación', 'Nueva Pass']" />
+        <PasosProgreso v-if="pasoActual > 0 && pasoActual < 3" :paso-actual="pasoActual" :total-pasos="3" :pasos="['', 'Verificación', 'Nueva Pass']" />
       </div>
 
       <div class="flex-1">
@@ -38,7 +38,7 @@
           </div>
           <h3 class="text-xl font-bold text-corporate mb-2">¡Contraseña restablecida!</h3>
           <p class="text-neutral-medium mb-6">Tu contraseña ha sido cambiada exitosamente. Ya puedes iniciar sesión con tu nueva contraseña.</p>
-          <button type="button" @click="$emit('openLogin')" class="w-full bg-action hover:bg-[#007BFF] text-white py-2.5 rounded-lg font-semibold transition-colors cursor-pointer">
+          <button type="button" @click="$emit('openLogin')" class="w-full bg-action hover:bg-action/90 text-white py-2.5 rounded-lg font-semibold transition-colors cursor-pointer">
             Iniciar sesión
           </button>
         </div>
@@ -57,7 +57,7 @@ import PasoRecuperarOTP from './PasoRecuperarOTP.vue';
 import PasoRecuperarNuevaPass from './PasoRecuperarNuevaPass.vue';
 import { Check as CheckIcon } from 'lucide-vue-next';
 
-const props = defineProps<{
+defineProps<{
   modelValue: boolean;
 }>();
 

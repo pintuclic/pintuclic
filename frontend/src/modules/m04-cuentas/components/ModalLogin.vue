@@ -37,7 +37,7 @@
           {{ errorMensaje }}
         </div>
 
-        <Button type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
+        <Button type="submit" variant="corporate" size="full" class="mt-2" :disabled="cargando">
           {{ cargando ? 'Iniciando...' : 'Iniciar sesión' }}
         </Button>
       </form>
@@ -98,7 +98,7 @@
       </div>
 
       <div class="flex flex-col gap-3 mt-2">
-        <Button variant="primary" size="full" :disabled="cargando" @click="confirmarVinculacion">
+        <Button variant="corporate" size="full" :disabled="cargando" @click="confirmarVinculacion">
           {{ cargando ? 'Vinculando...' : 'Sí, vincular cuenta' }}
         </Button>
         <Button variant="outline" size="full" :disabled="cargando" @click="cancelarVinculacion">
@@ -145,7 +145,7 @@
           {{ errorPasswordLocal || errorMensaje }}
         </div>
 
-        <Button type="submit" variant="primary" size="full" class="mt-2" :disabled="cargando">
+        <Button type="submit" variant="corporate" size="full" class="mt-2" :disabled="cargando">
           {{ cargando ? 'Guardando...' : 'Completar y acceder' }}
         </Button>
       </form>

@@ -144,7 +144,9 @@ Cualquier agente de IA o desarrollador que construya código para el frontend de
 | **Conversión** | Verde Principal | `#41BF5A` | `bg-conversion` / `text-conversion` | Botón "Agregar al Carrito", confirmaciones de compra. |
 | **Conversión (Hover)** | Verde Oscuro | `#1B6D24` | `bg-conversion-hover` / `text-conversion-hover` | Estado hover de botones de compra y conversión. |
 | **Conversión (Acento)**| Verde Acento | `#3CB148` | `bg-conversion-accent` / `text-conversion-accent` | Variantes o estados activos del flujo de compra. |
-| **Destacado** | Amarillo | `#FFC107` | `bg-highlight` / `text-highlight` | Etiquetas de "Patrocinado", ofertas, badges. |
+| **Destacado** | Amarillo | `#FFC107` | `bg-highlight` / `text-highlight` | Etiquetas de "Patrocinado", estrellas, badges. |
+| **Peligro / Crítico**| Rojo Peligro | `#E63946` | `bg-danger` / `text-danger` | Cierre de sesión, eliminación, confirmaciones destructivas. |
+| **Ofertas** | Rojo Ofertas | `#E63946` | `bg-offer` / `text-offer` | Badges de "OFERTAS", promociones y descuentos. |
 | **Neutros: Blanco** | Blanco | `#FFFFFF` | `bg-neutral-white` (o `bg-white`) / `text-white` | Fondos de tarjetas, modales, superficies principales. |
 | **Neutros: Gris Muy Claro** | Gris Fondo | `#F7F8FA` | `bg-neutral-lightest` / `text-neutral-lightest` | Fondo general de página, fondos de fotos de producto. |
 | **Neutros: Gris Claro** | Gris Bordes | `#E5E7EB` | `bg-neutral-light` / `border-neutral-light` | Bordes, divisores, separadores, sliders inactivos. |

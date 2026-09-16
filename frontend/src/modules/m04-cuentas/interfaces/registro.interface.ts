@@ -162,3 +162,14 @@ export interface ResultadoGoogleAuth {
     googleId: string;
   };
 }
+
+export interface PerfilUsuarioResponse {
+  id_usuario: number;
+  nombre: string;
+  correo: string;
+  telefono: string | null;
+  documento_identidad?: string | null;
+  tipo: string;
+  estado: string;
+  [key: string]: unknown;
+}

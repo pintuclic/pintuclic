@@ -82,6 +82,14 @@
             </div>
           </div>
 
+          <!-- Alertas de estado -->
+          <div v-if="errorMensaje" class="mb-6 p-3 bg-danger-subtle border border-danger/30 rounded-xl text-danger text-sm font-medium">
+            {{ errorMensaje }}
+          </div>
+          <div v-if="exitoMensaje" class="mb-6 p-3 bg-conversion/10 border border-conversion/30 rounded-xl text-conversion font-semibold text-sm">
+            {{ exitoMensaje }}
+          </div>
+
           <div class="flex flex-col md:flex-row gap-8 items-start">
             
             <!-- Avatar -->
@@ -250,6 +258,8 @@ const empresaData = computed(() => ({
 // -- LÓGICA DE EDICIÓN IN-PLACE --
 const isEditing = ref(false);
 const guardando = ref(false);
+const errorMensaje = ref<string | null>(null);
+const exitoMensaje = ref<string | null>(null);
 
 const editForm = reactive({
   nombre: '',
@@ -258,6 +268,8 @@ const editForm = reactive({
 });
 
 const iniciarEdicion = () => {
+  errorMensaje.value = null;
+  exitoMensaje.value = null;
   editForm.nombre = userPerfil.value?.nombre || '';
   editForm.telefono = userPerfil.value?.telefono || '';
   editForm.documento_identidad = documentoFallback.value;
@@ -265,11 +277,14 @@ const iniciarEdicion = () => {
 };
 
 const cancelarEdicion = () => {
+  errorMensaje.value = null;
   isEditing.value = false;
 };
 
 const guardarCambios = async () => {
   guardando.value = true;
+  errorMensaje.value = null;
+  exitoMensaje.value = null;
   try {
     const payload = {
       nombre: editForm.nombre,
@@ -287,9 +302,10 @@ const guardarCambios = async () => {
     documentoFallback.value = editForm.documento_identidad; // Reflejar en fallback
     
     isEditing.value = false;
+    exitoMensaje.value = 'Información actualizada exitosamente.';
   } catch (error) {
     console.error('Error al actualizar el perfil:', error);
-    alert('No se pudo guardar la información. Verifique los datos.');
+    errorMensaje.value = 'No se pudo guardar la información. Verifique los datos ingresados.';
   } finally {
     guardando.value = false;
   }

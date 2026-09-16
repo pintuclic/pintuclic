@@ -62,6 +62,8 @@ import Input from '@/core/components/forms/Input.vue';
 import Button from '@/core/components/buttons/Button.vue';
 import { CuentasService } from '@/modules/m04-cuentas/services/cuentas.service';
 
+import { ascensoEmpresaSchema } from '../dtos';
+
 const props = defineProps<{
   modelValue: boolean;
   initialName?: string;
@@ -84,14 +86,6 @@ const formData = reactive({
   telefono: ''
 });
 
-// Zod Schema basado en el backend
-const schema = z.object({
-  nombre_empresa: z.string().min(2, 'La razón social debe tener al menos 2 caracteres'),
-  nombre_representante: z.string().min(2, 'El representante debe tener al menos 2 caracteres'),
-  nit: z.string().min(5, 'El NIT o RUT debe tener al menos 5 caracteres').regex(/^[0-9-kK]+$/, 'El NIT debe contener dígitos y guion de verificación'),
-  telefono: z.string().min(7, 'El teléfono es muy corto')
-});
-
 // Inicializar datos al abrir el modal
 watch(() => props.modelValue, (isOpen) => {
   if (isOpen) {
@@ -111,7 +105,7 @@ const closeModal = () => {
 const handleSubmit = async () => {
   try {
     Object.keys(errores).forEach(k => delete errores[k]);
-    schema.parse(formData);
+    ascensoEmpresaSchema.parse(formData);
     
     loading.value = true;
     await CuentasService.solicitarAscensoEmpresa(formData);
@@ -122,13 +116,16 @@ const handleSubmit = async () => {
       closeModal();
     }, 2500);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       error.errors.forEach(e => {
         if (e.path[0]) errores[e.path[0].toString()] = e.message;
       });
-    } else if (error.response?.data?.mensaje) {
-      errores.nombre_empresa = error.response.data.mensaje; // General error fallback
+    } else {
+      const err = error as { response?: { data?: { mensaje?: string } } };
+      if (err.response?.data?.mensaje) {
+        errores.nombre_empresa = err.response.data.mensaje;
+      }
     }
   } finally {
     loading.value = false;

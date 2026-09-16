@@ -22,7 +22,7 @@
         <p>{{ errorMsg }}</p>
       </div>
 
-      <Button type="submit" variant="primary" size="full" class="mt-6" :disabled="isSubmitting">
+      <Button type="submit" variant="corporate" size="full" class="mt-6" :disabled="isSubmitting">
         {{ isSubmitting ? 'Procesando...' : 'Enviar código' }}
       </Button>
     </form>
@@ -33,9 +33,9 @@
 import { ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
-import { z } from 'zod';
 import { Mail as MailIcon, AlertCircle as AlertCircleIcon } from 'lucide-vue-next';
 import { CuentasService } from '../services/cuentas.service';
+import { solicitarRecuperacionSchema } from '../dtos';
 import Button from '@/core/components/buttons/Button.vue';
 import Input from '@/core/components/forms/Input.vue';
 
@@ -45,14 +45,7 @@ const emit = defineEmits<{
 
 const errorMsg = ref('');
 
-const schema = toTypedSchema(
-  z.object({
-    correo: z.string({ required_error: 'El correo es obligatorio' })
-      .email('Formato de correo inválido')
-      .toLowerCase()
-      .trim()
-  })
-);
+const schema = toTypedSchema(solicitarRecuperacionSchema);
 
 const { handleSubmit, isSubmitting } = useForm({
   validationSchema: schema,
@@ -63,8 +56,9 @@ const onSubmit = handleSubmit(async (values) => {
   try {
     await CuentasService.solicitarRecuperacion(values.correo);
     emit('solicitado', values.correo);
-  } catch (error: any) {
-    errorMsg.value = error.response?.data?.mensaje || 'Ocurrió un error al solicitar la recuperación.';
+  } catch (error) {
+    const err = error as { response?: { data?: { mensaje?: string } } };
+    errorMsg.value = err.response?.data?.mensaje || 'Ocurrió un error al solicitar la recuperación.';
   }
 });
 </script>

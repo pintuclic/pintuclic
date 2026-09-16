@@ -9,7 +9,7 @@
 
     <div class="flex justify-center gap-2 mb-6">
       <input 
-        v-for="(digit, index) in code" 
+        v-for="(_, index) in code" 
         :key="index"
         :ref="el => inputs[index] = el"
         v-model="code[index]"
@@ -30,7 +30,7 @@
       <p>{{ errorMsg }}</p>
     </div>
 
-    <Button type="button" variant="primary" size="full" :disabled="!isComplete || isLoading" @click="verificarCodigo">
+    <Button type="button" variant="corporate" size="full" :disabled="!isComplete || isLoading" @click="verificarCodigo">
       {{ isLoading ? 'Verificando...' : 'Verificar código' }}
     </Button>
   </div>
@@ -41,7 +41,7 @@ import { ref, computed } from 'vue';
 import { AlertCircle as AlertCircleIcon } from 'lucide-vue-next';
 import Button from '@/core/components/buttons/Button.vue';
 
-const props = defineProps<{
+defineProps<{
   correo: string;
 }>();
 
@@ -50,7 +50,7 @@ const emit = defineEmits<{
 }>();
 
 const code = ref(Array(6).fill(''));
-const inputs = ref<any[]>([]);
+const inputs = ref<(HTMLInputElement | null)[]>([]);
 const errorMsg = ref('');
 const isLoading = ref(false);
 
@@ -58,7 +58,7 @@ const isComplete = computed(() => code.value.every(d => d !== ''));
 
 const focusInput = (index: number) => {
   if (inputs.value[index]) {
-    inputs.value[index].focus();
+    inputs.value[index]?.focus();
   }
 };
 
@@ -82,9 +82,10 @@ const onKeyDown = (e: KeyboardEvent, index: number) => {
   }
 };
 
-const onPaste = (e: ClipboardEvent) => {
-  e.preventDefault();
-  const pasted = e.clipboardData?.getData('text');
+const onPaste = (event: Event) => {
+  event.preventDefault();
+  const ce = event as unknown as { clipboardData?: { getData: (type: string) => string } };
+  const pasted = ce.clipboardData?.getData('text');
   if (!pasted) return;
   const digits = pasted.replace(/\D/g, '').slice(0, 6).split('');
   digits.forEach((digit, i) => {

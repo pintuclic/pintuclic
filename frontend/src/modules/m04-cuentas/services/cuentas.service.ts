@@ -15,7 +15,9 @@ import type {
   GoogleVincularPayload,
   CompletarPasswordGooglePayload,
   ResultadoGoogleAuth,
+  PerfilUsuarioResponse,
 } from "../interfaces/registro.interface";
+import type { ActualizarPerfilDTO, AscensoEmpresaDTO } from "../dtos";
 
 export const CuentasService = {
   async login(payload: LoginPayload): Promise<ApiResponse<ResultadoLogin>> {
@@ -122,8 +124,10 @@ export const CuentasService = {
     return data;
   },
 
-  async actualizarPerfil(payload: any): Promise<ApiResponse<any>> {
-    const { data } = await apiClient.put<ApiResponse<any>>(
+  async actualizarPerfil(
+    payload: ActualizarPerfilDTO,
+  ): Promise<ApiResponse<PerfilUsuarioResponse>> {
+    const { data } = await apiClient.put<ApiResponse<PerfilUsuarioResponse>>(
       "/cuentas/perfil",
       payload,
     );
@@ -131,7 +135,7 @@ export const CuentasService = {
   },
 
   async solicitarAscensoEmpresa(
-    payload: any,
+    payload: AscensoEmpresaDTO,
   ): Promise<ApiResponse<{ mensaje: string }>> {
     const { data } = await apiClient.post<ApiResponse<{ mensaje: string }>>(
       "/cuentas/perfil/solicitar-empresa",
