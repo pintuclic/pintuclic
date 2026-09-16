@@ -34,7 +34,7 @@
     </div>
 
     <div class="w-full">
-      <Button type="submit" variant="primary" size="full" :disabled="!otpCompleto || cargando">
+      <Button type="submit" variant="corporate" size="full" :disabled="!otpCompleto || cargando">
         {{ cargando ? 'Verificando...' : 'Verificar y crear cuenta' }}
       </Button>
     </div>

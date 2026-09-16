@@ -13,7 +13,8 @@ import { dashboardCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboa
  * las resuelve igual sin necesidad de reescribirlas como relativas.
  * ==============================================================================
  */
-const routes: RouteRecordRaw[] = [
+export const routes: RouteRecordRaw[] = [
+  // 1. Portal Público / Tienda (LayoutHome)
   {
     path: '/',
     name: 'Tienda',
@@ -26,6 +27,8 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+
+  // 2. Panel Administrativo (LayoutAdmin puro, sin M01 inyectado)
   {
     path: '/admin',
     name: 'Administracion',
@@ -36,12 +39,16 @@ const routes: RouteRecordRaw[] = [
       ...dashboardCatalogoRoutes,
     ],
   },
+
+  // 3. Layout de Acceso / Auth independiente
   {
     path: '/acceso',
     name: 'Acceso',
     component: () => import('@/core/layouts/LayoutAcceso.vue'),
     children: [],
   },
+  
+  // 4. Fallback: Cualquier ruta no reconocida redirige al inicio
   {
     path: '/:pathMatch(.*)*',
     redirect: '/',

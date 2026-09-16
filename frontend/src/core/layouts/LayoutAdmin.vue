@@ -56,17 +56,29 @@
               <LayoutDashboardIcon class="w-4 h-4 shrink-0" />
               Dashboard
             </router-link>
-            <router-link to="/admin/usuarios" :class="claseLink('/admin/usuarios')">
+            <router-link to="/admin/empleados" :class="claseLink('/admin/empleados')">
               <UsersIcon class="w-4 h-4 shrink-0" />
-              Usuarios / Personal
+              Personal / Empleados
             </router-link>
-            <router-link to="/admin/roles" :class="claseLink('/admin/roles')">
+            <router-link to="/admin/permisos" :class="claseLink('/admin/permisos')">
               <KeyIcon class="w-4 h-4 shrink-0" />
               Roles y Permisos
+            </router-link>
+            <router-link to="/admin/clientes" :class="claseLink('/admin/clientes')">
+              <UsersIcon class="w-4 h-4 shrink-0" />
+              Clientes
             </router-link>
             <router-link to="/admin/solicitudes" :class="claseLink('/admin/solicitudes')">
               <BuildingIcon class="w-4 h-4 shrink-0" />
               Aprobación Empresas
+            </router-link>
+            <router-link to="/admin/perfil" :class="claseLink('/admin/perfil')">
+              <UserIcon class="w-4 h-4 shrink-0" />
+              Mi Perfil
+            </router-link>
+            <router-link to="/admin/configuracion" :class="claseLink('/admin/configuracion')">
+              <SettingsIcon class="w-4 h-4 shrink-0" />
+              Configuración
             </router-link>
           </div>
         </div>
@@ -122,14 +134,6 @@
               <SearchIcon class="w-4 h-4 shrink-0" />
               Búsquedas
             </router-link>
-            <router-link to="/admin/catalogo/reportes" :class="claseLink('/admin/catalogo/reportes')">
-              <BarChart3Icon class="w-4 h-4 shrink-0" />
-              Reportes
-            </router-link>
-            <router-link to="/admin/catalogo/configuracion" :class="claseLink('/admin/catalogo/configuracion')">
-              <SettingsIcon class="w-4 h-4 shrink-0" />
-              Configuración
-            </router-link>
           </div>
         </div>
 
@@ -139,7 +143,7 @@
       <div class="border-t border-subaction p-4">
         <button 
           @click="handleLogout" 
-          class="flex items-center justify-center gap-2 rounded-button bg-neutral-lightest hover:bg-[#E63946] hover:text-white text-[#E63946] py-2 transition-colors font-medium cursor-pointer"
+          class="flex items-center justify-center gap-2 rounded-button bg-neutral-lightest hover:bg-danger hover:text-white text-danger py-2 transition-colors font-medium cursor-pointer"
           :class="isSidebarCollapsed ? 'w-12 h-12 mx-auto px-0 rounded-full' : 'w-full px-4'"
           title="Cerrar sesión"
         >
@@ -179,6 +183,18 @@
       </main>
       
     </div>
+
+    <!-- Modal Confirmación Cerrar Sesión -->
+    <Modal v-model="showLogoutConfirm" maxWidth="sm">
+      <div class="text-center py-4">
+        <h3 class="text-xl font-bold text-corporate mb-2">¿Cerrar sesión?</h3>
+        <p class="text-neutral-medium text-sm mb-6">¿Estás seguro de que deseas salir de tu cuenta?</p>
+        <div class="flex gap-3 justify-center">
+          <button class="flex-1 py-2 px-4 rounded-lg border border-neutral-light text-neutral-dark font-semibold hover:bg-neutral-lightest transition-colors cursor-pointer" @click="showLogoutConfirm = false">Cancelar</button>
+          <button class="flex-1 py-2 px-4 rounded-lg bg-danger text-white font-semibold hover:bg-danger-hover transition-colors cursor-pointer" @click="confirmLogout">Aceptar</button>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -187,6 +203,7 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import logoSrc from '@/assets/Pintu_Transparent.png';
+import Modal from '@/core/components/overlays/Modal.vue';
 import { 
   Shield as ShieldIcon,
   Users as UsersIcon,
@@ -201,12 +218,12 @@ import {
   Rows3 as Rows3Icon,
   Droplet as DropletIcon,
   Search as SearchIcon,
-  BarChart3 as BarChart3Icon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
   LogOut as LogOutIcon,
   ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  User as UserIcon
 } from 'lucide-vue-next';
 
 const adminAbierto = ref(false);
@@ -214,12 +231,18 @@ const catalogoAbierto = ref(true);
 
 const isSidebarCollapsed = ref(false);
 const isMobileSidebarOpen = ref(false);
+const showLogoutConfirm = ref(false);
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
 const handleLogout = () => {
+  showLogoutConfirm.value = true;
+};
+
+const confirmLogout = () => {
+  showLogoutConfirm.value = false;
   authStore.logout();
   router.push('/');
 };
@@ -252,3 +275,10 @@ onUnmounted(() => {
   document.body.classList.remove('overflow-hidden');
 });
 </script>
+
+<style scoped>
+nav a.router-link-exact-active {
+  background-color: var(--color-action);
+  color: var(--color-neutral-white);
+}
+</style>

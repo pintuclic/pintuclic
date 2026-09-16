@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.4.0] - 2026-09-15
+### Módulo: Core Frontend (Layouts)
+- **Alcance General:** Salto a versión **MINOR (v2.4.0)**. Se importaron los componentes globales de `feature/m04-cuentas-auth-perfil` hacia `feature/core-frontend-layouts`.
+- **Hitos Clave Frontend:**
+  - **Botones y Tablas:** Corrección en renderizado del `:key` en `Table.vue` y estilos del botón outline en `Button.vue`.
+  - **Layouts y Modales:** Inyección de modales de autenticación y confirmación de "Cerrar sesión" en `LayoutHome.vue` y `LayoutAdmin.vue`.
+  - **Enrutador Central:** Refactorización de `routes/index.ts` usando el patrón de Layouts globales, en lugar de importar explícitamente M01.
+- **Estado:** ✅ Validado. Cambios sincronizados.
+
 ## [v2.3.0] - 2026-09-15
 ### Módulo: Core Frontend (Design System Components)
 - **Alcance General:** Salto a versión **MINOR (v2.3.0)** con la estabilización, implementación y centralización de los componentes visuales core del frontend en la rama `feature/core-frontend-layouts`, unificando el diseño de botones, tarjetas, inputs, tablas y modales para que todos los módulos utilicen la misma fuente y se erradique la duplicidad de componentes.
