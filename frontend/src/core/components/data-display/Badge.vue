@@ -1,11 +1,12 @@
-<template>
+﻿<template>
   <span
     :class="[
-      'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset',
-      estadoClasses,
+      'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
+      resolvedClasses,
       table ? 'w-auto sm:w-min whitespace-nowrap' : ''
     ]"
   >
+    <span v-if="dot" class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
     <slot>{{ computedLabel }}</slot>
   </span>
 </template>
@@ -13,11 +14,22 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-const props = defineProps<{
-  estado?: string | 'activo' | 'inactivo' | 'bloqueado' | 'pendiente' | 'success' | 'warning' | 'error' | 'info';
-  label?: string;
-  table?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    estado?: string;
+    tone?: 'success' | 'warning' | 'info' | 'neutral';
+    label?: string;
+    table?: boolean;
+    dot?: boolean;
+  }>(),
+  {
+    estado: '',
+    tone: undefined,
+    label: '',
+    table: false,
+    dot: false
+  }
+);
 
 const computedLabel = computed(() => {
   if (props.label) return props.label;
@@ -25,9 +37,18 @@ const computedLabel = computed(() => {
   return props.estado.charAt(0).toUpperCase() + props.estado.slice(1);
 });
 
-const estadoClasses = computed(() => {
+const resolvedClasses = computed(() => {
+  if (props.tone) {
+    const toneMap = {
+      success: 'bg-conversion/12 text-conversion ring-conversion/20',
+      warning: 'bg-highlight/20 text-neutral-dark ring-highlight/40',
+      info: 'bg-subaction text-action ring-action/20',
+      neutral: 'bg-neutral-lightest text-neutral-dark ring-neutral-light/50',
+    };
+    return toneMap[props.tone] || toneMap.neutral;
+  }
+
   const est = props.estado?.toLowerCase();
-  
   if (est === 'activo' || est === 'success') {
     return 'bg-green-50 text-green-700 ring-green-600/20';
   }
@@ -40,8 +61,6 @@ const estadoClasses = computed(() => {
   if (est === 'pendiente' || est === 'warning') {
     return 'bg-yellow-50 text-yellow-800 ring-yellow-600/20';
   }
-  
-  // Default (Info / Corporate)
   return 'bg-subaction text-action ring-action/20';
 });
 </script>

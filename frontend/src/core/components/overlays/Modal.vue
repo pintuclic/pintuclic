@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <Teleport to="body">
     <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <!-- Overlay -->
@@ -30,6 +30,12 @@
         </button>
         
         <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scrollbar">
+          <!-- Encabezado de marca institucional (opcional vía prop :brand-header="true") -->
+          <div v-if="brandHeader" class="flex items-center gap-3 mb-6">
+            <img :src="logoSrc" alt="PintuClic" class="w-9 h-9 rounded-lg object-contain" />
+            <span class="text-lg font-heading font-bold text-corporate">PintuClic</span>
+          </div>
+          <h2 v-if="title" class="mb-5 pr-8 text-xl font-bold text-corporate">{{ title }}</h2>
           <slot></slot>
         </div>
       </div>
@@ -40,11 +46,20 @@
 <script setup lang="ts">
 import { computed, watch, onMounted, onUnmounted } from 'vue';
 import { X as XIcon } from 'lucide-vue-next';
+import logoSrc from '@/assets/logo.png';
 
 const props = defineProps({
   modelValue: {
     type: Boolean,
     required: true
+  },
+  title: {
+    type: String,
+    default: ''
+  },
+  wide: {
+    type: Boolean,
+    default: false
   },
   maxWidth: {
     type: String,
@@ -54,20 +69,25 @@ const props = defineProps({
   accent: {
     type: Boolean,
     default: false
+  },
+  brandHeader: {
+    type: Boolean,
+    default: false
   }
 });
 
 const emit = defineEmits(['update:modelValue', 'close']);
 
 const maxWidthClass = computed(() => {
+  if (props.wide) return 'max-w-3xl';
   const map: Record<string, string> = {
     sm: 'max-w-sm',
-    md: 'max-w-md', // ~448px, perfect for login
-    lg: 'max-w-lg', // ~512px
+    md: 'max-w-md',
+    lg: 'max-w-lg',
     xl: 'max-w-xl',
-    '2xl': 'max-w-2xl' // good for register if needed
+    '2xl': 'max-w-2xl'
   };
-  return map[props.maxWidth];
+  return map[props.maxWidth] || 'max-w-md';
 });
 
 const close = () => {

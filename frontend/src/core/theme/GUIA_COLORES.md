@@ -28,7 +28,11 @@
 | **Conversión** | Verde Principal | `#41BF5A` | `bg-conversion` | `text-conversion` | `border-conversion` | Botón "Agregar al Carrito", confirmaciones de compra. |
 | **Conversión (Hover)** | Verde Oscuro | `#1B6D24` | `bg-conversion-hover` | `text-conversion-hover` | `border-conversion-hover` | Estado hover de botones de compra/conversión. |
 | **Conversión (Acento)**| Verde Acento | `#3CB148` | `bg-conversion-accent`| `text-conversion-accent`| `border-conversion-accent`| Variantes de conversión o estados activos. |
-| **Destacado** | Amarillo | `#FFC107` | `bg-highlight` | `text-highlight` | `border-highlight` | Etiquetas de "Patrocinado", ofertas, badges promocionales. |
+| **Destacado** | Amarillo | `#FFC107` | `bg-highlight` | `text-highlight` | `border-highlight` | Etiquetas de "Patrocinado", estrellas, badges comerciales. |
+| **Peligro / Crítico**| Rojo Peligro | `#E63946` | `bg-danger` | `text-danger` | `border-danger` | Cierre de sesión, eliminación de cuentas/ítems, alertas críticas. |
+| **Peligro (Hover)**  | Rojo Oscuro  | `#D62828` | `bg-danger-hover` | `text-danger-hover` | `border-danger-hover` | Estado hover en botones destructivos y de logout. |
+| **Oferta**           | Rojo Ofertas | `#E63946` | `bg-offer` | `text-offer` | `border-offer` | Badges de "OFERTAS", descuentos y promociones de impacto. |
+| **Oferta (Hover)**   | Rojo Intenso | `#D62839` | `bg-offer-hover` | `text-offer-hover` | `border-offer-hover` | Estado hover de botones o pastillas de ofertas. |
 | **Neutros: Blanco** | Blanco Puro | `#FFFFFF` | `bg-neutral-white` o `bg-white` | `text-neutral-white` | `border-neutral-white` | Fondos de tarjetas, modales, superficies principales. |
 | **Neutros: Gris Muy Claro** | Gris Fondo | `#F7F8FA` | `bg-neutral-lightest` | `text-neutral-lightest` | `border-neutral-lightest` | Fondo general de página, fondos de fotos de producto. |
 | **Neutros: Gris Claro** | Gris Bordes | `#E5E7EB` | `bg-neutral-light` | `text-neutral-light` | `border-neutral-light` | Bordes, separadores, divisores, sliders inactivos. |

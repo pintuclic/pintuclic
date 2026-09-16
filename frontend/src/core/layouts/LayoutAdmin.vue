@@ -135,7 +135,7 @@
       <div class="border-t border-subaction p-4">
         <button 
           @click="handleLogout" 
-          class="flex items-center justify-center gap-2 rounded-button bg-neutral-lightest hover:bg-[#E63946] hover:text-white text-[#E63946] py-2 transition-colors font-medium cursor-pointer"
+          class="flex items-center justify-center gap-2 rounded-button bg-neutral-lightest hover:bg-danger hover:text-white text-danger py-2 transition-colors font-medium cursor-pointer"
           :class="isSidebarCollapsed ? 'w-12 h-12 mx-auto px-0 rounded-full' : 'w-full px-4'"
           title="Cerrar sesión"
         >
@@ -175,6 +175,18 @@
       </main>
       
     </div>
+
+    <!-- Modal Confirmación Cerrar Sesión -->
+    <Modal v-model="showLogoutConfirm" maxWidth="sm">
+      <div class="text-center py-4">
+        <h3 class="text-xl font-bold text-corporate mb-2">¿Cerrar sesión?</h3>
+        <p class="text-neutral-medium text-sm mb-6">¿Estás seguro de que deseas salir de tu cuenta?</p>
+        <div class="flex gap-3 justify-center">
+          <button class="flex-1 py-2 px-4 rounded-lg border border-neutral-light text-neutral-dark font-semibold hover:bg-neutral-lightest transition-colors cursor-pointer" @click="showLogoutConfirm = false">Cancelar</button>
+          <button class="flex-1 py-2 px-4 rounded-lg bg-danger text-white font-semibold hover:bg-danger-hover transition-colors cursor-pointer" @click="confirmLogout">Aceptar</button>
+        </div>
+      </div>
+    </Modal>
   </div>
 </template>
 
@@ -183,6 +195,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import logoSrc from '@/assets/Pintu_Transparent.png';
+import Modal from '@/core/components/overlays/Modal.vue';
 import { 
   Shield as ShieldIcon,
   Users as UsersIcon,
@@ -209,11 +222,17 @@ const catalogoAbierto = ref(true);
 
 const isSidebarCollapsed = ref(false);
 const isMobileSidebarOpen = ref(false);
+const showLogoutConfirm = ref(false);
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 const handleLogout = () => {
+  showLogoutConfirm.value = true;
+};
+
+const confirmLogout = () => {
+  showLogoutConfirm.value = false;
   authStore.logout();
   router.push('/');
 };
