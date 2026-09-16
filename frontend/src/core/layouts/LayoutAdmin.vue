@@ -56,17 +56,29 @@
               <LayoutDashboardIcon class="w-4 h-4 shrink-0" />
               Dashboard
             </router-link>
-            <router-link to="/admin/usuarios" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/empleados" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <UsersIcon class="w-4 h-4 shrink-0" />
-              Usuarios / Personal
+              Personal / Empleados
             </router-link>
-            <router-link to="/admin/roles" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/permisos" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <KeyIcon class="w-4 h-4 shrink-0" />
               Roles y Permisos
+            </router-link>
+            <router-link to="/admin/clientes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+              <UsersIcon class="w-4 h-4 shrink-0" />
+              Clientes
             </router-link>
             <router-link to="/admin/solicitudes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <BuildingIcon class="w-4 h-4 shrink-0" />
               Aprobación Empresas
+            </router-link>
+            <router-link to="/admin/perfil" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+              <UserIcon class="w-4 h-4 shrink-0" />
+              Mi Perfil
+            </router-link>
+            <router-link to="/admin/configuracion" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+              <SettingsIcon class="w-4 h-4 shrink-0" />
+              Configuración
             </router-link>
           </div>
         </div>
@@ -94,7 +106,7 @@
           </button>
           
           <div v-show="catalogoAbierto && !isSidebarCollapsed" class="flex flex-col mt-1 mb-2 ml-4 pl-4 border-l border-subaction gap-1">
-            <router-link to="/admin/catalogo/productos" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-neutral-white bg-action transition-colors">
+            <router-link to="/admin/catalogo/productos" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <PackageIcon class="w-4 h-4 shrink-0" />
               Productos
             </router-link>
@@ -105,6 +117,10 @@
             <router-link to="/admin/catalogo/categorias" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <LayoutGridIcon class="w-4 h-4 shrink-0" />
               Categorías
+            </router-link>
+            <router-link to="/admin/catalogo/lineas" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+              <GitCommitIcon class="w-4 h-4 shrink-0" />
+              Líneas
             </router-link>
             <router-link to="/admin/catalogo/marcas" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <TagIcon class="w-4 h-4 shrink-0" />
@@ -117,14 +133,6 @@
             <router-link to="/admin/catalogo/busquedas-sin-resultado" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <SearchIcon class="w-4 h-4 shrink-0" />
               Búsquedas
-            </router-link>
-            <router-link to="/admin/catalogo/reportes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <BarChart3Icon class="w-4 h-4 shrink-0" />
-              Reportes
-            </router-link>
-            <router-link to="/admin/catalogo/configuracion" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <SettingsIcon class="w-4 h-4 shrink-0" />
-              Configuración
             </router-link>
           </div>
         </div>
@@ -209,12 +217,13 @@ import {
   Tag as TagIcon,
   Droplet as DropletIcon,
   Search as SearchIcon,
-  BarChart3 as BarChart3Icon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
   LogOut as LogOutIcon,
   ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon
+  ChevronRight as ChevronRightIcon,
+  User as UserIcon,
+  GitCommit as GitCommitIcon
 } from 'lucide-vue-next';
 
 const adminAbierto = ref(false);
@@ -237,3 +246,10 @@ const confirmLogout = () => {
   router.push('/');
 };
 </script>
+
+<style scoped>
+nav a.router-link-exact-active {
+  background-color: var(--color-action);
+  color: var(--color-neutral-white);
+}
+</style>
