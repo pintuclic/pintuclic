@@ -35,7 +35,6 @@
           @duplicar="(id) => irA(`/admin/catalogo/variantes/${id}/duplicar`)"
           @alternar="(id) => irA(`/admin/catalogo/variantes/${id}/estado`)"
           @exportar="irA('/admin/catalogo/variantes/exportar')"
-          @seleccion="(ids) => (seleccionados = ids)"
         />
       </div>
 
@@ -69,14 +68,6 @@
         </div>
       </aside>
     </div>
-
-    <BarraAccionesMasivas
-      :cantidad="seleccionados.length"
-      @limpiar="seleccionados = []"
-      @activar-lote="() => {}"
-      @desactivar-lote="() => {}"
-      @exportar-lote="() => irA('/admin/catalogo/variantes/exportar')"
-    />
   </div>
 </template>
 
@@ -93,13 +84,12 @@
  * Permiso requerido: «Gestión de productos» (M17), revalidado en el servidor.
  * ==============================================================================
  */
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Layers, PackageX, FileText } from 'lucide-vue-next';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import FiltrosVariantes from '../components/FiltrosVariantes.vue';
 import TablaVariantes from '../components/TablaVariantes.vue';
-import BarraAccionesMasivas from '../components/BarraAccionesMasivas.vue';
 import { useVariantes } from '../composables/useVariantes';
 
 const {
@@ -116,8 +106,6 @@ const {
   cambiarPorPagina,
   limpiarFiltros,
 } = useVariantes();
-
-const seleccionados = ref<string[]>([]);
 
 /** Resumen compacto del panel lateral (versión reducida de `TarjetaEstadistica`). */
 const filasResumen = computed(() => [

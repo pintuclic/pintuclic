@@ -26,7 +26,7 @@
         </p>
 
         <div class="flex flex-wrap items-center gap-2">
-          <BadgeEstadoProducto :estado="formulario.estado" />
+          <Badge :estado="tonoEstado(formulario.estado)" :label="etiquetaEstado(formulario.estado)" />
           <span
             class="inline-flex items-center gap-1.5 rounded-button px-2.5 py-1 text-xs font-medium"
             :class="hayStock ? 'bg-conversion/10 text-conversion' : 'bg-neutral-light text-neutral-medium'"
@@ -77,9 +77,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Eye, Image as ImageIcon, CalendarClock, User, Hash } from 'lucide-vue-next';
-import BadgeEstadoProducto from './BadgeEstadoProducto.vue';
+import { Badge } from '@/core/components';
 import { useFormatoCatalogo } from '../composables/useFormatoCatalogo';
-import type { ColorCatalogo, FormularioProducto } from '../interfaces';
+import type { ColorCatalogo, EstadoProducto, FormularioProducto } from '../interfaces';
 
 /** Metadatos de auditoría que solo se muestran al editar (maqueta ADMIN 04). */
 interface MetaVistaPrevia {
@@ -108,4 +108,16 @@ const precioFormateado = computed(() => {
   const precio = props.formulario.precioVenta;
   return precio && precio > 0 ? `$${formatearNumero(precio)} COP` : 'Precio por definir';
 });
+
+/** Mapeo de estado del producto -> tono de `Badge` del Core (no hay 1:1 exacto). */
+function tonoEstado(estado: EstadoProducto): string {
+  if (estado === 'publicado') return 'success';
+  if (estado === 'inactivo') return 'inactivo';
+  return 'info';
+}
+function etiquetaEstado(estado: EstadoProducto): string {
+  if (estado === 'publicado') return 'Publicado';
+  if (estado === 'inactivo') return 'Inactivo';
+  return 'Borrador';
+}
 </script>

@@ -5,22 +5,12 @@
       descripcion="Organiza y gestiona la estructura de tu catálogo. Crea, edita y ordena categorías para una mejor experiencia de navegación."
     >
       <template #acciones>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-          @click="irA('/admin/catalogo/categorias/subcategorias/nueva')"
-        >
-          <Plus class="h-4 w-4" aria-hidden="true" />
+        <Button variant="outline" :icon="Plus" @click="irA('/admin/catalogo/categorias/subcategorias/nueva')">
           Nueva subcategoría
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover"
-          @click="irA('/admin/catalogo/categorias/nueva')"
-        >
-          <Plus class="h-4 w-4" aria-hidden="true" />
+        </Button>
+        <Button variant="action" :icon="Plus" @click="irA('/admin/catalogo/categorias/nueva')">
           Nueva categoría
-        </button>
+        </Button>
       </template>
     </EncabezadoSeccion>
 
@@ -63,18 +53,9 @@
         @ordenar="ordenarElementosPor"
         @buscar="(t) => aplicarFiltroElementos({ busqueda: t })"
         @filtrar-tipo="onFiltrarTipo"
-        @seleccion-elementos="(ids) => (seleccionados = ids)"
       />
     </div>
   </div>
-
-  <BarraAccionesMasivas
-    :cantidad="seleccionados.length"
-    @limpiar="seleccionados = []"
-    @activar-lote="() => {}"
-    @desactivar-lote="() => {}"
-    @exportar-lote="() => {}"
-  />
 
   <!-- ADMIN 12 - Modal desactivar categoría/subcategoría -->
   <div
@@ -157,31 +138,15 @@
       </div>
 
       <div class="flex flex-wrap justify-end gap-3 p-5">
-        <button
-          type="button"
-          class="rounded-button px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-          :disabled="desactivando"
-          @click="cancelarDesactivar"
-        >
+        <Button variant="text" :disabled="desactivando" @click="cancelarDesactivar">
           Cancelar
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-          @click="verProductosAfectados"
-        >
-          <Eye class="h-4 w-4" aria-hidden="true" />
+        </Button>
+        <Button variant="outline" :icon="Eye" @click="verProductosAfectados">
           Ver productos afectados
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button bg-corporate px-4 py-2 text-sm font-medium text-neutral-white hover:bg-corporate/90 disabled:cursor-not-allowed disabled:opacity-50"
-          :disabled="!entiendoImpacto || desactivando"
-          @click="onConfirmarDesactivar"
-        >
-          <Power class="h-4 w-4" aria-hidden="true" />
+        </Button>
+        <Button variant="corporate" :icon="Power" :disabled="!entiendoImpacto || desactivando" @click="onConfirmarDesactivar">
           Desactivar
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -203,10 +168,10 @@
 import { onUnmounted, ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, AlertTriangle, Info, X, Layers, Eye, Power } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import ArbolCategorias from '../components/ArbolCategorias.vue';
 import PanelDetalleCategoria from '../components/PanelDetalleCategoria.vue';
-import BarraAccionesMasivas from '../components/BarraAccionesMasivas.vue';
 import { useCategorias } from '../composables/useCategorias';
 import { useProductosStore } from '../store/productos.store';
 import type { TipoNodoCategoria } from '../interfaces';
@@ -237,7 +202,6 @@ const {
 } = useCategorias();
 
 const entiendoImpacto = ref(false);
-const seleccionados = ref<string[]>([]);
 
 function onFiltrarTipo(valor: string): void {
   const tipo = valor === '' ? null : (valor as TipoNodoCategoria);

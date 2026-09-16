@@ -5,22 +5,12 @@
       descripcion="Administra la paleta de colores de tu catálogo. Organiza, edita y crea nuevos colores."
     >
       <template #acciones>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-          @click="irA('/admin/catalogo/colores/carga-masiva')"
-        >
-          <Upload class="h-4 w-4" aria-hidden="true" />
+        <Button variant="outline" :icon="Upload" @click="irA('/admin/catalogo/colores/carga-masiva')">
           Carga masiva
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover"
-          @click="irA('/admin/catalogo/colores/nuevo')"
-        >
-          <Plus class="h-4 w-4" aria-hidden="true" />
+        </Button>
+        <Button variant="action" :icon="Plus" @click="irA('/admin/catalogo/colores/nuevo')">
           Nuevo color
-        </button>
+        </Button>
       </template>
     </EncabezadoSeccion>
 
@@ -37,9 +27,7 @@
         <section class="rounded-card border border-neutral-light bg-neutral-white p-4 shadow-sm" aria-label="Familias cromáticas">
           <div class="mb-3 flex items-center justify-between">
             <h2 class="text-sm font-semibold text-neutral-black">Familias cromáticas</h2>
-            <button type="button" class="text-xs font-medium text-action hover:underline" @click="limpiarFiltros">
-              Ver todas
-            </button>
+            <Button variant="text" size="sm" @click="limpiarFiltros">Ver todas</Button>
           </div>
           <div class="flex gap-4 overflow-x-auto pb-1">
             <button
@@ -136,6 +124,7 @@
  */
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, Upload, Search, Palette, Droplet, LayoutGrid } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import TarjetaEstadistica from '../components/TarjetaEstadistica.vue';
 import TablaColores from '../components/TablaColores.vue';

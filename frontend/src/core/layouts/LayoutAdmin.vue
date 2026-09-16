@@ -52,19 +52,19 @@
           </button>
           
           <div v-show="adminAbierto && !isSidebarCollapsed" class="flex flex-col mt-1 mb-2 ml-4 pl-4 border-l border-subaction gap-1">
-            <router-link to="/admin" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin" :class="claseLink('/admin')">
               <LayoutDashboardIcon class="w-4 h-4 shrink-0" />
               Dashboard
             </router-link>
-            <router-link to="/admin/usuarios" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/usuarios" :class="claseLink('/admin/usuarios')">
               <UsersIcon class="w-4 h-4 shrink-0" />
               Usuarios / Personal
             </router-link>
-            <router-link to="/admin/roles" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/roles" :class="claseLink('/admin/roles')">
               <KeyIcon class="w-4 h-4 shrink-0" />
               Roles y Permisos
             </router-link>
-            <router-link to="/admin/solicitudes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/solicitudes" :class="claseLink('/admin/solicitudes')">
               <BuildingIcon class="w-4 h-4 shrink-0" />
               Aprobación Empresas
             </router-link>
@@ -94,35 +94,39 @@
           </button>
           
           <div v-show="catalogoAbierto && !isSidebarCollapsed" class="flex flex-col mt-1 mb-2 ml-4 pl-4 border-l border-subaction gap-1">
-            <router-link to="/admin/catalogo/productos" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-neutral-white bg-action transition-colors">
+            <router-link to="/admin/catalogo/productos" :class="claseLink('/admin/catalogo/productos')">
               <PackageIcon class="w-4 h-4 shrink-0" />
               Productos
             </router-link>
-            <router-link to="/admin/catalogo/variantes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/catalogo/variantes" :class="claseLink('/admin/catalogo/variantes')">
               <LayersIcon class="w-4 h-4 shrink-0" />
               Variantes
             </router-link>
-            <router-link to="/admin/catalogo/categorias" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/catalogo/categorias" :class="claseLink('/admin/catalogo/categorias')">
               <LayoutGridIcon class="w-4 h-4 shrink-0" />
               Categorías
             </router-link>
-            <router-link to="/admin/catalogo/marcas" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/catalogo/marcas" :class="claseLink('/admin/catalogo/marcas')">
               <TagIcon class="w-4 h-4 shrink-0" />
               Marcas
             </router-link>
-            <router-link to="/admin/catalogo/colores" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/catalogo/lineas" :class="claseLink('/admin/catalogo/lineas')">
+              <Rows3Icon class="w-4 h-4 shrink-0" />
+              Líneas
+            </router-link>
+            <router-link to="/admin/catalogo/colores" :class="claseLink('/admin/catalogo/colores')">
               <DropletIcon class="w-4 h-4 shrink-0" />
               Colores
             </router-link>
-            <router-link to="/admin/catalogo/busquedas-sin-resultado" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/catalogo/busquedas-sin-resultado" :class="claseLink('/admin/catalogo/busquedas-sin-resultado')">
               <SearchIcon class="w-4 h-4 shrink-0" />
               Búsquedas
             </router-link>
-            <router-link to="/admin/catalogo/reportes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/catalogo/reportes" :class="claseLink('/admin/catalogo/reportes')">
               <BarChart3Icon class="w-4 h-4 shrink-0" />
               Reportes
             </router-link>
-            <router-link to="/admin/catalogo/configuracion" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+            <router-link to="/admin/catalogo/configuracion" :class="claseLink('/admin/catalogo/configuracion')">
               <SettingsIcon class="w-4 h-4 shrink-0" />
               Configuración
             </router-link>
@@ -180,7 +184,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import logoSrc from '@/assets/Pintu_Transparent.png';
 import { 
@@ -194,6 +198,7 @@ import {
   Layers as LayersIcon,
   LayoutGrid as LayoutGridIcon,
   Tag as TagIcon,
+  Rows3 as Rows3Icon,
   Droplet as DropletIcon,
   Search as SearchIcon,
   BarChart3 as BarChart3Icon,
@@ -211,12 +216,24 @@ const isSidebarCollapsed = ref(false);
 const isMobileSidebarOpen = ref(false);
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const handleLogout = () => {
   authStore.logout();
   router.push('/');
 };
+
+const CLASE_LINK_ACTIVO =
+  'flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-neutral-white bg-action transition-colors';
+const CLASE_LINK_INACTIVO =
+  'flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors';
+
+/** Resalta el link del sidebar que corresponde a la ruta actual (exacta o cualquier subruta). */
+function claseLink(path: string): string {
+  const activo = path === '/admin' ? route.path === path : route.path === path || route.path.startsWith(`${path}/`);
+  return activo ? CLASE_LINK_ACTIVO : CLASE_LINK_INACTIVO;
+}
 
 /**
  * Este layout es un "app shell" de altura fija (h-screen) con su propio

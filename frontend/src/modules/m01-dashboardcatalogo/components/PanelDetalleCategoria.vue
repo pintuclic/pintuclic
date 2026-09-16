@@ -24,14 +24,9 @@
             </div>
           </div>
           <div class="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-button border border-neutral-light px-3 py-1.5 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-              @click="$emit('editar', detalle.categoria.id)"
-            >
-              <Pencil class="h-4 w-4" aria-hidden="true" />
+            <Button variant="outline" size="sm" :icon="Pencil" @click="$emit('editar', detalle.categoria.id)">
               Editar categoría
-            </button>
+            </Button>
             <button
               type="button"
               class="grid h-8 w-8 place-items-center rounded-button text-neutral-medium hover:bg-neutral-light"
@@ -62,7 +57,6 @@
         @filtrar-tipo="(v) => $emit('filtrar-tipo', v)"
         @editar="(id) => $emit('editar', id)"
         @menu="(id) => $emit('menu-elemento', id)"
-        @seleccion="(ids) => $emit('seleccion-elementos', ids)"
       />
     </template>
   </section>
@@ -70,6 +64,7 @@
 
 <script setup lang="ts">
 import { Layers, Pencil, MoreVertical, Package, FolderTree, Network, ListOrdered } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import TarjetaEstadistica from './TarjetaEstadistica.vue';
 import TablaElementosCategoria from './TablaElementosCategoria.vue';
 import type {
@@ -94,6 +89,5 @@ defineEmits<{
   (e: 'ordenar', campo: CampoOrdenElementoCategoria): void;
   (e: 'buscar', texto: string): void;
   (e: 'filtrar-tipo', valor: string): void;
-  (e: 'seleccion-elementos', ids: string[]): void;
 }>();
 </script>

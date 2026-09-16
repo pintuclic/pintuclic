@@ -1,13 +1,8 @@
 <template>
   <div class="space-y-5 p-6 lg:p-8">
-    <button
-      type="button"
-      class="inline-flex items-center gap-1.5 text-sm font-medium text-action hover:underline"
-      @click="irA('/admin/catalogo/productos')"
-    >
-      <ArrowLeft class="h-4 w-4" aria-hidden="true" />
+    <Button variant="text" :icon="ArrowLeft" @click="irA('/admin/catalogo/productos')">
       Volver a productos
-    </button>
+    </Button>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
@@ -24,22 +19,12 @@
       </div>
 
       <div v-if="esEdicion" class="flex shrink-0 flex-wrap gap-2">
-        <button
-          type="button"
-          class="inline-flex items-center gap-1.5 rounded-button border border-neutral-light bg-neutral-white px-3 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-          title="Disponible al conectar la tienda pública."
-        >
-          <ExternalLink class="h-4 w-4" aria-hidden="true" />
+        <Button variant="outline" size="sm" :icon="ExternalLink" title="Disponible al conectar la tienda pública.">
           Ver en catálogo
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-1.5 rounded-button border border-neutral-light bg-neutral-white px-3 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-          @click="irA('/admin/catalogo/productos/nuevo')"
-        >
-          <Copy class="h-4 w-4" aria-hidden="true" />
+        </Button>
+        <Button variant="outline" size="sm" :icon="Copy" @click="irA('/admin/catalogo/productos/nuevo')">
           Duplicar producto
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -175,57 +160,28 @@
       Completa los campos obligatorios para habilitar la publicación.
     </p>
 
-    <button
-      type="button"
-      class="rounded-button px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-      :disabled="guardando"
-      @click="irA('/admin/catalogo/productos')"
-    >
+    <Button variant="text" :disabled="guardando" @click="irA('/admin/catalogo/productos')">
       Cancelar
-    </button>
+    </Button>
 
     <!-- Modo crear -->
     <template v-if="!esEdicion">
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest disabled:opacity-50"
-        :disabled="guardando"
-        @click="guardarBorrador"
-      >
-        <Save class="h-4 w-4" aria-hidden="true" />
+      <Button variant="outline" :icon="Save" :disabled="guardando" @click="guardarBorrador">
         Guardar borrador
-      </button>
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-button bg-conversion px-4 py-2 text-sm font-medium text-neutral-white hover:bg-conversion-hover disabled:cursor-not-allowed disabled:opacity-50"
-        :disabled="guardando || !puedePublicar"
-        @click="publicar"
-      >
-        <Send class="h-4 w-4" aria-hidden="true" />
+      </Button>
+      <Button variant="conversion" :icon="Send" :disabled="guardando || !puedePublicar" @click="publicar">
         Publicar producto
-      </button>
+      </Button>
     </template>
 
     <!-- Modo editar -->
     <template v-else>
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest disabled:opacity-50"
-        :disabled="guardando"
-        @click="confirmarDesactivar"
-      >
-        <Power class="h-4 w-4" aria-hidden="true" />
+      <Button variant="outline" :icon="Power" :disabled="guardando" @click="confirmarDesactivar">
         Desactivar producto
-      </button>
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
-        :disabled="guardando"
-        @click="guardarCambios"
-      >
-        <Save class="h-4 w-4" aria-hidden="true" />
+      </Button>
+      <Button variant="action" :icon="Save" :disabled="guardando" @click="guardarCambios">
         Guardar cambios
-      </button>
+      </Button>
     </template>
   </div>
 </template>
@@ -258,6 +214,7 @@ import {
   Layers,
   Link2,
 } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import FormularioProducto from '../components/FormularioProducto.vue';
 import VistaPreviaProducto from '../components/VistaPreviaProducto.vue';
 import ChecklistPublicacion from '../components/ChecklistPublicacion.vue';

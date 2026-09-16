@@ -5,22 +5,12 @@
       descripcion="Organiza y administra las líneas comerciales de tus marcas. Define gamas, asocia productos y gestiona su visibilidad."
     >
       <template #acciones>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button bg-conversion px-4 py-2 text-sm font-medium text-neutral-white transition-colors hover:bg-conversion-hover focus:outline-none focus:ring-2 focus:ring-conversion focus:ring-offset-2"
-          @click="irA('/admin/catalogo/lineas/nueva')"
-        >
-          <Plus class="h-4 w-4" aria-hidden="true" />
+        <Button variant="conversion" :icon="Plus" @click="irA('/admin/catalogo/lineas/nueva')">
           Nueva línea
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark transition-colors hover:bg-neutral-lightest focus:outline-none focus:ring-2 focus:ring-action focus:ring-offset-2"
-          @click="irA('/admin/catalogo/lineas/exportar')"
-        >
-          <Download class="h-4 w-4" aria-hidden="true" />
+        </Button>
+        <Button variant="outline" :icon="Download" @click="irA('/admin/catalogo/lineas/exportar')">
           Exportar
-        </button>
+        </Button>
       </template>
     </EncabezadoSeccion>
 
@@ -70,15 +60,9 @@
             @input="onBuscar(($event.target as HTMLInputElement).value)"
           />
         </div>
-        <button
-          type="button"
-          class="inline-flex items-center gap-1.5 self-start rounded-button px-3 py-2 text-sm font-medium text-action hover:bg-subaction disabled:cursor-not-allowed disabled:text-neutral-medium disabled:hover:bg-transparent sm:self-auto"
-          :disabled="!hayFiltrosActivos"
-          @click="limpiarFiltros"
-        >
-          <FilterX class="h-4 w-4" aria-hidden="true" />
+        <Button variant="text" :icon="FilterX" :disabled="!hayFiltrosActivos" class="self-start sm:self-auto" @click="limpiarFiltros">
           Limpiar filtros
-        </button>
+        </Button>
       </div>
 
       <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -135,7 +119,6 @@
       @desactivar="(linea) => (lineaADesactivar = linea)"
       @ordenar="(orden) => aplicarFiltros({ orden })"
       @ir-pagina="irAPagina"
-      @seleccion="(ids) => (seleccionados = ids)"
     />
   </div>
 
@@ -146,14 +129,6 @@
     @cerrar="lineaADesactivar = null"
     @ver-dependencias="(linea) => irA(`/admin/catalogo/lineas/${linea.id}/editar`)"
     @confirmar="onDesactivar"
-  />
-
-  <BarraAccionesMasivas
-    :cantidad="seleccionados.length"
-    @limpiar="seleccionados = []"
-    @activar-lote="() => {}"
-    @desactivar-lote="() => {}"
-    @exportar-lote="() => irA('/admin/catalogo/lineas/exportar')"
   />
 </template>
 
@@ -174,10 +149,10 @@ import { computed, ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, Download, Search, FilterX, Boxes, Tag, Layers, Settings } from 'lucide-vue-next';
 import type { Component } from 'vue';
+import { Button } from '@/core/components';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import TablaLineas from '../components/TablaLineas.vue';
 import ModalDesactivarLinea from '../components/ModalDesactivarLinea.vue';
-import BarraAccionesMasivas from '../components/BarraAccionesMasivas.vue';
 import { useLineas } from '../composables/useLineas';
 import type { EstadoLinea, LineaListado } from '../interfaces';
 
@@ -196,7 +171,6 @@ const {
 } = useLineas();
 
 const lineaADesactivar = ref<LineaListado | null>(null);
-const seleccionados = ref<string[]>([]);
 
 // KPIs de la maqueta ADMIN 15: ícono en caja de color + número + etiqueta +
 // subtítulo. Colores solo con tokens oficiales (sin morado/rojo del mockup).

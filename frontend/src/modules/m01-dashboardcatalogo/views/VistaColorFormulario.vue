@@ -1,13 +1,8 @@
 <template>
   <div class="space-y-5 p-6 lg:p-8">
-    <button
-      type="button"
-      class="inline-flex items-center gap-1.5 text-sm font-medium text-action hover:underline"
-      @click="irA('/admin/catalogo/colores')"
-    >
-      <ArrowLeft class="h-4 w-4" aria-hidden="true" />
+    <Button variant="text" :icon="ArrowLeft" @click="irA('/admin/catalogo/colores')">
       Volver a colores
-    </button>
+    </Button>
 
     <div>
       <h1 class="text-2xl font-bold text-neutral-black">
@@ -404,32 +399,15 @@
   <div
     class="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-3 border-t border-neutral-light bg-neutral-white/95 px-6 py-3 backdrop-blur"
   >
-    <button
-      type="button"
-      class="rounded-button px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-      :disabled="guardando"
-      @click="irA('/admin/catalogo/colores')"
-    >
+    <Button variant="text" :disabled="guardando" @click="irA('/admin/catalogo/colores')">
       Cancelar
-    </button>
-    <button
-      type="button"
-      class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest disabled:opacity-50"
-      :disabled="guardando"
-      @click="guardarBorrador"
-    >
-      <Save class="h-4 w-4" aria-hidden="true" />
+    </Button>
+    <Button variant="outline" :icon="Save" :disabled="guardando" @click="guardarBorrador">
       Guardar borrador
-    </button>
-    <button
-      type="button"
-      class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
-      :disabled="guardando"
-      @click="guardarCambios"
-    >
-      <Save class="h-4 w-4" aria-hidden="true" />
+    </Button>
+    <Button variant="action" :icon="Save" :disabled="guardando" @click="guardarCambios">
       Guardar cambios
-    </button>
+    </Button>
   </div>
 </template>
 
@@ -460,6 +438,7 @@ import {
   CheckCircle2,
   Circle,
 } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import TarjetaSeccionFormulario from '../components/TarjetaSeccionFormulario.vue';
 import CampoFormulario from '../components/CampoFormulario.vue';
 import EntradaEtiquetas from '../components/EntradaEtiquetas.vue';

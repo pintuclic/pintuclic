@@ -1,13 +1,8 @@
 <template>
   <div class="space-y-5 p-6 lg:p-8">
-    <button
-      type="button"
-      class="inline-flex items-center gap-1.5 text-sm font-medium text-action hover:underline"
-      @click="irA('/admin/catalogo/marcas')"
-    >
-      <ArrowLeft class="h-4 w-4" aria-hidden="true" />
+    <Button variant="text" :icon="ArrowLeft" @click="irA('/admin/catalogo/marcas')">
       Volver a marcas
-    </button>
+    </Button>
 
     <div v-if="cargando" class="space-y-5">
       <div class="h-52 animate-pulse rounded-card bg-neutral-white" />
@@ -55,31 +50,15 @@
               </div>
 
               <div class="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1.5 rounded-button bg-action px-3 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover"
-                  @click="irA(`/admin/catalogo/marcas/${detalle.id}/editar`)"
-                >
-                  <Pencil class="h-4 w-4" aria-hidden="true" />
+                <Button variant="action" size="sm" :icon="Pencil" @click="irA(`/admin/catalogo/marcas/${detalle.id}/editar`)">
                   Editar marca
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1.5 rounded-button border border-neutral-light bg-neutral-white px-3 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-                  @click="irA('/admin/catalogo/variantes')"
-                >
-                  <List class="h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button variant="outline" size="sm" :icon="List" @click="irA('/admin/catalogo/variantes')">
                   Ver líneas
-                </button>
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-1.5 rounded-button border border-neutral-light bg-neutral-white px-3 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest disabled:opacity-50"
-                  :disabled="guardando || detalle.estado === 'inactiva'"
-                  @click="confirmarDesactivar"
-                >
-                  <Power class="h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button variant="outline" size="sm" :icon="Power" :disabled="guardando || detalle.estado === 'inactiva'" @click="confirmarDesactivar">
                   Desactivar
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -401,6 +380,7 @@ import {
   ChevronRight,
   Image as ImageIcon,
 } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import { useMarcaDetalle } from '../composables/useMarcaDetalle';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import type { PestanaDetalleMarca } from '../interfaces';

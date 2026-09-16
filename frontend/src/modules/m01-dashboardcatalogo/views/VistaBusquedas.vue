@@ -65,22 +65,12 @@
           />
         </div>
       </label>
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover"
-        @click="aplicarFiltros"
-      >
-        <Filter class="h-4 w-4" aria-hidden="true" />
+      <Button variant="action" :icon="Filter" @click="aplicarFiltros">
         Filtrar
-      </button>
-      <button
-        type="button"
-        class="rounded-button px-3 py-2 text-sm font-medium text-action hover:bg-subaction disabled:cursor-not-allowed disabled:text-neutral-medium disabled:hover:bg-transparent"
-        :disabled="!hayFiltrosActivos"
-        @click="limpiarFiltros"
-      >
+      </Button>
+      <Button variant="text" :disabled="!hayFiltrosActivos" @click="limpiarFiltros">
         Limpiar filtros
-      </button>
+      </Button>
     </section>
 
     <!-- KPIs -->
@@ -154,6 +144,7 @@
  */
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Search, Filter, TrendingUp, Flame, Clock, BarChart3 } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import TablaBusquedasSinResultado from '../components/TablaBusquedasSinResultado.vue';
 import { useBusquedas } from '../composables/useBusquedas';

@@ -5,22 +5,12 @@
       descripcion="Administra tu catálogo de productos: agrega, edita y organiza todos tus productos en un solo lugar."
     >
       <template #acciones>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button bg-conversion px-4 py-2 text-sm font-medium text-neutral-white transition-colors hover:bg-conversion-hover focus:outline-none focus:ring-2 focus:ring-conversion focus:ring-offset-2"
-          @click="irA('/admin/catalogo/productos/nuevo')"
-        >
-          <Plus class="h-4 w-4" aria-hidden="true" />
-          Nuevo producto
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark transition-colors hover:bg-neutral-lightest focus:outline-none focus:ring-2 focus:ring-action focus:ring-offset-2"
-          @click="irA('/admin/catalogo/productos/exportar')"
-        >
-          <Download class="h-4 w-4" aria-hidden="true" />
+        <Button variant="outline" :icon="Download" @click="irA('/admin/catalogo/productos/exportar')">
           Exportar
-        </button>
+        </Button>
+        <Button variant="conversion" :icon="Plus" @click="irA('/admin/catalogo/productos/nuevo')">
+          Nuevo producto
+        </Button>
       </template>
     </EncabezadoSeccion>
 
@@ -49,17 +39,8 @@
       @abrir="(id) => irA(`/admin/catalogo/productos/${id}`)"
       @editar="(id) => irA(`/admin/catalogo/productos/${id}/editar`)"
       @duplicar="() => irA('/admin/catalogo/productos/nuevo')"
-      @seleccion="onSeleccion"
     />
   </div>
-
-  <BarraAccionesMasivas
-    :cantidad="seleccionados.length"
-    @limpiar="seleccionados = []"
-    @activar-lote="() => {}"
-    @desactivar-lote="() => {}"
-    @exportar-lote="() => irA('/admin/catalogo/productos/exportar')"
-  />
 </template>
 
 <script setup lang="ts">
@@ -75,13 +56,12 @@
  * Permiso requerido: «Gestión de productos» (M17), revalidado en el servidor.
  * ==============================================================================
  */
-import { ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, Download } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import FiltrosProductos from '../components/FiltrosProductos.vue';
 import TablaProductos from '../components/TablaProductos.vue';
-import BarraAccionesMasivas from '../components/BarraAccionesMasivas.vue';
 import { useProductos } from '../composables/useProductos';
 
 const {
@@ -96,11 +76,6 @@ const {
   irAPagina,
   limpiarFiltros,
 } = useProductos();
-
-const seleccionados = ref<string[]>([]);
-function onSeleccion(ids: string[]): void {
-  seleccionados.value = ids;
-}
 
 // Navegación del panel: la provee el router (dashboardCatalogoRoutes).
 const { irA } = usePanelNavegacion();

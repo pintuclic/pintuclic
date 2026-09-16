@@ -60,29 +60,20 @@
         </select>
       </label>
 
-      <button
-        type="button"
-        class="rounded-button px-3 py-2 text-sm font-medium text-action hover:bg-subaction disabled:cursor-not-allowed disabled:text-neutral-medium disabled:hover:bg-transparent"
-        :disabled="!hayFiltrosActivos"
-        @click="$emit('limpiar')"
-      >
+      <Button variant="text" :disabled="!hayFiltrosActivos" @click="$emit('limpiar')">
         Limpiar filtros
-      </button>
+      </Button>
 
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover"
-        @click="$emit('nueva')"
-      >
-        <Plus class="h-4 w-4" aria-hidden="true" />
+      <Button variant="action" :icon="Plus" @click="$emit('nueva')">
         Nueva variante
-      </button>
+      </Button>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { Plus } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import type { FiltrosVariantes, OpcionesFiltroVariantes, EstadoVariante } from '../interfaces';
 
 defineProps<{

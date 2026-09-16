@@ -29,13 +29,9 @@
             <template v-else>{{ (marca.nombre || 'MC').slice(0, 2) }}</template>
           </span>
           <div>
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-button border border-neutral-light px-3 py-1.5 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-            >
-              <Upload class="h-4 w-4" aria-hidden="true" />
+            <Button variant="outline" size="sm" :icon="Upload">
               Cambiar logotipo
-            </button>
+            </Button>
             <p class="mt-1 text-xs text-neutral-medium">PNG, JPG o SVG. Máx. 2 MB. Recomendado: 300×300 px.</p>
           </div>
         </div>
@@ -124,22 +120,12 @@
       </div>
 
       <footer class="flex items-center justify-end gap-3 border-t border-neutral-light p-5">
-        <button
-          type="button"
-          class="rounded-button px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-          :disabled="guardando"
-          @click="$emit('cerrar')"
-        >
+        <Button variant="text" :disabled="guardando" @click="$emit('cerrar')">
           Cancelar
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover disabled:opacity-50"
-          :disabled="guardando"
-          @click="$emit('guardar')"
-        >
+        </Button>
+        <Button variant="action" :disabled="guardando" @click="$emit('guardar')">
           Guardar cambios
-        </button>
+        </Button>
       </footer>
     </aside>
   </div>
@@ -147,6 +133,7 @@
 
 <script setup lang="ts">
 import { X, Upload, Plus, Info } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import type { MarcaFormulario } from '../interfaces';
 
 const props = defineProps<{

@@ -5,14 +5,9 @@
       descripcion="Gestiona las marcas de tu catálogo. Agrega, edita o desactiva marcas según tus necesidades."
     >
       <template #acciones>
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover"
-          @click="irA('/admin/catalogo/marcas/nueva')"
-        >
-          <Plus class="h-4 w-4" aria-hidden="true" />
+        <Button variant="action" :icon="Plus" @click="irA('/admin/catalogo/marcas/nueva')">
           Nueva marca
-        </button>
+        </Button>
       </template>
     </EncabezadoSeccion>
 
@@ -54,14 +49,9 @@
           <option value="inactiva">Inactiva</option>
         </select>
       </label>
-      <button
-        type="button"
-        class="rounded-button px-3 py-2 text-sm font-medium text-action hover:bg-subaction disabled:cursor-not-allowed disabled:text-neutral-medium disabled:hover:bg-transparent"
-        :disabled="!hayFiltrosActivos"
-        @click="limpiarFiltros"
-      >
+      <Button variant="text" :disabled="!hayFiltrosActivos" @click="limpiarFiltros">
         Limpiar filtros
-      </button>
+      </Button>
     </section>
 
     <TablaMarcas
@@ -99,6 +89,7 @@
  */
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, Search, Bookmark, Package, Layers, Droplet } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import TarjetaEstadistica from '../components/TarjetaEstadistica.vue';
 import TablaMarcas from '../components/TablaMarcas.vue';

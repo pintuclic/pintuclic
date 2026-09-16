@@ -1,13 +1,8 @@
 <template>
   <div class="space-y-5 p-6 lg:p-8">
-    <button
-      type="button"
-      class="inline-flex items-center gap-1.5 text-sm font-medium text-action hover:underline"
-      @click="irA('/admin/catalogo/marcas')"
-    >
-      <ArrowLeft class="h-4 w-4" aria-hidden="true" />
+    <Button variant="text" :icon="ArrowLeft" @click="irA('/admin/catalogo/marcas')">
       Volver a marcas
-    </button>
+    </Button>
 
     <div>
       <h1 class="text-2xl font-bold text-neutral-black">
@@ -98,14 +93,9 @@
             </div>
             <div class="space-y-1.5">
               <div class="flex gap-2">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-3 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-                  @click="simularLogo"
-                >
-                  <Upload class="h-4 w-4" aria-hidden="true" />
+                <Button variant="outline" size="sm" :icon="Upload" @click="simularLogo">
                   {{ formulario.logoUrl ? 'Cambiar imagen' : 'Subir imagen' }}
-                </button>
+                </Button>
                 <button
                   v-if="formulario.logoUrl"
                   type="button"
@@ -362,32 +352,15 @@
     <p v-if="!puedePublicar" class="mr-auto text-xs text-neutral-medium">
       Completa los campos obligatorios para publicar la marca.
     </p>
-    <button
-      type="button"
-      class="rounded-button px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-      :disabled="guardando"
-      @click="irA('/admin/catalogo/marcas')"
-    >
+    <Button variant="text" :disabled="guardando" @click="irA('/admin/catalogo/marcas')">
       Cancelar
-    </button>
-    <button
-      type="button"
-      class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-neutral-white px-4 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest disabled:opacity-50"
-      :disabled="guardando"
-      @click="guardarBorrador"
-    >
-      <Save class="h-4 w-4" aria-hidden="true" />
+    </Button>
+    <Button variant="outline" :icon="Save" :disabled="guardando" @click="guardarBorrador">
       Guardar borrador
-    </button>
-    <button
-      type="button"
-      class="inline-flex items-center gap-2 rounded-button bg-action px-4 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
-      :disabled="guardando"
-      @click="guardarCambios"
-    >
-      <Save class="h-4 w-4" aria-hidden="true" />
+    </Button>
+    <Button variant="action" :icon="Save" :disabled="guardando" @click="guardarCambios">
       Guardar cambios
-    </button>
+    </Button>
   </div>
 </template>
 
@@ -420,6 +393,7 @@ import {
   Trash2,
   Image as ImageIcon,
 } from 'lucide-vue-next';
+import { Button } from '@/core/components';
 import TarjetaSeccionFormulario from '../components/TarjetaSeccionFormulario.vue';
 import CampoFormulario from '../components/CampoFormulario.vue';
 import EntradaEtiquetas from '../components/EntradaEtiquetas.vue';

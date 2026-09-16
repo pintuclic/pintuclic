@@ -1,13 +1,8 @@
 <template>
   <div class="space-y-5 p-6 lg:p-8">
-    <button
-      type="button"
-      class="inline-flex items-center gap-1.5 text-sm font-medium text-action hover:underline"
-      @click="irA('/admin/catalogo/productos')"
-    >
-      <ArrowLeft class="h-4 w-4" aria-hidden="true" />
+    <Button variant="text" :icon="ArrowLeft" @click="irA('/admin/catalogo/productos')">
       Volver a productos
-    </button>
+    </Button>
 
     <div v-if="cargando" class="space-y-5">
       <div class="h-64 animate-pulse rounded-card bg-neutral-white" />
@@ -58,7 +53,7 @@
           <div class="grid gap-5 lg:grid-cols-[1fr_18rem]">
             <div class="space-y-3">
               <div class="flex flex-wrap items-center gap-2">
-                <BadgeEstadoProducto :estado="detalle.estado" />
+                <Badge :estado="tonoEstado(detalle.estado)" :label="etiquetaEstado(detalle.estado)" />
                 <span
                   v-if="detalle.destacado"
                   class="inline-flex items-center gap-1.5 rounded-button bg-highlight/15 px-2.5 py-1 text-xs font-medium text-neutral-dark"
@@ -93,31 +88,15 @@
                 </div>
 
                 <div class="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-1.5 rounded-button bg-action px-3 py-2 text-sm font-medium text-neutral-white hover:bg-action-hover"
-                    @click="irA(`/admin/catalogo/productos/${detalle.id}/editar`)"
-                  >
-                    <Pencil class="h-4 w-4" aria-hidden="true" />
+                  <Button variant="action" size="sm" :icon="Pencil" @click="irA(`/admin/catalogo/productos/${detalle.id}/editar`)">
                     Editar producto
-                  </button>
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-1.5 rounded-button border border-neutral-light bg-neutral-white px-3 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest"
-                    @click="irA('/admin/catalogo/productos/nuevo')"
-                  >
-                    <Copy class="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                  <Button variant="outline" size="sm" :icon="Copy" @click="irA('/admin/catalogo/productos/nuevo')">
                     Duplicar
-                  </button>
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-1.5 rounded-button border border-neutral-light bg-neutral-white px-3 py-2 text-sm font-medium text-neutral-dark hover:bg-neutral-lightest disabled:opacity-50"
-                    :disabled="guardando || detalle.estado === 'inactivo'"
-                    @click="confirmarDesactivar"
-                  >
-                    <Power class="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                  <Button variant="outline" size="sm" :icon="Power" :disabled="guardando || detalle.estado === 'inactivo'" @click="confirmarDesactivar">
                     Desactivar
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -262,7 +241,7 @@
                 </div>
                 <div class="grid grid-cols-[8rem_1fr] items-center gap-2">
                   <dt class="text-neutral-medium">Estado</dt>
-                  <dd><BadgeEstadoProducto :estado="detalle.estado" /></dd>
+                  <dd><Badge :estado="tonoEstado(detalle.estado)" :label="etiquetaEstado(detalle.estado)" /></dd>
                 </div>
               </dl>
             </section>
@@ -503,10 +482,10 @@ import {
   Leaf,
   Image as ImageIcon,
 } from 'lucide-vue-next';
-import BadgeEstadoProducto from '../components/BadgeEstadoProducto.vue';
+import { Badge, Button } from '@/core/components';
 import { useProductoDetalle } from '../composables/useProductoDetalle';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
-import type { PestanaDetalleProducto, VarianteResumenDetalle } from '../interfaces';
+import type { EstadoProducto, PestanaDetalleProducto, VarianteResumenDetalle } from '../interfaces';
 
 const props = defineProps<{
   /** Id del producto (lo inyecta el router con `props: true`). */
@@ -566,6 +545,18 @@ const filasGenerales = computed(() => {
 // La paleta no tiene rol "negativo": una bajada va en neutro.
 function claseTendencia(puntos: number): string {
   return puntos > 0 ? 'text-conversion' : 'text-neutral-medium';
+}
+
+/** Mapeo de estado del producto -> tono de `Badge` del Core (no hay 1:1 exacto). */
+function tonoEstado(estado: EstadoProducto): string {
+  if (estado === 'publicado') return 'success';
+  if (estado === 'inactivo') return 'inactivo';
+  return 'info';
+}
+function etiquetaEstado(estado: EstadoProducto): string {
+  if (estado === 'publicado') return 'Publicado';
+  if (estado === 'inactivo') return 'Inactivo';
+  return 'Borrador';
 }
 
 const ESTADO_VARIANTE: Record<VarianteResumenDetalle['estado'], { etiqueta: string; clases: string }> = {

@@ -1,10 +1,6 @@
 <template>
-  <TablaBase
-    etiqueta="Elementos de la categoría"
-    :vacio="!elementos.length"
-    mensaje-vacio="No hay elementos que coincidan con la búsqueda."
-  >
-    <template #encabezado>
+  <section class="rounded-card border border-neutral-light bg-neutral-white shadow-sm" aria-label="Elementos de la categoría">
+    <header class="border-b border-neutral-light p-4">
       <div class="flex items-start justify-between gap-3">
         <div>
           <h3 class="text-base font-semibold text-neutral-black">Elementos de esta categoría</h3>
@@ -38,162 +34,138 @@
           <option value="categoria">Categorías</option>
           <option value="subcategoria">Subcategorías</option>
         </select>
+        <label class="flex items-center gap-2 text-xs font-medium text-neutral-medium">
+          Ordenar por
+          <select
+            :value="filtros.orden.campo"
+            class="rounded-input border border-neutral-light bg-neutral-white px-2.5 py-2 text-sm text-neutral-dark outline-none focus:border-action"
+            @change="$emit('ordenar', ($event.target as HTMLSelectElement).value as CampoOrdenElementoCategoria)"
+          >
+            <option v-for="col in columnasOrdenables" :key="col.campo" :value="col.campo">{{ col.etiqueta }}</option>
+          </select>
+        </label>
       </div>
-    </template>
+    </header>
 
-    <table class="w-full min-w-[760px] text-left text-sm">
-        <thead>
-          <tr :class="CLASE_ENCABEZADO_TABLA">
-            <th scope="col" class="w-10 px-4 py-3">
-              <input
-                type="checkbox"
-                class="accent-action"
-                :checked="todosSeleccionados"
-                :indeterminate.prop="algunoSeleccionado && !todosSeleccionados"
-                aria-label="Seleccionar todos"
-                @change="alternarTodos(($event.target as HTMLInputElement).checked)"
-              />
-            </th>
-            <th
-              v-for="col in columnas"
-              :key="col.campo"
-              scope="col"
-              class="px-3 py-3 font-semibold"
-              :class="col.alineado === 'derecha' ? 'text-right' : ''"
-            >
-              <button
-                type="button"
-                class="inline-flex items-center gap-1 hover:text-neutral-dark"
-                @click="$emit('ordenar', col.campo)"
-              >
-                {{ col.etiqueta }}
-                <ArrowUp
-                  v-if="filtros.orden.campo === col.campo && filtros.orden.direccion === 'asc'"
-                  class="h-3 w-3"
-                  aria-hidden="true"
-                />
-                <ArrowDown
-                  v-else-if="filtros.orden.campo === col.campo"
-                  class="h-3 w-3"
-                  aria-hidden="true"
-                />
-                <ChevronsUpDown v-else class="h-3 w-3 opacity-40" aria-hidden="true" />
-              </button>
-            </th>
-            <th scope="col" class="px-3 py-3 text-right font-semibold">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="el in elementosPaginados"
-            :key="el.id"
-            class="border-b border-neutral-light last:border-0 hover:bg-neutral-lightest"
-          >
-            <td class="px-4 py-3">
-              <input
-                type="checkbox"
-                class="accent-action"
-                :checked="seleccionados.has(el.id)"
-                :aria-label="`Seleccionar ${el.nombre}`"
-                @change="alternarUno(el.id, ($event.target as HTMLInputElement).checked)"
-              />
-            </td>
-            <td class="px-3 py-3 font-medium text-neutral-black">
-              <button
-                type="button"
-                class="block text-left font-medium text-neutral-black hover:text-action"
-                @click="$emit('editar', el.id)"
-              >
-                {{ el.nombre }}
-              </button>
-            </td>
-            <td class="px-3 py-3">
-              <span
-                class="inline-flex items-center rounded-button px-2 py-0.5 text-xs font-medium"
-                :class="el.tipo === 'categoria' ? 'bg-subaction text-corporate' : 'bg-action/10 text-action'"
-              >
-                {{ el.tipo === 'categoria' ? 'Categoría' : 'Subcategoría' }}
-              </span>
-            </td>
-            <td class="px-3 py-3 text-neutral-dark">{{ el.padreNombre ?? '—' }}</td>
-            <td class="px-3 py-3 text-right font-medium text-neutral-dark tabular-nums">
-              {{ formatearNumero(el.productosAsociados) }}
-            </td>
-            <td class="px-3 py-3">
-              <span
-                class="inline-flex items-center gap-1.5 rounded-button px-2.5 py-1 text-xs font-medium whitespace-nowrap"
-                :class="el.estado === 'publicado' ? 'bg-conversion/10 text-conversion' : 'bg-neutral-light text-neutral-medium'"
-              >
-                <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
-                {{ el.estado === 'publicado' ? 'Publicado' : 'Inactivo' }}
-              </span>
-            </td>
-            <td class="px-3 py-3 text-right tabular-nums text-neutral-dark">{{ el.orden }}</td>
-            <td class="px-3 py-3 text-right">
-              <button
-                type="button"
-                class="grid h-8 w-8 place-items-center rounded-button text-neutral-medium hover:bg-neutral-light"
-                :aria-label="`Acciones de ${el.nombre}`"
-                :aria-expanded="elementoActivo?.id === el.id"
-                aria-haspopup="menu"
-                @click.stop="(e) => abrirMenu(el, e, (item) => item.id)"
-              >
-                <MoreVertical class="h-4 w-4" aria-hidden="true" />
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <Table
+      :columns="columnas"
+      :rows="elementosPaginados as unknown as Record<string, unknown>[]"
+      row-key="id"
+      mobile-cards
+    >
+      <template #empty>
+        <p class="text-sm text-neutral-medium">No hay elementos que coincidan con la búsqueda.</p>
+      </template>
 
-      <!-- Menú de acciones de fila -->
-      <template v-if="elementoActivo">
-        <div
-          ref="menu-flotante"
-          class="fixed z-30 w-44 overflow-hidden rounded-card border border-neutral-light bg-neutral-white py-1 text-left shadow-lg"
-          :style="{ top: `${posMenu.top}px`, left: `${posMenu.left}px` }"
-          role="menu"
+      <template #cell-nombre="{ row }">
+        <button
+          type="button"
+          class="block text-left font-medium text-neutral-black hover:text-action"
+          @click="$emit('editar', (row as unknown as NodoCategoria).id)"
         >
+          {{ (row as unknown as NodoCategoria).nombre }}
+        </button>
+      </template>
+
+      <template #cell-tipo="{ row }">
+        <span
+          class="inline-flex items-center rounded-button px-2 py-0.5 text-xs font-medium"
+          :class="(row as unknown as NodoCategoria).tipo === 'categoria' ? 'bg-subaction text-corporate' : 'bg-action/10 text-action'"
+        >
+          {{ (row as unknown as NodoCategoria).tipo === 'categoria' ? 'Categoría' : 'Subcategoría' }}
+        </span>
+      </template>
+
+      <template #cell-padre="{ row }">{{ (row as unknown as NodoCategoria).padreNombre ?? '—' }}</template>
+
+      <template #cell-productos="{ row }">
+        <span class="block text-right font-medium tabular-nums">
+          {{ formatearNumero((row as unknown as NodoCategoria).productosAsociados) }}
+        </span>
+      </template>
+
+      <template #cell-estado="{ row }">
+        <Badge
+          :estado="(row as unknown as NodoCategoria).estado === 'publicado' ? 'success' : 'inactivo'"
+          :label="(row as unknown as NodoCategoria).estado === 'publicado' ? 'Publicado' : 'Inactivo'"
+          table
+        />
+      </template>
+
+      <template #cell-orden="{ row }">
+        <span class="block text-right tabular-nums">{{ (row as unknown as NodoCategoria).orden }}</span>
+      </template>
+
+      <template #cell-acciones="{ row }">
+        <div class="flex justify-end">
           <button
             type="button"
-            role="menuitem"
-            class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
-            @click="ejecutar('editar')"
+            class="grid h-8 w-8 place-items-center rounded-button text-neutral-medium hover:bg-neutral-light"
+            :aria-label="`Acciones de ${(row as unknown as NodoCategoria).nombre}`"
+            :aria-expanded="elementoActivo?.id === (row as unknown as NodoCategoria).id"
+            aria-haspopup="menu"
+            @click.stop="(e) => abrirMenu((row as unknown as NodoCategoria), e, (item) => item.id)"
           >
-            <Pencil class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
-            Editar
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
-            @click="ejecutar('desactivar')"
-          >
-            <Power class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
-            Desactivar
+            <MoreVertical class="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </template>
+    </Table>
 
-    <template #pie>
-      <PaginacionTabla
-        :pagina="paginaActual"
-        :por-pagina="porPagina"
-        :total="total"
-        :total-paginas="totalPaginas"
-        etiqueta="elementos"
-        :opciones-por-pagina="[10, 25, 50]"
-        @ir-pagina="(n) => (paginaActual = n)"
-        @por-pagina="(n) => { porPagina = n; paginaActual = 1; }"
-      />
+    <!-- Menú de acciones de fila -->
+    <template v-if="elementoActivo">
+      <div
+        ref="menu-flotante"
+        class="fixed z-30 w-44 overflow-hidden rounded-card border border-neutral-light bg-neutral-white py-1 text-left shadow-lg"
+        :style="{ top: `${posMenu.top}px`, left: `${posMenu.left}px` }"
+        role="menu"
+      >
+        <button
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
+          @click="ejecutar('editar')"
+        >
+          <Pencil class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
+          Editar
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest"
+          @click="ejecutar('desactivar')"
+        >
+          <Power class="h-4 w-4 text-neutral-medium" aria-hidden="true" />
+          Desactivar
+        </button>
+      </div>
     </template>
-  </TablaBase>
+
+    <div v-if="elementosPaginados.length" class="flex flex-col gap-2 border-t border-neutral-light sm:flex-row sm:items-center sm:justify-between">
+      <Paginacion
+        class="flex-1"
+        :model-value="paginaActual"
+        :total="total"
+        :page-size="porPagina"
+        @update:model-value="(n) => (paginaActual = n)"
+      />
+      <label class="flex items-center gap-2 px-4 py-2 text-xs text-neutral-medium sm:px-0">
+        <select
+          :value="porPagina"
+          class="rounded-input border border-neutral-light bg-neutral-white px-2 py-1.5 text-sm text-neutral-dark outline-none focus:border-action"
+          @change="(e) => { porPagina = Number((e.target as HTMLSelectElement).value); paginaActual = 1; }"
+        >
+          <option v-for="op in [10, 25, 50]" :key="op" :value="op">{{ op }} por página</option>
+        </select>
+      </label>
+    </div>
+  </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Search, ArrowUp, ArrowDown, ChevronsUpDown, MoreVertical, Pencil, Power } from 'lucide-vue-next';
-import TablaBase, { CLASE_ENCABEZADO_TABLA } from './TablaBase.vue';
-import PaginacionTabla from './PaginacionTabla.vue';
+import { Search, MoreVertical, Pencil, Power } from 'lucide-vue-next';
+import { Table, Badge, Paginacion } from '@/core/components';
 import { useFormatoCatalogo } from '../composables/useFormatoCatalogo';
 import { useMenuFlotante } from '../composables/useMenuFlotante';
 import type {
@@ -214,42 +186,37 @@ const emit = defineEmits<{
   (e: 'filtrar-tipo', valor: string): void;
   (e: 'editar', id: string): void;
   (e: 'menu', id: string): void;
-  (e: 'seleccion', ids: string[]): void;
 }>();
 
 const { formatearNumero } = useFormatoCatalogo();
 
+const columnas = [
+  { key: 'nombre', label: 'Nombre' },
+  { key: 'tipo', label: 'Tipo' },
+  { key: 'padre', label: 'Padre' },
+  { key: 'productos', label: 'Productos asociados' },
+  { key: 'estado', label: 'Estado' },
+  { key: 'orden', label: 'Orden' },
+  { key: 'acciones', label: 'Acciones' },
+];
+
+const columnasOrdenables: { campo: CampoOrdenElementoCategoria; etiqueta: string }[] = [
+  { campo: 'nombre', etiqueta: 'Nombre' },
+  { campo: 'tipo', etiqueta: 'Tipo' },
+  { campo: 'padre', etiqueta: 'Padre' },
+  { campo: 'productos', etiqueta: 'Productos asociados' },
+  { campo: 'estado', etiqueta: 'Estado' },
+  { campo: 'orden', etiqueta: 'Orden' },
+];
+
 // Paginación local
 const paginaActual = ref(1);
 const porPagina = ref(10);
-const totalPaginas = computed(() => Math.max(1, Math.ceil(props.elementos.length / porPagina.value)));
 
 const elementosPaginados = computed(() => {
   const inicio = (paginaActual.value - 1) * porPagina.value;
   return props.elementos.slice(inicio, inicio + porPagina.value);
 });
-
-// Selección local
-const seleccionados = ref<Set<string>>(new Set());
-const algunoSeleccionado = computed(() => seleccionados.value.size > 0);
-const todosSeleccionados = computed(
-  () => elementosPaginados.value.length > 0 && elementosPaginados.value.every((el) => seleccionados.value.has(el.id))
-);
-
-function notificar(): void {
-  emit('seleccion', [...seleccionados.value]);
-}
-function alternarUno(id: string, marcado: boolean): void {
-  const copia = new Set(seleccionados.value);
-  if (marcado) copia.add(id);
-  else copia.delete(id);
-  seleccionados.value = copia;
-  notificar();
-}
-function alternarTodos(marcado: boolean): void {
-  seleccionados.value = marcado ? new Set(elementosPaginados.value.map((el) => el.id)) : new Set();
-  notificar();
-}
 
 // Menú flotante por fila
 const {
@@ -266,13 +233,4 @@ function ejecutar(accion: 'editar' | 'desactivar'): void {
   if (accion === 'editar') emit('editar', item.id);
   else emit('menu', item.id);
 }
-
-const columnas: { campo: CampoOrdenElementoCategoria; etiqueta: string; alineado?: 'derecha' }[] = [
-  { campo: 'nombre', etiqueta: 'Nombre' },
-  { campo: 'tipo', etiqueta: 'Tipo' },
-  { campo: 'padre', etiqueta: 'Padre' },
-  { campo: 'productos', etiqueta: 'Productos asociados', alineado: 'derecha' },
-  { campo: 'estado', etiqueta: 'Estado' },
-  { campo: 'orden', etiqueta: 'Orden', alineado: 'derecha' },
-];
 </script>

@@ -1,10 +1,7 @@
 // Primitivas compartidas entre vistas
 // (el chrome del panel admin — sidebar/topbar — vive en core/layouts/LayoutAdmin.vue)
 export { default as EncabezadoSeccion } from './EncabezadoSeccion.vue';
-export { default as PaginacionTabla } from './PaginacionTabla.vue';
-export { default as TablaBase } from './TablaBase.vue';
 export { default as TarjetaEstadistica } from './TarjetaEstadistica.vue';
-export { default as BarraAccionesMasivas } from './BarraAccionesMasivas.vue';
 
 // Vista: Dashboard de catálogo (ADMIN 01)
 export { default as GraficoEstadoCatalogo } from './GraficoEstadoCatalogo.vue';
@@ -13,7 +10,6 @@ export { default as PanelMetricas } from './PanelMetricas.vue';
 export { default as TablaActividadReciente } from './TablaActividadReciente.vue';
 
 // Vista: Productos · Listado (ADMIN 02)
-export { default as BadgeEstadoProducto } from './BadgeEstadoProducto.vue';
 export { default as FiltrosProductos } from './FiltrosProductos.vue';
 export { default as TablaProductos } from './TablaProductos.vue';
 
