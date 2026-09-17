@@ -19,6 +19,7 @@ export default {
       },
       fontFamily: {
         sans: [
+          'Inter',
           'system-ui',
           '-apple-system',
           'BlinkMacSystemFont',
@@ -26,6 +27,7 @@ export default {
           'Roboto',
           'sans-serif',
         ],
+        title: ['Poppins', 'sans-serif'],
       },
     },
   },

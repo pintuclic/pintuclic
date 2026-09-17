@@ -487,6 +487,19 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v2.3.0] - 2026-09-15
+### Módulo: Core Frontend (Design System Components)
+- **Alcance General:** Salto a versión **MINOR (v2.3.0)** con la estabilización, implementación y centralización de los componentes visuales core del frontend en la rama `feature/core-frontend-layouts`, unificando el diseño de botones, tarjetas, inputs, tablas y modales para que todos los módulos utilicen la misma fuente y se erradique la duplicidad de componentes.
+- **Hitos Clave Frontend:**
+  - **Tipografías y Tailwind:** Inyección de `Inter` (sans) y `Poppins` (title) en `tailwind.config.ts`.
+  - **Componentes Base (Botones):** Refactorización completa de `Button.vue` e `IconButton.vue` para soportar las variantes oficiales (`action`, `corporate`, `outline`, etc.) y consumir la librería `lucide-vue-next` dinámicamente mediante la prop `icon`, protegiendo el `index.ts` y evitando crear archivos innecesarios.
+  - **Formularios y Tarjetas (`GrupoOpciones.vue` y `Card.vue`):** Implementación del diseño interactivo de tarjeta seleccionable (check y borde activo) en `GrupoOpciones.vue` e implementación de un contenedor de tarjetas limpio en `Card.vue`.
+  - **Tablas y Paginación (M17/M01):** Consolidación de `Table.vue` con soporte para diseño adaptativo (mobile-cards) y `Paginacion.vue` estándar, reemplazando las tablas dispares de los módulos.
+  - **Modales y Drawers:** Verificación de `Modal.vue` con la franja de gradiente corporativa e implementación de un `Drawer.vue` lateral con transiciones.
+  - **Corrección Arquitectónica:** Migración y corrección de `FooterPrincipal.vue` (removido erróneamente de `components/layout/` hacia la carpeta correcta `src/core/layouts/`).
+  - 🔗 **Walkthrough Técnico Frontend Core:** [walkthrough_v2.3.0_core_design_system_frontend.md](./walkthroughs/core/walkthrough_v2.3.0_core_design_system_frontend.md)
+- **Estado:** ✅ Validado. Componentes implementados estrictamente sobre `src/core/components/` sin afectar otras ramas.
+
 ## [v2.2.0] - 2026-09-07
 ### Arquitectura Global: Estandarización de DTOs en Frontend (Globales vs Locales y Erradicación Inline)
 - **Alcance General:** Salto a versión **MINOR (v2.2.0)** que formaliza la arquitectura de **DTOs (Data Transfer Objects) en el Frontend**, documentándola en `frontend/infraestructura.md` y `AGENTS.md` (Directiva 12). Se define la separación estricta entre **DTOs Globales (`src/core/dtos/`)**, **DTOs Locales de Módulo (`src/modules/m[xx]/dtos/`)** y **Contratos Estáticos (`interfaces/`)**, eliminando al 100% las declaraciones de esquemas Zod inline en componentes `.vue`.

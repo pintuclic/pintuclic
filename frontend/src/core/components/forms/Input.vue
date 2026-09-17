@@ -11,7 +11,7 @@
         :disabled="disabled"
         v-model="value"
         @blur="handleBlur"
-        class="w-full px-4 py-2.5 rounded-input border outline-none transition-colors duration-200 font-sans"
+        class="w-full px-4 py-2.5 rounded-lg border outline-none transition-colors duration-200 font-sans"
         :class="[
           errorMessage 
             ? 'border-red-500 focus:border-red-500 bg-red-50/30' 

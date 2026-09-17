@@ -23,7 +23,10 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/core/layouts/LayoutAcceso.vue'),
     children: [],
   },
-  { path: '/:pathMatch(.*)*', redirect: '/' },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/',
+  },
 ];
 
 const router = createRouter({
