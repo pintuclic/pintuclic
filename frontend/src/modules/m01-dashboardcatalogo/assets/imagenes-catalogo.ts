@@ -61,6 +61,14 @@ const IMAGENES_PUBLICAS_RESPALDO = [
 ] as const;
 
 export function obtenerImagenPublicaRespaldo(idProducto: number): string {
+  const mapeo: Record<number, string> = {
+    1: pinturaAcrilica,
+    2: taladro20v,
+    3: rodilloProfesional,
+    4: brochaPremium,
+    5: cintaEnmascarar,
+  };
+  if (mapeo[idProducto]) return mapeo[idProducto];
   const posicion = Math.abs(idProducto - 1) % IMAGENES_PUBLICAS_RESPALDO.length;
   return IMAGENES_PUBLICAS_RESPALDO[posicion] ?? pinturaAcrilica;
 }

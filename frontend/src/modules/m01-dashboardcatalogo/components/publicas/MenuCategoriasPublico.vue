@@ -13,11 +13,17 @@
         @click.self="emit('cerrar')"
       >
         <section
-          class="w-full max-w-4xl overflow-hidden rounded-modal bg-neutral-white shadow-2xl"
+          class="w-full max-w-4xl overflow-hidden rounded-2xl bg-neutral-white shadow-2xl"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-menu-categorias"
         >
+          <!-- Franja decorativa de marca arcoíris Pintu Clic -->
+          <div
+            class="h-2 w-full shrink-0"
+            style="background: linear-gradient(90deg, #FF4D4D 0%, #FFB703 20%, #4CAF50 40%, #00B4D8 65%, #0877E8 80%, #7B2FF7 100%);"
+          />
+
           <header class="flex items-center justify-between border-b border-neutral-light px-5 py-4 sm:px-7">
             <div class="flex items-center gap-3">
               <span class="grid h-10 w-10 place-items-center rounded-card bg-neutral-lightest text-corporate">

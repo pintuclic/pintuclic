@@ -55,26 +55,32 @@
           </div>
         </article>
 
-        <article class="flex flex-col rounded-card border border-neutral-light bg-neutral-white p-6 shadow-sm lg:p-8">
+        <article class="flex flex-col rounded-card border border-neutral-light bg-neutral-white p-6 shadow-sm">
           <header>
             <h2 class="font-title text-xl font-bold text-corporate">Combinador de colores</h2>
             <p class="mt-1 text-xs text-neutral-medium">Descubre combinaciones sugeridas a partir del color seleccionado.</p>
           </header>
 
-          <div class="mt-5 flex-1">
+          <div class="mt-5 flex flex-1 flex-col">
             <template v-if="colorSeleccionado">
               <div class="rounded-card border border-neutral-light bg-neutral-lightest p-4">
-                <div class="flex items-center gap-4">
-                  <span class="h-16 w-16 shrink-0 rounded-card border border-neutral-light shadow-sm" :style="{ backgroundColor: colorSeleccionado.muestra_hex ?? '#CCCCCC' }" />
-                  <div>
-                    <h3 class="font-title text-base font-bold text-corporate">{{ colorSeleccionado.nombre }}</h3>
-                    <p class="text-xs text-neutral-medium">Código: {{ colorSeleccionado.codigo || 'S/C' }}</p>
-                    <p class="mt-1 text-[11px] uppercase tracking-wider text-action font-semibold">{{ colorSeleccionado.familia }}</p>
+                <div class="flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-4">
+                    <span class="h-16 w-16 shrink-0 rounded-card border border-neutral-light shadow-sm" :style="{ backgroundColor: colorSeleccionado.muestra_hex ?? '#CCCCCC' }" />
+                    <div>
+                      <h3 class="font-title text-base font-bold text-corporate">{{ colorSeleccionado.nombre }}</h3>
+                      <p class="text-xs text-neutral-medium">Código: {{ colorSeleccionado.codigo || 'S/C' }}</p>
+                      <p class="mt-1 text-[11px] uppercase tracking-wider text-action font-semibold">{{ colorSeleccionado.familia }}</p>
+                    </div>
+                  </div>
+                  <div class="hidden sm:flex flex-col items-end text-right">
+                    <span class="rounded-full bg-corporate/10 px-2.5 py-0.5 text-[11px] font-semibold text-corporate">Color activo</span>
+                    <span class="mt-1 font-mono text-xs text-neutral-medium">{{ colorSeleccionado.muestra_hex ?? '' }}</span>
                   </div>
                 </div>
               </div>
 
-              <div class="mt-6 space-y-4">
+              <div class="mt-4 grid flex-1 grid-cols-1 sm:grid-cols-2 sm:grid-rows-2 gap-4">
                 <TarjetaCombinacionColoresPublica
                   v-for="esquema in esquemas"
                   :key="esquema.nombre"
@@ -93,14 +99,14 @@
 
       <section v-if="productosRecomendados.length" class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <h2 class="font-title text-xl font-bold text-corporate">Pinturas disponibles en este tono</h2>
-        <div class="mt-5 grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
+        <div class="mt-5 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           <TarjetaProductoPublico v-for="producto in productosRecomendados" :key="producto.id_producto" :producto="producto" @ver="verProducto" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" />
         </div>
       </section>
 
       <section v-if="productosComplementarios.length" class="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
         <h2 class="font-title text-xl font-bold text-corporate">Herramientas recomendadas</h2>
-        <div class="mt-5 grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
+        <div class="mt-5 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           <TarjetaProductoPublico v-for="producto in productosComplementarios" :key="producto.id_producto" :producto="producto" @ver="verProducto" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" />
         </div>
       </section>

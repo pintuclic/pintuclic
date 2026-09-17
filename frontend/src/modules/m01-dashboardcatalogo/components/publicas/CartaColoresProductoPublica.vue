@@ -1,7 +1,12 @@
 <template>
   <Teleport to="body">
     <div v-if="abierta" class="fixed inset-0 z-50 grid place-items-center bg-corporate/70 p-3 sm:p-6" role="presentation" @click.self="emit('cerrar')">
-      <section class="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-modal bg-neutral-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="titulo-carta">
+      <section class="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-neutral-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="titulo-carta">
+        <!-- Franja decorativa de marca arcoíris Pintu Clic -->
+        <div
+          class="h-2 w-full shrink-0"
+          style="background: linear-gradient(90deg, #FF4D4D 0%, #FFB703 20%, #4CAF50 40%, #00B4D8 65%, #0877E8 80%, #7B2FF7 100%);"
+        />
         <header class="flex items-start justify-between gap-4 border-b border-neutral-light px-5 py-4 sm:px-7">
           <div class="flex items-start gap-3">
             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-card bg-subaction text-action"><Palette :size="21" /></span>

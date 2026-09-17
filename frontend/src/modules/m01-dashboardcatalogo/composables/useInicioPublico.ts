@@ -40,7 +40,8 @@ export function useInicioPublico() {
         CatalogoPublicoService.listarProductos({ pagina: 1, limite: LIMITE_DESTACADOS }),
       ]);
       categorias.value = categoriasPublicas;
-      productos.value = await enriquecerProductos(pagina.items);
+      const enriquecidos = await enriquecerProductos(pagina.items);
+      productos.value = [...enriquecidos].sort((a, b) => a.id_producto - b.id_producto);
     } catch {
       error.value = 'No pudimos cargar el catálogo en este momento. Intenta nuevamente.';
     } finally {

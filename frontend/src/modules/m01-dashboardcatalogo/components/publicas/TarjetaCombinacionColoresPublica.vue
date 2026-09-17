@@ -1,13 +1,13 @@
 <template>
-  <article class="flex flex-col justify-between rounded-card border border-neutral-light bg-neutral-white p-4 shadow-sm">
+  <article class="flex h-full flex-col justify-between rounded-card border border-neutral-light bg-neutral-white p-4 sm:p-5 shadow-sm transition-all hover:border-action/40 hover:shadow-md">
     <div>
       <div class="flex items-center gap-2">
         <component :is="iconoEsquema(esquema.nombre)" :size="16" class="shrink-0 text-neutral-dark" aria-hidden="true" />
         <h3 class="font-title text-sm font-bold text-corporate">{{ esquema.nombre }}</h3>
       </div>
-      <p class="mt-1 min-h-10 text-xs leading-4 text-neutral-medium">{{ esquema.descripcion }}</p>
+      <p class="mt-1.5 text-xs leading-5 text-neutral-medium">{{ esquema.descripcion }}</p>
     </div>
-    <div class="mt-3 flex h-8 overflow-hidden rounded-button border border-neutral-light shadow-inner">
+    <div class="mt-4 flex h-9 overflow-hidden rounded-button border border-neutral-light shadow-inner">
       <button
         v-for="color in esquema.colores"
         :key="color.id_color"

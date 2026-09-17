@@ -108,7 +108,7 @@
           </router-link>
         </div>
 
-        <div v-if="cargando" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5" aria-live="polite">
+        <div v-if="cargando" class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" aria-live="polite">
           <div v-for="indice in 5" :key="indice" class="h-80 animate-pulse rounded-card bg-neutral-white" />
         </div>
         <div v-else-if="error" class="rounded-card border border-neutral-light bg-neutral-white px-6 py-10 text-center">
@@ -118,7 +118,7 @@
             Reintentar
           </button>
         </div>
-        <div v-else-if="productos.length" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
+        <div v-else-if="productos.length" class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           <TarjetaProductoPublico
             v-for="(producto, indice) in productos"
             :key="producto.id_producto"

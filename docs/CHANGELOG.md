@@ -4,6 +4,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.35.1] - 2026-09-17
+### Módulo: M01 Catálogo de Productos / Vistas Públicas (Frontend)
+- **Estandarización visual de tarjetas:** Alineación de `TarjetaProductoPublico` conforme a especificaciones oficiales con esquinas redondeadas `rounded-2xl`, insignia de descuento `-15%`, precios en una línea con precio tachado, y botón de compra alineado al pie (`mt-auto`) usando tokens oficiales (`bg-conversion-hover hover:bg-conversion-accent`).
+- **Filas de 5 productos:** Reorganización de las grillas a 5 columnas (`lg:grid-cols-5`) en productos destacados (Home), pinturas y herramientas (Paleta de Colores), y productos complementarios (Detalle de Producto).
+- **Distribución del combinador y abanico:** Cuadrícula de 2x2 para el combinador de colores con tarjetas de altura completa, y optimización de espaciados en el abanico de colores eliminando espacios en blanco innecesarios.
+- **Identidad institucional en modales:** Incorporación de la barra superior decorativa con degradado multicolor Pintu Clic en el componente `Modal.vue` del Core, y eliminación del botón circular de slider en productos destacados.
+- **Estado de Calidad:** ESLint (0 errores, 0 advertencias), TypeScript (`vue-tsc -b`) y Vite Build 100% exitosos sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.35.1_M01_diseno_storefront_tarjetas_frontend.md](./walkthroughs/M01/walkthrough_v3.35.1_M01_diseno_storefront_tarjetas_frontend.md)
+
+---
+
 ## [v3.35.0] - 2026-09-16
 ### Módulo: M01 Catálogo de Productos / Vistas Públicas (Frontend)
 - **Integración con Core Layouts:** Unificación de todas las vistas públicas (`VistaInicioPublica`, `VistaCatalogoPublico`, `VistaDetalleProductoPublico`, `VistaPaletaColoresPublica`) bajo el layout maestro unificado `LayoutHome.vue` configurado como rutas anidadas (`children: publicStorefrontRoutes`). Las vistas administrativas de catálogo se alojan correspondientemente como hijas de `/admin` en `LayoutAdmin.vue`.

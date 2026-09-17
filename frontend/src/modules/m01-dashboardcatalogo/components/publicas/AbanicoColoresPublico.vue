@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col items-start">
     <div
-      class="relative flex min-h-[520px] w-full items-end justify-start overflow-hidden pb-12 pl-4 sm:pl-12"
+      class="relative flex min-h-[460px] w-full items-end justify-start overflow-hidden pb-6 pl-4 sm:pl-10"
       aria-label="Abanico de colores disponibles"
       @wheel.prevent="desplazarLaminas($event, laminas.length)"
     >

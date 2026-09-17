@@ -1,4 +1,5 @@
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { normalizarBusquedaCatalogoPublico } from '../dtos/catalogo-publico.dto';
 import { CatalogoPublicoService } from '../services/catalogo-publico.service';
 import type { CategoriaPublica, ProductoDestacadoPublico, ProductoPublicoResumen } from '../interfaces/catalogo-publico.interface';
@@ -77,7 +78,36 @@ export function useCatalogoPublico() {
     seleccionarSubcategoria(undefined);
   }
 
-  onMounted(() => { void cargarInicio(); });
+  const route = useRoute();
+
+  function sincronizarSubcategoriaDesdeRuta(): void {
+    const raw = route?.query?.subcategoria;
+    if (raw !== undefined && raw !== null && raw !== '') {
+      const num = Number(raw);
+      if (!Number.isNaN(num)) {
+        subcategoria.value = num;
+      }
+    }
+  }
+
+  watch(
+    () => route?.query?.subcategoria,
+    (nuevo) => {
+      if (nuevo !== undefined && nuevo !== null && nuevo !== '') {
+        const num = Number(nuevo);
+        if (!Number.isNaN(num) && num !== subcategoria.value) {
+          seleccionarSubcategoria(num);
+        }
+      } else if (subcategoria.value !== undefined) {
+        seleccionarSubcategoria(undefined);
+      }
+    }
+  );
+
+  onMounted(() => {
+    sincronizarSubcategoriaDesdeRuta();
+    void cargarInicio();
+  });
 
   return { buscar, cargando, cargarInicio, categorias, error, irPagina, limpiar, pagina, productos, seleccionarSubcategoria, subcategoria, termino, total, totalPaginas };
 }

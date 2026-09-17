@@ -165,7 +165,7 @@
         <!-- Productos complementarios -->
         <section v-if="complementarios.length" class="mt-16">
           <h2 class="font-title text-xl font-bold text-corporate">Productos que te pueden interesar</h2>
-          <div class="mt-5 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          <div class="mt-5 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             <TarjetaProductoPublico
               v-for="item in complementarios"
               :key="item.id_producto"

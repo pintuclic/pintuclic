@@ -32,7 +32,11 @@
             <img src="@/assets/logo.png" alt="Pintu Clic" class="h-10 object-contain" />
           </router-link>
           
-          <button class="flex items-center gap-2 bg-action hover:bg-action-hover text-white transition-colors px-4 py-2.5 rounded-lg font-bold text-sm cursor-pointer shadow-sm">
+          <button 
+            type="button"
+            class="flex items-center gap-2 bg-action hover:bg-action-hover text-white transition-colors px-4 py-2.5 rounded-lg font-bold text-sm cursor-pointer shadow-sm"
+            @click="openCategorias"
+          >
             <MenuIcon class="w-5 h-5" />
             Categorías
             <ChevronDownIcon class="w-4 h-4 ml-1" />
@@ -41,22 +45,43 @@
 
         <!-- Enlaces Principales -->
         <nav class="hidden xl:flex items-center gap-6 font-semibold text-neutral-dark text-[15px]">
-          <router-link to="/" class="relative text-action py-1 cursor-pointer group">
+          <router-link 
+            to="/" 
+            class="relative py-1 cursor-pointer group transition-colors"
+            :class="isActivo('/') ? 'text-action' : 'hover:text-action'"
+          >
             Inicio
-            <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-100 transition-transform origin-left"></span>
+            <span 
+              class="absolute bottom-0 left-0 w-full h-[2px] bg-action transition-transform origin-left"
+              :class="isActivo('/') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
+            ></span>
           </router-link>
-          <router-link to="/catalogo" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
+          <router-link 
+            to="/catalogo" 
+            class="relative py-1 cursor-pointer group transition-colors"
+            :class="isActivo('/catalogo') ? 'text-action' : 'hover:text-action'"
+          >
             Productos
-            <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+            <span 
+              class="absolute bottom-0 left-0 w-full h-[2px] bg-action transition-transform origin-left"
+              :class="isActivo('/catalogo') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
+            ></span>
           </router-link>
-          <a href="#" class="bg-highlight text-corporate px-3 py-1 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer">OFERTAS</a>
+          <a href="#" class="bg-[#D62828] hover:bg-[#B71C1C] text-white px-3 py-1 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer">OFERTAS</a>
           <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
             Servicios
             <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
           </a>
-          <router-link to="/paleta-colores" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
+          <router-link 
+            to="/paleta-colores" 
+            class="relative py-1 cursor-pointer group transition-colors"
+            :class="isActivo('/paleta-colores') ? 'text-action' : 'hover:text-action'"
+          >
             Paleta de Color
-            <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+            <span 
+              class="absolute bottom-0 left-0 w-full h-[2px] bg-action transition-transform origin-left"
+              :class="isActivo('/paleta-colores') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
+            ></span>
           </router-link>
           <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
             Sobre Nosotros
@@ -142,6 +167,15 @@
       @irALogin="openLogin" 
       @exito="handleWizardSuccess" 
     />
+
+    <!-- Modal Global de Categorías M01 -->
+    <MenuCategoriasPublico
+      :abierto="showCategorias"
+      :cargando="cargandoCategorias"
+      :categorias="categorias"
+      @cerrar="showCategorias = false"
+      @seleccionar="handleSelectSubcategoria"
+    />
   </div>
 </template>
 
@@ -162,16 +196,62 @@ import {
 import { FooterPrincipal } from '@/core/components';
 import ModalLogin from '@/modules/m04-cuentas/components/ModalLogin.vue';
 import RegistroWizard from '@/modules/m04-cuentas/components/RegistroWizard.vue';
+import MenuCategoriasPublico from '@/modules/m01-dashboardcatalogo/components/publicas/MenuCategoriasPublico.vue';
+import { CatalogoPublicoService } from '@/modules/m01-dashboardcatalogo/services/catalogo-publico.service';
+import type { CategoriaPublica } from '@/modules/m01-dashboardcatalogo/interfaces/catalogo-publico.interface';
 import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import { watchEffect } from 'vue';
+
+// Categorías predefinidas de respaldo (garantiza UI funcional incluso si el backend está iniciando)
+const CATEGORIAS_FALLBACK: readonly CategoriaPublica[] = [
+  {
+    id_categoria: 1,
+    nombre: 'Pinturas',
+    subcategorias: [
+      { id_subcategoria: 1, nombre: 'Pinturas Interiores' },
+      { id_subcategoria: 2, nombre: 'Pinturas Exteriores' },
+      { id_subcategoria: 3, nombre: 'Esmaltes y Barnices' },
+      { id_subcategoria: 4, nombre: 'Pinturas en Spray' },
+    ],
+  },
+  {
+    id_categoria: 2,
+    nombre: 'Herramientas',
+    subcategorias: [
+      { id_subcategoria: 5, nombre: 'Brochas y Rodillos' },
+      { id_subcategoria: 6, nombre: 'Espátulas y Llanas' },
+      { id_subcategoria: 7, nombre: 'Cintas y Protección' },
+    ],
+  },
+  {
+    id_categoria: 3,
+    nombre: 'Preparación y Acabados',
+    subcategorias: [
+      { id_subcategoria: 8, nombre: 'Estucos y Masillas' },
+      { id_subcategoria: 9, nombre: 'Lijas y Abrasivos' },
+      { id_subcategoria: 10, nombre: 'Selladores y Primer' },
+    ],
+  },
+];
 
 // Estado global local del layout para modales
 const showLogin = ref(false);
 const showWizard = ref(false);
+const showCategorias = ref(false);
+const cargandoCategorias = ref(false);
+const categorias = ref<readonly CategoriaPublica[]>([]);
+const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+
+const isActivo = (path: string): boolean => {
+  if (path === '/') {
+    return route.path === '/';
+  }
+  return route.path.startsWith(path);
+};
 
 // Bloquear acceso a la vista pública para administradores
 watchEffect(() => {
@@ -186,6 +266,32 @@ watchEffect(() => {
 const closeAllModals = () => {
   showLogin.value = false;
   showWizard.value = false;
+  showCategorias.value = false;
+};
+
+const openCategorias = async () => {
+  closeAllModals();
+  showCategorias.value = true;
+  if (categorias.value.length === 0) {
+    cargandoCategorias.value = true;
+    try {
+      const data = await CatalogoPublicoService.listarCategorias();
+      if (Array.isArray(data) && data.length > 0) {
+        categorias.value = data;
+      } else {
+        categorias.value = CATEGORIAS_FALLBACK;
+      }
+    } catch {
+      categorias.value = CATEGORIAS_FALLBACK;
+    } finally {
+      cargandoCategorias.value = false;
+    }
+  }
+};
+
+const handleSelectSubcategoria = (idSubcategoria: number) => {
+  showCategorias.value = false;
+  void router.push({ path: '/catalogo', query: { subcategoria: idSubcategoria } });
 };
 
 const openLogin = () => {
