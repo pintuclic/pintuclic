@@ -3,7 +3,7 @@
     <div>
       <div class="flex items-center gap-2">
         <component :is="iconoEsquema(esquema.nombre)" :size="16" class="shrink-0 text-neutral-dark" aria-hidden="true" />
-        <h3 class="text-sm font-bold text-corporate">{{ esquema.nombre }}</h3>
+        <h3 class="font-title text-sm font-bold text-corporate">{{ esquema.nombre }}</h3>
       </div>
       <p class="mt-1 min-h-10 text-xs leading-4 text-neutral-medium">{{ esquema.descripcion }}</p>
     </div>

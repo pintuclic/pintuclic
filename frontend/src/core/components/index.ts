@@ -43,5 +43,8 @@ export { default as Table } from './data-display/Table.vue';
 export { default as Badge } from './data-display/Badge.vue';
 export { default as Avatar } from './data-display/Avatar.vue';
 
+// 7. Layouts globales compartidos
+export { default as FooterPrincipal } from '../layouts/FooterPrincipal.vue';
+
 // 8. Herramientas de soporte y depuración interna
 export { default as DevRoleSwitcher } from './dev/DevRoleSwitcher.vue';

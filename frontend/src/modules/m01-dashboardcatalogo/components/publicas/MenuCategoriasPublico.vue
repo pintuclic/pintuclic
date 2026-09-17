@@ -23,7 +23,7 @@
               <span class="grid h-10 w-10 place-items-center rounded-card bg-neutral-lightest text-corporate">
                 <PanelsTopLeft :size="20" aria-hidden="true" />
               </span>
-              <h2 id="titulo-menu-categorias" class="text-lg font-bold text-neutral-black">
+              <h2 id="titulo-menu-categorias" class="font-title text-lg font-bold text-neutral-black">
                 Categorías
               </h2>
             </div>
@@ -48,7 +48,7 @@
 
             <div v-else-if="categorias.length" class="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
               <article v-for="categoria in categorias" :key="categoria.id_categoria">
-                <h3 class="mb-3 flex items-center gap-2 text-sm font-bold uppercase text-corporate">
+                <h3 class="font-title mb-3 flex items-center gap-2 text-sm font-bold uppercase text-corporate">
                   <Tags :size="17" class="text-action" aria-hidden="true" />
                   {{ categoria.nombre }}
                 </h3>

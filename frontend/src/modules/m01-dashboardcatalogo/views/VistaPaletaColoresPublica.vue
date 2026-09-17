@@ -1,7 +1,5 @@
 <template>
-  <div class="min-h-screen bg-neutral-lightest text-neutral-dark">
-    <EncabezadoTiendaPublica @abrir-categorias="menuCategoriasAbierto = true" @informar="mostrarMensaje" />
-
+  <div class="bg-neutral-lightest text-neutral-dark font-sans">
     <main>
       <section class="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
         <nav class="mb-4 text-xs text-neutral-medium" aria-label="Migas de pan">
@@ -15,7 +13,7 @@
           <div class="absolute inset-0 bg-gradient-to-r from-corporate via-corporate/85 to-transparent" />
           <div class="relative z-10 flex min-h-64 max-w-xl flex-col justify-center px-7 py-10 text-white sm:min-h-72 sm:px-12">
             <p class="text-sm font-semibold">Paleta de colores</p>
-            <h1 class="mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">Elige el color perfecto<br />para tu proyecto</h1>
+            <h1 class="font-title mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">Elige el color perfecto<br />para tu proyecto</h1>
             <p class="mt-4 max-w-md text-sm leading-6 text-white/85">Explora los colores disponibles en productos publicados y encuentra una opción para transformar tu espacio.</p>
           </div>
         </div>
@@ -24,7 +22,9 @@
       <section class="mx-auto max-w-7xl px-4 py-5 sm:px-6">
         <div class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="flex items-center gap-2 text-base font-bold text-corporate"><Droplets :size="19" class="text-action" /> Filtrar por familia de color</h2>
+            <h2 class="font-title flex items-center gap-2 text-base font-bold text-corporate">
+              <Droplets :size="19" class="text-action" /> Filtrar por familia de color
+            </h2>
             <label class="relative block sm:w-72">
               <span class="sr-only">Buscar color por nombre</span>
               <Search :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-medium" />
@@ -40,7 +40,7 @@
 
       <section class="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 md:grid-cols-2">
         <article class="rounded-card border border-neutral-light bg-neutral-white p-6 shadow-sm">
-          <h2 class="text-xl font-bold text-corporate">Paleta de colores</h2>
+          <h2 class="font-title text-xl font-bold text-corporate">Paleta de colores</h2>
           <p class="mt-1 text-xs text-neutral-medium">Selecciona un color disponible para consultar productos compatibles.</p>
 
           <div v-if="cargando" class="mt-6 h-80 animate-pulse rounded-card bg-neutral-lightest" />
@@ -57,48 +57,75 @@
 
         <article class="flex flex-col rounded-card border border-neutral-light bg-neutral-white p-6 shadow-sm lg:p-8">
           <header>
-            <h2 class="text-xl font-bold text-corporate">Combinador de colores</h2>
-            <p class="mt-1 text-sm leading-5 text-neutral-medium">A partir del color seleccionado te sugerimos combinaciones que armonizan.</p>
+            <h2 class="font-title text-xl font-bold text-corporate">Combinador de colores</h2>
+            <p class="mt-1 text-xs text-neutral-medium">Descubre combinaciones sugeridas a partir del color seleccionado.</p>
           </header>
 
-          <div class="mt-6 flex items-center gap-5 rounded-card border border-neutral-light bg-neutral-lightest p-4 shadow-sm">
-            <span class="h-16 w-16 shrink-0 rounded-card border border-neutral-light bg-action shadow-inner transition-colors duration-300" :style="{ backgroundColor: colorSeleccionado?.muestra_hex ?? undefined }" />
-            <div>
-              <p class="text-xs text-neutral-medium">Color seleccionado</p>
-              <h3 class="text-lg font-bold text-corporate">{{ colorSeleccionado?.nombre ?? 'Sin color disponible' }}</h3>
-              <p class="text-xs font-semibold uppercase tracking-wide text-neutral-medium">
-                {{ colorSeleccionado?.codigo ?? 'Sin código comercial' }}<template v-if="colorSeleccionado?.muestra_hex"> · {{ colorSeleccionado.muestra_hex }}</template>
-              </p>
-            </div>
-          </div>
+          <div class="mt-5 flex-1">
+            <template v-if="colorSeleccionado">
+              <div class="rounded-card border border-neutral-light bg-neutral-lightest p-4">
+                <div class="flex items-center gap-4">
+                  <span class="h-16 w-16 shrink-0 rounded-card border border-neutral-light shadow-sm" :style="{ backgroundColor: colorSeleccionado.muestra_hex ?? '#CCCCCC' }" />
+                  <div>
+                    <h3 class="font-title text-base font-bold text-corporate">{{ colorSeleccionado.nombre }}</h3>
+                    <p class="text-xs text-neutral-medium">Código: {{ colorSeleccionado.codigo || 'S/C' }}</p>
+                    <p class="mt-1 text-[11px] uppercase tracking-wider text-action font-semibold">{{ colorSeleccionado.familia }}</p>
+                  </div>
+                </div>
+              </div>
 
-          <div class="mt-6 grid flex-1 gap-4 sm:grid-cols-2">
-            <TarjetaCombinacionColoresPublica v-for="esquema in esquemas" :key="esquema.nombre" :esquema="esquema" :color-seleccionado-id="colorSeleccionado?.id_color ?? null" @seleccionar="seleccionarColor" />
+              <div class="mt-6 space-y-4">
+                <TarjetaCombinacionColoresPublica
+                  v-for="esquema in esquemas"
+                  :key="esquema.nombre"
+                  :esquema="esquema"
+                  :color-seleccionado-id="colorSeleccionado?.id_color ?? null"
+                  @seleccionar="seleccionarColor"
+                />
+              </div>
+            </template>
+            <div v-else class="grid h-full min-h-64 place-items-center rounded-card border border-dashed border-neutral-light bg-neutral-lightest p-6 text-center text-xs text-neutral-medium">
+              Selecciona un color del abanico para ver sugerencias de combinación.
+            </div>
           </div>
         </article>
       </section>
 
-      <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div class="mb-5 flex items-end justify-between"><div><h2 class="text-xl font-bold text-corporate">Productos recomendados</h2><p class="mt-1 text-xs text-neutral-medium">Opciones publicadas asociadas al color seleccionado.</p></div><router-link to="/catalogo" class="inline-flex min-h-11 items-center text-xs font-medium text-action hover:text-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action">Ver todos <ChevronRight :size="13" class="ml-1" /></router-link></div>
-        <div v-if="productosRecomendados.length" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5"><TarjetaProductoPublico v-for="producto in productosRecomendados" :key="producto.id_producto" :producto="producto" :muestra-color="colorSeleccionado?.muestra_hex ?? null" @ver="verProducto" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" /></div>
-        <p v-else-if="!cargando" class="rounded-card bg-neutral-white p-8 text-center text-sm text-neutral-medium">No hay pinturas publicadas asociadas a este color.</p>
+      <section v-if="productosRecomendados.length" class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+        <h2 class="font-title text-xl font-bold text-corporate">Pinturas disponibles en este tono</h2>
+        <div class="mt-5 grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
+          <TarjetaProductoPublico v-for="producto in productosRecomendados" :key="producto.id_producto" :producto="producto" @ver="verProducto" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" />
+        </div>
       </section>
 
-      <section class="mx-auto max-w-7xl px-4 pb-14 sm:px-6">
-        <h2 class="text-xl font-bold text-corporate">Productos que podrían interesarte</h2>
-        <p class="mt-1 text-xs text-neutral-medium">Herramientas y accesorios para completar tu proyecto.</p>
-        <div v-if="productosComplementarios.length" class="mt-5 grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5"><TarjetaProductoPublico v-for="producto in productosComplementarios" :key="producto.id_producto" :producto="producto" @ver="verProducto" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" /></div>
+      <section v-if="productosComplementarios.length" class="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
+        <h2 class="font-title text-xl font-bold text-corporate">Herramientas recomendadas</h2>
+        <div class="mt-5 grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5">
+          <TarjetaProductoPublico v-for="producto in productosComplementarios" :key="producto.id_producto" :producto="producto" @ver="verProducto" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" />
+        </div>
       </section>
 
       <section id="servicios" class="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
         <div class="grid grid-cols-2 divide-x divide-y divide-neutral-light rounded-card border border-neutral-light bg-neutral-white sm:grid-cols-4 sm:divide-y-0">
-          <div v-for="beneficio in beneficios" :key="beneficio.titulo" class="flex items-center gap-3 px-4 py-5 sm:justify-center"><component :is="beneficio.icono" :size="25" class="shrink-0 text-conversion" /><div><p class="text-xs font-bold text-corporate">{{ beneficio.titulo }}</p><p class="text-[10px] text-neutral-medium">{{ beneficio.detalle }}</p></div></div>
+          <div v-for="beneficio in beneficios" :key="beneficio.titulo" class="flex items-center gap-3 px-4 py-5 sm:justify-center">
+            <component :is="beneficio.icono" :size="25" class="shrink-0 text-conversion" />
+            <div>
+              <p class="text-xs font-bold text-corporate">{{ beneficio.titulo }}</p>
+              <p class="text-[10px] text-neutral-medium">{{ beneficio.detalle }}</p>
+            </div>
+          </div>
         </div>
       </section>
     </main>
 
-    <div v-if="mensaje" class="fixed bottom-5 left-1/2 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-card bg-corporate px-4 py-3 text-sm text-white shadow-lg" role="status"><div class="flex items-start justify-between gap-3"><span>{{ mensaje }}</span><button type="button" aria-label="Cerrar mensaje" @click="mensaje = null"><X :size="16" /></button></div></div>
-    <PieTiendaPublica :categorias="categorias" />
+    <div v-if="mensaje" class="fixed bottom-5 left-1/2 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-card bg-corporate px-4 py-3 text-sm text-white shadow-lg" role="status">
+      <div class="flex items-start justify-between gap-3">
+        <span>{{ mensaje }}</span>
+        <button type="button" aria-label="Cerrar mensaje" @click="mensaje = null"><X :size="16" /></button>
+      </div>
+    </div>
+
+    <!-- Modales de Negocio -->
     <MenuCategoriasPublico :abierto="menuCategoriasAbierto" :cargando="cargando" :categorias="categorias" @cerrar="menuCategoriasAbierto = false" @seleccionar="seleccionarSubcategoria" />
   </div>
 </template>
@@ -108,10 +135,8 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { BadgeCheck, ChevronRight, CircleAlert, Droplets, Headphones, Search, ShieldCheck, Truck, X } from 'lucide-vue-next';
 import heroStorefront from '../assets/storefront/hero-storefront.png';
-import EncabezadoTiendaPublica from '../components/publicas/EncabezadoTiendaPublica.vue';
 import AbanicoColoresPublico from '../components/publicas/AbanicoColoresPublico.vue';
 import MenuCategoriasPublico from '../components/publicas/MenuCategoriasPublico.vue';
-import PieTiendaPublica from '../components/publicas/PieTiendaPublica.vue';
 import TarjetaProductoPublico from '../components/publicas/TarjetaProductoPublico.vue';
 import TarjetaCombinacionColoresPublica from '../components/publicas/TarjetaCombinacionColoresPublica.vue';
 import { usePaletaColoresPublica } from '../composables/usePaletaColoresPublica';
@@ -134,10 +159,33 @@ const beneficios = [
   { titulo: 'Compra segura', detalle: 'Tus datos protegidos', icono: ShieldCheck },
 ] as const;
 
-const { cargarPaleta, cargando, categorias, colorSeleccionado, colores, coloresFiltrados, error, familiaSeleccionada, productosComplementarios, productosRecomendados, seleccionarColor, seleccionarFamilia, termino } = usePaletaColoresPublica();
+const {
+  cargarPaleta,
+  cargando,
+  categorias,
+  colorSeleccionado,
+  colores,
+  coloresFiltrados,
+  error,
+  familiaSeleccionada,
+  productosComplementarios,
+  productosRecomendados,
+  seleccionarColor,
+  seleccionarFamilia,
+  termino,
+} = usePaletaColoresPublica();
 const { esquemas } = useCombinacionesPaleta(colores, colorSeleccionado);
 
-function mostrarMensaje(texto: string): void { mensaje.value = texto; }
-function verProducto(idProducto: number): void { void router.push({ name: 'DetalleProductoPublico', params: { productoId: idProducto } }); }
-function seleccionarSubcategoria(idSubcategoria: number): void { menuCategoriasAbierto.value = false; void router.push({ name: 'CatalogoPublico', query: { subcategoria: idSubcategoria } }); }
+function mostrarMensaje(texto: string): void {
+  mensaje.value = texto;
+}
+
+function verProducto(idProducto: number): void {
+  void router.push({ name: 'DetalleProductoPublico', params: { productoId: idProducto } });
+}
+
+function seleccionarSubcategoria(idSubcategoria: number): void {
+  menuCategoriasAbierto.value = false;
+  void router.push({ name: 'CatalogoPublico', query: { subcategoria: idSubcategoria } });
+}
 </script>

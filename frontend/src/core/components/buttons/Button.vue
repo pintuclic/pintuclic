@@ -28,7 +28,7 @@ import { computed } from 'vue';
 import type { Component } from 'vue';
 
 const props = defineProps<{
-  variant?: 'corporate' | 'action' | 'subaction' | 'conversion' | 'outline' | 'text';
+  variant?: 'corporate' | 'primary' | 'action' | 'subaction' | 'secondary' | 'conversion' | 'green' | 'danger' | 'google' | 'outline' | 'text' | 'ghost';
   size?: 'sm' | 'md' | 'lg' | 'full';
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
@@ -59,11 +59,17 @@ const size = computed(() => props.size || 'md');
 
 const variantClasses: Record<string, string> = {
   corporate: 'bg-corporate hover:bg-corporate/90 text-white focus-visible:ring-corporate',
+  primary: 'bg-corporate hover:bg-corporate/90 text-white focus-visible:ring-corporate',
   action: 'bg-action hover:bg-action/90 text-white focus-visible:ring-action',
   subaction: 'bg-subaction hover:bg-subaction/80 text-action focus-visible:ring-action',
+  secondary: 'bg-subaction hover:bg-subaction/80 text-action focus-visible:ring-action',
   conversion: 'bg-conversion hover:bg-conversion-hover text-white focus-visible:ring-conversion',
+  green: 'bg-conversion hover:bg-conversion-hover text-white focus-visible:ring-conversion',
+  danger: 'bg-[#E63946] hover:bg-[#D62839] text-white focus-visible:ring-[#E63946]',
+  google: 'bg-white border border-neutral-light text-neutral-dark hover:bg-neutral-lightest focus-visible:ring-neutral-light',
   outline: 'border border-neutral-light bg-transparent hover:bg-neutral-lightest text-corporate focus-visible:ring-corporate',
   text: 'bg-transparent text-action hover:underline focus-visible:ring-action px-0 py-0',
+  ghost: 'bg-transparent text-action hover:underline focus-visible:ring-action px-0 py-0',
 };
 
 const sizeClasses: Record<string, string> = {

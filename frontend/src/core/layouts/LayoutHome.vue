@@ -45,19 +45,19 @@
             Inicio
             <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-100 transition-transform origin-left"></span>
           </router-link>
-          <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
+          <router-link to="/catalogo" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
             Productos
             <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-          </a>
+          </router-link>
           <a href="#" class="bg-highlight text-corporate px-3 py-1 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer">OFERTAS</a>
           <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
             Servicios
             <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
           </a>
-          <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
+          <router-link to="/paleta-colores" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
             Paleta de Color
             <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-          </a>
+          </router-link>
           <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
             Sobre Nosotros
             <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>

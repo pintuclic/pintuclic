@@ -6,7 +6,7 @@
           <div class="flex items-start gap-3">
             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-card bg-subaction text-action"><Palette :size="21" /></span>
             <div>
-              <h2 id="titulo-carta" class="text-lg font-bold text-corporate sm:text-xl">Carta de colores</h2>
+              <h2 id="titulo-carta" class="font-title text-lg font-bold text-corporate sm:text-xl">Carta de colores</h2>
               <p class="mt-0.5 text-xs text-neutral-medium">{{ nombreProducto }}</p>
             </div>
           </div>
@@ -57,7 +57,7 @@
               <p class="text-xs font-semibold text-neutral-medium">Tu selección</p>
               <div class="mt-3 flex items-center gap-3">
                 <span class="h-14 w-14 shrink-0 rounded-full border-4 border-neutral-white bg-action shadow-md" />
-                <div class="min-w-0"><h3 class="truncate text-base font-bold text-corporate">{{ colorBorrador?.nombre ?? 'Selecciona un color' }}</h3><p class="text-[10px] text-neutral-medium">Muestra ilustrativa</p></div>
+                <div class="min-w-0"><h3 class="font-title truncate text-base font-bold text-corporate">{{ colorBorrador?.nombre ?? 'Selecciona un color' }}</h3><p class="text-[10px] text-neutral-medium">Muestra ilustrativa</p></div>
               </div>
               <div class="mt-5 rounded-card border border-neutral-light bg-neutral-white p-3">
                 <p class="flex items-start gap-2 text-xs leading-5 text-neutral-medium"><Info :size="15" class="mt-0.5 shrink-0 text-action" /> Al aplicar el color conservaremos la presentación elegida cuando exista una variante compatible.</p>

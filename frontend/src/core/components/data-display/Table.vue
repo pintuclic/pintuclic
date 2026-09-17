@@ -22,7 +22,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-light">
-            <tr v-for="row in rows" :key="row[rowKey]" class="hover:bg-neutral-lightest/50 transition-colors">
+            <tr v-for="(row, idx) in rows" :key="String(row[rowKey] ?? idx)" class="hover:bg-neutral-lightest/50 transition-colors">
               <td v-for="col in columns" :key="col.key" class="px-6 py-4 text-neutral-dark">
                 <slot :name="`cell-${col.key}`" :row="row">
                   {{ row[col.key] }}
@@ -35,7 +35,7 @@
       
       <!-- Vista Mobile (Tarjetas) -->
       <div v-if="mobileCards" class="sm:hidden flex flex-col gap-4 p-4">
-        <div v-for="row in rows" :key="row[rowKey]" class="bg-white border border-neutral-light rounded-xl p-4 flex flex-col gap-3 shadow-sm">
+        <div v-for="(row, idx) in rows" :key="String(row[rowKey] ?? idx)" class="bg-white border border-neutral-light rounded-xl p-4 flex flex-col gap-3 shadow-sm">
           <div v-for="col in columns" :key="col.key" class="flex flex-col">
             <span class="text-xs font-semibold text-corporate uppercase mb-1">{{ col.label }}</span>
             <div class="text-sm text-neutral-dark">
@@ -59,7 +59,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-light">
-            <tr v-for="row in rows" :key="row[rowKey]" class="hover:bg-neutral-lightest/50 transition-colors">
+            <tr v-for="(row, idx) in rows" :key="String(row[rowKey] ?? idx)" class="hover:bg-neutral-lightest/50 transition-colors">
               <td v-for="col in columns" :key="col.key" class="px-4 py-3 text-neutral-dark">
                 <slot :name="`cell-${col.key}`" :row="row">
                   {{ row[col.key] }}
@@ -74,11 +74,18 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  columns: { key: string; label: string }[];
-  rows: Record<string, unknown>[];
-  rowKey?: string;
-  loading?: boolean;
-  mobileCards?: boolean;
-}>();
+withDefaults(
+  defineProps<{
+    columns: { key: string; label: string }[];
+    rows: Record<string, unknown>[];
+    rowKey?: string;
+    loading?: boolean;
+    mobileCards?: boolean;
+  }>(),
+  {
+    rowKey: 'id',
+    loading: false,
+    mobileCards: false,
+  }
+);
 </script>

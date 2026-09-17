@@ -1,8 +1,7 @@
 <template>
-  <div class="min-h-screen bg-neutral-white text-neutral-dark">
-    <EncabezadoTiendaPublica :en-inicio="true" @abrir-categorias="menuCategoriasAbierto = true" @informar="informarPendiente" />
-
+  <div class="bg-neutral-lightest text-neutral-dark font-sans">
     <main id="inicio">
+      <!-- Hero Principal -->
       <section class="mx-auto max-w-7xl px-4 pt-5 sm:px-6 sm:pt-8">
         <div class="relative min-h-80 overflow-hidden rounded-card bg-corporate sm:min-h-96 lg:min-h-80">
           <img
@@ -12,11 +11,11 @@
           />
           <div class="absolute inset-0 bg-gradient-to-r from-corporate via-corporate/80 to-transparent" />
           <div class="relative z-10 flex min-h-80 max-w-xl flex-col justify-center px-7 py-10 text-white sm:min-h-96 sm:px-12 lg:min-h-80">
-            <h1 class="max-w-md text-3xl font-bold leading-tight sm:text-4xl">
+            <h1 class="font-title max-w-md text-3xl font-bold leading-tight sm:text-4xl">
               Todo para tu proyecto,<br />
               <span class="text-highlight">en un solo lugar</span>
             </h1>
-            <p class="mt-4 max-w-md text-sm leading-6 text-white/90">
+            <p class="font-sans mt-4 max-w-md text-sm leading-6 text-white/90">
               Pinturas, herramientas y accesorios de las mejores marcas. Calidad, asesoría y envío rápido.
             </p>
             <div class="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -38,8 +37,9 @@
         </div>
       </section>
 
+      <!-- Beneficios / Servicios -->
       <section id="servicios" class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        <div class="grid grid-cols-2 divide-x divide-y divide-neutral-light rounded-card border border-neutral-light bg-neutral-lightest sm:grid-cols-4 sm:divide-y-0">
+        <div class="grid grid-cols-2 divide-x divide-y divide-neutral-light rounded-card border border-neutral-light bg-neutral-white sm:grid-cols-4 sm:divide-y-0">
           <div v-for="beneficio in beneficios" :key="beneficio.titulo" class="flex items-center gap-3 px-4 py-4 sm:justify-center">
             <component :is="beneficio.icono" :size="22" class="shrink-0 text-corporate" aria-hidden="true" />
             <div>
@@ -50,6 +50,7 @@
         </div>
       </section>
 
+      <!-- Buscador y Accesos Rápidos -->
       <section class="mx-auto max-w-7xl px-4 pb-8 sm:px-6">
         <form class="grid gap-3 lg:grid-cols-[1fr_auto_auto]" role="search" @submit.prevent="ejecutarBusqueda">
           <label class="relative block">
@@ -88,6 +89,7 @@
         </form>
       </section>
 
+      <!-- Mensaje de estado -->
       <div v-if="mensaje" class="mx-auto max-w-7xl px-4 pb-2 sm:px-6" role="status">
         <div class="flex items-start justify-between gap-3 rounded-card bg-subaction px-4 py-3 text-sm text-corporate">
           <span>{{ mensaje }}</span>
@@ -97,18 +99,19 @@
         </div>
       </div>
 
+      <!-- Productos Destacados -->
       <section id="productos" class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div class="mb-5 flex items-center justify-between">
-          <h2 class="text-xl font-bold text-neutral-black">Productos destacados</h2>
-          <router-link to="/catalogo" class="text-sm font-semibold text-conversion-hover hover:text-conversion">
+          <h2 class="font-title text-xl font-bold text-neutral-black">Productos destacados</h2>
+          <router-link to="/catalogo" class="text-sm font-semibold text-action hover:text-action-hover">
             Ver todos <ChevronRight :size="15" class="inline" />
           </router-link>
         </div>
 
         <div v-if="cargando" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-5" aria-live="polite">
-          <div v-for="indice in 5" :key="indice" class="h-80 animate-pulse rounded-card bg-neutral-lightest" />
+          <div v-for="indice in 5" :key="indice" class="h-80 animate-pulse rounded-card bg-neutral-white" />
         </div>
-        <div v-else-if="error" class="rounded-card border border-neutral-light bg-neutral-lightest px-6 py-10 text-center">
+        <div v-else-if="error" class="rounded-card border border-neutral-light bg-neutral-white px-6 py-10 text-center">
           <CircleAlert :size="32" class="mx-auto text-highlight" />
           <p class="mt-3 text-sm text-neutral-dark">{{ error }}</p>
           <button type="button" class="mt-4 rounded-button bg-action px-4 py-2 text-sm font-semibold text-white hover:bg-action-hover" @click="cargarInicio">
@@ -125,14 +128,15 @@
             @agregar="agregarProducto"
           />
         </div>
-        <p v-else class="rounded-card bg-neutral-lightest px-6 py-10 text-center text-sm text-neutral-medium">
+        <p v-else class="rounded-card bg-neutral-white px-6 py-10 text-center text-sm text-neutral-medium">
           No encontramos productos para mostrar.
         </p>
       </section>
 
-      <section id="categorias" class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <!-- Explorar Categorías -->
+      <section id="categorias" class="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
         <div class="mb-5 flex items-center justify-between">
-          <h2 class="text-xl font-bold text-neutral-black">Explora nuestras categorías</h2>
+          <h2 class="font-title text-xl font-bold text-neutral-black">Explora nuestras categorías</h2>
           <button type="button" class="text-sm font-semibold text-action hover:text-action-hover" @click="menuCategoriasAbierto = true">
             Ver categorías <ChevronRight :size="15" class="inline" />
           </button>
@@ -147,56 +151,19 @@
             @click="seleccionarCategoria(categoria.subcategorias[0]?.id_subcategoria)"
           >
             <Shapes :size="72" class="absolute -bottom-3 -right-2 opacity-25 transition-transform group-hover:scale-110" />
-            <strong class="relative block text-base leading-tight">{{ categoria.nombre }}</strong>
+            <strong class="font-title relative block text-base leading-tight">{{ categoria.nombre }}</strong>
             <span class="relative mt-2 inline-flex items-center gap-1 text-xs font-medium">
               Ver productos <ChevronRight :size="13" />
             </span>
           </button>
         </div>
-        <div v-else-if="!cargando" class="rounded-card bg-neutral-lightest px-6 py-8 text-center text-sm text-neutral-medium">
+        <div v-else-if="!cargando" class="rounded-card bg-neutral-white px-6 py-8 text-center text-sm text-neutral-medium">
           Las categorías públicas disponibles aparecerán aquí.
         </div>
       </section>
     </main>
 
-    <footer id="contacto" class="mt-8 bg-corporate text-white">
-      <div class="mx-auto grid max-w-7xl gap-9 px-6 py-10 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <img :src="logo" alt="Pintu Clic" class="h-14 rounded-card bg-neutral-white p-1 object-contain" />
-          <p class="mt-4 max-w-xs text-xs leading-5 text-white/75">
-            Todo para tu proyecto en un solo lugar. Calidad, asesoría y envío rápido a todo Colombia.
-          </p>
-        </div>
-        <div>
-          <h2 class="text-base font-bold">Categorías</h2>
-          <ul class="mt-4 space-y-2 text-xs text-white/75">
-            <li v-for="categoria in categorias.slice(0, 4)" :key="categoria.id_categoria">{{ categoria.nombre }}</li>
-          </ul>
-        </div>
-        <div>
-          <h2 class="text-base font-bold">Servicios</h2>
-          <ul class="mt-4 space-y-2 text-xs text-white/75">
-            <li>Asesoría de color</li>
-            <li>Calculadora de pintura</li>
-            <li>Directorio de pintores</li>
-            <li>Centro de ayuda</li>
-          </ul>
-        </div>
-        <div>
-          <h2 class="text-base font-bold">Contacto</h2>
-          <ul class="mt-4 space-y-2 text-xs text-white/75">
-            <li class="flex items-center gap-2"><MapPin :size="14" /> Bogotá, Colombia</li>
-            <li class="flex items-center gap-2"><Phone :size="14" /> 322 123 4567</li>
-            <li class="flex items-center gap-2"><Mail :size="14" /> contacto@pintuclic.com</li>
-          </ul>
-        </div>
-      </div>
-      <div class="mx-auto flex max-w-7xl flex-col gap-3 border-t border-neutral-white/20 px-6 py-5 text-[11px] text-white/60 sm:flex-row sm:items-center sm:justify-between">
-        <p>© 2026 Pintu Clic. Todos los derechos reservados.</p>
-        <p>Términos y condiciones · Política de privacidad · Políticas de envío</p>
-      </div>
-    </footer>
-
+    <!-- Modales de Negocio del Módulo M01 -->
     <MenuCategoriasPublico
       :abierto="menuCategoriasAbierto"
       :cargando="cargando"
@@ -222,11 +189,8 @@ import {
   CircleAlert,
   CreditCard,
   LoaderCircle,
-  Mail,
-  MapPin,
   PackageCheck,
   Palette,
-  Phone,
   Search,
   Shapes,
   ShieldCheck,
@@ -234,10 +198,8 @@ import {
   Truck,
   X,
 } from 'lucide-vue-next';
-import logo from '@/assets/logo.png';
 import heroStorefront from '../assets/storefront/hero-storefront.png';
 import CalculadoraPinturaPublica from '../components/publicas/CalculadoraPinturaPublica.vue';
-import EncabezadoTiendaPublica from '../components/publicas/EncabezadoTiendaPublica.vue';
 import MenuCategoriasPublico from '../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../components/publicas/TarjetaProductoPublico.vue';
 import { useInicioPublico } from '../composables/useInicioPublico';

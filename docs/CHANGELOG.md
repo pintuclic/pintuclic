@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.35.0] - 2026-09-16
+### Módulo: M01 Catálogo de Productos / Vistas Públicas (Frontend)
+- **Integración con Core Layouts:** Unificación de todas las vistas públicas (`VistaInicioPublica`, `VistaCatalogoPublico`, `VistaDetalleProductoPublico`, `VistaPaletaColoresPublica`) bajo el layout maestro unificado `LayoutHome.vue` configurado como rutas anidadas (`children: publicStorefrontRoutes`). Las vistas administrativas de catálogo se alojan correspondientemente como hijas de `/admin` en `LayoutAdmin.vue`.
+- **Erradicación de Duplicidad:** Eliminados definitivamente los componentes duplicados `EncabezadoTiendaPublica.vue` y `PieTiendaPublica.vue`, delegando navegación, cabecera y pie al Core (`LayoutHome`, `HeaderPrincipal`, `FooterPrincipal`).
+- **Estandarización Tipográfica y de Componentes:** Aplicadas fuentes institucionales del Design System (`font-title` / Poppins para títulos de sección, nombres de producto y precios; `font-sans` / Inter para textos, botones e inputs). Migrados modales y botones a componentes oficiales del Core (`Modal`, `Button`, `Paginacion`).
+- **Estado de Calidad:** ESLint (0 errores, 0 advertencias), TypeScript (`vue-tsc -b`) y Vite Build 100% exitosos sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.35.0_M01_integracion_core_layouts_frontend.md](./walkthroughs/M01/walkthrough_v3.35.0_M01_integracion_core_layouts_frontend.md)
+
+---
+
 ## [v3.34.10] - 2026-09-14
 ### Módulo: M01 Catálogo de Productos (Frontend)
 - **Corrección visual:** El panel preliminar reemplaza los selects deshabilitados por secciones compactas con buscador, checkboxes, muestras circulares y rango de precio, siguiendo el mockup del catálogo.
