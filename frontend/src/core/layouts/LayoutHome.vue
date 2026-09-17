@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex flex-col bg-neutral-lightest font-sans">
-    
+
     <!-- Top Bar Azul Oscuro -->
     <div class="bg-corporate text-white py-1.5 text-xs font-medium tracking-wide">
       <div class="container mx-auto px-4 lg:px-8 flex justify-end items-center gap-6">
@@ -25,13 +25,13 @@
     <!-- Main Navbar Blanco -->
     <header class="bg-white border-b border-neutral-light sticky top-0 z-40 shadow-sm">
       <div class="container mx-auto px-4 lg:px-8 h-20 flex items-center justify-between">
-        
+
         <!-- Logo y Categorías -->
         <div class="flex items-center gap-6">
           <router-link to="/" class="flex-shrink-0 cursor-pointer">
             <img src="@/assets/logo.png" alt="Pintu Clic" class="h-10 object-contain" />
           </router-link>
-          
+
           <button class="flex items-center gap-2 bg-action hover:bg-action/90 text-white transition-colors px-4 py-2.5 rounded-lg font-bold text-sm cursor-pointer shadow-sm">
             <MenuIcon class="w-5 h-5" />
             Categorías
@@ -66,7 +66,7 @@
 
         <!-- Acciones Derecha -->
         <div class="flex items-center gap-6">
-          
+
           <!-- Acciones: Mi Cuenta -->
           <div v-if="authStore.isAuthenticated" class="relative group">
             <button class="flex items-center gap-2 text-neutral-dark hover:text-action transition-colors text-left cursor-pointer focus:outline-none">
@@ -77,7 +77,7 @@
               </div>
               <ChevronDownIcon class="w-4 h-4 ml-1 text-neutral-medium" />
             </button>
-            
+
             <!-- Dropdown Menu -->
             <div class="absolute right-0 mt-0 w-48 bg-white rounded-lg shadow-lg border border-neutral-light overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
               <div class="py-1">
@@ -91,7 +91,7 @@
               </div>
             </div>
           </div>
-          
+
           <button v-else @click="openLogin" class="flex items-center gap-2 text-neutral-dark hover:text-action transition-colors text-left cursor-pointer focus:outline-none">
             <UserIcon class="w-7 h-7" />
             <div class="hidden md:block">
@@ -155,8 +155,8 @@
         <h3 class="text-xl font-bold text-corporate mb-2">¿Cerrar sesión?</h3>
         <p class="text-neutral-medium text-sm mb-6">¿Estás seguro de que deseas salir de tu cuenta?</p>
         <div class="flex gap-3 justify-center">
-          <button class="flex-1 py-2 px-4 rounded-lg border border-neutral-light text-neutral-dark font-semibold hover:bg-neutral-lightest transition-colors cursor-pointer" @click="showLogoutConfirm = false">Cancelar</button>
-          <button class="flex-1 py-2 px-4 rounded-lg bg-danger text-white font-semibold hover:bg-danger-hover transition-colors cursor-pointer" @click="confirmLogout">Aceptar</button>
+          <Button variant="neutral" class="flex-1" @click="showLogoutConfirm = false">Cancelar</Button>
+          <Button variant="danger" class="flex-1" @click="confirmLogout">Aceptar</Button>
         </div>
       </div>
     </Modal>
@@ -165,9 +165,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { 
-  MapPin as MapPinIcon, 
-  ShieldCheck as ShieldCheckIcon, 
+import {
+  MapPin as MapPinIcon,
+  ShieldCheck as ShieldCheckIcon,
   Headset as HeadsetIcon,
   HelpCircle as HelpCircleIcon,
   Phone as PhoneIcon,
@@ -178,6 +178,7 @@ import {
 } from 'lucide-vue-next';
 
 import FooterPrincipal from './FooterPrincipal.vue';
+import Button from '@/core/components/buttons/Button.vue';
 import Modal from '@/core/components/overlays/Modal.vue';
 import ModalLogin from '@/modules/m04-cuentas/components/ModalLogin.vue';
 import RegistroWizard from '@/modules/m04-cuentas/components/RegistroWizard.vue';
@@ -228,7 +229,6 @@ const openRecover = () => {
 };
 
 const handleLoginSuccess = () => {
-  console.log('Login exitoso en layout global');
   closeAllModals();
   const rol = authStore.user?.rol_nombre?.toLowerCase() || authStore.user?.tipo?.toLowerCase();
   if (rol === 'administrador' || rol === 'empleado' || rol === 'admin') {
@@ -246,8 +246,7 @@ const confirmLogout = () => {
   router.push('/');
 };
 
-const handleWizardSuccess = (tipoCuenta: TipoCuentaRegistro) => {
-  console.log('Registro finalizado exitosamente. Tipo de cuenta:', tipoCuenta);
+const handleWizardSuccess = (_tipoCuenta?: TipoCuentaRegistro) => {
   closeAllModals();
 };
 

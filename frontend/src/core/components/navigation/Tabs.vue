@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <!-- Modo Vertical (Menú lateral de perfil / panel / navegación) -->
   <nav
     v-if="orientation === 'vertical'"

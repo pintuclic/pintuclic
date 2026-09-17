@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <span
     :class="[
       'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
@@ -50,16 +50,16 @@ const resolvedClasses = computed(() => {
 
   const est = props.estado?.toLowerCase();
   if (est === 'activo' || est === 'success') {
-    return 'bg-green-50 text-green-700 ring-green-600/20';
+    return 'bg-conversion/12 text-conversion ring-conversion/20';
   }
   if (est === 'inactivo') {
     return 'bg-neutral-lightest text-neutral-dark ring-neutral-light/50';
   }
   if (est === 'bloqueado' || est === 'error') {
-    return 'bg-red-50 text-red-700 ring-red-600/10';
+    return 'bg-danger/10 text-danger ring-danger/20';
   }
   if (est === 'pendiente' || est === 'warning') {
-    return 'bg-yellow-50 text-yellow-800 ring-yellow-600/20';
+    return 'bg-highlight/20 text-neutral-dark ring-highlight/40';
   }
   return 'bg-subaction text-action ring-action/20';
 });

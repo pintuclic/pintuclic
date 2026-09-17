@@ -1,16 +1,16 @@
-﻿<template>
+<template>
   <div class="w-full" :aria-busy="loading">
-    <caption v-if="caption" class="sr-only">{{ caption }}</caption>
+    <p v-if="caption" class="sr-only">{{ caption }}</p>
     <div v-if="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-corporate"></div>
     </div>
-    
+
     <div v-else-if="rows.length === 0" class="py-12 text-center">
       <slot name="empty">
         <p class="text-neutral-medium">{{ emptyMessage || 'No hay datos disponibles.' }}</p>
       </slot>
     </div>
-    
+
     <template v-else>
       <!-- Vista Desktop (Tabla real) -->
       <div class="hidden sm:block overflow-x-auto">
@@ -31,7 +31,7 @@
           <tbody class="divide-y divide-neutral-light">
             <tr
               v-for="(row, idx) in rows"
-              :key="String(rowKey ? row[rowKey as keyof T] ?? idx : idx)"
+              :key="String(rowKey ? (row as any)[rowKey] ?? idx : idx)"
               class="hover:bg-neutral-lightest/50 transition-colors"
             >
               <td
@@ -41,32 +41,32 @@
                 :class="col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'"
               >
                 <slot :name="`cell-${col.key}`" :row="row">
-                  {{ row[col.key as keyof T] }}
+                  {{ (row as any)[col.key] }}
                 </slot>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      
+
       <!-- Vista Mobile (Tarjetas) -->
       <div v-if="mobileCards" class="sm:hidden flex flex-col gap-4 p-4">
         <div
           v-for="(row, idx) in rows"
-          :key="String(rowKey ? row[rowKey as keyof T] ?? idx : idx)"
-          class="bg-white border border-neutral-light rounded-xl p-4 flex flex-col gap-3 shadow-sm"
+          :key="String(rowKey ? (row as any)[rowKey] ?? idx : idx)"
+          class="min-w-0 break-words [overflow-wrap:anywhere] bg-neutral-white border border-neutral-light rounded-xl p-4 flex flex-col gap-3 shadow-sm"
         >
           <div v-for="col in columns" :key="col.key" class="flex flex-col">
             <span class="text-xs font-semibold text-corporate uppercase mb-1">{{ col.label }}</span>
             <div class="text-sm text-neutral-dark" :class="col.align === 'right' ? 'text-right' : ''">
               <slot :name="`cell-${col.key}`" :row="row">
-                {{ row[col.key as keyof T] }}
+                {{ (row as any)[col.key] }}
               </slot>
             </div>
           </div>
         </div>
       </div>
-      
+
       <div v-else class="sm:hidden overflow-x-auto">
         <!-- Fallback si no usan mobile-cards -->
         <table class="w-full text-left text-sm whitespace-nowrap">
@@ -86,7 +86,7 @@
           <tbody class="divide-y divide-neutral-light">
             <tr
               v-for="(row, idx) in rows"
-              :key="String(rowKey ? row[rowKey as keyof T] ?? idx : idx)"
+              :key="String(rowKey ? (row as any)[rowKey] ?? idx : idx)"
               class="hover:bg-neutral-lightest/50 transition-colors"
             >
               <td
@@ -96,7 +96,7 @@
                 :class="col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'"
               >
                 <slot :name="`cell-${col.key}`" :row="row">
-                  {{ row[col.key as keyof T] }}
+                  {{ (row as any)[col.key] }}
                 </slot>
               </td>
             </tr>
@@ -107,7 +107,7 @@
   </div>
 </template>
 
-<script setup lang="ts" generic="T extends Record<string, unknown>">
+<script setup lang="ts" generic="T extends object">
 import type { TableColumn } from '@/core/types/table.type';
 
 withDefaults(
