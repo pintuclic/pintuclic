@@ -4,6 +4,21 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.36.0] - 2026-09-19
+
+### Módulo: M04 Cuentas, Autenticación y Perfil & Core Layouts (Frontend)
+- **Alcance General:** Incremento **MINOR (v3.36.0)** que consolida la refactorización arquitectónica de M04 bajo los principios SOLID, completa la sincronización con el Design System y Core Layouts (`Dropdown.vue`, botones de peligro/cancelación, modal accesible `X`), y audita el cumplimiento integral de notificaciones transaccionales M18 / SMTP.
+- **Hitos Clave de Arquitectura y Frontend:**
+  - **Refactorización SOLID de Perfil (`VistaPerfil.vue`):** Descomposición del antiguo componente monolítico de 485 líneas en submódulos atómicos: `PerfilSidebarNav.vue` (navegación y asistencia), `PerfilDatosForm.vue` (visualización y edición in-place con inputs del core) y `ModalConfirmarPassword.vue` (reautenticación de seguridad para cambio de correo). Reducción de la vista a menos de 140 líneas como coordinador declarativo limpio.
+  - **Inversión de Dependencias (DIP):** Creación del composable reactivo `usePerfil.ts`, aislando las vistas del consumo estático de Axios y unificando el parseo de errores de backend sin acoplamiento a librerías HTTP.
+  - **Consolidación y Purgado de Componentes:** Erradicación del componente duplicado local `PasosProgreso.vue` en favor del alias canónico exportado por `@/core/components`. Estandarización de inputs, checkboxes y botones nativos en `ModalLogin.vue`, `PasoDatos.vue`, `PasoListo.vue`, `PasoVerificacion.vue` y `RecuperarPasswordWizard.vue`.
+  - **Seguridad y No Exposición de Datos Sensibles (`HU-SEG-06`):** Saneados todos los manejadores de error en formularios y llamadas de red, eliminando volcados de objetos en consola que expongan contraseñas o tokens en texto plano.
+  - **Auditoría de Notificaciones Transaccionales (M18 SMTP):** Verificación exhaustiva de eventos de correo en las 10 HUs de cuentas. Generación del reporte formal para el equipo de backend con el diagnóstico y código propuesto para la emisión de `SOLICITUD_EMPRESA_RECIBIDA` en `solicitarAscensoEmpresa` (`HU-CUE-07`).
+- **Estado de Calidad:** ESLint (0 errores, 0 advertencias), TypeScript (`vue-tsc -b`) y Vite Build 100% exitosos sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M04/walkthrough_v3.36.0_M04_refactor_solid_core_layouts_notificaciones_frontend.md](./walkthroughs/M04/walkthrough_v3.36.0_M04_refactor_solid_core_layouts_notificaciones_frontend.md)
+
+---
+
 ## [v3.29.0] - 2026-09-16
 
 ### Módulo: M04 Cuentas, Autenticación y Perfil (Frontend)

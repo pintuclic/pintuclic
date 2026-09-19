@@ -49,9 +49,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import Modal from '@/core/components/overlays/Modal.vue';
+import { Modal, PasosProgreso } from '@/core/components';
 import EncabezadoModal from './EncabezadoModal.vue';
-import PasosProgreso from './PasosProgreso.vue';
 import PasoRecuperarCorreo from './PasoRecuperarCorreo.vue';
 import PasoRecuperarOTP from './PasoRecuperarOTP.vue';
 import PasoRecuperarNuevaPass from './PasoRecuperarNuevaPass.vue';

@@ -120,26 +120,22 @@
       </div>
 
       <form @submit.prevent="guardarPasswordInicial" class="flex flex-col gap-4">
-        <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-medium text-neutral-dark">Contraseña propia</label>
-          <input
+        <div class="flex flex-col gap-1">
+          <Input
             v-model="nuevaPassword"
             type="password"
+            label="Contraseña propia"
             placeholder="Mín. 8 caracteres, 1 mayúscula, 1 minúscula y 1 número"
-            class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-light focus:outline-none focus:ring-2 focus:ring-action text-sm"
           />
           <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
         </div>
 
-        <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-medium text-neutral-dark">Confirmar contraseña</label>
-          <input
-            v-model="confirmarPassword"
-            type="password"
-            placeholder="Repite la contraseña"
-            class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-light focus:outline-none focus:ring-2 focus:ring-action text-sm"
-          />
-        </div>
+        <Input
+          v-model="confirmarPassword"
+          type="password"
+          label="Confirmar contraseña"
+          placeholder="Repite la contraseña"
+        />
 
         <div v-if="errorPasswordLocal || errorMensaje" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
           {{ errorPasswordLocal || errorMensaje }}
@@ -160,10 +156,8 @@ import { toTypedSchema } from '@vee-validate/zod';
 import { useCuentas } from '../composables/useCuentas';
 import { loginSchema, validarContrasenaConConfirmacion } from '../dtos';
 import { Mail as MailIcon, Lock as LockIcon, ShieldCheck } from 'lucide-vue-next';
-import Modal from '@/core/components/overlays/Modal.vue';
+import { Modal, Input, Button } from '@/core/components';
 import EncabezadoModal from './EncabezadoModal.vue';
-import Input from '@/core/components/forms/Input.vue';
-import Button from '@/core/components/buttons/Button.vue';
 
 const props = defineProps<{
   modelValue: boolean;

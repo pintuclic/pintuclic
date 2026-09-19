@@ -40,13 +40,12 @@
           <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
         </div>
 
-        <div class="flex items-start gap-2 mt-1">
-          <input type="checkbox" id="termsNatural" class="mt-1 rounded border-neutral-light text-corporate focus:ring-corporate" required />
-          <label for="termsNatural" class="text-xs text-neutral-medium">
+        <Checkbox id="termsNatural" required class="mt-1">
+          <span class="text-xs text-neutral-medium">
             Acepto los <a href="#" class="text-action hover:underline">Términos y Condiciones</a> y la
             <a href="#" class="text-action hover:underline">Política de Tratamiento de Datos</a>.
-          </label>
-        </div>
+          </span>
+        </Checkbox>
 
         <div v-if="errorMensaje" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
           {{ errorMensaje }}
@@ -94,13 +93,12 @@
         <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
       </div>
 
-      <div class="flex items-start gap-2 mt-1">
-        <input type="checkbox" id="termsEmpresa" class="mt-1 rounded border-neutral-light text-corporate focus:ring-corporate" required />
-        <label for="termsEmpresa" class="text-xs text-neutral-medium">
+      <Checkbox id="termsEmpresa" required class="mt-1">
+        <span class="text-xs text-neutral-medium">
           Acepto los <a href="#" class="text-action hover:underline">Términos y Condiciones</a> y la
           <a href="#" class="text-action hover:underline">Política de Tratamiento de Datos</a>.
-        </label>
-      </div>
+        </span>
+      </Checkbox>
 
       <div v-if="errorMensaje" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
         {{ errorMensaje }}
@@ -165,26 +163,22 @@
     </div>
 
     <form @submit.prevent="guardarPasswordInicial" class="flex flex-col gap-4">
-      <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-medium text-neutral-dark">Contraseña propia</label>
-        <input
+      <div class="flex flex-col gap-1">
+        <Input
           v-model="nuevaPassword"
           type="password"
+          label="Contraseña propia"
           placeholder="Mín. 8 caracteres, 1 mayúscula, 1 minúscula y 1 número"
-          class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-light focus:outline-none focus:ring-2 focus:ring-action text-sm"
         />
         <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
       </div>
 
-      <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-medium text-neutral-dark">Confirmar contraseña</label>
-        <input
-          v-model="confirmarPassword"
-          type="password"
-          placeholder="Repite la contraseña"
-          class="w-full px-3.5 py-2.5 rounded-lg border border-neutral-light focus:outline-none focus:ring-2 focus:ring-action text-sm"
-        />
-      </div>
+      <Input
+        v-model="confirmarPassword"
+        type="password"
+        label="Confirmar contraseña"
+        placeholder="Repite la contraseña"
+      />
 
       <div v-if="errorPasswordLocal || errorMensaje" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
         {{ errorPasswordLocal || errorMensaje }}
@@ -203,9 +197,7 @@ import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Mail as MailIcon, Lock as LockIcon, Phone as PhoneIcon, ShieldCheck } from 'lucide-vue-next';
 import EncabezadoModal from './EncabezadoModal.vue';
-import PasosProgreso from './PasosProgreso.vue';
-import Input from '@/core/components/forms/Input.vue';
-import Button from '@/core/components/buttons/Button.vue';
+import { PasosProgreso, Input, Button, Checkbox } from '@/core/components';
 import type {
   TipoCuentaRegistro,
   RegistroNaturalPayload,
