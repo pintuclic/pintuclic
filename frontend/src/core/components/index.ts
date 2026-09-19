@@ -35,6 +35,7 @@ export { default as Tabs } from './navigation/Tabs.vue';
 export { default as Migas } from './navigation/Migas.vue';
 export { default as Paginacion } from './navigation/Paginacion.vue';
 export { default as PasosProceso } from './navigation/PasosProceso.vue';
+export { default as PasosProgreso } from './navigation/PasosProceso.vue';
 export { default as LineaTiempo } from './navigation/LineaTiempo.vue';
 
 // 6. Visualización y presentación de datos

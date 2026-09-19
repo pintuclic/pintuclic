@@ -4,4 +4,3 @@ export * from './registro.dto';
 export * from './recuperar-password.dto';
 export * from './ascenso-empresa.dto';
 export * from './perfil.dto';
-

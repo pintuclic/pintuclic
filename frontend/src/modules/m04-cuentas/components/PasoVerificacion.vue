@@ -57,8 +57,7 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
 import EncabezadoModal from './EncabezadoModal.vue';
-import PasosProgreso from './PasosProgreso.vue';
-import { Button } from '@/core/components';
+import { Button, PasosProgreso } from '@/core/components';
 import { useCuentas } from '../composables/useCuentas';
 
 const props = defineProps<{

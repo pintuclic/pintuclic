@@ -21,7 +21,7 @@ export const routes: RouteRecordRaw[] = [
     ],
   },
 
-  // 2. Panel Administrativo (LayoutAdmin puro, sin M01 inyectado)
+  // 2. Panel Administrativo (LayoutAdmin puro con rutas de M04)
   {
     path: '/admin',
     name: 'Administracion',
@@ -43,14 +43,14 @@ export const routes: RouteRecordRaw[] = [
     path: '/acceso',
     name: 'Acceso',
     component: () => import('@/core/layouts/LayoutAcceso.vue'),
-    children: []
+    children: [],
   },
-  
+
   // 4. Fallback: Cualquier ruta no reconocida redirige al inicio
   {
     path: '/:pathMatch(.*)*',
     redirect: '/',
-  }
+  },
 ];
 
 const router = createRouter({
