@@ -68,29 +68,44 @@
         <div class="flex items-center gap-6">
 
           <!-- Acciones: Mi Cuenta -->
-          <div v-if="authStore.isAuthenticated" class="relative group">
-            <button class="flex items-center gap-2 text-neutral-dark hover:text-action transition-colors text-left cursor-pointer focus:outline-none">
-              <UserIcon class="w-7 h-7" />
-              <div class="hidden md:block">
-                <span class="block text-xs text-neutral-medium leading-none">Mi Cuenta</span>
-                <span class="block font-bold leading-tight">{{ authStore.user?.nombre || 'Usuario' }}</span>
-              </div>
-              <ChevronDownIcon class="w-4 h-4 ml-1 text-neutral-medium" />
-            </button>
+          <Dropdown v-if="authStore.isAuthenticated" align="right" width="w-48">
+            <template #trigger="{ isOpen }">
+              <button
+                type="button"
+                class="flex items-center gap-2 text-neutral-dark hover:text-action transition-colors text-left cursor-pointer focus:outline-none"
+              >
+                <UserIcon class="w-7 h-7" />
+                <div class="hidden md:block">
+                  <span class="block text-xs text-neutral-medium leading-none">Mi Cuenta</span>
+                  <span class="block font-bold leading-tight">{{ authStore.user?.nombre || 'Usuario' }}</span>
+                </div>
+                <ChevronDownIcon
+                  class="w-4 h-4 ml-1 text-neutral-medium transition-transform duration-200"
+                  :class="{ 'rotate-180': isOpen }"
+                />
+              </button>
+            </template>
 
-            <!-- Dropdown Menu -->
-            <div class="absolute right-0 mt-0 w-48 bg-white rounded-lg shadow-lg border border-neutral-light overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+            <template #default="{ close }">
               <div class="py-1">
-                <router-link to="/perfil" class="block px-4 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest hover:text-action transition-colors">
+                <router-link
+                  to="/perfil"
+                  @click="close"
+                  class="block px-4 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest hover:text-action transition-colors"
+                >
                   Mi Perfil
                 </router-link>
                 <div class="border-t border-neutral-lightest"></div>
-                <button @click="handleLogout" class="w-full text-left block px-4 py-2 text-sm text-danger hover:bg-neutral-lightest transition-colors font-medium">
+                <button
+                  type="button"
+                  @click="handleLogout(); close();"
+                  class="w-full text-left block px-4 py-2 text-sm text-danger hover:bg-neutral-lightest transition-colors font-medium cursor-pointer"
+                >
                   Cerrar sesión
                 </button>
               </div>
-            </div>
-          </div>
+            </template>
+          </Dropdown>
 
           <button v-else @click="openLogin" class="flex items-center gap-2 text-neutral-dark hover:text-action transition-colors text-left cursor-pointer focus:outline-none">
             <UserIcon class="w-7 h-7" />
@@ -180,6 +195,7 @@ import {
 import FooterPrincipal from './FooterPrincipal.vue';
 import Button from '@/core/components/buttons/Button.vue';
 import Modal from '@/core/components/overlays/Modal.vue';
+import Dropdown from '@/core/components/overlays/Dropdown.vue';
 import ModalLogin from '@/modules/m04-cuentas/components/ModalLogin.vue';
 import RegistroWizard from '@/modules/m04-cuentas/components/RegistroWizard.vue';
 import RecuperarPasswordWizard from '@/modules/m04-cuentas/components/RecuperarPasswordWizard.vue';
