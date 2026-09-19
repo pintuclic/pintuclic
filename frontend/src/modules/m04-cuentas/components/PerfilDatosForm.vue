@@ -70,11 +70,12 @@
             <span class="block text-xs text-neutral-medium mb-1">
               {{ isEmpresa ? 'Nombre representante legal' : 'Nombre completo' }}
             </span>
-            <Input
+            <input
               v-if="isEditing"
               v-model="form.nombre"
               type="text"
               placeholder="Nombre completo"
+              class="w-full text-sm font-semibold text-corporate bg-transparent border-b-2 border-action/30 focus:border-action focus:outline-none focus:bg-subaction/30 px-1 py-1 rounded-t-md transition-colors"
             />
             <span v-else class="block text-sm font-semibold text-corporate">
               {{ user?.nombre || 'No registrado' }}
@@ -96,11 +97,12 @@
           <MailIcon class="w-5 h-5 text-neutral-medium shrink-0 mt-0 md:mt-1" />
           <div class="flex-1 w-full">
             <span class="block text-xs text-neutral-medium mb-1">Correo electrónico</span>
-            <Input
+            <input
               v-if="isEditing"
               v-model="form.correo"
               type="email"
               placeholder="correo@ejemplo.com"
+              class="w-full text-sm font-semibold text-corporate bg-transparent border-b-2 border-action/30 focus:border-action focus:outline-none focus:bg-subaction/30 px-1 py-1 rounded-t-md transition-colors"
             />
             <span v-else class="block text-sm font-semibold text-corporate">
               {{ user?.correo || 'No registrado' }}
@@ -113,11 +115,12 @@
           <MapPinIcon class="w-5 h-5 text-neutral-medium shrink-0 mt-0 md:mt-1" />
           <div class="flex-1 w-full">
             <span class="block text-xs text-neutral-medium mb-1">Ciudad</span>
-            <Input
+            <input
               v-if="isEditing"
               v-model="form.ciudad"
               type="text"
               placeholder="Ciudad"
+              class="w-full text-sm font-semibold text-corporate bg-transparent border-b-2 border-action/30 focus:border-action focus:outline-none focus:bg-subaction/30 px-1 py-1 rounded-t-md transition-colors"
             />
             <span v-else class="block text-sm font-semibold text-corporate">
               {{ ciudadFallback }}
@@ -130,11 +133,12 @@
           <PhoneIcon class="w-5 h-5 text-neutral-medium shrink-0 mt-0 md:mt-1" />
           <div class="flex-1 w-full">
             <span class="block text-xs text-neutral-medium mb-1">Teléfono</span>
-            <Input
+            <input
               v-if="isEditing"
               v-model="form.telefono"
               type="tel"
               placeholder="Teléfono"
+              class="w-full text-sm font-semibold text-corporate bg-transparent border-b-2 border-action/30 focus:border-action focus:outline-none focus:bg-subaction/30 px-1 py-1 rounded-t-md transition-colors"
             />
             <span v-else class="block text-sm font-semibold text-corporate">
               {{ user?.telefono || 'No registrado' }}
@@ -147,11 +151,12 @@
           <HomeIcon class="w-5 h-5 text-neutral-medium shrink-0 mt-0 md:mt-1" />
           <div class="flex-1 w-full">
             <span class="block text-xs text-neutral-medium mb-1">Dirección</span>
-            <Input
+            <input
               v-if="isEditing"
               v-model="form.direccion"
               type="text"
               placeholder="Dirección"
+              class="w-full text-sm font-semibold text-corporate bg-transparent border-b-2 border-action/30 focus:border-action focus:outline-none focus:bg-subaction/30 px-1 py-1 rounded-t-md transition-colors"
             />
             <span v-else class="block text-sm font-semibold text-corporate">
               {{ direccionFallback }}
@@ -184,7 +189,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue';
-import { Button, Input } from '@/core/components';
+import { Button } from '@/core/components';
 import type { UsuarioSeguro } from '../interfaces/registro.interface';
 import {
   User as UserIcon,
