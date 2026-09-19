@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.35.2] - 2026-09-19
+### Módulo: M01 Catálogo de Productos / Vistas Públicas & Core (Frontend)
+- **Avance preliminar en Detalle de Producto (`VistaDetalleProductoPublico`):** ⚠️ *Nota de alcance: La vista de detalle de producto NO está finalizada; representa un avance técnico preliminar en desarrollo.* Se implementó la restricción condicional de la calculadora de pintura (`esPintura`) para que solo aplique a pinturas y no a herramientas/taladros, se deduplicaron las muestras cromáticas por `id_color` limitándolas a 6 con botón de apertura `+N más` hacia la carta completa, y se sincronizó el color inicial mediante query parameter (`?color=...`).
+- **Centralización en Zona Global (`src/core/`):** Creación del módulo utilitario oficial `src/core/utils/moneda.ts` (`formatearCOP`, `formatearPrecio`, `formatearPrecioConSufijo`), erradicando duplicaciones de `Intl.NumberFormat`. Creación del componente oficial `MuestraColor.vue` en `src/core/components/data-display/` con relieve, sombra y anillo perimetral para alto contraste. Estandarización de variantes `descuento` y `destacado` en `Badge.vue`.
+- **Sincronización en Paleta de Colores y Tarjetas:** Enlace reactivo de `:muestra-color="colorSeleccionado?.muestra_hex"` en `VistaPaletaColoresPublica` hacia `TarjetaProductoPublico`, y fallback automático para pinturas con variantes coloreadas. Eliminación de color inline arbitrario `bg-[#D62828]` en favor del componente oficial `<Badge estado="descuento">`.
+- **Estado de Calidad:** ESLint (0 errores, 0 advertencias), TypeScript (`vue-tsc -b`) y Vite Build 100% exitosos sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.35.2_M01_avance_detalle_producto_y_core_frontend.md](./walkthroughs/M01/walkthrough_v3.35.2_M01_avance_detalle_producto_y_core_frontend.md)
+
+---
+
 ## [v3.35.1] - 2026-09-17
 ### Módulo: M01 Catálogo de Productos / Vistas Públicas (Frontend)
 - **Estandarización visual de tarjetas:** Alineación de `TarjetaProductoPublico` conforme a especificaciones oficiales con esquinas redondeadas `rounded-2xl`, insignia de descuento `-15%`, precios en una línea con precio tachado, y botón de compra alineado al pie (`mt-auto`) usando tokens oficiales (`bg-conversion-hover hover:bg-conversion-accent`).

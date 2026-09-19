@@ -70,7 +70,7 @@
               </p>
             </div>
 
-            <div v-if="colores.length" class="mt-5">
+            <div v-if="todosLosColores.length" class="mt-5">
               <div class="flex items-center justify-between gap-3">
                 <h2 class="font-title text-sm font-semibold text-corporate">Elige un color:</h2>
                 <button
@@ -81,18 +81,28 @@
                   <Palette :size="15" /> Ver carta de colores
                 </button>
               </div>
-              <div class="mt-2 flex flex-wrap gap-3">
+              <div class="mt-2 flex flex-wrap items-center gap-3">
                 <button
                   v-for="(variante, indice) in colores"
-                  :key="variante.id_variante"
+                  :key="variante.id_color ?? variante.id_variante"
                   type="button"
                   class="grid h-11 w-11 place-items-center rounded-full border-2 bg-neutral-white transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-                  :class="varianteSeleccionadaId === variante.id_variante ? 'border-action ring-2 ring-subaction' : 'border-neutral-light'"
+                  :class="varianteSeleccionada?.id_color === variante.id_color ? 'border-action ring-2 ring-subaction' : 'border-neutral-light'"
                   :aria-label="`Seleccionar color ${variante.color}`"
                   :title="variante.color ?? ''"
-                  @click="seleccionarColor(variante.id_variante)"
+                  @click="seleccionarColor(variante.id_color ?? variante.id_variante)"
                 >
                   <span class="h-7 w-7 rounded-full shadow-sm" :class="claseMuestra(indice)" />
+                </button>
+
+                <button
+                  v-if="todosLosColores.length > MAX_COLORES_PREVIA"
+                  type="button"
+                  class="flex h-11 items-center justify-center rounded-full border border-dashed border-neutral-light bg-neutral-white px-3 text-xs font-semibold text-action transition-all hover:border-action hover:bg-subaction hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+                  title="Ver todos los colores en la carta"
+                  @click="cartaColoresAbierta = true"
+                >
+                  +{{ todosLosColores.length - MAX_COLORES_PREVIA }} más
                 </button>
               </div>
               <p class="mt-2 text-xs font-medium text-neutral-medium">
@@ -117,6 +127,7 @@
             </div>
 
             <button
+              v-if="esPintura"
               type="button"
               class="mt-5 flex min-h-11 w-full items-center justify-between rounded-button border border-neutral-light bg-neutral-white px-4 py-3 text-sm font-medium text-corporate transition-all hover:-translate-y-0.5 hover:border-action hover:bg-subaction hover:shadow-sm active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
               @click="calculadoraAbierta = true"
@@ -199,6 +210,7 @@
       @seleccionar="irSubcategoria"
     />
     <CalculadoraPinturaPublica
+      v-if="esPintura"
       :abierta="calculadoraAbierta"
       :producto="producto"
       @cerrar="calculadoraAbierta = false"
@@ -217,18 +229,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, ref, toRef, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, Calculator, ChevronDown, CircleAlert, MapPin, Palette, ShoppingCart, X } from 'lucide-vue-next';
 import { GALERIA_PRODUCTO_DEMO, obtenerImagenPublicaRespaldo } from '../assets/imagenes-catalogo';
 import CalculadoraPinturaPublica from '../components/publicas/CalculadoraPinturaPublica.vue';
 import CartaColoresProductoPublica from '../components/publicas/CartaColoresProductoPublica.vue';
 import MenuCategoriasPublico from '../components/publicas/MenuCategoriasPublico.vue';
-import TarjetaProductoPublico from '../components/publicas/TarjetaProductoPublico.vue';
 import { useDetalleProductoPublico } from '../composables/useDetalleProductoPublico';
+import { formatearCOP } from '@/core/utils/moneda';
 
 const props = defineProps<{ productoId: string }>();
 const router = useRouter();
+const route = useRoute();
 const idProducto = computed(() => Number(props.productoId));
 const {
   cargando,
@@ -239,6 +252,22 @@ const {
   varianteSeleccionada,
   varianteSeleccionadaId,
 } = useDetalleProductoPublico(toRef(idProducto));
+
+watch(
+  () => [producto.value, route.query.color] as const,
+  ([prod, colorParam]) => {
+    if (!prod || !colorParam) return;
+    const idColor = Number(colorParam);
+    if (!idColor) return;
+    const coincidencia = prod.variantes.find((v) => v.id_color === idColor);
+    if (coincidencia) {
+      varianteSeleccionadaId.value = coincidencia.id_variante;
+      const idx = prod.imagenes.findIndex((img) => img.id_color === idColor);
+      if (idx >= 0) indiceGaleria.value = idx;
+    }
+  },
+  { immediate: true }
+);
 const menuCategoriasAbierto = ref(false);
 const calculadoraAbierta = ref(false);
 const cartaColoresAbierta = ref(false);
@@ -247,7 +276,41 @@ const mensaje = ref<string | null>(null);
 const cantidad = ref(1);
 const indiceGaleria = ref(0);
 
-const colores = computed(() => producto.value?.variantes.filter((item) => item.color) ?? []);
+const esPintura = computed(() => {
+  if (!producto.value) return false;
+  // En Pintu Clic (RF-CAT-02-02, HU-CAT-10), las herramientas y accesorios tienen clase 'sin_color'
+  if (producto.value.clase_color === 'sin_color') return false;
+  const texto = `${producto.value.nombre} ${producto.value.descripcion ?? ''}`.toLowerCase();
+  if (/(taladro|rodillo|brocha|cinta|espátula|bandeja|herramienta|accesorio)/i.test(texto)) {
+    return false;
+  }
+  return true;
+});
+
+const MAX_COLORES_PREVIA = 6;
+
+const todosLosColores = computed(() => {
+  const unicos = new Map<number, NonNullable<typeof producto.value>['variantes'][number]>();
+  for (const item of producto.value?.variantes ?? []) {
+    if (item.id_color !== null && item.color && !unicos.has(item.id_color)) {
+      unicos.set(item.id_color, item);
+    }
+  }
+  return Array.from(unicos.values());
+});
+
+const colores = computed(() => {
+  const lista = todosLosColores.value;
+  if (lista.length <= MAX_COLORES_PREVIA) {
+    return lista;
+  }
+  const previa = lista.slice(0, MAX_COLORES_PREVIA);
+  const seleccionada = varianteSeleccionada.value;
+  if (seleccionada?.id_color && !previa.some((c) => c.id_color === seleccionada.id_color)) {
+    return [...previa.slice(0, MAX_COLORES_PREVIA - 1), seleccionada];
+  }
+  return previa;
+});
 const presentaciones = computed(() => {
   const unicas = new Map<number, NonNullable<typeof producto.value>['variantes'][number]>();
   for (const variante of producto.value?.variantes ?? []) {
@@ -269,9 +332,7 @@ const imagenActiva = computed(() => galeria.value[indiceGaleria.value] ?? obtene
 
 const precioActual = computed(() =>
   varianteSeleccionada.value
-    ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(
-        varianteSeleccionada.value.precio_vigente
-      )
+    ? formatearCOP(varianteSeleccionada.value.precio_vigente)
     : 'Consultar precio'
 );
 
@@ -289,15 +350,24 @@ function seleccionarPresentacion(idPresentacion: number): void {
   varianteSeleccionadaId.value = (opciones.find((item) => item.id_color === colorActual) ?? opciones[0])?.id_variante ?? null;
 }
 
-function seleccionarColor(idVariante: number): void {
-  varianteSeleccionadaId.value = idVariante;
-  const variante = producto.value?.variantes.find((item) => item.id_variante === idVariante);
-  const indiceImagen = producto.value?.imagenes.findIndex((imagen) => imagen.id_color === variante?.id_color) ?? -1;
-  if (indiceImagen >= 0) indiceGaleria.value = indiceImagen;
+function seleccionarColor(idColor: number): void {
+  const presentacionActual = varianteSeleccionada.value?.id_presentacion;
+  const opciones = producto.value?.variantes.filter((item) => item.id_color === idColor) ?? [];
+  const coincidencia = opciones.find((item) => item.id_presentacion === presentacionActual) ?? opciones[0];
+  if (coincidencia) {
+    varianteSeleccionadaId.value = coincidencia.id_variante;
+    const indiceImagen = producto.value?.imagenes.findIndex((imagen) => imagen.id_color === idColor) ?? -1;
+    if (indiceImagen >= 0) indiceGaleria.value = indiceImagen;
+  }
 }
 
 function seleccionarDesdeCarta(idVariante: number): void {
-  seleccionarColor(idVariante);
+  varianteSeleccionadaId.value = idVariante;
+  const variante = producto.value?.variantes.find((item) => item.id_variante === idVariante);
+  if (variante?.id_color) {
+    const indiceImagen = producto.value?.imagenes.findIndex((imagen) => imagen.id_color === variante.id_color) ?? -1;
+    if (indiceImagen >= 0) indiceGaleria.value = indiceImagen;
+  }
 }
 
 function irProducto(id: number): void {

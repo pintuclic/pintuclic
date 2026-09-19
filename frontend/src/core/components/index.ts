@@ -42,6 +42,7 @@ export { default as Card } from './data-display/Card.vue';
 export { default as Table } from './data-display/Table.vue';
 export { default as Badge } from './data-display/Badge.vue';
 export { default as Avatar } from './data-display/Avatar.vue';
+export { default as MuestraColor } from './data-display/MuestraColor.vue';
 
 // 7. Layouts globales compartidos
 export { default as FooterPrincipal } from '../layouts/FooterPrincipal.vue';

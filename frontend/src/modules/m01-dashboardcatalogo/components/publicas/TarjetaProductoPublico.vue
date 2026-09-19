@@ -9,12 +9,13 @@
       :class="modo === 'lista' ? 'aspect-square sm:aspect-auto sm:min-h-48' : 'aspect-square'"
     >
       <!-- Badge de Descuento Rojo (-15%) -->
-      <span
+      <Badge
         v-if="descuentoTexto"
-        class="absolute left-2.5 top-2.5 rounded-md bg-[#D62828] px-2 py-0.5 text-[11px] font-bold text-white shadow-sm"
+        estado="descuento"
+        class="absolute left-2.5 top-2.5 z-10 shadow-sm"
       >
         {{ descuentoTexto }}
-      </span>
+      </Badge>
 
       <img
         v-if="imagenVisible"
@@ -25,11 +26,10 @@
         @error="imagenConError = true"
       />
       <PackageOpen v-else :size="54" class="text-neutral-light" aria-hidden="true" />
-      <span
-        v-if="muestraColor"
-        class="absolute bottom-2 right-2 h-7 w-7 rounded-full border-2 border-neutral-white shadow-md"
-        :style="{ backgroundColor: muestraColor }"
-        aria-hidden="true"
+      <MuestraColor
+        v-if="muestraColorEfectiva"
+        :hex="muestraColorEfectiva"
+        class="absolute bottom-2.5 right-2.5 z-10 transition-transform duration-200 group-hover:scale-110"
       />
     </div>
 
@@ -46,7 +46,7 @@
       <!-- Fila de Precios -->
       <div class="mt-2.5 flex items-baseline gap-2 whitespace-nowrap">
         <span class="font-title text-base sm:text-[17px] font-bold text-neutral-black whitespace-nowrap">
-          {{ precioMinimo === null ? 'Consultar precio' : formatearPrecio(precioMinimo) + ' COP' }}
+          {{ precioMinimo === null ? 'Consultar precio' : formatearPrecioConSufijo(precioMinimo) }}
         </span>
         <span 
           v-if="precioAnterior" 
@@ -81,6 +81,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { PackageOpen, ShoppingCart } from 'lucide-vue-next';
+import { Badge, MuestraColor } from '@/core/components';
+import { formatearPrecio, formatearPrecioConSufijo } from '@/core/utils/moneda';
 import type { ProductoDestacadoPublico } from '../../interfaces/catalogo-publico.interface';
 import { obtenerImagenPublicaRespaldo } from '../../assets/imagenes-catalogo';
 
@@ -101,6 +103,15 @@ const imagenVisible = computed(() => {
   const principal = imagenes.find((imagen) => imagen.es_principal) ?? imagenes[0];
   if (principal?.contenido_url && !imagenConError.value) return principal.contenido_url;
   return obtenerImagenPublicaRespaldo(props.producto.id_producto);
+});
+
+const muestraColorEfectiva = computed(() => {
+  if (props.muestraColor) return props.muestraColor;
+  if (props.producto.clase_color !== 'sin_color') {
+    const primeraConMuestra = props.producto.detalle?.variantes.find((v) => v.muestra_hex);
+    if (primeraConMuestra?.muestra_hex) return primeraConMuestra.muestra_hex;
+  }
+  return null;
 });
 
 const precioMinimo = computed(() => {
@@ -128,10 +139,4 @@ const descripcionClaseColor = computed(() => {
   if (props.producto.clase_color === 'colores_fijos') return 'Consulta los colores y presentaciones disponibles.';
   return 'Producto de calidad para completar tu proyecto.';
 });
-
-function formatearPrecio(precio: number): string {
-  return `$${new Intl.NumberFormat('es-CO', {
-    maximumFractionDigits: 0,
-  }).format(precio)}`;
-}
 </script>

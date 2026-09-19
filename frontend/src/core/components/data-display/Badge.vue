@@ -14,7 +14,7 @@
 import { computed } from 'vue';
 
 const props = defineProps<{
-  estado?: string | 'activo' | 'inactivo' | 'bloqueado' | 'pendiente' | 'success' | 'warning' | 'error' | 'info';
+  estado?: string | 'activo' | 'inactivo' | 'bloqueado' | 'pendiente' | 'success' | 'warning' | 'error' | 'info' | 'descuento' | 'destacado';
   label?: string;
   table?: boolean;
 }>();
@@ -39,6 +39,12 @@ const estadoClasses = computed(() => {
   }
   if (est === 'pendiente' || est === 'warning') {
     return 'bg-yellow-50 text-yellow-800 ring-yellow-600/20';
+  }
+  if (est === 'descuento') {
+    return 'bg-red-600 text-white font-bold ring-red-700/30 shadow-sm';
+  }
+  if (est === 'destacado') {
+    return 'bg-highlight text-corporate font-bold ring-amber-500/30';
   }
   
   // Default (Info / Corporate)

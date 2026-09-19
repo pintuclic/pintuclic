@@ -100,7 +100,14 @@
       <section v-if="productosRecomendados.length" class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <h2 class="font-title text-xl font-bold text-corporate">Pinturas disponibles en este tono</h2>
         <div class="mt-5 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          <TarjetaProductoPublico v-for="producto in productosRecomendados" :key="producto.id_producto" :producto="producto" @ver="verProducto" @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')" />
+          <TarjetaProductoPublico
+            v-for="producto in productosRecomendados"
+            :key="producto.id_producto"
+            :producto="producto"
+            :muestra-color="colorSeleccionado?.muestra_hex"
+            @ver="verProducto"
+            @agregar="mostrarMensaje('Agregar al carrito requiere la integración con M07.')"
+          />
         </div>
       </section>
 
@@ -187,7 +194,11 @@ function mostrarMensaje(texto: string): void {
 }
 
 function verProducto(idProducto: number): void {
-  void router.push({ name: 'DetalleProductoPublico', params: { productoId: idProducto } });
+  void router.push({
+    name: 'DetalleProductoPublico',
+    params: { productoId: idProducto },
+    query: colorSeleccionado.value?.id_color ? { color: colorSeleccionado.value.id_color } : undefined,
+  });
 }
 
 function seleccionarSubcategoria(idSubcategoria: number): void {
