@@ -4,6 +4,14 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.35.7] - 2026-09-20
+### Módulo: M01 Catálogo / Vistas Públicas (Frontend)
+- **Alcance:** Simulador de cinco ambientes en el detalle de pinturas, conectado al color de la variante, con alternancia a la galería del envase y ficha más compacta.
+- **Hitos:** PNG RGBA de 1024 × 1024 aislados en M01, baño actualizado, muestras del color comercial y visor limitado a 384 px de alto.
+- **Calidad:** TypeScript de la aplicación y ESLint de todo src aprobados sin errores ni advertencias. Build completo y validación visual pendientes; entrega parcial del detalle.
+- **Walkthrough:** [Simulador de ambientes y ficha compacta](./walkthroughs/M01/walkthrough_v3.35.7_M01_ficha_compacta_ambientes_completos_frontend.md).
+
+---
 ## [v3.35.2] - 2026-09-19
 ### Módulo: M01 Catálogo de Productos / Vistas Públicas & Core (Frontend)
 - **Avance preliminar en Detalle de Producto (`VistaDetalleProductoPublico`):** ⚠️ *Nota de alcance: La vista de detalle de producto NO está finalizada; representa un avance técnico preliminar en desarrollo.* Se implementó la restricción condicional de la calculadora de pintura (`esPintura`) para que solo aplique a pinturas y no a herramientas/taladros, se deduplicaron las muestras cromáticas por `id_color` limitándolas a 6 con botón de apertura `+N más` hacia la carta completa, y se sincronizó el color inicial mediante query parameter (`?color=...`).

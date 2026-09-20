@@ -1,6 +1,6 @@
 <template>
   <div class="bg-neutral-lightest text-neutral-dark font-sans">
-    <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <main class="mx-auto max-w-6xl px-4 py-5 sm:px-6">
       <button
         type="button"
         class="inline-flex items-center gap-2 rounded-button border border-action px-3 py-2 text-xs font-semibold text-action transition-colors hover:bg-subaction"
@@ -32,22 +32,65 @@
           <span class="text-neutral-dark">{{ producto.nombre }}</span>
         </nav>
 
-        <section class="mt-5 grid gap-8 rounded-card border border-neutral-light bg-neutral-white p-4 shadow-sm sm:p-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <section class="mt-4 grid items-start gap-6 rounded-card border border-neutral-light bg-neutral-white p-4 shadow-sm sm:p-5 lg:grid-cols-2">
           <div>
-            <div class="grid aspect-[4/3] place-items-center overflow-hidden rounded-card bg-neutral-lightest p-5">
-              <img :src="imagenActiva" :alt="producto.nombre" class="h-full w-full object-contain" />
+            <!-- Selector de Modo de Vista (solo para pinturas) -->
+            <div v-if="esPintura" class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-neutral-light pb-3">
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer"
+                  :class="modoVista === 'ambientes'
+                    ? 'bg-corporate text-white shadow-sm'
+                    : 'bg-neutral-lightest text-neutral-dark hover:bg-neutral-light hover:text-corporate'"
+                  @click="modoVista = 'ambientes'"
+                >
+                  <Palette :size="14" />
+                  <span>Simular en Ambientes</span>
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer"
+                  :class="modoVista === 'envase'
+                    ? 'bg-corporate text-white shadow-sm'
+                    : 'bg-neutral-lightest text-neutral-dark hover:bg-neutral-light hover:text-corporate'"
+                  @click="modoVista = 'envase'"
+                >
+                  <PackageOpen :size="14" />
+                  <span>Ver Envase</span>
+                </button>
+              </div>
+
+              <span v-if="modoVista === 'ambientes'" class="flex items-center gap-1 text-[11px] font-medium text-action">
+                <Sparkles :size="13" /> 5 ambientes interactivos
+              </span>
             </div>
-            <div class="mt-3 flex gap-3">
-              <button
-                v-for="(imagen, indice) in galeria"
-                :key="imagen"
-                type="button"
-                class="h-16 w-20 overflow-hidden rounded-button border bg-neutral-lightest p-1 transition-all hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-                :class="indiceGaleria === indice ? 'border-action' : 'border-neutral-light'"
-                @click="indiceGaleria = indice"
-              >
-                <img :src="imagen" alt="" class="h-full w-full object-contain" />
-              </button>
+
+            <!-- Vista 1: Visualizador de Ambientes Interactivos con Cambio de Color -->
+            <VisualizadorAmbientesPublico
+              v-if="esPintura && modoVista === 'ambientes'"
+              :color-hex="varianteSeleccionada?.muestra_hex"
+              :color-nombre="varianteSeleccionada?.color"
+              :color-codigo="varianteSeleccionada?.codigo_color"
+            />
+
+            <!-- Vista 2: Galería Estándar de Envase / Producto -->
+            <div v-else>
+              <div class="grid aspect-[4/3] place-items-center overflow-hidden rounded-card bg-neutral-lightest p-5">
+                <img :src="imagenActiva" :alt="producto.nombre" class="h-full w-full object-contain" />
+              </div>
+              <div class="mt-3 flex gap-3">
+                <button
+                  v-for="(imagen, indice) in galeria"
+                  :key="imagen"
+                  type="button"
+                  class="h-16 w-20 overflow-hidden rounded-button border bg-neutral-lightest p-1 transition-all hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action cursor-pointer"
+                  :class="indiceGaleria === indice ? 'border-action' : 'border-neutral-light'"
+                  @click="indiceGaleria = indice"
+                >
+                  <img :src="imagen" alt="" class="h-full w-full object-contain" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -83,16 +126,16 @@
               </div>
               <div class="mt-2 flex flex-wrap items-center gap-3">
                 <button
-                  v-for="(variante, indice) in colores"
+                  v-for="variante in colores"
                   :key="variante.id_color ?? variante.id_variante"
                   type="button"
-                  class="grid h-11 w-11 place-items-center rounded-full border-2 bg-neutral-white transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+                  class="grid h-11 w-11 place-items-center rounded-full border-2 bg-neutral-white transition-all hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action cursor-pointer"
                   :class="varianteSeleccionada?.id_color === variante.id_color ? 'border-action ring-2 ring-subaction' : 'border-neutral-light'"
                   :aria-label="`Seleccionar color ${variante.color}`"
                   :title="variante.color ?? ''"
                   @click="seleccionarColor(variante.id_color ?? variante.id_variante)"
                 >
-                  <span class="h-7 w-7 rounded-full shadow-sm" :class="claseMuestra(indice)" />
+                  <MuestraColor :hex="variante.muestra_hex" :nombre="variante.color" tamano="md" />
                 </button>
 
                 <button
@@ -231,11 +274,13 @@
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ArrowLeft, Calculator, ChevronDown, CircleAlert, MapPin, Palette, ShoppingCart, X } from 'lucide-vue-next';
+import { ArrowLeft, Calculator, ChevronDown, CircleAlert, MapPin, PackageOpen, Palette, ShoppingCart, Sparkles, X } from 'lucide-vue-next';
+import { MuestraColor } from '@/core/components';
 import { GALERIA_PRODUCTO_DEMO, obtenerImagenPublicaRespaldo } from '../assets/imagenes-catalogo';
 import CalculadoraPinturaPublica from '../components/publicas/CalculadoraPinturaPublica.vue';
 import CartaColoresProductoPublica from '../components/publicas/CartaColoresProductoPublica.vue';
 import MenuCategoriasPublico from '../components/publicas/MenuCategoriasPublico.vue';
+import VisualizadorAmbientesPublico from '../components/publicas/VisualizadorAmbientesPublico.vue';
 import { useDetalleProductoPublico } from '../composables/useDetalleProductoPublico';
 import { formatearCOP } from '@/core/utils/moneda';
 
@@ -275,6 +320,7 @@ const descripcionAbierta = ref(true);
 const mensaje = ref<string | null>(null);
 const cantidad = ref(1);
 const indiceGaleria = ref(0);
+const modoVista = ref<'ambientes' | 'envase'>('ambientes');
 
 const esPintura = computed(() => {
   if (!producto.value) return false;
@@ -335,10 +381,6 @@ const precioActual = computed(() =>
     ? formatearCOP(varianteSeleccionada.value.precio_vigente)
     : 'Consultar precio'
 );
-
-function claseMuestra(indice: number): string {
-  return ['bg-highlight', 'bg-action', 'bg-corporate', 'bg-conversion', 'bg-neutral-light'][indice % 5] ?? 'bg-neutral-light';
-}
 
 function mostrarMensaje(texto: string): void {
   mensaje.value = texto;
