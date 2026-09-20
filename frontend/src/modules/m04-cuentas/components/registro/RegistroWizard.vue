@@ -26,7 +26,7 @@ import { Modal } from '@/core/components';
 import PasoDatos from './PasoDatos.vue';
 import PasoVerificacion from './PasoVerificacion.vue';
 import PasoListo from './PasoListo.vue';
-import type { TipoCuentaRegistro } from '../interfaces/registro.interface';
+import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
 
 /**
  * Contenedor del flujo de registro de 3 pasos (Datos → Verificación → Listo).

@@ -153,11 +153,11 @@
 import { ref, watch, nextTick } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
-import { useCuentas } from '../composables/useCuentas';
-import { loginSchema, validarContrasenaConConfirmacion } from '../dtos';
+import { useCuentas } from '@/modules/m04-cuentas/composables/useCuentas';
+import { loginSchema, validarContrasenaConConfirmacion } from '@/modules/m04-cuentas/dtos';
 import { Mail as MailIcon, Lock as LockIcon, ShieldCheck } from 'lucide-vue-next';
 import { Modal, Input, Button } from '@/core/components';
-import EncabezadoModal from './EncabezadoModal.vue';
+import EncabezadoModal from '../comunes/EncabezadoModal.vue';
 
 const props = defineProps<{
   modelValue: boolean;

@@ -196,19 +196,19 @@ import { ref, computed, watch, nextTick } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Mail as MailIcon, Lock as LockIcon, Phone as PhoneIcon, ShieldCheck } from 'lucide-vue-next';
-import EncabezadoModal from './EncabezadoModal.vue';
+import EncabezadoModal from '../comunes/EncabezadoModal.vue';
 import { PasosProgreso, Input, Button, Checkbox } from '@/core/components';
 import type {
   TipoCuentaRegistro,
   RegistroNaturalPayload,
   RegistroEmpresaPayload,
-} from '../interfaces/registro.interface';
-import { useCuentas } from '../composables/useCuentas';
+} from '@/modules/m04-cuentas/interfaces/registro.interface';
+import { useCuentas } from '@/modules/m04-cuentas/composables/useCuentas';
 import {
   registroNaturalSchema,
   registroEmpresaSchema,
   validarContrasenaConConfirmacion,
-} from '../dtos';
+} from '@/modules/m04-cuentas/dtos';
 
 const emit = defineEmits<{
   irALogin: [];

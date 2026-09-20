@@ -190,7 +190,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue';
 import { Button } from '@/core/components';
-import type { UsuarioSeguro } from '../interfaces/registro.interface';
+import type { UsuarioSeguro } from '@/modules/m04-cuentas/interfaces/registro.interface';
 import {
   User as UserIcon,
   CreditCard as CreditCardIcon,

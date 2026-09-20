@@ -34,8 +34,8 @@ import { ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Mail as MailIcon, AlertCircle as AlertCircleIcon } from 'lucide-vue-next';
-import { CuentasService } from '../services/cuentas.service';
-import { solicitarRecuperacionSchema } from '../dtos';
+import { CuentasService } from '@/modules/m04-cuentas/services/cuentas.service';
+import { solicitarRecuperacionSchema } from '@/modules/m04-cuentas/dtos';
 import Button from '@/core/components/buttons/Button.vue';
 import Input from '@/core/components/forms/Input.vue';
 

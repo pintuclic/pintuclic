@@ -50,7 +50,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Modal, PasosProgreso } from '@/core/components';
-import EncabezadoModal from './EncabezadoModal.vue';
+import EncabezadoModal from '../comunes/EncabezadoModal.vue';
 import PasoRecuperarCorreo from './PasoRecuperarCorreo.vue';
 import PasoRecuperarOTP from './PasoRecuperarOTP.vue';
 import PasoRecuperarNuevaPass from './PasoRecuperarNuevaPass.vue';

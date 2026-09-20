@@ -35,8 +35,8 @@ import { ref } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Lock as LockIcon, AlertCircle as AlertCircleIcon } from 'lucide-vue-next';
-import { CuentasService } from '../services/cuentas.service';
-import { confirmarRecuperacionSchema } from '../dtos';
+import { CuentasService } from '@/modules/m04-cuentas/services/cuentas.service';
+import { confirmarRecuperacionSchema } from '@/modules/m04-cuentas/dtos';
 import Button from '@/core/components/buttons/Button.vue';
 import Input from '@/core/components/forms/Input.vue';
 

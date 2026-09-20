@@ -77,11 +77,11 @@ import { ref, computed } from 'vue';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import { usePerfil } from '@/modules/m04-cuentas/composables/usePerfil';
 import { Modal } from '@/core/components';
-import PerfilSidebarNav from '@/modules/m04-cuentas/components/PerfilSidebarNav.vue';
-import PerfilDatosForm from '@/modules/m04-cuentas/components/PerfilDatosForm.vue';
-import ModalConfirmarPassword from '@/modules/m04-cuentas/components/ModalConfirmarPassword.vue';
-import PasoVerificacion from '@/modules/m04-cuentas/components/PasoVerificacion.vue';
-import ModalAscensoEmpresa from '@/modules/m04-cuentas/components/ModalAscensoEmpresa.vue';
+import PerfilSidebarNav from '@/modules/m04-cuentas/components/perfil/PerfilSidebarNav.vue';
+import PerfilDatosForm from '@/modules/m04-cuentas/components/perfil/PerfilDatosForm.vue';
+import ModalConfirmarPassword from '@/modules/m04-cuentas/components/perfil/ModalConfirmarPassword.vue';
+import PasoVerificacion from '@/modules/m04-cuentas/components/registro/PasoVerificacion.vue';
+import ModalAscensoEmpresa from '@/modules/m04-cuentas/components/empresas/ModalAscensoEmpresa.vue';
 
 interface DatosFormulario {
   nombre: string;

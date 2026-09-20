@@ -56,9 +56,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
-import EncabezadoModal from './EncabezadoModal.vue';
+import EncabezadoModal from '../comunes/EncabezadoModal.vue';
 import { Button, PasosProgreso } from '@/core/components';
-import { useCuentas } from '../composables/useCuentas';
+import { useCuentas } from '@/modules/m04-cuentas/composables/useCuentas';
 
 const props = defineProps<{
   correo: string;

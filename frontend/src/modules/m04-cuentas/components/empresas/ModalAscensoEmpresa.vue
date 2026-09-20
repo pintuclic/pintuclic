@@ -66,7 +66,7 @@ import Input from '@/core/components/forms/Input.vue';
 import Button from '@/core/components/buttons/Button.vue';
 import { CuentasService } from '@/modules/m04-cuentas/services/cuentas.service';
 
-import { ascensoEmpresaSchema } from '../dtos';
+import { ascensoEmpresaSchema } from '@/modules/m04-cuentas/dtos';
 
 const props = defineProps<{
   modelValue: boolean;
