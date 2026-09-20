@@ -1,16 +1,22 @@
 <template>
   <div class="bg-neutral-lightest min-h-screen font-sans pb-12">
     <!-- Header visual de la vista -->
-    <div class="relative bg-white h-32 md:h-40 overflow-hidden mx-4 md:mx-8 mt-6 rounded-2xl shadow-sm border border-neutral-light flex justify-between">
-      <div class="relative h-full flex flex-col justify-center px-8 md:px-12 z-10 w-full md:w-1/2 bg-gradient-to-r from-blue-50/90 via-blue-50/90 to-transparent">
-        <h1 class="text-3xl font-black text-corporate mb-2">Mi Perfil</h1>
-        <p class="text-neutral-medium text-sm max-w-md">
+    <div
+      class="relative h-32 md:h-40 overflow-hidden mx-4 md:mx-8 mt-6 rounded-2xl shadow-sm border border-[#D5E6F5] flex justify-between"
+      style="background: linear-gradient(135deg, #E6F1FB 0%, #E2EFFA 50%, #DFEEFA 100%);"
+    >
+      <div class="relative h-full flex flex-col justify-center px-8 md:px-12 z-10 w-full md:w-1/2">
+        <h1 class="text-2xl md:text-3xl font-title font-bold text-corporate mb-1.5">Mi Perfil</h1>
+        <p class="text-neutral-medium text-sm font-sans font-normal max-w-md">
           Administra tu información personal y consulta el estado de tus pedidos.
         </p>
       </div>
-      <div class="absolute inset-0 md:relative md:inset-auto md:w-1/2 h-full">
-        <img src="@/assets/banner_perfil.png" alt="Fondo perfil" class="absolute inset-0 w-full h-full object-cover md:object-contain md:object-right" />
-        <div class="absolute inset-0 bg-gradient-to-r from-blue-50/90 md:from-transparent to-transparent md:bg-none"></div>
+      <div class="absolute inset-0 md:relative md:inset-auto md:w-1/2 h-full flex justify-end pointer-events-none">
+        <img
+          src="@/assets/banner_perfil.png"
+          alt="Fondo perfil"
+          class="h-full w-auto object-contain object-right [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_30%)] [mask-image:linear-gradient(to_right,transparent_0%,black_30%)]"
+        />
       </div>
     </div>
 

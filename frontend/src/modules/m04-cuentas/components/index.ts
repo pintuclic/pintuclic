@@ -3,15 +3,20 @@
  * Organizados por subdominios funcionales según principios SOLID.
  */
 
-// Autenticación
+// Autenticación e Integración Social
 export { default as ModalLogin } from './auth/ModalLogin.vue';
+export { default as BotonGoogleAuth } from './auth/BotonGoogleAuth.vue';
+export { default as PantallaVincularGoogle } from './auth/PantallaVincularGoogle.vue';
+export { default as PantallaCompletarPasswordGoogle } from './auth/PantallaCompletarPasswordGoogle.vue';
 
 // Elementos comunes
 export { default as EncabezadoModal } from './comunes/EncabezadoModal.vue';
 
-// Flujo de Registro (Wizard multi-paso)
+// Flujo de Registro (Wizard multi-paso y formularios)
 export { default as RegistroWizard } from './registro/RegistroWizard.vue';
 export { default as PasoDatos } from './registro/PasoDatos.vue';
+export { default as FormRegistroNatural } from './registro/FormRegistroNatural.vue';
+export { default as FormRegistroEmpresa } from './registro/FormRegistroEmpresa.vue';
 export { default as PasoVerificacion } from './registro/PasoVerificacion.vue';
 export { default as PasoListo } from './registro/PasoListo.vue';
 

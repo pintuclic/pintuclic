@@ -1,11 +1,11 @@
 <template>
   <Modal :modelValue="modelValue" @update:modelValue="cerrarModal" maxWidth="md" accent>
     <EncabezadoModal />
-    
+
     <!-- 1. VISTA ESTÁNDAR: INICIO DE SESIÓN -->
     <div v-if="vistaActual === 'login'">
       <div class="text-center mb-8">
-        <h2 class="text-2xl font-bold text-corporate mb-2">Iniciar sesión</h2>
+        <h2 class="text-2xl font-title font-semibold text-corporate mb-2">Iniciar sesión</h2>
         <p class="text-neutral-medium text-sm">Ingresa a tu cuenta para ver tus pedidos y ofertas</p>
       </div>
 
@@ -17,7 +17,7 @@
           placeholder="ejemplo@correo.com"
           :icon="MailIcon"
         />
-        
+
         <div class="flex flex-col gap-1.5">
           <Input
             name="contrasena"
@@ -27,13 +27,20 @@
             :icon="LockIcon"
           />
           <div class="flex justify-end mt-1">
-            <button type="button" class="text-sm font-semibold text-action hover:underline cursor-pointer" @click="$emit('goToRecover')">
+            <button
+              type="button"
+              class="text-sm font-semibold text-action hover:underline cursor-pointer"
+              @click="$emit('goToRecover')"
+            >
               ¿Olvidaste tu contraseña?
             </button>
           </div>
         </div>
 
-        <div v-if="errorMensaje" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
+        <div
+          v-if="errorMensaje"
+          class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md"
+        >
           {{ errorMensaje }}
         </div>
 
@@ -53,16 +60,14 @@
         </div>
 
         <div class="mt-5">
-          <div v-show="googleBotonMontado" ref="googleBtnRef" class="w-full flex justify-center"></div>
-          <Button v-show="!googleBotonMontado" variant="google" size="full" :disabled="cargando" @click="loginWithGoogle">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
-            Iniciar sesión con Google
-          </Button>
+          <BotonGoogleAuth
+            ref="botonGoogleRef"
+            text="signin_with"
+            label="Iniciar sesión con Google"
+            :disabled="cargando"
+            @success="procesarRespuestaGoogle"
+            @error="(msg) => (errorMensaje = msg)"
+          />
         </div>
       </div>
 
@@ -74,78 +79,24 @@
       </div>
     </div>
 
-    <!-- 2. VISTA HU-CUE-02: SUGERENCIA DE VINCULACIÓN CON CUENTA EXISTENTE -->
-    <div v-else-if="vistaActual === 'vincular_google'" class="flex flex-col gap-5">
-      <div class="text-center">
-        <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-subaction flex items-center justify-center text-corporate">
-          <ShieldCheck class="w-6 h-6" />
-        </div>
-        <h2 class="text-xl font-bold text-corporate mb-2">Vincular cuenta con Google</h2>
-        <p class="text-neutral-medium text-sm">
-          Ya existe una cuenta en Pintuclic registrada con el correo:
-        </p>
-        <p class="font-semibold text-corporate mt-1 text-base">
-          {{ datosVinculacion.correo }}
-        </p>
-      </div>
-
-      <div class="p-3.5 bg-neutral-lightest border border-neutral-light rounded-lg text-sm text-neutral-dark">
-        ¿Deseas vincular tu acceso de Google a tu cuenta actual? Podrás iniciar sesión indistintamente con tu contraseña o con Google.
-      </div>
-
-      <div v-if="errorMensaje" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
-        {{ errorMensaje }}
-      </div>
-
-      <div class="flex flex-col gap-3 mt-2">
-        <Button variant="corporate" size="full" :disabled="cargando" @click="confirmarVinculacion">
-          {{ cargando ? 'Vinculando...' : 'Sí, vincular cuenta' }}
-        </Button>
-        <Button variant="outline" size="full" :disabled="cargando" @click="cancelarVinculacion">
-          Cancelar
-        </Button>
-      </div>
-    </div>
+    <!-- 2. VISTA HU-CUE-02: VINCULACIÓN CON CUENTA EXISTENTE -->
+    <PantallaVincularGoogle
+      v-else-if="vistaActual === 'vincular_google'"
+      :correo="datosVinculacion.correo"
+      :cargando="cargando"
+      :error-mensaje="errorMensaje"
+      @confirmar="confirmarVinculacion"
+      @cancelar="cancelarVinculacion"
+    />
 
     <!-- 3. VISTA HU-CUE-02: CREAR CONTRASEÑA PROPIA TRAS REGISTRO CON GOOGLE -->
-    <div v-else-if="vistaActual === 'completar_password'" class="flex flex-col gap-5">
-      <div class="text-center">
-        <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-subaction flex items-center justify-center text-corporate">
-          <LockIcon class="w-6 h-6" />
-        </div>
-        <h2 class="text-xl font-bold text-corporate mb-2">Crea tu contraseña</h2>
-        <p class="text-neutral-medium text-sm">
-          Tu cuenta ha sido creada mediante Google. Por favor, digita una contraseña propia para contar con ambas vías de acceso.
-        </p>
-      </div>
-
-      <form @submit.prevent="guardarPasswordInicial" class="flex flex-col gap-4">
-        <div class="flex flex-col gap-1">
-          <Input
-            v-model="nuevaPassword"
-            type="password"
-            label="Contraseña propia"
-            placeholder="Mín. 8 caracteres, 1 mayúscula, 1 minúscula y 1 número"
-          />
-          <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
-        </div>
-
-        <Input
-          v-model="confirmarPassword"
-          type="password"
-          label="Confirmar contraseña"
-          placeholder="Repite la contraseña"
-        />
-
-        <div v-if="errorPasswordLocal || errorMensaje" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
-          {{ errorPasswordLocal || errorMensaje }}
-        </div>
-
-        <Button type="submit" variant="corporate" size="full" class="mt-2" :disabled="cargando">
-          {{ cargando ? 'Guardando...' : 'Completar y acceder' }}
-        </Button>
-      </form>
-    </div>
+    <PantallaCompletarPasswordGoogle
+      v-else-if="vistaActual === 'completar_password'"
+      :correo="datosPassword.correo"
+      :cargando="cargando"
+      :error-mensaje="errorMensaje"
+      @guardar="guardarPasswordInicial"
+    />
   </Modal>
 </template>
 
@@ -154,10 +105,13 @@ import { ref, watch, nextTick } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { useCuentas } from '@/modules/m04-cuentas/composables/useCuentas';
-import { loginSchema, validarContrasenaConConfirmacion } from '@/modules/m04-cuentas/dtos';
-import { Mail as MailIcon, Lock as LockIcon, ShieldCheck } from 'lucide-vue-next';
+import { loginSchema } from '@/modules/m04-cuentas/dtos';
+import { Mail as MailIcon, Lock as LockIcon } from 'lucide-vue-next';
 import { Modal, Input, Button } from '@/core/components';
 import EncabezadoModal from '../comunes/EncabezadoModal.vue';
+import BotonGoogleAuth from './BotonGoogleAuth.vue';
+import PantallaVincularGoogle from './PantallaVincularGoogle.vue';
+import PantallaCompletarPasswordGoogle from './PantallaCompletarPasswordGoogle.vue';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -172,14 +126,11 @@ const emit = defineEmits<{
 
 type VistaModal = 'login' | 'vincular_google' | 'completar_password';
 const vistaActual = ref<VistaModal>('login');
-
-const googleBtnRef = ref<HTMLElement | null>(null);
-const googleBotonMontado = ref(false);
+const botonGoogleRef = ref<InstanceType<typeof BotonGoogleAuth> | null>(null);
 
 const datosVinculacion = ref<{
   correo: string;
   googleId: string;
-  nombre?: string;
 }>({
   correo: '',
   googleId: '',
@@ -190,10 +141,6 @@ const datosPassword = ref<{
 }>({
   correo: '',
 });
-
-const nuevaPassword = ref('');
-const confirmarPassword = ref('');
-const errorPasswordLocal = ref<string | null>(null);
 
 const {
   cargando,
@@ -210,17 +157,11 @@ function cerrarModal(valor: boolean): void {
   if (!valor) {
     vistaActual.value = 'login';
     limpiarErrores();
-    errorPasswordLocal.value = null;
-    nuevaPassword.value = '';
-    confirmarPassword.value = '';
   }
 }
 
 const schema = toTypedSchema(loginSchema);
-
-const { handleSubmit } = useForm({
-  validationSchema: schema,
-});
+const { handleSubmit } = useForm({ validationSchema: schema });
 
 const onSubmit = handleSubmit(async (values) => {
   limpiarErrores();
@@ -231,7 +172,7 @@ const onSubmit = handleSubmit(async (values) => {
   }
 });
 
-async function procesarRespuestaGoogle(idToken: string) {
+async function procesarRespuestaGoogle(idToken: string): Promise<void> {
   const respuesta = await loginConGoogle(idToken);
   if (!respuesta) return;
 
@@ -242,7 +183,6 @@ async function procesarRespuestaGoogle(idToken: string) {
     datosVinculacion.value = {
       correo: respuesta.correo,
       googleId: respuesta.datos_google?.googleId ?? '',
-      nombre: respuesta.datos_google?.nombre,
     };
     vistaActual.value = 'vincular_google';
   } else if (respuesta.tipo === 'requiere_password_inicial') {
@@ -253,131 +193,43 @@ async function procesarRespuestaGoogle(idToken: string) {
   }
 }
 
-function inicializarBotonGoogle() {
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-  if (!clientId || clientId.trim() === '') return;
-
-  const intentarMontar = () => {
-    if (typeof window !== 'undefined' && window.google?.accounts?.id && googleBtnRef.value) {
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: (response) => {
-          if (response.credential) {
-            void procesarRespuestaGoogle(response.credential);
-          }
-        },
-      });
-
-      googleBtnRef.value.innerHTML = '';
-      window.google.accounts.id.renderButton(googleBtnRef.value, {
-        type: 'standard',
-        shape: 'rectangular',
-        theme: 'outline',
-        text: 'signin_with',
-        size: 'large',
-        logo_alignment: 'left',
-        width: googleBtnRef.value.clientWidth > 200 ? googleBtnRef.value.clientWidth : 340,
-      });
-
-      googleBotonMontado.value = true;
-      return true;
-    }
-    return false;
-  };
-
-  if (!intentarMontar()) {
-    let reintentos = 0;
-    const intervalo = setInterval(() => {
-      reintentos++;
-      if (intentarMontar() || reintentos > 15) {
-        clearInterval(intervalo);
-      }
-    }, 200);
-  }
-}
-
 watch(
   () => props.modelValue,
   (abierto) => {
     if (abierto) {
       void nextTick(() => {
-        inicializarBotonGoogle();
+        botonGoogleRef.value?.montar();
       });
     }
   },
   { immediate: true }
 );
 
-/**
- * HU-CUE-02: Inicio y registro mediante Google Identity Services (Click directo o fallback)
- */
-const loginWithGoogle = () => {
-  limpiarErrores();
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
-  if (!clientId || clientId.trim() === '') {
-    errorMensaje.value = 'El servicio de Google Sign-In no está configurado en este entorno.';
-    return;
-  }
-
-  if (typeof window !== 'undefined' && window.google?.accounts?.id) {
-    window.google.accounts.id.initialize({
-      client_id: clientId,
-      callback: (response) => {
-        if (response.credential) {
-          void procesarRespuestaGoogle(response.credential);
-        }
-      },
-    });
-
-    window.google.accounts.id.prompt();
-  } else {
-    errorMensaje.value = 'Cargando servicios de Google... Por favor, reintenta en un momento.';
-  }
-};
-
-/**
- * Confirmación explícita de vinculación de cuenta existente (HU-CUE-02 / CA-CUE-02-02)
- */
-const confirmarVinculacion = async () => {
+async function confirmarVinculacion(): Promise<void> {
   const resultado = await confirmarVinculacionGoogle(
     datosVinculacion.value.correo,
     datosVinculacion.value.googleId,
     true
   );
-
   if (resultado) {
     emit('success');
     cerrarModal(false);
   }
-};
+}
 
-const cancelarVinculacion = () => {
+function cancelarVinculacion(): void {
   vistaActual.value = 'login';
   limpiarErrores();
-};
+}
 
-/**
- * Registro de contraseña inicial tras alta con Google (HU-CUE-02 / RF-CUE-02-04)
- */
-const guardarPasswordInicial = async () => {
-  errorPasswordLocal.value = validarContrasenaConConfirmacion(
-    nuevaPassword.value,
-    confirmarPassword.value
-  );
-
-  if (errorPasswordLocal.value) {
-    return;
-  }
-
+async function guardarPasswordInicial(password: string): Promise<void> {
   const resultado = await completarPasswordGoogle(
     datosPassword.value.correo,
-    nuevaPassword.value
+    password
   );
-
   if (resultado) {
     emit('success');
     cerrarModal(false);
   }
-};
+}
 </script>

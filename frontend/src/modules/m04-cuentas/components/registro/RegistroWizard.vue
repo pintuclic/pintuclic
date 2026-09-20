@@ -1,5 +1,10 @@
 <template>
-  <Modal :modelValue="modelValue" @update:modelValue="$emit('update:modelValue', $event)" maxWidth="lg" accent>
+  <Modal
+    :modelValue="modelValue"
+    @update:modelValue="$emit('update:modelValue', $event)"
+    maxWidth="lg"
+    accent
+  >
     <PasoDatos
       v-if="paso === 1"
       @ir-a-login="$emit('irALogin')"
@@ -12,21 +17,17 @@
       @verificado="paso = 3"
       @volver="paso = 1"
     />
-    <PasoListo
-      v-else
-      :tipo-cuenta="tipoCuenta"
-      @finalizar="onFinalizar"
-    />
+    <PasoListo v-else :tipo-cuenta="tipoCuenta" @finalizar="onFinalizar" />
   </Modal>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Modal } from '@/core/components';
-import PasoDatos from './PasoDatos.vue';
-import PasoVerificacion from './PasoVerificacion.vue';
-import PasoListo from './PasoListo.vue';
-import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
+import { ref } from "vue";
+import { Modal } from "@/core/components";
+import PasoDatos from "./PasoDatos.vue";
+import PasoVerificacion from "./PasoVerificacion.vue";
+import PasoListo from "./PasoListo.vue";
+import type { TipoCuentaRegistro } from "@/modules/m04-cuentas/interfaces/registro.interface";
 
 /**
  * Contenedor del flujo de registro de 3 pasos (Datos → Verificación → Listo).
@@ -51,14 +52,14 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: boolean];
+  "update:modelValue": [value: boolean];
   irALogin: [];
   exito: [tipo: TipoCuentaRegistro];
 }>();
 
 const paso = ref<1 | 2 | 3>(1);
-const tipoCuenta = ref<TipoCuentaRegistro>('natural');
-const correoRegistro = ref('');
+const tipoCuenta = ref<TipoCuentaRegistro>("natural");
+const correoRegistro = ref("");
 
 function onDatosListos(tipo: TipoCuentaRegistro, correo: string) {
   tipoCuenta.value = tipo;
@@ -67,14 +68,14 @@ function onDatosListos(tipo: TipoCuentaRegistro, correo: string) {
 }
 
 function onRegistroGoogleExitoso(correo: string) {
-  tipoCuenta.value = 'natural';
+  tipoCuenta.value = "natural";
   correoRegistro.value = correo;
   paso.value = 3;
 }
 
 function onFinalizar() {
-  emit('update:modelValue', false);
-  emit('exito', tipoCuenta.value);
+  emit("update:modelValue", false);
+  emit("exito", tipoCuenta.value);
   // Se reinicia para la próxima vez que se abra el wizard desde cero.
   paso.value = 1;
 }

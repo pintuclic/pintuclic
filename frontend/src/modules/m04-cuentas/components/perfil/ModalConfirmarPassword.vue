@@ -8,7 +8,7 @@
   >
     <div class="p-6">
       <div class="mb-4">
-        <h3 class="text-lg font-bold text-corporate mb-2">Autorización de Seguridad</h3>
+        <h3 class="text-lg font-title font-semibold text-corporate mb-2">Autorización de Seguridad</h3>
         <p class="text-sm text-neutral-medium">
           Por seguridad de su cuenta, ingrese su contraseña actual para autorizar el cambio de correo electrónico a <strong>{{ nuevoCorreo }}</strong>. Enviaremos un código de confirmación a su correo actual vigente.
         </p>

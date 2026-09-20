@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white rounded-2xl shadow-sm border border-neutral-light p-6 md:p-8">
     <div class="flex flex-col md:flex-row justify-between items-center md:items-start gap-4 mb-8">
-      <h2 class="text-xl md:text-2xl font-bold text-corporate text-center md:text-left">
+      <h2 class="text-xl md:text-2xl font-title font-semibold text-corporate text-center md:text-left">
         Información personal
       </h2>
 

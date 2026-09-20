@@ -24,6 +24,7 @@ export default tseslint.config(
         sessionStorage: 'readonly',
         Event: 'readonly',
         KeyboardEvent: 'readonly',
+        TouchEvent: 'readonly',
         HTMLInputElement: 'readonly',
         HTMLSelectElement: 'readonly',
         HTMLDialogElement: 'readonly',
