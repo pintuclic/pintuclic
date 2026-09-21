@@ -47,9 +47,6 @@ export function useCategoriaFormulario() {
     // acciones
     inicializar: store.inicializar,
     actualizar: store.actualizar,
-    alternarLista: store.alternarLista,
-    agregarEtiqueta: store.agregarEtiqueta,
-    quitarEtiqueta: store.quitarEtiqueta,
     guardarBorrador: store.guardarBorrador,
     guardarCambios: store.guardarCambios,
     reiniciar: store.reiniciar,

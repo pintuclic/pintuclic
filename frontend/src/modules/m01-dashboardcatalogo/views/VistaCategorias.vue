@@ -1,10 +1,10 @@
 <template>
   <div class="space-y-6 p-6 lg:p-8">
-    <EncabezadoSeccion
-      titulo="Categorías y subcategorías"
-      descripcion="Organiza y gestiona la estructura de tu catálogo. Crea, edita y ordena categorías para una mejor experiencia de navegación."
+    <PageHeader
+      title="Categorías y subcategorías"
+      description="Organiza y gestiona la estructura de tu catálogo. Crea, edita y ordena categorías para una mejor experiencia de navegación."
     >
-      <template #acciones>
+      <template #default>
         <Button variant="outline" :icon="Plus" @click="irA('/admin/catalogo/categorias/subcategorias/nueva')">
           Nueva subcategoría
         </Button>
@@ -12,7 +12,7 @@
           Nueva categoría
         </Button>
       </template>
-    </EncabezadoSeccion>
+    </PageHeader>
 
     <p
       v-if="error"
@@ -41,6 +41,7 @@
       />
 
       <PanelDetalleCategoria
+        v-model:seleccion="seleccion"
         :detalle="detalle"
         :elementos="elementosFiltrados"
         :filtros="filtrosElementos"
@@ -55,6 +56,14 @@
         @filtrar-tipo="onFiltrarTipo"
       />
     </div>
+
+    <BarraAccionesMasivas
+      :cantidad="seleccion.length"
+      @limpiar="seleccion = []"
+      @activar-lote="seleccion = []"
+      @desactivar-lote="seleccion = []"
+      @exportar-lote="seleccion = []"
+    />
   </div>
 
   <!-- ADMIN 12 - Modal desactivar categoría/subcategoría -->
@@ -168,10 +177,10 @@
 import { onUnmounted, ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, AlertTriangle, Info, X, Layers, Eye, Power } from 'lucide-vue-next';
-import { Button } from '@/core/components';
-import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
+import { Button, PageHeader } from '@/core/components';
 import ArbolCategorias from '../components/ArbolCategorias.vue';
 import PanelDetalleCategoria from '../components/PanelDetalleCategoria.vue';
+import BarraAccionesMasivas from '../components/BarraAccionesMasivas.vue';
 import { useCategorias } from '../composables/useCategorias';
 import { useProductosStore } from '../store/productos.store';
 import type { TipoNodoCategoria } from '../interfaces';
@@ -202,6 +211,14 @@ const {
 } = useCategorias();
 
 const entiendoImpacto = ref(false);
+
+/**
+ * Selección de la tabla de elementos para las acciones masivas. Ninguna de
+ * ellas tiene endpoint por lotes en la API real (y categorías tampoco tiene
+ * ruta de exportación propia): todas se limitan a limpiar la selección en vez
+ * de simular un resultado inexistente.
+ */
+const seleccion = ref<string[]>([]);
 
 function onFiltrarTipo(valor: string): void {
   const tipo = valor === '' ? null : (valor as TipoNodoCategoria);

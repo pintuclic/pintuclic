@@ -38,8 +38,9 @@ graph LR
   descuentos dinámicos (eso es M13 y M06).
 - **HU cubiertas (UI):** HU-CAT-01 (categorías/subcategorías), HU-CAT-02
   (productos), HU-CAT-03 (variantes), HU-CAT-04 (marcas), HU-CAT-05 (colores),
-  HU-CAT-09 (estado y ciclo de vida). El reporte «Búsquedas sin resultado»
-  (ADMIN 08) se alimenta de **M02**.
+  HU-CAT-09 (estado y ciclo de vida) y HU-CAT-11 (líneas comerciales). El
+  reporte «Búsquedas sin resultado» **se retiró** de este módulo: se alimentaría
+  de M02 y no existe endpoint ni tabla que lo respalde.
 - **Transversales:** cada ruta declara en `meta.permiso` el permiso de M17
   (`GESTION_CATALOGO` o `GESTION_PRODUCTOS`), que **el backend revalida siempre**
   (Seguridad por Defecto, M20). El frontend nunca es la autoridad de acceso.
@@ -58,7 +59,7 @@ graph LR
 | Regla de Oro de color (solo tokens) | Únicamente `corporate / action / conversion / highlight / subaction / neutral-*`. Sin hex arbitrarios ni colores Tailwind ajenos. Los hex de **color de producto** son dato de catálogo (derivado de CIELAB) y van por `:style` — único uso permitido de estilo inline dinámico. |
 | Utility-first, sin CSS por módulo | Sin hojas `.css` ni `<style>` con clases propias. |
 | Estados interactivos y responsivo mobile-first | `hover:` / `focus-visible:` en todo clickeable; rejillas `grid-cols-1 … xl:grid-cols-*`. |
-| Aislamiento del módulo | **No toca** `tailwind.config.ts`, `style.css`, `main.ts`, `App.vue` ni otros módulos. Lee de `@/core` (`api/axios`, tokens) y, desde la migración a `DisenoAdmin.vue` (§5), también **aporta** el chrome del panel a `core/layouts/` + `core/composables/` y registra sus rutas en `core/routes/index.ts` — es el único punto donde M01 escribe fuera de sí mismo, documentado aquí para no romper el aislamiento del resto. |
+| Aislamiento del módulo | **No toca** `tailwind.config.ts`, `style.css`, `main.ts` ni `App.vue`. Consume `@/core` (`api/axios`, tokens, biblioteca de componentes) y registra sus rutas en `core/routes/index.ts` — ese registro es el único punto donde M01 escribe fuera de sí mismo. El chrome del panel **no lo aporta M01**: es `core/layouts/LayoutAdmin.vue`, propiedad del equipo Core. |
 | Validar antes de delegar en el servicio | Formularios (`producto-formulario`, `marca`) validan con su DTO antes de llamar al service. |
 
 ---
@@ -100,7 +101,7 @@ Instancia del diagrama de `infraestructura.md` §2 para este módulo:
 ```mermaid
 graph TD
     A[Empleado interactúa en el panel] --> S[vue-router · match de ruta]
-    S -->|monta| B[VistaXxx.vue, envuelta en DisenoAdmin]
+    S -->|monta como hija de LayoutAdmin| B[VistaXxx.vue]
     B -->|acción / filtro| C(useXxx · composable)
     C --> P[useXxx Store · Pinia]
     P -->|petición tipada| D[XxxService · axios del módulo]
@@ -135,34 +136,28 @@ graph TD
 
 ## 5. Modelo de navegación
 
-`vue-router` **ya está montado** (`core/routes/index.ts` agrega
-`...dashboardCatalogoRoutes`, una URL real por vista bajo `/admin/catalogo`).
-Cada vista se envuelve a sí misma en `<DisenoAdmin>` — el layout compartido del
-panel (barra lateral agrupada/colapsable + barra superior), en
-`core/layouts/DisenoAdmin.vue` — con el mismo patrón que `DisenoTienda.vue`:
-un `<slot>`, no `<router-view>` anidado.
+`core/routes/index.ts` monta `core/layouts/LayoutAdmin.vue` en `/admin` y cuelga
+`...dashboardCatalogoRoutes` como **rutas hijas**. El layout contiene el
+`<router-view />`, así que barra lateral y barra superior son permanentes: no se
+remontan al navegar, conservan el scroll y el estado del acordeón, y Vue Router
+ilumina solo el enlace activo.
 
 ```mermaid
 graph LR
-    R[vue-router] -->|match /admin/catalogo/...| V[VistaXxx.vue]
-    V -->|se envuelve en| DA[DisenoAdmin]
-    DA --> SL[BarraLateralAdmin · core/layouts]
-    DA --> ST[BarraSuperiorAdmin · core/layouts]
+    R[vue-router] -->|match /admin| LA[LayoutAdmin · core/layouts]
+    LA -->|router-view| V[VistaXxx.vue · ruta hija]
     V -->|irA path, botones internos| N[usePanelNavegacion]
     N -->|router.push| R
 ```
 
-- `BarraLateralAdmin` / `BarraSuperiorAdmin` viven en `core/layouts/` (no en el
-  módulo): son el chrome compartido de todo el panel admin, no solo de M01.
-  `core/layouts/DisenoAdmin.vue` los monta una sola vez y deriva la miga de la
-  barra superior de `route.meta.titulo`.
-- `usePanelNavegacion().irA()` sigue existiendo y se usa para la navegación
-  **interna** de cada vista (botones «Cancelar», «Editar», filas de tabla…):
-  delega en `router.push()`. El modo "shell / `inject`" (previo a montar
-  `vue-router`) ya se retiró del composable — no quedaba código muerto que
-  mantener.
-- `dashboard-catalogo.routes.ts` declara `meta.titulo` en cada ruta,
-  justo lo que `DisenoAdmin` lee para la miga.
+- Las vistas son **contenedores limpios** (`<div class="space-y-6 p-6 lg:p-8">`):
+  no envuelven nada de chrome. Queda prohibido reintroducir un layout local.
+- `usePanelNavegacion().irA()` cubre la navegación **interna** de cada vista
+  (botones «Cancelar», «Editar», filas de tabla…) delegando en `router.push()`.
+- `dashboard-catalogo.routes.ts` declara `meta.titulo` y `meta.permiso` en cada
+  ruta; el permiso lo revalida siempre el backend.
+- `/admin/catalogo` es un `redirect` a `/admin/catalogo/productos`: el dashboard
+  de catálogo se retiró por depender por completo de métricas simuladas.
 
 ---
 
@@ -195,12 +190,13 @@ Endpoints previstos (aún no implementados por el backend de M01):
 - Crea y modifica casi todo bajo `src/modules/m01-dashboardcatalogo/`.
 - **Lee** de `@/core`: `api/axios` (instancia + interceptor JWT), `theme/colors.ts`
   (tokens, vía Tailwind), `assets/logo.png`.
-- **Excepción documentada (desde la migración a `DisenoAdmin.vue`, §5, decisión #5):**
-  `core/layouts/DisenoAdmin.vue`, `core/layouts/BarraLateralAdmin.vue`,
-  `core/layouts/BarraSuperiorAdmin.vue`, `core/composables/useMenuMovil.ts` y la
-  entrada de `dashboardCatalogoRoutes` en `core/routes/index.ts` son mantenidos
-  por M01 porque hoy es el único módulo admin con vistas reales; otros módulos
-  (M02/M04/M17) los reusan sin duplicarlos cuando tengan sus propias vistas.
+- **Excepción documentada:** la entrada de `dashboardCatalogoRoutes` en
+  `core/routes/index.ts` — es el punto donde el módulo se enchufa al árbol de
+  rutas. `core/layouts/LayoutAdmin.vue` lo mantiene el equipo Core, no M01.
+- **Contribuciones al Core** (acordadas, no unilaterales): se extendió
+  `core/components/data-display/Table.vue` con selección opcional de filas y
+  `core/components/forms/Input.vue` con soporte de campos numéricos, en vez de
+  recrear componentes locales equivalentes.
 
 **Lo que NO toca:** `tailwind.config.ts`, `style.css`, `main.ts`, `App.vue`, ni
 archivos de otros módulos (`m02-productos`, `m04-cuentas`, `m17-permisos`).
@@ -225,7 +221,9 @@ archivos de otros módulos (`m02-productos`, `m04-cuentas`, `m17-permisos`).
 | 2 | Stores Pinia por vista, no uno global de catálogo | Caché de sesión acotada; menos acoplamiento; se libera al salir. | Store monolítico `useCatalogoStore`. |
 | 3 | Mock con *fallback* en el store, no un flag de entorno | La UI es revisable hoy sin backend y sin build especial; la transición es automática. | `if (import.meta.env.DEV)` disperso. |
 | 4 | `usePanelNavegacion` + shell, sin montar `vue-router` (superado: `vue-router` ya está montado, ver §5) | No tocar `main.ts`/`App.vue` → push del módulo 100 % aislado; las vistas no cambian al migrar. | Editar `App.vue` (rompe aislamiento). |
-| 5 | `BarraLateralAdmin` / `BarraSuperiorAdmin` movidos a `core/layouts/`, con `DisenoAdmin.vue` como layout compartido | Dejaron de ser exclusivas de M01: el sidebar ahora agrupa "Gestión Administrativa" (M04/M17, enlaces aún sin conectar) y "Gestión de Catálogo". Se necesitaba un único punto para que otros módulos admin lo reusen. | Mantenerlas duplicadas por módulo. |
+| 5 | El chrome del panel es `core/layouts/LayoutAdmin.vue` y las vistas son rutas **hijas** | Sidebar y topbar no se remontan al navegar: se conserva scroll y estado del acordeón, y el enlace activo lo resuelve el router. | Que cada vista se envuelva en su propio layout (duplica chrome y lo hace parpadear). |
+| 8 | Extender los componentes del Core en vez de crear equivalentes locales | Una sola implementación de tabla/input para todo el sistema; el resto de módulos hereda las mejoras. | `TablaBase.vue`, `PaginacionTabla.vue`, `BadgeEstadoProducto.vue` y demás duplicados locales (ya eliminados). |
+| 9 | Campos fantasma eliminados de los DTOs | El formulario prometía datos (peso, SEO, márgenes, notas) que el backend rechaza o ignora. Alinear el modelo evita errores silenciosos. | Mantener campos que ninguna tabla persiste. |
 | 6 | Envoltorio `ApiResponse<T>` local en `interfaces/api.interface.ts` | Igual contrato que el resto del sistema sin depender de un tipo global inexistente. | Importar de un `core/interfaces` que no existe. |
 | 7 | Inline de componentes triviales (badges, barra de acciones, tarjetas de un solo uso) | Coste/beneficio: menos archivos, misma legibilidad. Se extrae solo con reuso o lógica. | 33+ componentes, varios de 1 `<span>`. |
 
@@ -235,7 +233,7 @@ archivos de otros módulos (`m02-productos`, `m04-cuentas`, `m17-permisos`).
 
 1. **Endpoints de M01** en el backend (`/api/catalogo/*`) → retirar mocks.
 2. ~~`vue-router` montado + `dashboardCatalogoRoutes` registradas + `irA` → `router.push()`~~ — **hecho**.
-3. ~~`core/layouts/DisenoAdmin.vue` compartido → mover `BarraLateralAdmin` / `BarraSuperiorAdmin`~~ — **hecho**.
+3. ~~Chrome del panel compartido en `core/layouts/LayoutAdmin.vue`, vistas como rutas hijas~~ — **hecho**.
 4. **Acciones masivas reales** (`BarraAccionesMasivas.vue`, ya conectada en Productos/Variantes/Líneas/Categorías): "Activar"/"Desactivar" en lote son no-op hasta que exista el endpoint de baja lógica en lote; "Exportar" reutiliza rutas de exportación individuales que tampoco existen aún en el backend.
 5. **Sesión (M04):** nombre y permisos reales desde el store de autenticación (hoy `Carlos Álvarez` fijo).
 6. **Subida de imágenes/logos (HU-CAT-07):** endpoint propio; los componentes actuales son marcadores.

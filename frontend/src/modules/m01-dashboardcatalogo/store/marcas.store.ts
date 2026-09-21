@@ -2,11 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import axios from 'axios';
 import { MarcasService } from '../services/marcas.service';
-import {
-  consultarMarcasDemo,
-  RESUMEN_MARCAS_DEMO,
-  LINEAS_MARCA_DEMO,
-} from '../services/marcas.mock';
+import { consultarMarcasDemo, RESUMEN_MARCAS_DEMO } from '../services/marcas.mock';
 import {
   FILTROS_MARCAS_INICIALES,
   hayFiltrosMarcasActivos as calcularFiltrosActivos,
@@ -32,10 +28,8 @@ function formularioDesde(marca: MarcaListado): MarcaFormulario {
   return {
     id: marca.id,
     nombre: marca.nombre,
-    descripcionCorta: marca.descripcionCorta,
     logoUrl: marca.logoUrl,
     estado: marca.estado,
-    lineas: LINEAS_MARCA_DEMO[marca.id] ?? [],
   };
 }
 
@@ -113,10 +107,8 @@ export const useMarcasStore = defineStore('m01-marcas', () => {
     marcaEnEdicion.value = {
       id: null,
       nombre: '',
-      descripcionCorta: '',
       logoUrl: null,
       estado: 'activa',
-      lineas: [],
     };
     erroresEdicion.value = {};
   }

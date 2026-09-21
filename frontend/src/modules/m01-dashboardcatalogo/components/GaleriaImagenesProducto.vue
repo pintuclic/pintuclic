@@ -54,7 +54,7 @@
         <span class="text-xs font-medium">Añadir más</span>
         <input
           type="file"
-          accept="image/*"
+          :accept="FORMATOS_IMAGEN_PERMITIDOS.join(',')"
           multiple
           class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           @click="guardarPosicionScroll"
@@ -63,22 +63,45 @@
       </label>
     </div>
 
-    <p v-if="error" class="mt-2 flex items-center gap-1 text-xs font-medium text-neutral-black" role="alert">
+    <p
+      v-if="errorMostrado"
+      class="mt-2 flex items-center gap-1 text-xs font-medium text-neutral-black"
+      role="alert"
+    >
       <AlertCircle class="h-3.5 w-3.5 shrink-0 text-highlight" aria-hidden="true" />
-      {{ error }}
+      {{ errorMostrado }}
     </p>
     <p v-else class="mt-2 text-xs text-neutral-medium">
       Sube imágenes en alta resolución (mín. 1200×1200 px) con fondo blanco o en uso real.
+      Formatos {{ FORMATOS_LEGIBLES }}, hasta {{ PESO_MAXIMO_MB }}MB cada una.
       La primera es la principal (HU-CAT-07).
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
+/**
+ * ==============================================================================
+ * M01 - GALERÍA DE IMÁGENES DEL PRODUCTO (HU-CAT-07)
+ *
+ * El backend recibe cada imagen como data URL base64 (`CrearImagenDto.imagen`),
+ * limitada a jpeg/png/webp y 5MB. Aquí se aplican esas mismas reglas antes de
+ * leer el archivo, para avisar al usuario en el navegador en vez de esperar a
+ * que el servidor rechace la subida. Las reglas viven en `dtos/` (directiva 12).
+ *
+ * NOTA: en esta rama no hay endpoint de subida cableado; la galería solo
+ * mantiene el modelo local (`url`, `orden`, `esPrincipal`).
+ * ==============================================================================
+ */
+import { computed, ref } from 'vue';
 import { Image as ImageIcon, Plus, X, AlertCircle } from 'lucide-vue-next';
+import {
+  FORMATOS_IMAGEN_PERMITIDOS,
+  PESO_MAXIMO_IMAGEN_BYTES,
+} from '../dtos/producto-formulario.dto';
 import type { ImagenProducto } from '../interfaces';
 
-defineProps<{
+const props = defineProps<{
   imagenes: ImagenProducto[];
   error?: string;
 }>();
@@ -88,6 +111,24 @@ const emit = defineEmits<{
   (e: 'quitar', id: string): void;
   (e: 'principal', id: string): void;
 }>();
+
+const PESO_MAXIMO_MB = PESO_MAXIMO_IMAGEN_BYTES / (1024 * 1024);
+const FORMATOS_LEGIBLES = FORMATOS_IMAGEN_PERMITIDOS.map((f) => f.replace('image/', '')).join(', ');
+
+/** Error propio del selector (formato / peso); el del formulario tiene prioridad. */
+const errorArchivo = ref<string | null>(null);
+const errorMostrado = computed(() => props.error || errorArchivo.value || '');
+
+/** Mismas reglas que `CrearImagenDto`, aplicadas sobre el archivo elegido. */
+function motivoRechazo(archivo: { name: string; type: string; size: number }): string | null {
+  if (!(FORMATOS_IMAGEN_PERMITIDOS as readonly string[]).includes(archivo.type)) {
+    return `«${archivo.name}»: solo se admiten imágenes ${FORMATOS_LEGIBLES}.`;
+  }
+  if (archivo.size > PESO_MAXIMO_IMAGEN_BYTES) {
+    return `«${archivo.name}»: la imagen no puede pesar más de ${PESO_MAXIMO_MB}MB.`;
+  }
+  return null;
+}
 
 /**
  * Posición de scroll justo antes de abrir el selector de archivos del sistema.
@@ -113,8 +154,14 @@ function restaurarPosicionScroll(): void {
 function onSeleccionarArchivos(evento: Event): void {
   const input = evento.target as HTMLInputElement;
   const archivos = input.files ? Array.from(input.files) : [];
+  errorArchivo.value = null;
 
   for (const archivo of archivos) {
+    const rechazo = motivoRechazo(archivo);
+    if (rechazo) {
+      errorArchivo.value = rechazo;
+      continue;
+    }
     const lector = new FileReader();
     lector.onload = () => {
       emit('agregar', { nombre: archivo.name, url: String(lector.result ?? '') });

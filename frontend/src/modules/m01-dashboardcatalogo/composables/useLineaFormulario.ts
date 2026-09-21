@@ -16,7 +16,6 @@ export function useLineaFormulario() {
   const {
     formulario,
     opciones,
-    impacto,
     modo,
     cargando,
     guardando,
@@ -32,7 +31,6 @@ export function useLineaFormulario() {
   return {
     formulario,
     opciones,
-    impacto,
     modo,
     cargando,
     guardando,
@@ -45,9 +43,6 @@ export function useLineaFormulario() {
     puedePublicar,
     inicializar: store.inicializar,
     actualizar: store.actualizar,
-    alternarProducto: store.alternarProducto,
-    agregarEtiqueta: store.agregarEtiqueta,
-    quitarEtiqueta: store.quitarEtiqueta,
     guardarBorrador: store.guardarBorrador,
     guardarCambios: store.guardarCambios,
     reiniciar: store.reiniciar,

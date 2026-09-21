@@ -4,8 +4,12 @@
  * Ubicación: src/modules/m01-dashboardcatalogo/interfaces/producto-formulario.interface.ts
  *
  * Tipos de integración de la vista "ADMIN 03 - Productos · Crear / editar".
- * Cubren HU-CAT-02 (gestión de productos), HU-CAT-05 (clase de color),
- * HU-CAT-07 (imágenes) y HU-CAT-09 (estado y ciclo de vida).
+ * Sincronizado 1:1 con `CrearProductoDto` / `ActualizarProductoDto` del backend
+ * real (backend/src/modules/m01-catalogo/dtos/productos.dto.ts): nombre,
+ * id_marca, clase_color, id_subcategorias, id_linea, id_tipo_resina,
+ * descripcion, id_categoria_complementaria, patrocinado. `rendimiento` y
+ * `bases` son sub-recursos que se crean DESPUÉS del producto (no viven en este
+ * formulario). Cubre también HU-CAT-05 (clase de color) y HU-CAT-07 (imágenes).
  *
  * Permiso M17 requerido: «Gestión de productos», revalidado en el servidor.
  * Pureza estricta de compilación TypeScript: 0 bytes de runtime.
@@ -13,8 +17,16 @@
  */
 import type { ClaseColorProducto, OpcionSelect } from './productos.interface';
 
-/** Estado que el formulario puede fijar (el ciclo de vida completo vive en HU-CAT-09). */
-export type EstadoPublicacion = 'borrador' | 'publicado';
+/**
+ * Estado del producto en el formulario.
+ *
+ * El backend real maneja DOS ejes separados: publicación (`/publicar`,
+ * `/despublicar`) y activación (`/desactivar`, `/reactivar`). Este tipo los
+ * aplana en el estado efectivo que la UI muestra —el mismo juego de valores que
+ * `ProductoListado.estado`—: un producto desactivado queda `'inactivo'`, NO
+ * `'borrador'` (un borrador es un producto sin publicar, no uno dado de baja).
+ */
+export type EstadoPublicacion = 'borrador' | 'publicado' | 'inactivo';
 
 /** Modo de edición de la vista. */
 export type ModoFormulario = 'crear' | 'editar';
@@ -31,47 +43,32 @@ export interface ColorCatalogo {
   marcaId: string;
 }
 
-/** Imagen del producto (HU-CAT-07). La primera activa es la principal. */
+/**
+ * Imagen del producto (HU-CAT-07), alineada con `CrearImagenDto` del backend
+ * real: `{ imagen, id_variante?, id_color?, orden?, es_principal? }`.
+ *
+ * `url` transporta la imagen: una data URL base64 (jpeg/png/webp, ≤ 5MB — el
+ * backend no acepta multipart) para las recién cargadas, o la URL ya almacenada
+ * para las que vienen del servidor. La validación de formato y peso vive en
+ * `dtos/producto-formulario.dto.ts` (`validarImagenProducto`).
+ *
+ * NOTA: en esta rama no hay endpoint de subida cableado; el modelo y la
+ * validación se alinean, pero las imágenes no se envían todavía.
+ */
 export interface ImagenProducto {
   id: string;
+  /** Data URL base64 (jpeg/png/webp, ≤ 5MB) o URL almacenada (`imagen`). */
   url: string;
   nombre: string;
+  /** Posición en la galería (`orden`); 0 es la primera. */
+  orden: number;
+  /** `es_principal`. */
   esPrincipal: boolean;
 }
 
 /** Subcategoría dependiente de su categoría padre (RF-CAT-01-02). */
 export interface SubcategoriaOpcion extends OpcionSelect {
   categoriaId: string;
-}
-
-/**
- * Atributos técnicos del producto (maqueta "ADMIN 04 - Editar producto").
- * Todos opcionales: no bloquean la publicación, enriquecen la ficha.
- */
-export interface AtributosTecnicosProducto {
-  presentacionPrincipal: string;
-  rendimiento: string;
-  acabado: string;
-  usoRecomendado: string;
-  secadoAlTacto: string;
-  tiempoRepintado: string;
-}
-
-/** Base disponible para entonado (maqueta "ADMIN 04"). */
-export interface OpcionBaseProducto {
-  valor: string;
-  etiqueta: string;
-  descripcion: string;
-}
-
-/** Listas de opciones de los selectores de atributos técnicos. */
-export interface OpcionesAtributosTecnicos {
-  presentaciones: OpcionSelect[];
-  rendimientos: OpcionSelect[];
-  acabados: OpcionSelect[];
-  usos: OpcionSelect[];
-  secados: OpcionSelect[];
-  repintados: OpcionSelect[];
 }
 
 /** Línea comercial dependiente de su marca (RF-CAT-11-02). */
@@ -81,65 +78,49 @@ export interface LineaOpcion extends OpcionSelect {
 
 /** Catálogos que llenan los selectores del formulario. */
 export interface OpcionesFormularioProducto {
+  /** Usada para etiquetar la categoría complementaria (id_categoria_complementaria). */
   categorias: OpcionSelect[];
   subcategorias: SubcategoriaOpcion[];
-  tiposProducto: OpcionSelect[];
+  /** Tipo de resina (id_tipo_resina). */
+  tiposResina: OpcionSelect[];
   marcas: OpcionSelect[];
   lineas: LineaOpcion[];
   colores: ColorCatalogo[];
-  atributos: OpcionesAtributosTecnicos;
-  bases: OpcionBaseProducto[];
-  sistemasEntonado: OpcionSelect[];
 }
 
 /**
  * Modelo editable del producto. Se envía tal cual (salvo `imagenes`, que suben
- * por su propio endpoint) al crear o actualizar.
+ * por su propio endpoint) al crear o actualizar. Campo a campo, corresponde a
+ * `CrearProductoDto` del backend real.
  */
 export interface FormularioProducto {
-  // Información general
+  // Información general (nombre, descripcion)
   nombre: string;
   descripcion: string;
 
-  // Clasificación
-  categoriaId: string | null;
-  subcategoriaId: string | null;
-  tipoProductoId: string | null;
+  // Clasificación (id_subcategorias, id_categoria_complementaria)
+  subcategoriasIds: string[];
+  categoriaComplementariaId: string | null;
   estado: EstadoPublicacion;
 
-  // Marca y línea
+  // Marca y línea (id_marca, id_linea)
   marcaId: string | null;
-  /** Obligatoria en pinturas; opcional en productos sin color (RF-CAT-02-02). */
+  /** Obligatoria en pinturas entonables (RF-CAT-02-02). */
   lineaId: string | null;
+  /** Tipo de resina (id_tipo_resina), opcional. */
+  tipoResinaId: string | null;
 
-  // Clase de color (RF-CAT-02-03 / HU-CAT-05)
+  // Clase de color (clase_color / RF-CAT-02-03 / HU-CAT-05)
   claseColor: ClaseColorProducto;
   colorPrincipalId: string | null;
   codigoColor: string;
   coloresDisponiblesIds: string[];
 
-  // Atributos técnicos (maqueta "ADMIN 04")
-  atributos: AtributosTecnicosProducto;
-
-  // Bases y entonado (maqueta "ADMIN 04")
-  basesDisponibles: string[];
-  sistemaEntonado: string;
-
   // Imágenes (HU-CAT-07)
   imagenes: ImagenProducto[];
 
-  // Información comercial
-  precioVenta: number | null;
-  precioReferencia: number | null;
-  sku: string;
-  stockInicial: number | null;
-  destacado: boolean;
-  mostrarEnOfertas: boolean;
-  permitirOpiniones: boolean;
-  requiereEnvioEspecial: boolean;
-
-  // Descubrimiento
-  etiquetas: string[];
+  /** Visibilidad destacada del producto (patrocinado). */
+  patrocinado: boolean;
 }
 
 /** Clave estable de cada bloque del checklist de publicación. */
@@ -148,9 +129,7 @@ export type ClaveSeccionChecklist =
   | 'clasificacion'
   | 'marca_linea'
   | 'clase_color'
-  | 'imagenes'
-  | 'informacion_comercial'
-  | 'etiquetas';
+  | 'imagenes';
 
 export interface SeccionChecklist {
   clave: ClaveSeccionChecklist;

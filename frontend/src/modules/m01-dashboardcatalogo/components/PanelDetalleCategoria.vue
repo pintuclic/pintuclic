@@ -52,6 +52,8 @@
         :elementos="elementos"
         :filtros="filtros"
         :total="totalElementos"
+        :seleccion="seleccion"
+        @update:seleccion="(ids) => $emit('update:seleccion', ids)"
         @ordenar="(c) => $emit('ordenar', c)"
         @buscar="(t) => $emit('buscar', t)"
         @filtrar-tipo="(v) => $emit('filtrar-tipo', v)"
@@ -80,9 +82,12 @@ defineProps<{
   filtros: FiltrosElementosCategoria;
   totalElementos: number;
   cargando?: boolean;
+  /** Ids seleccionados en la tabla de elementos (`v-model:seleccion`). */
+  seleccion?: string[];
 }>();
 
 defineEmits<{
+  (e: 'update:seleccion', ids: string[]): void;
   (e: 'editar', id: string): void;
   (e: 'menu', id: string): void;
   (e: 'menu-elemento', id: string): void;

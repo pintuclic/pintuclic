@@ -49,23 +49,6 @@
           <span v-if="errores.nombre" class="text-xs font-medium text-neutral-black">{{ errores.nombre }}</span>
         </label>
 
-        <!-- Descripción -->
-        <label class="flex flex-col gap-1.5 text-sm">
-          <span class="flex items-baseline justify-between">
-            <span class="font-medium text-neutral-dark">Descripción corta <span class="text-action">*</span></span>
-            <span class="text-xs text-neutral-medium tabular-nums">{{ marca.descripcionCorta.length }}/120</span>
-          </span>
-          <textarea
-            :value="marca.descripcionCorta"
-            rows="3"
-            maxlength="120"
-            class="resize-y rounded-input border border-neutral-light bg-neutral-white px-3 py-2 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30"
-            :class="errores.descripcionCorta && 'border-highlight ring-2 ring-highlight/30'"
-            @input="$emit('cambiar', { descripcionCorta: ($event.target as HTMLTextAreaElement).value })"
-          />
-          <span v-if="errores.descripcionCorta" class="text-xs font-medium text-neutral-black">{{ errores.descripcionCorta }}</span>
-        </label>
-
         <!-- Estado -->
         <label class="flex flex-col gap-1.5 text-sm">
           <span class="font-medium text-neutral-dark">Estado</span>
@@ -78,38 +61,6 @@
             <option value="inactiva">Inactiva</option>
           </select>
         </label>
-
-        <!-- Líneas -->
-        <div class="text-sm">
-          <p class="mb-1.5 font-medium text-neutral-dark">
-            Líneas de productos <span class="text-neutral-medium">({{ marca.lineas.length }})</span>
-          </p>
-          <div class="flex flex-wrap gap-2">
-            <span
-              v-for="linea in marca.lineas"
-              :key="linea"
-              class="inline-flex items-center gap-1 rounded-button bg-subaction px-2 py-0.5 text-xs font-medium text-corporate"
-            >
-              {{ linea }}
-              <button
-                type="button"
-                class="grid h-4 w-4 place-items-center rounded-full hover:bg-action/20"
-                :aria-label="`Quitar ${linea}`"
-                @click="$emit('cambiar', { lineas: marca.lineas.filter((l) => l !== linea) })"
-              >
-                <X class="h-3 w-3" aria-hidden="true" />
-              </button>
-            </span>
-            <button
-              type="button"
-              class="inline-flex items-center gap-1 rounded-button border border-dashed border-neutral-light px-2 py-0.5 text-xs font-medium text-action hover:border-action"
-              @click="agregarLinea"
-            >
-              <Plus class="h-3 w-3" aria-hidden="true" />
-              Agregar línea
-            </button>
-          </div>
-        </div>
 
         <div class="flex gap-2 rounded-card bg-subaction p-3">
           <Info class="mt-0.5 h-4 w-4 shrink-0 text-corporate" aria-hidden="true" />
@@ -132,25 +83,19 @@
 </template>
 
 <script setup lang="ts">
-import { X, Upload, Plus, Info } from 'lucide-vue-next';
+import { X, Upload, Info } from 'lucide-vue-next';
 import { Button } from '@/core/components';
 import type { MarcaFormulario } from '../interfaces';
 
-const props = defineProps<{
+defineProps<{
   marca: MarcaFormulario;
   errores: Record<string, string>;
   guardando: boolean;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   (e: 'cerrar'): void;
   (e: 'cambiar', parcial: Partial<MarcaFormulario>): void;
   (e: 'guardar'): void;
 }>();
-
-/** Alta rápida de línea (sin backend, el nombre se pediría en un modal propio). */
-function agregarLinea(): void {
-  const nueva = `Nueva línea ${props.marca.lineas.length + 1}`;
-  emit('cambiar', { lineas: [...props.marca.lineas, nueva] });
-}
 </script>

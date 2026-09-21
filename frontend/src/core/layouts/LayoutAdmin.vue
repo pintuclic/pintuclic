@@ -130,10 +130,6 @@
               <DropletIcon class="w-4 h-4 shrink-0" />
               Colores
             </router-link>
-            <router-link to="/admin/catalogo/busquedas-sin-resultado" :class="claseLink('/admin/catalogo/busquedas-sin-resultado')">
-              <SearchIcon class="w-4 h-4 shrink-0" />
-              Búsquedas
-            </router-link>
           </div>
         </div>
 
@@ -217,7 +213,6 @@ import {
   Tag as TagIcon,
   Rows3 as Rows3Icon,
   Droplet as DropletIcon,
-  Search as SearchIcon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
   LogOut as LogOutIcon,

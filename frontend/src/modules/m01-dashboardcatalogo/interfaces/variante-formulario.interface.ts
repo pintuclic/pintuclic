@@ -4,11 +4,13 @@
  * Ubicación: src/modules/m01-dashboardcatalogo/interfaces/variante-formulario.interface.ts
  *
  * Tipos de las maquetas "ADMIN 07 - Crear variante" y "ADMIN 08 - Editar
- * variante". El precio y la existencia referencial viven SIEMPRE en la variante
- * física (RF-CAT-03-04). El modelo de variante depende del producto:
- *   - entonable  → producto + base + presentación
- *   - fijo       → producto + color + presentación
- *   - sin color  → producto + presentación
+ * variante". Sincronizado 1:1 con `CrearVarianteDto` / `ActualizarVarianteDto`
+ * del backend real (backend/src/modules/m01-catalogo/dtos/variantes.dto.ts):
+ * id_producto, id_presentacion, precio_vigente, existencia_referencial,
+ * id_color, id_base, codigo_proveedor. `id_presentacion`/`id_base` son
+ * referencias a catálogos propios (Presentacion / Base) sin UI de gestión en
+ * este módulo; se editan aquí como selectores alimentados por el mock de
+ * opciones del formulario.
  *
  * Permiso M17 requerido: «Gestión de productos», revalidado en el servidor.
  * Pureza estricta de compilación TypeScript: 0 bytes de runtime.
@@ -25,52 +27,38 @@ export type EstadoVarianteForm = 'borrador' | 'activo' | 'inactivo';
 /** Imagen específica de la variante (HU-CAT-07). La primera es la principal. */
 export interface ImagenVariante {
   id: string;
+  /** Data URL base64 (jpeg/png/webp, ≤ 5MB) o URL almacenada (`imagen`). */
   url: string;
   nombre: string;
+  /** Posición en la galería (`orden`); 0 es la primera. */
+  orden: number;
+  /** `es_principal`. */
   esPrincipal: boolean;
 }
 
 /**
  * Modelo editable de la variante. Se envía tal cual (salvo `imagenes`, que
- * suben por su propio endpoint) al crear o actualizar.
+ * suben por su propio endpoint) al crear o actualizar. Campo a campo,
+ * corresponde a `CrearVarianteDto` del backend real.
  */
 export interface FormularioVariante {
-  // Producto asociado
+  // Producto asociado (id_producto)
   productoId: string | null;
 
-  // Presentación / unidad / base
-  presentacion: string;
-  unidadMedida: string;
-  base: string;
+  // Presentación (id_presentacion): referencia al catálogo de Presentaciones.
+  presentacionId: string | null;
 
-  // Color asociado (solo colores fijos)
+  // Base (id_base) y color (id_color): referencias a catálogo, solo aplican
+  // según la clase de color del producto asociado.
+  baseId: string | null;
   colorId: string | null;
 
-  // Códigos e identificación
-  sku: string;
+  // Códigos e identificación (codigo_proveedor)
   codigoProveedor: string;
-  codigoBarras: string;
 
-  // Información comercial
-  precioVenta: number | null;
-  precioReferencia: number | null;
-  costoCompra: number | null;
-  /** Porcentaje de IVA: 0 | 5 | 19. */
-  impuestoIva: number;
-
-  // Inventario
-  stockInicial: number | null;
-  stockMinimo: number | null;
-  bodegaId: string | null;
-
-  // Dimensiones / peso (opcional)
-  pesoKg: number | null;
-  altoCm: number | null;
-  anchoCm: number | null;
-  profundidadCm: number | null;
-
-  // Notas logísticas (opcional)
-  notasLogisticas: string;
+  // Información comercial (precio_vigente, existencia_referencial)
+  precioVigente: number | null;
+  existenciaReferencial: number | null;
 
   // Imágenes (opcional)
   imagenes: ImagenVariante[];
@@ -91,26 +79,22 @@ export interface OpcionColorVariante {
 
 /** Producto al que se puede asociar la variante (incluye datos de contexto). */
 export interface OpcionProductoVariante extends OpcionSelect {
-  sku: string;
   marca: string;
   linea: string | null;
-  /** false en productos sin contenido líquido (herramientas, equipos): oculta "Presentación y unidad". */
+  /** false en productos sin contenido líquido (herramientas, equipos): oculta "Presentación". */
   requierePresentacion: boolean;
   /** false en productos sin base/color (herramientas, equipos): oculta "Base y color". */
   requiereColor: boolean;
-  /** false en productos sin dimensiones logísticas propias: oculta "Dimensiones / peso". */
-  requiereDimensiones: boolean;
 }
 
 /** Catálogos que llenan los selectores del formulario de variante. */
 export interface OpcionesFormularioVariante {
   productos: OpcionProductoVariante[];
+  /** Catálogo de Presentaciones (id_presentacion): sin UI de gestión en este módulo. */
   presentaciones: OpcionSelect[];
-  unidades: OpcionSelect[];
+  /** Catálogo de Bases (id_base): sin UI de gestión en este módulo. */
   bases: OpcionSelect[];
   colores: OpcionColorVariante[];
-  impuestos: OpcionSelect[];
-  bodegas: OpcionSelect[];
 }
 
 /** Bloque del checklist de publicación de la variante. */

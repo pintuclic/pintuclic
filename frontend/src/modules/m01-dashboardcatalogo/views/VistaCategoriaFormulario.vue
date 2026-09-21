@@ -30,9 +30,7 @@
     </p>
 
     <div v-if="cargando" class="grid gap-5 xl:grid-cols-3">
-      <div class="space-y-4 xl:col-span-2">
-        <div v-for="n in 3" :key="n" class="h-40 animate-pulse rounded-card bg-neutral-white" />
-      </div>
+      <div class="h-56 animate-pulse rounded-card bg-neutral-white xl:col-span-2" />
       <div class="h-72 animate-pulse rounded-card bg-neutral-white" />
     </div>
 
@@ -44,184 +42,13 @@
           descripcion="Datos básicos de la categoría."
           :icono="Info"
         >
-          <div class="grid gap-4 sm:grid-cols-2">
-            <CampoFormulario
-              :etiqueta="esSubcategoria ? 'Nombre de la subcategoría' : 'Nombre de la categoría'"
-              requerido
-              :error="erroresValidacion.nombre"
-            >
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.nombre"
-                  type="text"
-                  :class="[claseInput, erroresValidacion.nombre && claseError]"
-                  placeholder="Ej. Pinturas Interiores"
-                  @input="set({ nombre: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario
-              etiqueta="Código / Slug"
-              requerido
-              :error="erroresValidacion.slug"
-              ayuda="Se usará en la URL. Solo minúsculas, números y guiones."
-            >
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.slug"
-                  type="text"
-                  :class="[claseInput, erroresValidacion.slug && claseError]"
-                  placeholder="pinturas-interiores"
-                  @input="set({ slug: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
-          </div>
-          <CampoFormulario
-            etiqueta="Descripción"
-            requerido
-            :error="erroresValidacion.descripcion"
-            :contador="{ actual: formulario.descripcion.length, max: 1000 }"
-          >
-            <template #default="{ id }">
-              <textarea
-                :id="id"
-                :value="formulario.descripcion"
-                rows="4"
-                :class="[claseInput, 'resize-y', erroresValidacion.descripcion && claseError]"
-                placeholder="Describe qué agrupa esta categoría y para qué sirve."
-                @input="set({ descripcion: ($event.target as HTMLTextAreaElement).value })"
-              />
-            </template>
-          </CampoFormulario>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="Icono / imagen representativa"
-          descripcion="Sube un ícono o imagen para identificar la categoría."
-          :icono="ImageIcon"
-        >
-          <div class="flex items-center gap-4">
-            <div class="grid h-24 w-24 shrink-0 place-items-center rounded-card border border-neutral-light bg-neutral-lightest text-neutral-medium">
-              <img
-                v-if="formulario.iconoUrl"
-                :src="formulario.iconoUrl"
-                alt="Icono de la categoría"
-                class="h-full w-full rounded-card object-contain p-2"
-              />
-              <ImageIcon v-else class="h-6 w-6" aria-hidden="true" />
-            </div>
-            <div>
-              <Button variant="outline" size="sm" :icon="Upload">
-                Subir imagen
-              </Button>
-              <p class="mt-1.5 text-xs text-neutral-medium">
-                PNG, JPG o SVG. Máx. 2 MB. Recomendado 300 × 300 px.
-              </p>
-            </div>
-          </div>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="Filtros o atributos asociados"
-          descripcion="Se heredarán por los productos de esta categoría."
-          :icono="Filter"
-        >
-          <ChipsSeleccion
-            :opciones="opciones.filtros"
-            :seleccionados="formulario.filtros"
-            etiqueta-agregar="Agregar filtro"
-            @alternar="(v) => alternarLista('filtros', v)"
+          <Input
+            name="nombre"
+            :label="esSubcategoria ? 'Nombre de la subcategoría' : 'Nombre de la categoría'"
+            placeholder="Ej. Pinturas Interiores"
           />
         </TarjetaSeccionFormulario>
 
-        <TarjetaSeccionFormulario
-          titulo="Líneas o familias relacionadas"
-          descripcion="Se mostrarán como filtros y en la navegación."
-          :icono="Bookmark"
-        >
-          <ChipsSeleccion
-            :opciones="opciones.lineas"
-            :seleccionados="formulario.lineas"
-            etiqueta-agregar="Agregar línea"
-            @alternar="(v) => alternarLista('lineas', v)"
-          />
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="SEO y etiquetas"
-          descripcion="Mejora la visibilidad en buscadores (opcional)."
-          :icono="Search"
-        >
-          <div class="grid gap-4 sm:grid-cols-2">
-            <CampoFormulario
-              etiqueta="Título SEO"
-              :contador="{ actual: formulario.tituloSeo.length, max: 60 }"
-            >
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.tituloSeo"
-                  type="text"
-                  :class="claseInput"
-                  placeholder="Pinturas para Interiores | Pintu Clic"
-                  @input="set({ tituloSeo: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario
-              etiqueta="Meta descripción"
-              :contador="{ actual: formulario.metaDescripcion.length, max: 160 }"
-            >
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.metaDescripcion"
-                  type="text"
-                  :class="claseInput"
-                  placeholder="Resumen para buscadores."
-                  @input="set({ metaDescripcion: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
-          </div>
-          <CampoFormulario etiqueta="Etiquetas">
-            <EntradaEtiquetas
-              :etiquetas="formulario.etiquetas"
-              placeholder="Ej. interiores, hogar, paredes, decoración…"
-              @agregar="agregarEtiqueta"
-              @quitar="quitarEtiqueta"
-            />
-          </CampoFormulario>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="Notas adicionales"
-          descripcion="Notas internas o comentarios sobre esta categoría (opcional)."
-          :icono="FileText"
-        >
-          <CampoFormulario
-            etiqueta="Notas"
-            :contador="{ actual: formulario.notas.length, max: 500 }"
-          >
-            <template #default="{ id }">
-              <textarea
-                :id="id"
-                :value="formulario.notas"
-                rows="3"
-                :class="[claseInput, 'resize-y']"
-                placeholder="Ej. Revisar con marketing las imágenes para la campaña Q3."
-                @input="set({ notas: ($event.target as HTMLTextAreaElement).value })"
-              />
-            </template>
-          </CampoFormulario>
-        </TarjetaSeccionFormulario>
-      </div>
-
-      <!-- Columna lateral -->
-      <div class="space-y-5">
         <TarjetaSeccionFormulario
           titulo="Jerarquía"
           descripcion="Define el tipo de categoría y su ubicación."
@@ -278,22 +105,22 @@
                 </select>
               </template>
             </CampoFormulario>
-            <CampoFormulario etiqueta="Orden de visualización" ayuda="Orden dentro de su nivel.">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.ordenVisualizacion"
-                  type="number"
-                  min="0"
-                  step="1"
-                  :class="claseInput"
-                  @input="set({ ordenVisualizacion: Number(($event.target as HTMLInputElement).value) || 0 })"
-                />
-              </template>
-            </CampoFormulario>
+            <div class="flex flex-col gap-1.5">
+              <Input
+                name="ordenVisualizacion"
+                label="Orden de visualización"
+                type="number"
+                min="0"
+                step="1"
+              />
+              <span class="text-xs text-neutral-medium">Orden dentro de su nivel.</span>
+            </div>
           </div>
         </TarjetaSeccionFormulario>
+      </div>
 
+      <!-- Columna lateral -->
+      <div class="space-y-5">
         <!-- Vista previa en la jerarquía -->
         <section class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm">
           <header class="mb-3 flex items-center gap-2 text-sm font-semibold text-neutral-black">
@@ -356,12 +183,6 @@
                 {{ resumenImpacto.visibilidadPublica ? 'Pública' : 'Privada' }}
               </dd>
             </div>
-            <div class="flex items-center justify-between gap-3">
-              <dt class="text-neutral-medium">Herencia de filtros</dt>
-              <dd class="font-semibold text-neutral-black tabular-nums">
-                {{ formulario.filtros.length || resumenImpacto.herenciaFiltros }} filtros
-              </dd>
-            </div>
           </dl>
           <p class="mt-3 flex items-start gap-2 rounded-input bg-subaction/40 px-3 py-2 text-xs text-neutral-dark">
             <Info class="mt-0.5 h-3.5 w-3.5 shrink-0 text-action" aria-hidden="true" />
@@ -394,36 +215,28 @@
  * M01 - VISTA: CATEGORÍAS · CREAR / EDITAR  (maquetas "ADMIN 10" y "ADMIN 11")
  * Ubicación: src/modules/m01-dashboardcatalogo/views/VistaCategoriaFormulario.vue
  *
- * Alta y edición de categorías y subcategorías (HU-CAT-01): información general,
- * icono, filtros heredados, líneas relacionadas, SEO, jerarquía (tipo + padre +
- * estado + orden) y notas, con vista previa del árbol y resumen de impacto.
+ * Alta y edición de categorías y subcategorías (HU-CAT-01). Sincronizado 1:1
+ * con `CrearCategoriaDto` / `CrearSubcategoriaDto` del backend real: nombre,
+ * orden y (en subcategoría) categoría padre; el tipo de nodo (categoría vs.
+ * subcategoría) sigue siendo lógica real de UI/ruteo, consumida desde
+ * `dashboard-catalogo.routes.ts` (`categoriaId: 'nueva-categoria' |
+ * 'nueva-subcategoria'`). Con el contenido restante ya no se justifican las
+ * secciones de ícono, filtros, líneas, SEO ni notas: se retiraron.
  *
  * Permiso requerido: «Gestión del catálogo» (M17), revalidado en el servidor.
  * ==============================================================================
  */
-import { computed, onMounted } from 'vue';
-import {
-  ArrowLeft,
-  Save,
-  Info,
-  Filter,
-  Bookmark,
-  Search,
-  FileText,
-  Network,
-  Eye,
-  Folder,
-  BarChart3,
-  Upload,
-  Image as ImageIcon,
-} from 'lucide-vue-next';
+import { computed, onMounted, watch } from 'vue';
+import { useForm } from 'vee-validate';
+import { toTypedSchema } from '@vee-validate/zod';
+import { ArrowLeft, Save, Info, Network, Eye, Folder, BarChart3 } from 'lucide-vue-next';
 import { Button } from '@/core/components';
+import Input from '@/core/components/forms/Input.vue';
 import TarjetaSeccionFormulario from '../components/TarjetaSeccionFormulario.vue';
 import CampoFormulario from '../components/CampoFormulario.vue';
-import EntradaEtiquetas from '../components/EntradaEtiquetas.vue';
-import ChipsSeleccion from '../components/ChipsSeleccion.vue';
 import { useCategoriaFormulario } from '../composables/useCategoriaFormulario';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
+import { categoriaFormularioSchema } from '../dtos';
 import type { FormularioCategoria, TipoNodoCategoria } from '../interfaces';
 
 const props = defineProps<{
@@ -444,14 +257,10 @@ const {
   esSubcategoria,
   inicializar,
   actualizar,
-  alternarLista,
-  agregarEtiqueta,
-  quitarEtiqueta,
   guardarBorrador,
   guardarCambios,
   formatearNumero,
 } = useCategoriaFormulario();
-
 
 onMounted(() => {
   const id = props.categoriaId;
@@ -470,6 +279,35 @@ const titulo = computed(() => {
 const claseInput =
   'w-full rounded-input border border-neutral-light bg-neutral-white px-3 py-2 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30 disabled:bg-neutral-lightest disabled:text-neutral-medium';
 const claseError = 'border-highlight ring-2 ring-highlight/30';
+
+// vee-validate: UX de tipeo de los campos migrados a `Input` del Core (nombre
+// y ordenVisualizacion). `Input.vue` convierte los `type="number"` a number
+// real (o `null` si queda vacío), así que el z.number() del schema ya valida
+// bien desde el propio campo. La autoridad de validación al guardar sigue
+// siendo `validarCategoriaFormulario` en el store.
+const { values, setValues } = useForm({ validationSchema: toTypedSchema(categoriaFormularioSchema) });
+
+watch(
+  () => formulario.value,
+  (f) => setValues(f, false),
+  { immediate: true }
+);
+
+watch(
+  () => values.nombre,
+  (v) => {
+    if (v !== undefined && v !== formulario.value.nombre) actualizar({ nombre: v });
+  }
+);
+
+watch(
+  () => values.ordenVisualizacion,
+  (v) => {
+    // El campo es opcional en la UI: vacío equivale a 0 en el store.
+    const valor = v ?? 0;
+    if (valor !== formulario.value.ordenVisualizacion) actualizar({ ordenVisualizacion: valor });
+  }
+);
 
 const nombrePadrePreview = computed(() => {
   if (!esSubcategoria.value) return formulario.value.nombre || 'Nueva categoría';

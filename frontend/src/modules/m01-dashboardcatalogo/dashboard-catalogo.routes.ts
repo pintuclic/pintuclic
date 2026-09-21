@@ -15,14 +15,10 @@ import type { RouteRecordRaw } from 'vue-router';
  */
 export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
   {
+    // Sin dashboard propio (dependía de métricas simuladas sin respaldo en
+    // el backend real); se entra directo al listado de productos.
     path: '/admin/catalogo',
-    name: 'AdminDashboardCatalogo',
-    component: () => import('./views/VistaDashboardCatalogo.vue'),
-    meta: {
-      requiereAuth: true,
-      permiso: 'GESTION_CATALOGO',
-      titulo: 'Dashboard de catálogo',
-    },
+    redirect: '/admin/catalogo/productos',
   },
   {
     path: '/admin/catalogo/productos',
@@ -226,6 +222,16 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/admin/catalogo/colores/carga-masiva',
+    name: 'AdminColorCargaMasiva',
+    component: () => import('./views/VistaColorCargaMasiva.vue'),
+    meta: {
+      requiereAuth: true,
+      permiso: 'GESTION_CATALOGO',
+      titulo: 'Carga masiva de colores',
+    },
+  },
+  {
     path: '/admin/catalogo/colores/nuevo',
     name: 'AdminColorNuevo',
     component: () => import('./views/VistaColorFormulario.vue'),
@@ -244,16 +250,6 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
       requiereAuth: true,
       permiso: 'GESTION_CATALOGO',
       titulo: 'Editar color',
-    },
-  },
-  {
-    path: '/admin/catalogo/busquedas-sin-resultado',
-    name: 'AdminBusquedasSinResultado',
-    component: () => import('./views/VistaBusquedas.vue'),
-    meta: {
-      requiereAuth: true,
-      permiso: 'GESTION_CATALOGO',
-      titulo: 'Búsquedas sin resultado',
     },
   },
 ];

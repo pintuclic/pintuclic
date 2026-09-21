@@ -9,8 +9,8 @@
         {{ modo === 'editar' ? 'Editar marca' : 'Crear nueva marca' }}
       </h1>
       <p class="mt-1 text-sm text-neutral-medium">
-        Completa la información de la marca. Se mostrará en el catálogo y estará disponible para
-        asociar productos.
+        Completa el nombre y el logotipo de la marca. Se mostrará en el catálogo y estará
+        disponible para asociar productos.
       </p>
     </div>
 
@@ -29,257 +29,57 @@
     </p>
 
     <div v-if="cargando" class="grid gap-5 lg:grid-cols-3">
-      <div class="space-y-4 lg:col-span-2">
-        <div v-for="n in 4" :key="n" class="h-36 animate-pulse rounded-card bg-neutral-white" />
-      </div>
-      <div class="h-72 animate-pulse rounded-card bg-neutral-white" />
+      <div class="h-64 animate-pulse rounded-card bg-neutral-white lg:col-span-2" />
+      <div class="h-64 animate-pulse rounded-card bg-neutral-white" />
     </div>
 
     <div v-else class="grid gap-5 lg:grid-cols-3">
-      <div class="space-y-5 lg:col-span-2">
+      <div class="lg:col-span-2">
         <TarjetaSeccionFormulario
-          titulo="Información general"
-          descripcion="Datos básicos de la marca."
+          titulo="Información de la marca"
+          descripcion="Nombre y logotipo son los únicos datos obligatorios."
           :icono="Info"
         >
-          <CampoFormulario etiqueta="Nombre de la marca" requerido :error="erroresValidacion.nombre">
-            <template #default="{ id }">
-              <input
-                :id="id"
-                :value="formulario.nombre"
-                type="text"
-                :class="[claseInput, erroresValidacion.nombre && claseError]"
-                placeholder="Ej. Pintuco"
-                @input="set({ nombre: ($event.target as HTMLInputElement).value })"
-              />
-            </template>
-          </CampoFormulario>
-          <CampoFormulario
-            etiqueta="Descripción"
-            requerido
-            :error="erroresValidacion.descripcion"
-            :contador="{ actual: formulario.descripcion.length, max: 1000 }"
-          >
-            <template #default="{ id }">
-              <textarea
-                :id="id"
-                :value="formulario.descripcion"
-                rows="4"
-                :class="[claseInput, 'resize-y', erroresValidacion.descripcion && claseError]"
-                placeholder="Describe la marca, su trayectoria y su propuesta de valor."
-                @input="set({ descripcion: ($event.target as HTMLTextAreaElement).value })"
-              />
-            </template>
-          </CampoFormulario>
-        </TarjetaSeccionFormulario>
+          <Input name="nombre" label="Nombre de la marca" placeholder="Ej. Pintuco" />
 
-        <TarjetaSeccionFormulario
-          titulo="Identidad visual"
-          descripcion="Sube el logo y otros elementos visuales."
-          :icono="ImageIcon"
-        >
-          <p class="text-sm font-medium text-neutral-dark">
-            Logo principal <span class="text-neutral-medium">*</span>
-          </p>
-          <div class="flex flex-wrap items-center gap-4">
-            <div class="grid h-24 w-24 shrink-0 place-items-center rounded-card border border-neutral-light bg-neutral-lightest text-neutral-medium">
-              <img
-                v-if="formulario.logoUrl"
-                :src="formulario.logoUrl"
-                alt="Logo de la marca"
-                class="h-full w-full rounded-card object-contain p-2"
-              />
-              <ImageIcon v-else class="h-6 w-6" aria-hidden="true" />
-            </div>
-            <div class="space-y-1.5">
-              <div class="flex gap-2">
-                <Button variant="outline" size="sm" :icon="Upload" @click="simularLogo">
-                  {{ formulario.logoUrl ? 'Cambiar imagen' : 'Subir imagen' }}
-                </Button>
-                <button
+          <div>
+            <p class="text-sm font-medium text-neutral-dark">
+              Logotipo <span class="text-neutral-medium">*</span>
+            </p>
+            <div class="mt-1.5 flex flex-wrap items-center gap-4">
+              <div class="grid h-24 w-24 shrink-0 place-items-center rounded-card border border-neutral-light bg-neutral-lightest text-neutral-medium">
+                <img
                   v-if="formulario.logoUrl"
-                  type="button"
-                  class="grid h-9 w-9 place-items-center rounded-button border border-neutral-light text-neutral-medium hover:bg-neutral-lightest"
-                  aria-label="Quitar logo"
-                  @click="quitarLogo"
-                >
-                  <Trash2 class="h-4 w-4" aria-hidden="true" />
-                </button>
+                  :src="formulario.logoUrl"
+                  alt="Logo de la marca"
+                  class="h-full w-full rounded-card object-contain p-2"
+                />
+                <ImageIcon v-else class="h-6 w-6" aria-hidden="true" />
               </div>
-              <p class="text-xs text-neutral-medium">
-                PNG, JPG o SVG. Máx. 2 MB. Fondo blanco o transparente, mínimo 400 × 400 px.
-              </p>
-              <p v-if="erroresValidacion.logoUrl" class="text-xs text-neutral-black">
-                {{ erroresValidacion.logoUrl }}
-              </p>
+              <div class="space-y-1.5">
+                <div class="flex gap-2">
+                  <Button variant="outline" size="sm" :icon="Upload" @click="simularLogo">
+                    {{ formulario.logoUrl ? 'Cambiar imagen' : 'Subir imagen' }}
+                  </Button>
+                  <button
+                    v-if="formulario.logoUrl"
+                    type="button"
+                    class="grid h-9 w-9 place-items-center rounded-button border border-neutral-light text-neutral-medium hover:bg-neutral-lightest"
+                    aria-label="Quitar logo"
+                    @click="quitarLogo"
+                  >
+                    <Trash2 class="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+                <p class="text-xs text-neutral-medium">
+                  JPG, PNG o WEBP. Máx. 5 MB.
+                </p>
+                <p v-if="erroresValidacion.logoUrl" class="text-xs text-neutral-black">
+                  {{ erroresValidacion.logoUrl }}
+                </p>
+              </div>
             </div>
           </div>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="Datos de la marca"
-          descripcion="Información adicional y de contacto."
-          :icono="Contact"
-        >
-          <div class="grid gap-4 sm:grid-cols-2">
-            <CampoFormulario etiqueta="Sitio web" :error="erroresValidacion.sitioWeb">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.sitioWeb"
-                  type="url"
-                  :class="[claseInput, erroresValidacion.sitioWeb && claseError]"
-                  placeholder="https://www.marca.com"
-                  @input="set({ sitioWeb: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario etiqueta="País de origen">
-              <template #default="{ id }">
-                <select
-                  :id="id"
-                  :value="formulario.paisOrigen"
-                  :class="claseInput"
-                  @change="set({ paisOrigen: ($event.target as HTMLSelectElement).value })"
-                >
-                  <option value="">Selecciona…</option>
-                  <option v-for="op in opciones.paises" :key="op.valor" :value="op.valor">
-                    {{ op.etiqueta }}
-                  </option>
-                </select>
-              </template>
-            </CampoFormulario>
-            <CampoFormulario etiqueta="Contacto" :error="erroresValidacion.contactoEmail">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.contactoEmail"
-                  type="email"
-                  :class="[claseInput, erroresValidacion.contactoEmail && claseError]"
-                  placeholder="contacto@marca.com"
-                  @input="set({ contactoEmail: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario etiqueta="Teléfono">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.telefono"
-                  type="tel"
-                  :class="claseInput"
-                  placeholder="+57 601 000 0000"
-                  @input="set({ telefono: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
-          </div>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="Relaciones del catálogo"
-          descripcion="Asocia líneas, colores y bases disponibles."
-          :icono="Network"
-        >
-          <div>
-            <p class="mb-1.5 text-sm font-medium text-neutral-dark">Líneas de productos</p>
-            <ChipsSeleccion
-              :opciones="opciones.lineas"
-              :seleccionados="formulario.lineas"
-              etiqueta-agregar="Agregar línea"
-              @alternar="(v) => alternarLista('lineas', v)"
-            />
-          </div>
-          <CampoFormulario etiqueta="Colores disponibles">
-            <template #default="{ id }">
-              <select
-                :id="id"
-                :value="formulario.politicaColor"
-                :class="claseInput"
-                @change="set({ politicaColor: ($event.target as HTMLSelectElement).value })"
-              >
-                <option v-for="op in opciones.politicasColor" :key="op.valor" :value="op.valor">
-                  {{ op.etiqueta }}
-                </option>
-              </select>
-            </template>
-          </CampoFormulario>
-          <div>
-            <p class="mb-1.5 text-sm font-medium text-neutral-dark">Bases compatibles</p>
-            <ChipsSeleccion
-              :opciones="opciones.bases"
-              :seleccionados="formulario.basesCompatibles"
-              etiqueta-agregar="Agregar base"
-              @alternar="(v) => alternarLista('basesCompatibles', v)"
-            />
-          </div>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="SEO y etiquetas"
-          descripcion="Optimiza cómo se muestra la marca en buscadores (opcional)."
-          :icono="Search"
-        >
-          <CampoFormulario
-            etiqueta="Título SEO"
-            :contador="{ actual: formulario.tituloSeo.length, max: 60 }"
-          >
-            <template #default="{ id }">
-              <input
-                :id="id"
-                :value="formulario.tituloSeo"
-                type="text"
-                :class="claseInput"
-                placeholder="Marca | Pinturas y recubrimientos"
-                @input="set({ tituloSeo: ($event.target as HTMLInputElement).value })"
-              />
-            </template>
-          </CampoFormulario>
-          <CampoFormulario
-            etiqueta="Descripción SEO"
-            :contador="{ actual: formulario.descripcionSeo.length, max: 160 }"
-          >
-            <template #default="{ id }">
-              <textarea
-                :id="id"
-                :value="formulario.descripcionSeo"
-                rows="2"
-                :class="[claseInput, 'resize-y']"
-                placeholder="Resumen para buscadores."
-                @input="set({ descripcionSeo: ($event.target as HTMLTextAreaElement).value })"
-              />
-            </template>
-          </CampoFormulario>
-          <CampoFormulario etiqueta="Etiquetas">
-            <EntradaEtiquetas
-              :etiquetas="formulario.etiquetas"
-              placeholder="Ej. pintura, recubrimientos, colombia, hogar…"
-              @agregar="agregarEtiqueta"
-              @quitar="quitarEtiqueta"
-            />
-          </CampoFormulario>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="Notas internas"
-          descripcion="Información privada para el equipo administrativo (opcional)."
-          :icono="FileText"
-        >
-          <CampoFormulario
-            etiqueta="Notas"
-            :contador="{ actual: formulario.notasInternas.length, max: 500 }"
-          >
-            <template #default="{ id }">
-              <textarea
-                :id="id"
-                :value="formulario.notasInternas"
-                rows="3"
-                :class="[claseInput, 'resize-y']"
-                placeholder="Ej. Coordinar lanzamientos con el equipo comercial."
-                @input="set({ notasInternas: ($event.target as HTMLTextAreaElement).value })"
-              />
-            </template>
-          </CampoFormulario>
         </TarjetaSeccionFormulario>
       </div>
 
@@ -310,33 +110,6 @@
               <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
               {{ formulario.estado === 'activa' ? 'Marca activa' : 'Marca inactiva' }}
             </span>
-            <p v-if="formulario.descripcion" class="line-clamp-3 text-xs text-neutral-medium">
-              {{ formulario.descripcion }}
-            </p>
-            <dl class="space-y-1 border-t border-neutral-light pt-2 text-xs text-neutral-medium">
-              <div v-if="formulario.sitioWeb" class="flex items-center gap-1.5">
-                <Globe class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <dd class="truncate text-neutral-dark">{{ formulario.sitioWeb }}</dd>
-              </div>
-              <div v-if="paisEtiqueta" class="flex items-center gap-1.5">
-                <MapPin class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <dd class="text-neutral-dark">{{ paisEtiqueta }}</dd>
-              </div>
-            </dl>
-            <div class="grid grid-cols-3 gap-2 pt-1 text-center">
-              <div>
-                <p class="text-sm font-bold text-neutral-black tabular-nums">{{ resumenPrevia.productos }}</p>
-                <p class="text-[11px] text-neutral-medium">Productos</p>
-              </div>
-              <div>
-                <p class="text-sm font-bold text-neutral-black tabular-nums">{{ formulario.lineas.length || resumenPrevia.lineas }}</p>
-                <p class="text-[11px] text-neutral-medium">Líneas</p>
-              </div>
-              <div>
-                <p class="text-sm font-bold text-neutral-black tabular-nums">{{ resumenPrevia.colores }}</p>
-                <p class="text-[11px] text-neutral-medium">Colores</p>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -370,39 +143,26 @@
  * M01 - VISTA: MARCAS · CREAR / EDITAR  (maqueta "ADMIN 13")
  * Ubicación: src/modules/m01-dashboardcatalogo/views/VistaMarcaFormulario.vue
  *
- * Alta y edición de marcas (HU-CAT-04): información general, identidad visual,
- * datos de contacto, relaciones del catálogo (líneas / colores / bases), SEO y
- * notas internas, con vista previa en vivo y checklist de publicación.
+ * Alta y edición de marcas (HU-CAT-04). Sincronizado 1:1 con `CrearMarcaDto` /
+ * `ActualizarMarcaDto` del backend real: solo nombre y logotipo son datos de
+ * negocio; con un único bloque de contenido real, el formulario se muestra en
+ * una sola tarjeta (sin pasos / pestañas de Progressive Disclosure).
  *
  * Permiso requerido: «Gestión del catálogo» (M17), revalidado en el servidor.
  * ==============================================================================
  */
-import { computed, onMounted } from 'vue';
-import {
-  ArrowLeft,
-  Save,
-  Info,
-  Contact,
-  Network,
-  Search,
-  FileText,
-  Eye,
-  Globe,
-  MapPin,
-  Upload,
-  Trash2,
-  Image as ImageIcon,
-} from 'lucide-vue-next';
+import { onMounted, watch } from 'vue';
+import { useForm } from 'vee-validate';
+import { toTypedSchema } from '@vee-validate/zod';
+import { ArrowLeft, Save, Info, Eye, Upload, Trash2, Image as ImageIcon } from 'lucide-vue-next';
 import { Button } from '@/core/components';
+import Input from '@/core/components/forms/Input.vue';
 import TarjetaSeccionFormulario from '../components/TarjetaSeccionFormulario.vue';
-import CampoFormulario from '../components/CampoFormulario.vue';
-import EntradaEtiquetas from '../components/EntradaEtiquetas.vue';
-import ChipsSeleccion from '../components/ChipsSeleccion.vue';
 import ChecklistPublicacion from '../components/ChecklistPublicacion.vue';
 import { useMarcaFormulario } from '../composables/useMarcaFormulario';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { LOGO_MARCA_DEMO } from '../assets/imagenes-catalogo';
-import type { FormularioMarca } from '../interfaces';
+import { marcaFormularioSchema } from '../dtos';
 
 const props = defineProps<{
   /** Id de la marca a editar (lo inyecta el router con `props: true`). Vacío = crear. */
@@ -411,8 +171,6 @@ const props = defineProps<{
 
 const {
   formulario,
-  opciones,
-  resumenPrevia,
   modo,
   cargando,
   guardando,
@@ -424,30 +182,31 @@ const {
   puedePublicar,
   inicializar,
   actualizar,
-  alternarLista,
-  agregarEtiqueta,
-  quitarEtiqueta,
   quitarLogo,
   guardarBorrador,
   guardarCambios,
 } = useMarcaFormulario();
 
-
 onMounted(() => {
   void inicializar(props.marcaId);
 });
 
-const claseInput =
-  'w-full rounded-input border border-neutral-light bg-neutral-white px-3 py-2 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30 disabled:bg-neutral-lightest disabled:text-neutral-medium';
-const claseError = 'border-highlight ring-2 ring-highlight/30';
+// vee-validate: solo para UX de tipeo del campo de texto migrado (nombre).
+// La autoridad de validación al guardar sigue siendo `validarMarcaFormulario` en el store.
+const { values, setValues } = useForm({ validationSchema: toTypedSchema(marcaFormularioSchema) });
 
-const paisEtiqueta = computed(
-  () => opciones.value.paises.find((p) => p.valor === formulario.value.paisOrigen)?.etiqueta ?? ''
+watch(
+  () => formulario.value,
+  (f) => setValues(f as unknown as Parameters<typeof setValues>[0], false),
+  { immediate: true }
 );
 
-function set(parcial: Partial<FormularioMarca>): void {
-  actualizar(parcial);
-}
+watch(
+  () => values.nombre,
+  (v) => {
+    if (v !== undefined && v !== formulario.value.nombre) actualizar({ nombre: v });
+  }
+);
 
 /** Sin subida real (HU-CAT-07): asigna una ilustración de ejemplo como logo. */
 function simularLogo(): void {

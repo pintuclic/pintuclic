@@ -9,17 +9,19 @@ import {
   formularioColorVacio,
 } from '../services/color-formulario.mock';
 import { validarColorFormulario, hexARgb } from '../dtos/color-formulario.dto';
+import { hexACielab } from '../composables/useColorCielab';
 import type {
   FormularioColor,
   OpcionesFormularioColor,
   ModoFormularioColor,
+  PayloadColor,
   ResumenColorPrevia,
   ImpactoColor,
   EstadoColor,
   ApiErrorResponse,
 } from '../interfaces';
 
-const OPCIONES_VACIAS: OpcionesFormularioColor = { familias: [], bases: [] };
+const OPCIONES_VACIAS: OpcionesFormularioColor = { marcas: [], familias: [] };
 const PREVIA_VACIA: ResumenColorPrevia = { productos: 0, variantes: 0, coloresRelacionados: [] };
 
 /**
@@ -43,19 +45,40 @@ export const useColorFormularioStore = defineStore('m01-color-formulario', () =>
   const guardadoOk = ref<boolean>(false);
 
   const rgb = computed(() => hexARgb(formulario.value.hex));
+  /** Valor cromático que realmente viaja al backend (RF-CAT-05-02). */
+  const cielab = computed(() => hexACielab(formulario.value.hex));
   const familiaNombre = computed(
     () => opciones.value.familias.find((f) => f.valor === formulario.value.familiaClave)?.etiqueta ?? '—'
+  );
+  const marcaNombre = computed(
+    () => opciones.value.marcas.find((m) => m.valor === formulario.value.marcaId)?.etiqueta ?? '—'
   );
 
   const impacto = computed<ImpactoColor[]>(() => {
     const f = formulario.value;
     return [
-      { clave: 'tienda', etiqueta: 'Disponible para productos', detalle: 'Visible en la tienda y buscadores', cumple: f.mostrarEnTienda },
-      { clave: 'bases', etiqueta: `Compatible con ${f.basesCompatibles.length} base(s)`, detalle: 'Bases sobre las que se prepara', cumple: f.basesCompatibles.length > 0 },
-      { clave: 'seo', etiqueta: 'Optimizado para SEO', detalle: 'Título y meta descripción definidos', cumple: f.tituloSeo.trim().length > 0 },
-      { clave: 'cromatico', etiqueta: 'Valor cromático válido', detalle: 'Se visualiza igual en todos los dispositivos', cumple: rgb.value !== null },
+      { clave: 'marca', etiqueta: 'Marca asignada', detalle: 'Todo color pertenece a una marca', cumple: f.marcaId.trim().length > 0 },
+      { clave: 'familia', etiqueta: 'Familia cromática asignada', detalle: 'Permite filtrar el catálogo por familia', cumple: f.familiaClave.trim().length > 0 },
+      { clave: 'codigo', etiqueta: 'Código interno definido', detalle: 'Facilita la trazabilidad con proveedores (opcional)', cumple: f.codigo.trim().length > 0 },
+      { clave: 'cromatico', etiqueta: 'Valor cromático válido', detalle: 'CIELAB derivado del HEX; igual en todos los dispositivos', cumple: cielab.value !== null },
     ];
   });
+
+  /** Construye el payload real: deriva `cielab` del HEX y omite el código vacío. */
+  function construirPayload(): PayloadColor | null {
+    const f = formulario.value;
+    const valorCielab = hexACielab(f.hex);
+    if (!valorCielab) return null;
+    const codigo = f.codigo.trim();
+    return {
+      nombre: f.nombre.trim(),
+      marcaId: f.marcaId,
+      ...(codigo ? { codigo } : {}),
+      cielab: valorCielab,
+      familiaClave: f.familiaClave,
+      estado: f.estado,
+    };
+  }
 
   async function cargarOpciones(): Promise<void> {
     try {
@@ -117,24 +140,6 @@ export const useColorFormularioStore = defineStore('m01-color-formulario', () =>
     actualizar({ hex });
   }
 
-  function alternarBase(valor: string): void {
-    const actuales = formulario.value.basesCompatibles;
-    actualizar({
-      basesCompatibles: actuales.includes(valor)
-        ? actuales.filter((b) => b !== valor)
-        : [...actuales, valor],
-    });
-  }
-
-  function agregarEtiqueta(texto: string): void {
-    const limpia = texto.trim().toLowerCase();
-    if (!limpia || formulario.value.etiquetas.includes(limpia)) return;
-    actualizar({ etiquetas: [...formulario.value.etiquetas, limpia] });
-  }
-  function quitarEtiqueta(texto: string): void {
-    actualizar({ etiquetas: formulario.value.etiquetas.filter((t) => t !== texto) });
-  }
-
   function validar(): boolean {
     const { valido, errores } = validarColorFormulario(formulario.value);
     erroresValidacion.value = errores;
@@ -147,13 +152,20 @@ export const useColorFormularioStore = defineStore('m01-color-formulario', () =>
       error.value = 'Revisa los campos marcados antes de continuar.';
       return false;
     }
+    const payload = construirPayload();
+    if (!payload) {
+      erroresValidacion.value = { hex: 'Usa un HEX válido, p. ej. #FFC928' };
+      error.value = 'Revisa los campos marcados antes de continuar.';
+      return false;
+    }
+
     guardando.value = true;
     error.value = null;
     try {
       const respuesta =
         modo.value === 'editar' && colorId.value
-          ? await ColorFormularioService.actualizar(colorId.value, formulario.value)
-          : await ColorFormularioService.crear(formulario.value);
+          ? await ColorFormularioService.actualizar(colorId.value, payload)
+          : await ColorFormularioService.crear(payload);
       colorId.value = respuesta.data.id;
       modo.value = 'editar';
       guardadoOk.value = true;
@@ -197,14 +209,14 @@ export const useColorFormularioStore = defineStore('m01-color-formulario', () =>
     usandoDatosDemo,
     guardadoOk,
     rgb,
+    cielab,
     familiaNombre,
+    marcaNombre,
     impacto,
     inicializar,
     actualizar,
     actualizarRgb,
-    alternarBase,
-    agregarEtiqueta,
-    quitarEtiqueta,
+    construirPayload,
     guardarBorrador,
     guardarCambios,
     reiniciar,

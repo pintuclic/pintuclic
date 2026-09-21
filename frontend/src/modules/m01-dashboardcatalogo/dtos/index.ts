@@ -1,4 +1,3 @@
-export * from './dashboard.dto';
 export * from './productos.dto';
 export * from './producto-formulario.dto';
 export * from './variantes.dto';
@@ -8,7 +7,7 @@ export * from './categoria-formulario.dto';
 export * from './marcas.dto';
 export * from './marca-formulario.dto';
 export * from './colores.dto';
+export * from './colores-carga-masiva.dto';
 export * from './color-formulario.dto';
-export * from './busquedas.dto';
 export * from './lineas.dto';
 export * from './linea-formulario.dto';

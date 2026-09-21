@@ -57,384 +57,176 @@
     <div v-else class="grid gap-5 lg:grid-cols-3">
       <!-- Formulario -->
       <div class="space-y-5 lg:col-span-2">
-        <TarjetaSeccionFormulario
-          titulo="Producto asociado"
-          descripcion="Selecciona el producto principal al que pertenecerá esta variante."
-          :icono="Boxes"
-        >
-          <CampoFormulario etiqueta="Producto" requerido :error="erroresValidacion.productoId">
-            <template #default="{ id }">
-              <select
-                :id="id"
-                :value="formulario.productoId ?? ''"
-                :class="[claseInput, erroresValidacion.productoId && claseError]"
-                @change="set({ productoId: aTextoONull(($event.target as HTMLSelectElement).value) })"
-              >
-                <option value="">Selecciona…</option>
-                <option v-for="op in opciones.productos" :key="op.valor" :value="op.valor">
-                  {{ op.etiqueta }} · {{ op.sku }}
-                </option>
-              </select>
-            </template>
-          </CampoFormulario>
-          <p v-if="productoAsociado" class="rounded-input bg-neutral-lightest px-3 py-2 text-xs text-neutral-medium">
-            SKU del producto: <span class="text-neutral-dark">{{ productoAsociado.sku }}</span> ·
-            Marca: <span class="text-neutral-dark">{{ productoAsociado.marca }}</span>
-            <template v-if="productoAsociado.linea">
-              · Línea: <span class="text-neutral-dark">{{ productoAsociado.linea }}</span>
-            </template>
-          </p>
-        </TarjetaSeccionFormulario>
+        <Tabs
+          :items="pestanas"
+          :model-value="pestanaActiva"
+          @update:model-value="(id) => (pestanaActiva = id)"
+        />
 
-        <TarjetaSeccionFormulario
-          v-if="requierePresentacion"
-          titulo="Presentación y unidad"
-          descripcion="Define la presentación de esta variante."
-          :icono="Ruler"
-        >
-          <div>
-            <p class="mb-2 text-sm font-medium text-neutral-dark">
-              Presentación <span class="text-neutral-medium">*</span>
-            </p>
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="op in opciones.presentaciones"
-                :key="op.valor"
-                type="button"
-                class="rounded-button border px-3 py-1.5 text-sm font-medium transition-colors"
-                :class="
-                  formulario.presentacion === op.valor
-                    ? 'border-action bg-subaction text-corporate'
-                    : 'border-neutral-light bg-neutral-white text-neutral-dark hover:bg-neutral-lightest'
-                "
-                :aria-pressed="formulario.presentacion === op.valor"
-                @click="set({ presentacion: op.valor })"
-              >
-                {{ op.etiqueta }}
-              </button>
-            </div>
-            <p v-if="erroresValidacion.presentacion" class="mt-1.5 text-xs text-neutral-black">
-              {{ erroresValidacion.presentacion }}
-            </p>
-          </div>
-
-          <CampoFormulario etiqueta="Unidad de medida" requerido :error="erroresValidacion.unidadMedida">
-            <template #default="{ id }">
-              <select
-                :id="id"
-                :value="formulario.unidadMedida"
-                :class="[claseInput, erroresValidacion.unidadMedida && claseError]"
-                @change="set({ unidadMedida: ($event.target as HTMLSelectElement).value })"
-              >
-                <option value="">Selecciona…</option>
-                <option v-for="op in opciones.unidades" :key="op.valor" :value="op.valor">
-                  {{ op.etiqueta }}
-                </option>
-              </select>
-            </template>
-          </CampoFormulario>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          v-if="requiereColor"
-          titulo="Base y color"
-          descripcion="Base sobre la que se prepara y color que identifica la variante."
-          :icono="Palette"
-        >
-          <div>
-            <p class="mb-2 text-sm font-medium text-neutral-dark">Base / entonado</p>
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="op in opciones.bases"
-                :key="op.valor"
-                type="button"
-                class="rounded-button border px-3 py-1.5 text-sm font-medium transition-colors"
-                :class="
-                  formulario.base === op.valor
-                    ? 'border-action bg-subaction text-corporate'
-                    : 'border-neutral-light bg-neutral-white text-neutral-dark hover:bg-neutral-lightest'
-                "
-                :aria-pressed="formulario.base === op.valor"
-                @click="set({ base: formulario.base === op.valor ? '' : op.valor })"
-              >
-                {{ op.etiqueta }}
-              </button>
-            </div>
-          </div>
-
-          <div class="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
-            <CampoFormulario etiqueta="Color asociado">
+        <!-- 1. Producto y presentación -->
+        <div v-show="pestanaActiva === 'producto'" class="space-y-5">
+          <TarjetaSeccionFormulario
+            titulo="Producto asociado"
+            descripcion="Selecciona el producto principal al que pertenecerá esta variante."
+            :icono="Boxes"
+          >
+            <CampoFormulario etiqueta="Producto" requerido :error="erroresValidacion.productoId">
               <template #default="{ id }">
                 <select
                   :id="id"
-                  :value="formulario.colorId ?? ''"
-                  :class="claseInput"
-                  @change="definirColor(aTextoONull(($event.target as HTMLSelectElement).value))"
-                >
-                  <option value="">Sin color</option>
-                  <option v-for="c in opciones.colores" :key="c.id" :value="c.id">
-                    {{ c.nombre }}<template v-if="c.codigo"> ({{ c.codigo }})</template>
-                  </option>
-                </select>
-              </template>
-            </CampoFormulario>
-            <div
-              v-if="colorAsociado"
-              class="flex items-center gap-2 rounded-input border border-neutral-light px-3 py-2 text-xs text-neutral-medium"
-            >
-              <!-- hex derivado del valor CIELAB del color: dato de catálogo, no token de UI -->
-              <span
-                class="h-4 w-4 rounded-full border border-neutral-light"
-                :style="{ backgroundColor: colorAsociado.hex }"
-                aria-hidden="true"
-              />
-              {{ colorAsociado.hex }} · {{ colorAsociado.familia }}
-            </div>
-          </div>
-          <p v-if="erroresValidacion.base" class="text-xs text-neutral-black">
-            {{ erroresValidacion.base }}
-          </p>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="Códigos e identificación"
-          descripcion="Define los códigos de la variante."
-          :icono="Barcode"
-        >
-          <div class="grid gap-4 sm:grid-cols-2">
-            <CampoFormulario etiqueta="Código interno (SKU)" requerido :error="erroresValidacion.sku">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.sku"
-                  type="text"
-                  :class="[claseInput, erroresValidacion.sku && claseError]"
-                  placeholder="Ej. VIN-ADV-001-1G-AM"
-                  @input="set({ sku: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario etiqueta="Código de proveedor">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.codigoProveedor"
-                  type="text"
-                  :class="claseInput"
-                  placeholder="Ej. VIN-ADV-100"
-                  @input="set({ codigoProveedor: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario
-              etiqueta="Código de barras"
-              ayuda="Opcional pero recomendado para la gestión de inventario."
-            >
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.codigoBarras"
-                  type="text"
-                  :class="claseInput"
-                  placeholder="Ej. 7701234567890"
-                  @input="set({ codigoBarras: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
-          </div>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="Información comercial"
-          descripcion="Define los precios y costos de la variante."
-          :icono="DollarSign"
-        >
-          <div class="grid gap-4 sm:grid-cols-2">
-            <CampoFormulario etiqueta="Precio de venta" requerido :error="erroresValidacion.precioVenta">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.precioVenta ?? ''"
-                  type="number"
-                  min="0"
-                  :class="[claseInput, erroresValidacion.precioVenta && claseError]"
-                  placeholder="0"
-                  @input="set({ precioVenta: aNumero(($event.target as HTMLInputElement).value) })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario
-              v-if="esEdicion"
-              etiqueta="Precio de referencia"
-              ayuda="Opcional. Precio tachado antes de descuento."
-            >
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.precioReferencia ?? ''"
-                  type="number"
-                  min="0"
-                  :class="claseInput"
-                  placeholder="0"
-                  @input="set({ precioReferencia: aNumero(($event.target as HTMLInputElement).value) })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario etiqueta="Costo de compra">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.costoCompra ?? ''"
-                  type="number"
-                  min="0"
-                  :class="claseInput"
-                  placeholder="0"
-                  @input="set({ costoCompra: aNumero(($event.target as HTMLInputElement).value) })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario etiqueta="Impuesto (IVA)" requerido>
-              <template #default="{ id }">
-                <select
-                  :id="id"
-                  :value="String(formulario.impuestoIva)"
-                  :class="claseInput"
-                  @change="set({ impuestoIva: Number(($event.target as HTMLSelectElement).value) })"
-                >
-                  <option v-for="op in opciones.impuestos" :key="op.valor" :value="op.valor">
-                    {{ op.etiqueta }}
-                  </option>
-                </select>
-              </template>
-            </CampoFormulario>
-            <CampoFormulario etiqueta="Margen estimado" ayuda="Se calcula con el costo de compra.">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="margenEstimado !== null ? `${margenEstimado}%` : '—'"
-                  type="text"
-                  readonly
-                  class="w-full rounded-input border border-neutral-light bg-neutral-lightest px-3 py-2 text-sm text-neutral-medium"
-                />
-              </template>
-            </CampoFormulario>
-          </div>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="Inventario"
-          :descripcion="esEdicion ? 'Gestiona la disponibilidad de esta variante.' : 'Configura el stock inicial y mínimo.'"
-          :icono="Boxes"
-        >
-          <div class="grid gap-4 sm:grid-cols-3">
-            <CampoFormulario
-              :etiqueta="esEdicion ? 'Stock actual' : 'Stock inicial'"
-              requerido
-              :error="erroresValidacion.stockInicial"
-            >
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.stockInicial ?? ''"
-                  type="number"
-                  min="0"
-                  step="1"
-                  :class="[claseInput, erroresValidacion.stockInicial && claseError]"
-                  placeholder="0"
-                  @input="set({ stockInicial: aNumero(($event.target as HTMLInputElement).value) })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario etiqueta="Stock mínimo" requerido :error="erroresValidacion.stockMinimo">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.stockMinimo ?? ''"
-                  type="number"
-                  min="0"
-                  step="1"
-                  :class="[claseInput, erroresValidacion.stockMinimo && claseError]"
-                  placeholder="0"
-                  @input="set({ stockMinimo: aNumero(($event.target as HTMLInputElement).value) })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario etiqueta="Bodega principal" requerido :error="erroresValidacion.bodegaId">
-              <template #default="{ id }">
-                <select
-                  :id="id"
-                  :value="formulario.bodegaId ?? ''"
-                  :class="[claseInput, erroresValidacion.bodegaId && claseError]"
-                  @change="set({ bodegaId: aTextoONull(($event.target as HTMLSelectElement).value) })"
+                  :value="formulario.productoId ?? ''"
+                  :class="[claseInput, erroresValidacion.productoId && claseError]"
+                  @change="set({ productoId: aTextoONull(($event.target as HTMLSelectElement).value) })"
                 >
                   <option value="">Selecciona…</option>
-                  <option v-for="op in opciones.bodegas" :key="op.valor" :value="op.valor">
+                  <option v-for="op in opciones.productos" :key="op.valor" :value="op.valor">
                     {{ op.etiqueta }}
                   </option>
                 </select>
               </template>
             </CampoFormulario>
-          </div>
-        </TarjetaSeccionFormulario>
+            <p v-if="productoAsociado" class="rounded-input bg-neutral-lightest px-3 py-2 text-xs text-neutral-medium">
+              Marca: <span class="text-neutral-dark">{{ productoAsociado.marca }}</span>
+              <template v-if="productoAsociado.linea">
+                · Línea: <span class="text-neutral-dark">{{ productoAsociado.linea }}</span>
+              </template>
+            </p>
+          </TarjetaSeccionFormulario>
 
-        <TarjetaSeccionFormulario
-          v-if="requiereDimensiones"
-          titulo="Dimensiones / peso"
-          descripcion="Información logística (opcional)."
-          :icono="Ruler"
-        >
-          <div class="grid gap-4 sm:grid-cols-4">
-            <CampoFormulario v-for="dim in camposDimension" :key="dim.clave" :etiqueta="dim.etiqueta">
+          <TarjetaSeccionFormulario
+            v-if="requierePresentacion"
+            titulo="Presentación"
+            descripcion="Referencia al catálogo de presentaciones."
+            :icono="Ruler"
+          >
+            <CampoFormulario etiqueta="Presentación" requerido :error="erroresValidacion.presentacionId">
               <template #default="{ id }">
-                <input
+                <select
                   :id="id"
-                  :value="formulario[dim.clave] ?? ''"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  :class="claseInput"
-                  placeholder="0"
-                  @input="setDimension(dim.clave, ($event.target as HTMLInputElement).value)"
-                />
+                  :value="formulario.presentacionId ?? ''"
+                  :class="[claseInput, erroresValidacion.presentacionId && claseError]"
+                  @change="set({ presentacionId: aTextoONull(($event.target as HTMLSelectElement).value) })"
+                >
+                  <option value="">Selecciona…</option>
+                  <option v-for="op in opciones.presentaciones" :key="op.valor" :value="op.valor">
+                    {{ op.etiqueta }}
+                  </option>
+                </select>
               </template>
             </CampoFormulario>
-          </div>
-        </TarjetaSeccionFormulario>
+          </TarjetaSeccionFormulario>
 
-        <TarjetaSeccionFormulario
-          titulo="Notas logísticas"
-          descripcion="Información adicional para tu equipo (opcional)."
-          :icono="FileText"
-        >
-          <CampoFormulario
-            etiqueta="Notas"
-            :contador="{ actual: formulario.notasLogisticas.length, max: 500 }"
+          <TarjetaSeccionFormulario
+            v-if="requiereColor"
+            titulo="Base"
+            descripcion="Base sobre la que se prepara la variante."
+            :icono="Palette"
           >
-            <template #default="{ id }">
-              <textarea
-                :id="id"
-                :value="formulario.notasLogisticas"
-                rows="3"
-                :class="[claseInput, 'resize-y']"
-                placeholder="Manejo, almacenamiento, disponibilidad en tiendas…"
-                @input="set({ notasLogisticas: ($event.target as HTMLTextAreaElement).value })"
-              />
-            </template>
-          </CampoFormulario>
-        </TarjetaSeccionFormulario>
+            <CampoFormulario etiqueta="Base">
+              <template #default="{ id }">
+                <select
+                  :id="id"
+                  :value="formulario.baseId ?? ''"
+                  :class="claseInput"
+                  @change="definirBase(aTextoONull(($event.target as HTMLSelectElement).value))"
+                >
+                  <option value="">Sin base</option>
+                  <option v-for="op in opciones.bases" :key="op.valor" :value="op.valor">
+                    {{ op.etiqueta }}
+                  </option>
+                </select>
+              </template>
+            </CampoFormulario>
+          </TarjetaSeccionFormulario>
+        </div>
 
-        <TarjetaSeccionFormulario
-          titulo="Imágenes de la variante"
-          descripcion="Sube imágenes específicas de esta variante. La primera será la principal (opcional)."
-          :icono="ImageIcon"
-        >
-          <GaleriaImagenesProducto
-            :imagenes="formulario.imagenes"
-            @agregar="(archivo) => agregarImagen(archivo.nombre, archivo.url)"
-            @quitar="quitarImagen"
-            @principal="marcarImagenPrincipal"
-          />
-        </TarjetaSeccionFormulario>
+        <!-- 2. Precio, existencia y color -->
+        <div v-show="pestanaActiva === 'comercial'" class="space-y-5">
+          <TarjetaSeccionFormulario
+            titulo="Precio y existencia"
+            descripcion="Precio vigente y existencia referencial de la variante."
+            :icono="DollarSign"
+          >
+            <div class="grid gap-4 sm:grid-cols-2">
+              <Input name="precioVigente" label="Precio vigente" type="number" min="0" placeholder="0" />
+              <div class="flex flex-col gap-1.5">
+                <Input
+                  name="existenciaReferencial"
+                  label="Existencia referencial"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                />
+                <span class="text-xs text-neutral-medium">Opcional. Cantidad estimada disponible.</span>
+              </div>
+            </div>
+          </TarjetaSeccionFormulario>
+
+          <TarjetaSeccionFormulario
+            v-if="requiereColor"
+            titulo="Color"
+            descripcion="Color administrado que identifica la variante."
+            :icono="Palette"
+          >
+            <div class="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+              <CampoFormulario etiqueta="Color asociado">
+                <template #default="{ id }">
+                  <select
+                    :id="id"
+                    :value="formulario.colorId ?? ''"
+                    :class="claseInput"
+                    @change="definirColor(aTextoONull(($event.target as HTMLSelectElement).value))"
+                  >
+                    <option value="">Sin color</option>
+                    <option v-for="c in opciones.colores" :key="c.id" :value="c.id">
+                      {{ c.nombre }}<template v-if="c.codigo"> ({{ c.codigo }})</template>
+                    </option>
+                  </select>
+                </template>
+              </CampoFormulario>
+              <div
+                v-if="colorAsociado"
+                class="flex items-center gap-2 rounded-input border border-neutral-light px-3 py-2 text-xs text-neutral-medium"
+              >
+                <!-- hex derivado del valor CIELAB del color: dato de catálogo, no token de UI -->
+                <span
+                  class="h-4 w-4 rounded-full border border-neutral-light"
+                  :style="{ backgroundColor: colorAsociado.hex }"
+                  aria-hidden="true"
+                />
+                {{ colorAsociado.hex }} · {{ colorAsociado.familia }}
+              </div>
+            </div>
+          </TarjetaSeccionFormulario>
+
+          <TarjetaSeccionFormulario
+            titulo="Código de proveedor"
+            descripcion="Código que usa el proveedor para identificar esta variante."
+            :icono="Barcode"
+          >
+            <div class="flex flex-col gap-1">
+              <Input name="codigoProveedor" label="Código de proveedor" placeholder="Ej. VIN-ADV-100" />
+              <span class="text-xs text-neutral-medium">Opcional.</span>
+            </div>
+          </TarjetaSeccionFormulario>
+        </div>
+
+        <!-- 3. Imágenes -->
+        <div v-show="pestanaActiva === 'imagenes'" class="space-y-5">
+          <TarjetaSeccionFormulario
+            titulo="Imágenes de la variante"
+            descripcion="Sube imágenes específicas de esta variante. La primera será la principal (opcional)."
+            :icono="ImageIcon"
+          >
+            <GaleriaImagenesProducto
+              :imagenes="formulario.imagenes"
+              @agregar="(archivo) => agregarImagen(archivo.nombre, archivo.url)"
+              @quitar="quitarImagen"
+              @principal="marcarImagenPrincipal"
+            />
+          </TarjetaSeccionFormulario>
+        </div>
       </div>
 
       <!-- Aside -->
@@ -458,7 +250,7 @@
           <div class="mt-3 space-y-2">
             <p class="text-sm font-semibold text-neutral-black">{{ tituloVariante }}</p>
             <p class="text-lg font-bold text-corporate">
-              {{ formulario.precioVenta ? `$${formatearNumero(formulario.precioVenta)} COP` : 'Precio por definir' }}
+              {{ formulario.precioVigente !== null ? `$${formatearNumero(formulario.precioVigente)} COP` : 'Precio por definir' }}
             </p>
             <span
               class="inline-flex items-center gap-1.5 rounded-button px-2.5 py-1 text-xs font-medium"
@@ -575,6 +367,13 @@
       </Button>
     </template>
   </div>
+
+  <ModalConfirmarAccion
+    v-model="mostrarConfirmarDesactivar"
+    titulo="¿Desactivar variante?"
+    mensaje="Dejará de mostrarse en el catálogo público."
+    @confirmar="ejecutarDesactivar"
+  />
 </template>
 
 <script setup lang="ts">
@@ -583,16 +382,19 @@
  * M01 - VISTA: VARIANTES · CREAR / EDITAR  (maquetas "ADMIN 07" y "ADMIN 08")
  * Ubicación: src/modules/m01-dashboardcatalogo/views/VistaVarianteFormulario.vue
  *
- * Alta y edición de variantes: producto asociado, presentación/unidad, base y
- * color, códigos, información comercial (con margen calculado), inventario,
- * dimensiones, notas e imágenes. En «crear» acompaña el checklist de
- * publicación; en «editar» muestra los últimos movimientos de inventario y las
- * métricas de rotación/disponibilidad, y permite desactivar.
+ * Alta y edición de variantes: producto asociado, presentación, base y color,
+ * código de proveedor, precio vigente y existencia referencial e imágenes.
+ * Usa Progressive Disclosure (Tabs) en lugar de mostrar todas las tarjetas a
+ * la vez. En «crear» acompaña el checklist de publicación; en «editar»
+ * muestra los últimos movimientos de inventario y las métricas de
+ * rotación/disponibilidad, y permite desactivar.
  *
  * Permiso requerido: «Gestión de productos» (M17), revalidado en el servidor.
  * ==============================================================================
  */
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useForm } from 'vee-validate';
+import { toTypedSchema } from '@vee-validate/zod';
 import {
   ArrowLeft,
   Save,
@@ -605,16 +407,19 @@ import {
   Palette,
   Barcode,
   DollarSign,
-  FileText,
   Image as ImageIcon,
 } from 'lucide-vue-next';
-import { Button } from '@/core/components';
+import { Button, Tabs } from '@/core/components';
+import Input from '@/core/components/forms/Input.vue';
+import type { TabItem } from '@/core/components/navigation/Tabs.vue';
 import TarjetaSeccionFormulario from '../components/TarjetaSeccionFormulario.vue';
 import CampoFormulario from '../components/CampoFormulario.vue';
 import GaleriaImagenesProducto from '../components/GaleriaImagenesProducto.vue';
 import ChecklistPublicacion from '../components/ChecklistPublicacion.vue';
+import ModalConfirmarAccion from '../components/ModalConfirmarAccion.vue';
 import { useVarianteFormulario } from '../composables/useVarianteFormulario';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
+import { varianteFormularioSchema } from '../dtos';
 import type { EstadoVarianteForm, FormularioVariante, MovimientoInventario } from '../interfaces';
 
 const props = defineProps<{
@@ -635,13 +440,13 @@ const {
   desactivado,
   productoAsociado,
   colorAsociado,
-  margenEstimado,
   checklist,
   progresoChecklist,
   puedePublicar,
   inicializar,
   actualizar,
   definirColor,
+  definirBase,
   agregarImagen,
   quitarImagen,
   marcarImagenPrincipal,
@@ -659,9 +464,53 @@ onMounted(() => {
 
 const esEdicion = computed(() => modo.value === 'editar');
 
+/** Progressive disclosure: 3 pasos en lugar de 9 tarjetas simultáneas. */
+const pestanas: TabItem[] = [
+  { id: 'producto', label: 'Producto y presentación' },
+  { id: 'comercial', label: 'Precio, existencia y color' },
+  { id: 'imagenes', label: 'Imágenes' },
+];
+const pestanaActiva = ref<string>('producto');
+
 const claseInput =
   'w-full rounded-input border border-neutral-light bg-neutral-white px-3 py-2 text-sm text-neutral-dark outline-none focus:border-action focus:ring-2 focus:ring-action/30 disabled:bg-neutral-lightest disabled:text-neutral-medium';
 const claseError = 'border-highlight ring-2 ring-highlight/30';
+
+// vee-validate: UX de tipeo de los campos migrados a `Input` del Core
+// (codigoProveedor, precioVigente y existenciaReferencial). `Input.vue` ya
+// convierte los `type="number"` a number real (o `null` si queda vacío), así
+// que los z.number() del schema validan bien desde el propio campo. La
+// autoridad de validación al guardar sigue siendo `validarVarianteFormulario`.
+const { values, setValues } = useForm({ validationSchema: toTypedSchema(varianteFormularioSchema) });
+
+watch(
+  () => formulario.value,
+  (f) => setValues(f as unknown as Parameters<typeof setValues>[0], false),
+  { immediate: true }
+);
+
+watch(
+  () => values.codigoProveedor,
+  (v) => {
+    if (v !== undefined && v !== formulario.value.codigoProveedor) actualizar({ codigoProveedor: v });
+  }
+);
+
+watch(
+  () => values.precioVigente,
+  (v) => {
+    const valor = v ?? null;
+    if (valor !== formulario.value.precioVigente) actualizar({ precioVigente: valor });
+  }
+);
+
+watch(
+  () => values.existenciaReferencial,
+  (v) => {
+    const valor = v ?? null;
+    if (valor !== formulario.value.existenciaReferencial) actualizar({ existenciaReferencial: valor });
+  }
+);
 
 const ESTADO_META: Record<EstadoVarianteForm, { etiqueta: string; clases: string }> = {
   activo: { etiqueta: 'Activa', clases: 'bg-conversion/10 text-conversion' },
@@ -675,13 +524,6 @@ const MOV_META: Record<MovimientoInventario['tipo'], { etiqueta: string; clases:
   ajuste: { etiqueta: 'Ajuste', clases: 'bg-action/10 text-action' },
 };
 
-const camposDimension: { clave: 'pesoKg' | 'altoCm' | 'anchoCm' | 'profundidadCm'; etiqueta: string }[] = [
-  { clave: 'pesoKg', etiqueta: 'Peso (kg)' },
-  { clave: 'altoCm', etiqueta: 'Alto (cm)' },
-  { clave: 'anchoCm', etiqueta: 'Ancho (cm)' },
-  { clave: 'profundidadCm', etiqueta: 'Profundidad (cm)' },
-];
-
 const imagenPrincipal = computed(() => {
   const imgs = formulario.value.imagenes;
   return (imgs.find((i) => i.esPrincipal) ?? imgs[0])?.url || '';
@@ -689,16 +531,12 @@ const imagenPrincipal = computed(() => {
 
 const requierePresentacion = computed(() => productoAsociado.value?.requierePresentacion ?? true);
 const requiereColor = computed(() => productoAsociado.value?.requiereColor ?? true);
-const requiereDimensiones = computed(() => productoAsociado.value?.requiereDimensiones ?? true);
 
 const etiquetaPresentacion = computed(
-  () => opciones.value.presentaciones.find((p) => p.valor === formulario.value.presentacion)?.etiqueta ?? '—'
+  () => opciones.value.presentaciones.find((p) => p.valor === formulario.value.presentacionId)?.etiqueta ?? '—'
 );
 const etiquetaBase = computed(
-  () => opciones.value.bases.find((b) => b.valor === formulario.value.base)?.etiqueta ?? 'N/A'
-);
-const etiquetaBodega = computed(
-  () => opciones.value.bodegas.find((b) => b.valor === formulario.value.bodegaId)?.etiqueta ?? '—'
+  () => opciones.value.bases.find((b) => b.valor === formulario.value.baseId)?.etiqueta ?? 'N/A'
 );
 
 const tituloVariante = computed(() => {
@@ -714,11 +552,10 @@ const filasPreview = computed(() => {
     filas.push({ etiqueta: 'Base', valor: etiquetaBase.value });
     filas.push({ etiqueta: 'Color', valor: colorAsociado.value?.nombre ?? 'N/A' });
   }
-  filas.push({ etiqueta: 'Bodega', valor: etiquetaBodega.value });
-  filas.push({ etiqueta: 'SKU', valor: formulario.value.sku || '—' });
+  filas.push({ etiqueta: 'Código de proveedor', valor: formulario.value.codigoProveedor || '—' });
   filas.push({
-    etiqueta: 'Stock',
-    valor: formulario.value.stockInicial !== null ? `${formulario.value.stockInicial} uds.` : '—',
+    etiqueta: 'Existencia referencial',
+    valor: formulario.value.existenciaReferencial !== null ? `${formulario.value.existenciaReferencial} uds.` : '—',
   });
   return filas;
 });
@@ -726,24 +563,17 @@ const filasPreview = computed(() => {
 function set(parcial: Partial<FormularioVariante>): void {
   actualizar(parcial);
 }
-function setDimension(
-  clave: 'pesoKg' | 'altoCm' | 'anchoCm' | 'profundidadCm',
-  valor: string
-): void {
-  actualizar({ [clave]: aNumero(valor) } as Partial<FormularioVariante>);
-}
-function aNumero(valor: string): number | null {
-  return valor.trim() === '' ? null : Number(valor);
-}
 function aTextoONull(valor: string): string | null {
   return valor === '' ? null : valor;
 }
 
+const mostrarConfirmarDesactivar = ref(false);
 function confirmarDesactivar(): void {
-  const ok = globalThis.confirm?.(
-    '¿Desactivar esta variante? Dejará de mostrarse en el catálogo público.'
-  );
-  if (ok) void desactivar();
+  mostrarConfirmarDesactivar.value = true;
+}
+function ejecutarDesactivar(): void {
+  mostrarConfirmarDesactivar.value = false;
+  void desactivar();
 }
 
 // Navegación del panel: la provee el router (dashboardCatalogoRoutes).

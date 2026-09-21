@@ -21,18 +21,13 @@
           {{ formulario.nombre || 'Nombre del producto' }}
         </p>
 
-        <p class="text-lg font-bold text-corporate">
-          {{ precioFormateado }}
-        </p>
-
         <div class="flex flex-wrap items-center gap-2">
           <Badge :estado="tonoEstado(formulario.estado)" :label="etiquetaEstado(formulario.estado)" />
           <span
-            class="inline-flex items-center gap-1.5 rounded-button px-2.5 py-1 text-xs font-medium"
-            :class="hayStock ? 'bg-conversion/10 text-conversion' : 'bg-neutral-light text-neutral-medium'"
+            v-if="formulario.patrocinado"
+            class="inline-flex items-center gap-1.5 rounded-button bg-subaction px-2.5 py-1 text-xs font-medium text-corporate"
           >
-            <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
-            {{ hayStock ? 'Stock disponible' : 'Sin stock' }}
+            Destacado
           </span>
         </div>
 
@@ -63,11 +58,6 @@
             <dt class="sr-only">Editado por</dt>
             <dd class="text-neutral-dark">Por {{ meta.creadoPor }}</dd>
           </div>
-          <div v-if="meta.sku" class="flex items-center gap-1.5">
-            <Hash class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <dt class="sr-only">SKU</dt>
-            <dd class="text-neutral-dark">SKU: {{ meta.sku }}</dd>
-          </div>
         </dl>
       </div>
     </div>
@@ -76,16 +66,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Eye, Image as ImageIcon, CalendarClock, User, Hash } from 'lucide-vue-next';
+import { Eye, Image as ImageIcon, CalendarClock, User } from 'lucide-vue-next';
 import { Badge } from '@/core/components';
-import { useFormatoCatalogo } from '../composables/useFormatoCatalogo';
 import type { ColorCatalogo, EstadoProducto, FormularioProducto } from '../interfaces';
 
 /** Metadatos de auditoría que solo se muestran al editar (maqueta ADMIN 04). */
 interface MetaVistaPrevia {
   actualizadoEn: string;
   creadoPor: string;
-  sku: string;
 }
 
 const props = defineProps<{
@@ -94,20 +82,9 @@ const props = defineProps<{
   meta?: MetaVistaPrevia | null;
 }>();
 
-const { formatearNumero } = useFormatoCatalogo();
-
 const imagenPrincipal = computed(
   () => props.formulario.imagenes.find((img) => img.esPrincipal) ?? props.formulario.imagenes[0] ?? null
 );
-
-const hayStock = computed(
-  () => props.formulario.stockInicial !== null && props.formulario.stockInicial > 0
-);
-
-const precioFormateado = computed(() => {
-  const precio = props.formulario.precioVenta;
-  return precio && precio > 0 ? `$${formatearNumero(precio)} COP` : 'Precio por definir';
-});
 
 /** Mapeo de estado del producto -> tono de `Badge` del Core (no hay 1:1 exacto). */
 function tonoEstado(estado: EstadoProducto): string {

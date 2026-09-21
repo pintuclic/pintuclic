@@ -68,3 +68,9 @@ export interface ResumenColores {
   coloresActivos: { valor: number; variacionPorcentaje: number };
   familiasCromaticas: { valor: number };
 }
+
+/** Respuesta de POST /catalogo/colores/carga-masiva (RF-CAT-05-03). */
+export interface ResultadoCargaMasivaColores {
+  creados: number;
+  coloresCreados: ColorListado[];
+}

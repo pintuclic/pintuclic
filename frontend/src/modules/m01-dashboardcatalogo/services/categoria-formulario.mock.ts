@@ -24,21 +24,6 @@ export const OPCIONES_FORMULARIO_CATEGORIA_DEMO: OpcionesFormularioCategoria = {
     { valor: 'accesorios', etiqueta: 'Accesorios' },
     { valor: 'impermeabilizantes', etiqueta: 'Impermeabilizantes' },
   ],
-  filtros: [
-    { valor: 'tipo-acabado', etiqueta: 'Tipo de acabado' },
-    { valor: 'rendimiento', etiqueta: 'Rendimiento' },
-    { valor: 'tiempo-secado', etiqueta: 'Tiempo de secado' },
-    { valor: 'resistencia-lavado', etiqueta: 'Resistencia al lavado' },
-    { valor: 'color', etiqueta: 'Color' },
-  ],
-  lineas: [
-    { valor: 'viniltex', etiqueta: 'Viniltex' },
-    { valor: 'pintuclic', etiqueta: 'Pintu Clic' },
-    { valor: 'corona', etiqueta: 'Corona' },
-    { valor: '3m', etiqueta: '3M' },
-    { valor: 'pintuco-profesional', etiqueta: 'Pintuco Profesional' },
-    { valor: 'koraza', etiqueta: 'Koraza' },
-  ],
   arbolPreview: [
     { id: 'pinturas', nombre: 'Pinturas', padreId: null },
     { id: 'pinturas-interiores', nombre: 'Pinturas Interiores', padreId: 'pinturas' },
@@ -56,18 +41,9 @@ export function formularioCategoriaVacio(tipo: TipoNodoCategoria): FormularioCat
   return {
     tipo,
     nombre: '',
-    slug: '',
-    descripcion: '',
-    iconoUrl: null,
     padreId: null,
     estado: 'publicado',
-    ordenVisualizacion: 1,
-    filtros: [],
-    lineas: [],
-    tituloSeo: '',
-    metaDescripcion: '',
-    etiquetas: [],
-    notas: '',
+    ordenVisualizacion: 0,
   };
 }
 
@@ -75,20 +51,9 @@ export function formularioCategoriaVacio(tipo: TipoNodoCategoria): FormularioCat
 export const CATEGORIA_FORMULARIO_DEMO: FormularioCategoria = {
   tipo: 'subcategoria',
   nombre: 'Pinturas Interiores',
-  slug: 'pinturas-interiores',
-  descripcion:
-    'Productos de pintura para interiores que embellecen, protegen y dan color a tus espacios. Incluye pinturas lavables, mates y satinadas para todo tipo de ambientes interiores.',
-  iconoUrl: null,
   padreId: 'pinturas',
   estado: 'publicado',
   ordenVisualizacion: 1,
-  filtros: ['tipo-acabado', 'rendimiento', 'tiempo-secado', 'resistencia-lavado'],
-  lineas: ['viniltex', 'pintuclic', 'corona', '3m'],
-  tituloSeo: 'Pinturas para Interiores | Pintu Clic',
-  metaDescripcion:
-    'Descubre nuestra línea de pinturas interiores. Colores de alta calidad, lavables y de gran cobertura para tus espacios.',
-  etiquetas: ['interiores', 'hogar', 'paredes', 'decoración'],
-  notas: '',
 };
 
 /** Panel "Resumen e impacto" de la maqueta ADMIN 10. */
@@ -96,6 +61,5 @@ export const RESUMEN_IMPACTO_CATEGORIA_DEMO: ResumenImpactoCategoria = {
   productosAsociados: 68,
   subcategorias: 7,
   visibilidadPublica: true,
-  herenciaFiltros: 4,
   nivel: 2,
 };

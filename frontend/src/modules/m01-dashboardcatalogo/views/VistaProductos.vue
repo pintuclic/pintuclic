@@ -1,10 +1,10 @@
 <template>
   <div class="space-y-6 p-6 lg:p-8">
-    <EncabezadoSeccion
-      titulo="Gestión de productos"
-      descripcion="Administra tu catálogo de productos: agrega, edita y organiza todos tus productos en un solo lugar."
+    <PageHeader
+      title="Gestión de productos"
+      description="Administra tu catálogo de productos: agrega, edita y organiza todos tus productos en un solo lugar."
     >
-      <template #acciones>
+      <template #default>
         <Button variant="outline" :icon="Download" @click="irA('/admin/catalogo/productos/exportar')">
           Exportar
         </Button>
@@ -12,7 +12,7 @@
           Nuevo producto
         </Button>
       </template>
-    </EncabezadoSeccion>
+    </PageHeader>
 
     <p
       v-if="error"
@@ -31,6 +31,7 @@
 
     <TablaProductos
       v-if="pagina"
+      v-model:seleccion="seleccion"
       :pagina="pagina"
       :filtros="filtros"
       :cargando="cargando"
@@ -39,6 +40,14 @@
       @abrir="(id) => irA(`/admin/catalogo/productos/${id}`)"
       @editar="(id) => irA(`/admin/catalogo/productos/${id}/editar`)"
       @duplicar="() => irA('/admin/catalogo/productos/nuevo')"
+    />
+
+    <BarraAccionesMasivas
+      :cantidad="seleccion.length"
+      @limpiar="seleccion = []"
+      @activar-lote="seleccion = []"
+      @desactivar-lote="seleccion = []"
+      @exportar-lote="exportarSeleccion"
     />
   </div>
 </template>
@@ -56,12 +65,13 @@
  * Permiso requerido: «Gestión de productos» (M17), revalidado en el servidor.
  * ==============================================================================
  */
+import { ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, Download } from 'lucide-vue-next';
-import { Button } from '@/core/components';
-import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
+import { Button, PageHeader } from '@/core/components';
 import FiltrosProductos from '../components/FiltrosProductos.vue';
 import TablaProductos from '../components/TablaProductos.vue';
+import BarraAccionesMasivas from '../components/BarraAccionesMasivas.vue';
 import { useProductos } from '../composables/useProductos';
 
 const {
@@ -79,4 +89,17 @@ const {
 
 // Navegación del panel: la provee el router (dashboardCatalogoRoutes).
 const { irA } = usePanelNavegacion();
+
+/**
+ * Selección de filas para las acciones masivas. «Activar»/«Desactivar» en lote
+ * no tienen endpoint por lotes en la API real: solo limpian la selección (no
+ * se simula un guardado que no ocurre). «Exportar» reutiliza la misma ruta que
+ * el botón «Exportar» de la cabecera.
+ */
+const seleccion = ref<string[]>([]);
+
+function exportarSeleccion(): void {
+  irA('/admin/catalogo/productos/exportar');
+  seleccion.value = [];
+}
 </script>

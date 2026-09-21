@@ -8,10 +8,7 @@ import {
   RESUMEN_IMPACTO_CATEGORIA_DEMO,
   formularioCategoriaVacio,
 } from '../services/categoria-formulario.mock';
-import {
-  validarCategoriaFormulario,
-  slugificar,
-} from '../dtos/categoria-formulario.dto';
+import { validarCategoriaFormulario } from '../dtos/categoria-formulario.dto';
 import type {
   FormularioCategoria,
   OpcionesFormularioCategoria,
@@ -24,8 +21,6 @@ import type {
 
 const OPCIONES_VACIAS: OpcionesFormularioCategoria = {
   categoriasPadre: [],
-  filtros: [],
-  lineas: [],
   arbolPreview: [],
 };
 
@@ -34,9 +29,9 @@ const OPCIONES_VACIAS: OpcionesFormularioCategoria = {
  * M01 - STORE DEL FORMULARIO DE CATEGORÍA / SUBCATEGORÍA (Pinia, sintaxis setup)
  * Ubicación: src/modules/m01-dashboardcatalogo/store/categoria-formulario.store.ts
  *
- * Estado de las maquetas "ADMIN 10" y "ADMIN 11": modelo editable, catálogos,
- * resumen de impacto y guardado. Ante fallo o ausencia de endpoint usa las
- * semillas.
+ * Estado de las maquetas "ADMIN 10" y "ADMIN 11": modelo editable (nombre,
+ * padre cuando aplica, orden), catálogos, resumen de impacto y guardado. Ante
+ * fallo o ausencia de endpoint usa las semillas.
  * ==============================================================================
  */
 export const useCategoriaFormularioStore = defineStore('m01-categoria-formulario', () => {
@@ -45,8 +40,6 @@ export const useCategoriaFormularioStore = defineStore('m01-categoria-formulario
   const resumenImpacto = ref<ResumenImpactoCategoria | null>(null);
   const modo = ref<ModoFormularioCategoria>('crear');
   const categoriaId = ref<string | null>(null);
-  /** El usuario editó el slug a mano → dejar de autoderivarlo del nombre. */
-  const slugManual = ref<boolean>(false);
 
   const cargando = ref<boolean>(false);
   const guardando = ref<boolean>(false);
@@ -81,7 +74,6 @@ export const useCategoriaFormularioStore = defineStore('m01-categoria-formulario
     erroresValidacion.value = {};
     guardadoOk.value = false;
     usandoDatosDemo.value = false;
-    slugManual.value = Boolean(opts.id);
 
     await cargarOpciones();
 
@@ -107,7 +99,6 @@ export const useCategoriaFormularioStore = defineStore('m01-categoria-formulario
         productosAsociados: 0,
         subcategorias: 0,
         visibilidadPublica: true,
-        herenciaFiltros: 0,
         nivel: opts.tipo === 'subcategoria' ? 2 : 1,
       };
       formulario.value = formularioCategoriaVacio(opts.tipo);
@@ -117,32 +108,8 @@ export const useCategoriaFormularioStore = defineStore('m01-categoria-formulario
   }
 
   function actualizar(parcial: Partial<FormularioCategoria>): void {
-    const siguiente = { ...formulario.value, ...parcial };
-    // Autoderivar el slug del nombre mientras no se haya editado a mano.
-    if (parcial.nombre !== undefined && !slugManual.value) {
-      siguiente.slug = slugificar(parcial.nombre);
-    }
-    if (parcial.slug !== undefined) slugManual.value = true;
-    formulario.value = siguiente;
+    formulario.value = { ...formulario.value, ...parcial };
     for (const campo of Object.keys(parcial)) delete erroresValidacion.value[campo];
-  }
-
-  function alternarLista(campo: 'filtros' | 'lineas', valor: string): void {
-    const actuales = formulario.value[campo];
-    actualizar({
-      [campo]: actuales.includes(valor)
-        ? actuales.filter((v) => v !== valor)
-        : [...actuales, valor],
-    } as Partial<FormularioCategoria>);
-  }
-
-  function agregarEtiqueta(texto: string): void {
-    const limpia = texto.trim().toLowerCase();
-    if (!limpia || formulario.value.etiquetas.includes(limpia)) return;
-    actualizar({ etiquetas: [...formulario.value.etiquetas, limpia] });
-  }
-  function quitarEtiqueta(texto: string): void {
-    actualizar({ etiquetas: formulario.value.etiquetas.filter((t) => t !== texto) });
   }
 
   function validar(): boolean {
@@ -190,7 +157,6 @@ export const useCategoriaFormularioStore = defineStore('m01-categoria-formulario
     resumenImpacto.value = null;
     modo.value = 'crear';
     categoriaId.value = null;
-    slugManual.value = false;
     error.value = null;
     erroresValidacion.value = {};
     guardadoOk.value = false;
@@ -213,9 +179,6 @@ export const useCategoriaFormularioStore = defineStore('m01-categoria-formulario
     rutaJerarquia,
     inicializar,
     actualizar,
-    alternarLista,
-    agregarEtiqueta,
-    quitarEtiqueta,
     validar,
     guardarBorrador,
     guardarCambios,

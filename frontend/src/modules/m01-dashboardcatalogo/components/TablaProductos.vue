@@ -27,6 +27,10 @@
       row-key="id"
       :loading="cargando"
       mobile-cards
+      selectable
+      selection-label-key="nombre"
+      :model-value="seleccion"
+      @update:model-value="(claves) => $emit('update:seleccion', claves.map(String))"
     >
       <template #empty>
         <p class="text-sm text-neutral-medium">No hay productos que coincidan con los filtros aplicados.</p>
@@ -54,7 +58,6 @@
         >
           {{ (row as unknown as ProductoListado).nombre }}
         </button>
-        <span class="text-xs text-neutral-medium">SKU: {{ (row as unknown as ProductoListado).sku }}</span>
       </template>
 
       <template #cell-marca="{ row }">{{ (row as unknown as ProductoListado).marca }}</template>
@@ -152,9 +155,12 @@ const props = defineProps<{
   pagina: PaginaProductos;
   filtros: FiltrosProductos;
   cargando?: boolean;
+  /** Ids de las filas seleccionadas (`v-model:seleccion` desde la vista). */
+  seleccion?: string[];
 }>();
 
 const emit = defineEmits<{
+  (e: 'update:seleccion', ids: string[]): void;
   (e: 'ordenar', orden: OrdenProductos): void;
   (e: 'ir-pagina', numero: number): void;
   (e: 'abrir', id: string): void;

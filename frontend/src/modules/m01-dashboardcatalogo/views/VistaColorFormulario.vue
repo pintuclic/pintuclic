@@ -38,49 +38,26 @@
       <div class="space-y-5 lg:col-span-2">
         <TarjetaSeccionFormulario
           titulo="Información general"
-          descripcion="Nombre comercial y clasificación del color."
+          descripcion="Nombre comercial, marca y clasificación del color."
           :icono="Info"
         >
           <div class="grid gap-4 sm:grid-cols-2">
-            <CampoFormulario etiqueta="Nombre del color" requerido :error="erroresValidacion.nombre">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.nombre"
-                  type="text"
-                  :class="[claseInput, erroresValidacion.nombre && claseError]"
-                  placeholder="Ej. Amarillo Profundo"
-                  @input="set({ nombre: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
-            <CampoFormulario etiqueta="Nombre corto" :error="erroresValidacion.nombreCorto">
-              <template #default="{ id }">
-                <input
-                  :id="id"
-                  :value="formulario.nombreCorto"
-                  type="text"
-                  :class="claseInput"
-                  placeholder="Ej. Amarillo Prof."
-                  @input="set({ nombreCorto: ($event.target as HTMLInputElement).value })"
-                />
-              </template>
-            </CampoFormulario>
+            <Input name="nombre" label="Nombre del color" placeholder="Ej. Amarillo Profundo" />
+            <Input name="codigo" label="Código interno" placeholder="Ej. AP-001" />
           </div>
-          <CampoFormulario
-            etiqueta="Descripción"
-            :error="erroresValidacion.descripcion"
-            :contador="{ actual: formulario.descripcion.length, max: 500 }"
-          >
+          <CampoFormulario etiqueta="Marca" requerido :error="erroresValidacion.marcaId">
             <template #default="{ id }">
-              <textarea
+              <select
                 :id="id"
-                :value="formulario.descripcion"
-                rows="3"
-                :class="[claseInput, 'resize-y', erroresValidacion.descripcion && claseError]"
-                placeholder="Describe el color, su cobertura y para qué espacios está pensado."
-                @input="set({ descripcion: ($event.target as HTMLTextAreaElement).value })"
-              />
+                :value="formulario.marcaId"
+                :class="[claseInput, erroresValidacion.marcaId && claseError]"
+                @change="set({ marcaId: ($event.target as HTMLSelectElement).value })"
+              >
+                <option value="">Selecciona…</option>
+                <option v-for="op in opciones.marcas" :key="op.valor" :value="op.valor">
+                  {{ op.etiqueta }}
+                </option>
+              </select>
             </template>
           </CampoFormulario>
           <CampoFormulario etiqueta="Familia cromática" requerido :error="erroresValidacion.familiaClave">
@@ -102,7 +79,7 @@
 
         <TarjetaSeccionFormulario
           titulo="Valor cromático"
-          descripcion="El HEX es obligatorio; la muestra y el RGB se derivan de él."
+          descripcion="El HEX es obligatorio; el RGB y el CIELAB que viaja al backend se derivan de él."
           :icono="Palette"
         >
           <div class="flex flex-wrap items-start gap-4">
@@ -167,46 +144,19 @@
               </div>
             </div>
           </div>
+          <p class="text-xs text-neutral-medium">
+            <span class="font-medium text-neutral-dark">CIELAB (D65):</span>
+            <span v-if="cielab" class="tabular-nums">
+              L* {{ cielab.l }} · a* {{ cielab.a }} · b* {{ cielab.b }}
+            </span>
+            <span v-else>—</span>
+            · es el valor que se guarda en el catálogo.
+          </p>
         </TarjetaSeccionFormulario>
 
         <TarjetaSeccionFormulario
-          titulo="Bases y uso"
-          descripcion="Define sobre qué bases puede prepararse y en qué productos se ofrece."
-          :icono="Layers"
-        >
-          <div>
-            <p class="mb-1.5 text-sm font-medium text-neutral-dark">
-              Bases compatibles <span class="text-action" aria-hidden="true">*</span>
-            </p>
-            <ChipsSeleccion
-              :opciones="opciones.bases"
-              :seleccionados="formulario.basesCompatibles"
-              etiqueta-agregar="Agregar base"
-              @alternar="alternarBase"
-            />
-            <p v-if="erroresValidacion.basesCompatibles" class="mt-1.5 text-xs font-medium text-neutral-black">
-              {{ erroresValidacion.basesCompatibles }}
-            </p>
-          </div>
-          <CampoFormulario etiqueta="Productos donde puede usarse">
-            <template #default="{ id }">
-              <select
-                :id="id"
-                :value="formulario.politicaProductos"
-                :class="claseInput"
-                @change="set({ politicaProductos: ($event.target as HTMLSelectElement).value as PoliticaProductoColor })"
-              >
-                <option value="todos">Todos los productos</option>
-                <option value="especificos">Productos específicos</option>
-                <option value="personalizadas">Reglas personalizadas</option>
-              </select>
-            </template>
-          </CampoFormulario>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="Estado y visibilidad"
-          descripcion="Controla la publicación y dónde aparece este color."
+          titulo="Estado"
+          descripcion="Controla la publicación de este color en el catálogo."
           :icono="Eye"
         >
           <CampoFormulario etiqueta="Estado">
@@ -223,101 +173,8 @@
             </template>
           </CampoFormulario>
 
-          <fieldset class="space-y-2.5">
-            <legend class="mb-1 text-sm font-medium text-neutral-dark">Visibilidad</legend>
-            <label class="flex cursor-pointer items-start gap-2.5 text-sm">
-              <input
-                type="checkbox"
-                class="mt-0.5 h-4 w-4 shrink-0 accent-action"
-                :checked="formulario.mostrarEnTienda"
-                @change="set({ mostrarEnTienda: ($event.target as HTMLInputElement).checked })"
-              />
-              <span>
-                <span class="block font-medium text-neutral-dark">Mostrar en la tienda</span>
-                <span class="block text-xs text-neutral-medium">El color será visible en las fichas de producto.</span>
-              </span>
-            </label>
-            <label class="flex cursor-pointer items-start gap-2.5 text-sm">
-              <input
-                type="checkbox"
-                class="mt-0.5 h-4 w-4 shrink-0 accent-action"
-                :checked="formulario.incluirEnBuscador"
-                @change="set({ incluirEnBuscador: ($event.target as HTMLInputElement).checked })"
-              />
-              <span>
-                <span class="block font-medium text-neutral-dark">Incluir en el buscador</span>
-                <span class="block text-xs text-neutral-medium">Permite filtrar y encontrar productos por este color.</span>
-              </span>
-            </label>
-          </fieldset>
         </TarjetaSeccionFormulario>
 
-        <TarjetaSeccionFormulario
-          titulo="SEO y etiquetas"
-          descripcion="Mejora cómo se muestra el color en buscadores (opcional)."
-          :icono="Search"
-        >
-          <CampoFormulario
-            etiqueta="Título SEO"
-            :contador="{ actual: formulario.tituloSeo.length, max: 60 }"
-          >
-            <template #default="{ id }">
-              <input
-                :id="id"
-                :value="formulario.tituloSeo"
-                type="text"
-                :class="claseInput"
-                placeholder="Color | Pintu Clic"
-                @input="set({ tituloSeo: ($event.target as HTMLInputElement).value })"
-              />
-            </template>
-          </CampoFormulario>
-          <CampoFormulario
-            etiqueta="Meta descripción"
-            :contador="{ actual: formulario.metaDescripcion.length, max: 160 }"
-          >
-            <template #default="{ id }">
-              <textarea
-                :id="id"
-                :value="formulario.metaDescripcion"
-                rows="2"
-                :class="[claseInput, 'resize-y']"
-                placeholder="Resumen para buscadores."
-                @input="set({ metaDescripcion: ($event.target as HTMLTextAreaElement).value })"
-              />
-            </template>
-          </CampoFormulario>
-          <CampoFormulario etiqueta="Etiquetas">
-            <EntradaEtiquetas
-              :etiquetas="formulario.etiquetas"
-              placeholder="Ej. amarillo, vibrante, interiores…"
-              @agregar="agregarEtiqueta"
-              @quitar="quitarEtiqueta"
-            />
-          </CampoFormulario>
-        </TarjetaSeccionFormulario>
-
-        <TarjetaSeccionFormulario
-          titulo="Notas internas"
-          descripcion="Información privada para uso del equipo (opcional)."
-          :icono="FileText"
-        >
-          <CampoFormulario
-            etiqueta="Notas"
-            :contador="{ actual: formulario.notasInternas.length, max: 1000 }"
-          >
-            <template #default="{ id }">
-              <textarea
-                :id="id"
-                :value="formulario.notasInternas"
-                rows="3"
-                :class="[claseInput, 'resize-y']"
-                placeholder="Ej. Color recomendado para campañas de temporada."
-                @input="set({ notasInternas: ($event.target as HTMLTextAreaElement).value })"
-              />
-            </template>
-          </CampoFormulario>
-        </TarjetaSeccionFormulario>
       </div>
 
       <!-- Aside -->
@@ -346,9 +203,7 @@
               <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
               {{ ETIQUETA_ESTADO[formulario.estado] }}
             </span>
-            <p v-if="formulario.descripcion" class="line-clamp-3 text-xs text-neutral-medium">
-              {{ formulario.descripcion }}
-            </p>
+            <p class="text-xs text-neutral-medium">{{ marcaNombre }}</p>
             <div class="grid grid-cols-2 gap-2 pt-1 text-center">
               <div>
                 <p class="text-sm font-bold text-neutral-black tabular-nums">{{ previa.productos }}</p>
@@ -417,35 +272,35 @@
  * M01 - VISTA: COLORES · CREAR / EDITAR  (maqueta "ADMIN 18")
  * Ubicación: src/modules/m01-dashboardcatalogo/views/VistaColorFormulario.vue
  *
- * Alta y edición de colores (HU-CAT-05): información general, valor cromático
- * (HEX + RGB derivado), bases y uso, estado/visibilidad, SEO/etiquetas y notas,
- * con vista previa en vivo y bloque informativo de impacto y uso.
+ * Alta y edición de colores (HU-CAT-05): información general (nombre, código,
+ * marca y familia cromática), valor cromático (HEX con RGB y CIELAB derivados)
+ * y estado de publicación, con vista previa en vivo y bloque de impacto y uso.
+ * El payload enviado al backend lleva `cielab` (RF-CAT-05-02), derivado del HEX.
  *
  * Permiso requerido: «Gestión del catálogo» (M17), revalidado en el servidor.
  * ==============================================================================
  */
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
+import { useForm } from 'vee-validate';
+import { toTypedSchema } from '@vee-validate/zod';
 import {
   ArrowLeft,
   Save,
   Info,
   Palette,
-  Layers,
   Eye,
-  Search,
-  FileText,
   BarChart3,
   CheckCircle2,
   Circle,
 } from 'lucide-vue-next';
 import { Button } from '@/core/components';
+import Input from '@/core/components/forms/Input.vue';
 import TarjetaSeccionFormulario from '../components/TarjetaSeccionFormulario.vue';
 import CampoFormulario from '../components/CampoFormulario.vue';
-import EntradaEtiquetas from '../components/EntradaEtiquetas.vue';
-import ChipsSeleccion from '../components/ChipsSeleccion.vue';
 import { useColorFormulario } from '../composables/useColorFormulario';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
-import type { EstadoColor, FormularioColor, PoliticaProductoColor } from '../interfaces';
+import { colorFormularioSchema } from '../dtos';
+import type { EstadoColor, FormularioColor } from '../interfaces';
 
 const props = defineProps<{
   /** Id del color a editar (lo inyecta el router con `props: true`). Vacío = crear. */
@@ -463,14 +318,13 @@ const {
   erroresValidacion,
   guardadoOk,
   rgb,
+  cielab,
   familiaNombre,
+  marcaNombre,
   impacto,
   inicializar,
   actualizar,
   actualizarRgb,
-  alternarBase,
-  agregarEtiqueta,
-  quitarEtiqueta,
   guardarBorrador,
   guardarCambios,
 } = useColorFormulario();
@@ -497,6 +351,33 @@ const CLASES_ESTADO: Record<EstadoColor, string> = {
 function set(parcial: Partial<FormularioColor>): void {
   actualizar(parcial);
 }
+
+// vee-validate: solo para UX de tipeo en los campos de texto migrados
+// (nombre, codigo). hex/R/G/B quedan nativos: hex es lógica
+// de color-picking (fuera de alcance) y R/G/B son z.number() derivados de él
+// (un <input type="number"> vía v-model entrega string, lo que rompería la
+// validación tipada). La autoridad de validación al guardar sigue siendo
+// `validarColorFormulario` en el store.
+const { values, setValues } = useForm({ validationSchema: toTypedSchema(colorFormularioSchema) });
+
+watch(
+  () => formulario.value,
+  (f) => setValues(f, false),
+  { immediate: true }
+);
+
+watch(
+  () => values.nombre,
+  (v) => {
+    if (v !== undefined && v !== formulario.value.nombre) actualizar({ nombre: v });
+  }
+);
+watch(
+  () => values.codigo,
+  (v) => {
+    if (v !== undefined && v !== formulario.value.codigo) actualizar({ codigo: v });
+  }
+);
 
 const { irA } = usePanelNavegacion();
 </script>

@@ -4,14 +4,17 @@
  * Ubicación: src/modules/m01-dashboardcatalogo/interfaces/marca-formulario.interface.ts
  *
  * Tipos de la maqueta "ADMIN 13 - Crear / editar marca" (HU-CAT-04).
- * RF-CAT-04-01/02: nombre y logotipo obligatorios; unicidad de nombre validada
- * en el servidor. Se pueden asociar líneas, colores y bases.
+ * Sincronizado 1:1 con `CrearMarcaDto` / `ActualizarMarcaDto` del backend real
+ * (backend/src/modules/m01-catalogo/dtos/marcas.dto.ts): únicamente `nombre` y
+ * `logotipo`. RF-CAT-04-01/02: ambos obligatorios; unicidad de nombre validada
+ * en el servidor. `estado` es un concepto de UI local (activar/desactivar la
+ * marca) que no viaja en ese DTO — mismo tratamiento que `EstadoPublicacion`
+ * en el formulario de producto.
  *
  * Permiso M17 requerido: «Gestión del catálogo», revalidado en el servidor.
  * Pureza estricta de compilación TypeScript: 0 bytes de runtime.
  * ==============================================================================
  */
-import type { OpcionSelect } from './productos.interface';
 import type { EstadoMarca } from './marcas.interface';
 
 /** Modo de la vista de formulario. */
@@ -20,36 +23,9 @@ export type ModoFormularioMarca = 'crear' | 'editar';
 /** Modelo editable de la marca. */
 export interface FormularioMarca {
   nombre: string;
-  descripcion: string;
+  /** Logotipo (data URL base64, jpeg/png/webp, máx. 5MB — RF-CAT-04-02). */
   logoUrl: string | null;
-
-  // Datos de contacto
-  sitioWeb: string;
-  paisOrigen: string;
-  contactoEmail: string;
-  telefono: string;
-
-  // Relaciones del catálogo
-  lineas: string[];
-  /** Política de colores: 'todos' o 'especificos'. */
-  politicaColor: string;
-  basesCompatibles: string[];
-
-  // SEO
-  tituloSeo: string;
-  descripcionSeo: string;
-  etiquetas: string[];
-
-  notasInternas: string;
   estado: EstadoMarca;
-}
-
-/** Catálogos que llenan los selectores del formulario. */
-export interface OpcionesFormularioMarca {
-  paises: OpcionSelect[];
-  lineas: OpcionSelect[];
-  bases: OpcionSelect[];
-  politicasColor: OpcionSelect[];
 }
 
 /** Bloque del checklist de publicación de la marca. */
@@ -58,13 +34,6 @@ export interface SeccionChecklistMarca {
   etiqueta: string;
   completa: boolean;
   opcional: boolean;
-}
-
-/** Indicadores de la tarjeta "Vista previa de la marca". */
-export interface ResumenPreviaMarca {
-  productos: number;
-  lineas: number;
-  colores: number;
 }
 
 /** Respuesta de crear / actualizar marca. */

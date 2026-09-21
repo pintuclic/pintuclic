@@ -14,24 +14,12 @@ export const DETALLE_MARCA_DEMO: DetalleAdministrativoMarca = {
   id: 'pintuco',
   nombre: 'Pintuco',
   estado: 'activa',
-  eslogan: 'Líder en pinturas y soluciones para un mejor vivir',
-  descripcion:
-    'En Pintuco creemos en el poder del color para transformar la vida de las personas. Desarrollamos pinturas, recubrimientos y soluciones especializadas para el hogar, la industria y la construcción, con altos estándares de calidad, innovación y sostenibilidad. Nuestro propósito es proteger y embellecer todo lo que importa.',
   logoUrl: LOGO_MARCA_DEMO['pintuco'] ?? null,
-
-  sitioWeb: 'https://www.pintuco.com',
-  paisOrigen: 'Colombia',
-  anioFundacion: 1954,
-  tipoMarca: 'Fabricante',
 
   productosAsociados: 245,
   lineasComerciales: 12,
   coloresActivos: 186,
-  basesAsociadas: 8,
 
-  visibleEnTienda: true,
-  apareceEnBusquedas: true,
-  ordenVisualizacion: 1,
   actualizadoEn: '2025-05-27T10:24:00-05:00',
   actualizadoPor: 'Carlos Álvarez',
 
@@ -50,23 +38,10 @@ export const DETALLE_MARCA_DEMO: DetalleAdministrativoMarca = {
     { nombre: 'Verde Olivo', hex: '#5A7D2A', codigo: 'VO-008' },
     { nombre: 'Gris Moderno', hex: '#6C757D', codigo: 'GM-003' },
   ],
-  productosDestacados: [
+  productosPatrocinados: [
     { id: 'prd-001', nombre: 'Viniltex Advanced', precio: 89900 },
     { id: 'prd-006', nombre: 'Pintura Acrílica Premium', precio: 92900 },
     { id: 'prd-007', nombre: 'Viniltex Tradicional', precio: 28900 },
-  ],
-  bases: ['Base agua', 'Base solvente', 'Base universal', 'Base epóxica'],
-
-  imagenes: [
-    { id: 'img-1', nombre: 'Logo principal', tipo: 'imagen', url: LOGO_MARCA_DEMO['pintuco'] ?? '', peso: null },
-    { id: 'img-2', nombre: 'Logo alternativo', tipo: 'imagen', url: LOGO_MARCA_DEMO['corona'] ?? '', peso: null },
-    { id: 'img-3', nombre: 'Banner de marca', tipo: 'imagen', url: LOGO_MARCA_DEMO['viniltex'] ?? '', peso: null },
-    { id: 'img-4', nombre: 'Imagen institucional', tipo: 'imagen', url: LOGO_MARCA_DEMO['sika'] ?? '', peso: null },
-  ],
-  documentos: [
-    { id: 'doc-1', nombre: 'Guía de marca', tipo: 'documento', url: '#', peso: 'PDF · 4.2 MB' },
-    { id: 'doc-2', nombre: 'Catálogo general', tipo: 'documento', url: '#', peso: 'PDF · 12.8 MB' },
-    { id: 'doc-3', nombre: 'Material promocional', tipo: 'documento', url: '#', peso: 'ZIP · 28.5 MB' },
   ],
   historial: [
     { id: 'h-1', fechaHora: '2025-05-27T10:24:00-05:00', descripcion: 'Marca actualizada', usuario: 'Carlos Álvarez' },

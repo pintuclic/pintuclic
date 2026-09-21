@@ -27,6 +27,10 @@
       row-key="id"
       :loading="cargando"
       mobile-cards
+      selectable
+      selection-label-key="nombre"
+      :model-value="seleccion"
+      @update:model-value="(claves) => $emit('update:seleccion', claves.map(String))"
     >
       <template #empty>
         <p class="text-sm text-neutral-medium">No hay líneas comerciales que coincidan con los filtros aplicados.</p>
@@ -52,7 +56,6 @@
         >
           {{ (row as unknown as LineaListado).nombre }}
         </button>
-        <span class="text-xs text-neutral-medium">{{ (row as unknown as LineaListado).descripcionCorta }}</span>
       </template>
 
       <template #cell-marca="{ row }">{{ (row as unknown as LineaListado).marca }}</template>
@@ -121,9 +124,12 @@ const props = defineProps<{
   pagina: PaginaLineas;
   orden: OrdenLineas;
   cargando?: boolean;
+  /** Ids de las filas seleccionadas (`v-model:seleccion` desde la vista). */
+  seleccion?: string[];
 }>();
 
 defineEmits<{
+  (e: 'update:seleccion', ids: string[]): void;
   (e: 'editar', linea: LineaListado): void;
   (e: 'desactivar', linea: LineaListado): void;
   (e: 'ordenar', orden: OrdenLineas): void;

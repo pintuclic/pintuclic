@@ -33,21 +33,15 @@ export function hayFiltrosMarcasActivos(filtros: FiltrosMarcasDTO): boolean {
   return filtros.busqueda.trim() !== '' || filtros.estado !== null;
 }
 
-/** Alta / edición de una marca (panel lateral). */
+/** Alta / edición de una marca (panel lateral). Sincronizado con `CrearMarcaDto`. */
 export const marcaFormSchema = z.object({
   nombre: z
     .string({ required_error: 'El nombre de la marca es obligatorio' })
     .trim()
-    .min(2, 'Debe tener al menos 2 caracteres')
-    .max(80, 'Máximo 80 caracteres'),
-  descripcionCorta: z
-    .string({ required_error: 'La descripción corta es obligatoria' })
-    .trim()
-    .min(1, 'La descripción corta es obligatoria')
-    .max(120, 'Máximo 120 caracteres'),
+    .min(1, 'El nombre de la marca es obligatorio')
+    .max(100, 'Máximo 100 caracteres'),
   logoUrl: z.string().nullable().default(null),
   estado: estadoMarcaSchema.default('activa'),
-  lineas: z.array(z.string().trim().min(1)).default([]),
 });
 
 export type MarcaFormDTO = z.infer<typeof marcaFormSchema>;

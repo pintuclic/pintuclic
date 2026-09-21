@@ -5,8 +5,14 @@
  *
  * Tipos de las maquetas "ADMIN 10 - Crear / editar categoría", "ADMIN 11 - Crear
  * nueva subcategoría" y "ADMIN 12 - Modal desactivar categoría/subcategoría".
- * HU-CAT-01: exactamente dos niveles, nombre ≤ 100 obligatorio, padre
- * obligatorio en la subcategoría, baja lógica en cascada (RF-CAT-01-01..05).
+ * Sincronizado 1:1 con `CrearCategoriaDto`/`CrearSubcategoriaDto` del backend
+ * real (backend/src/modules/m01-catalogo/dtos/categorias.dto.ts y
+ * subcategorias.dto.ts): nombre (≤ 100, obligatorio), orden (opcional) y,
+ * en subcategoría, id_categoria (padre, obligatorio). `tipo` distingue la UI
+ * de categoría/subcategoría (no es un campo del backend, cada nivel tiene su
+ * propio DTO). `estado` es un concepto de UI local (publicar/desactivar) que
+ * no viaja en esos DTOs — mismo tratamiento que `EstadoPublicacion` en el
+ * formulario de producto.
  *
  * Permiso M17 requerido: «Gestión del catálogo», revalidado en el servidor.
  * Pureza estricta de compilación TypeScript: 0 bytes de runtime.
@@ -22,25 +28,12 @@ export type ModoFormularioCategoria = 'crear' | 'editar';
 export interface FormularioCategoria {
   tipo: TipoNodoCategoria;
   nombre: string;
-  /** Slug para la URL. Solo letras, números y guiones (RF-CAT-01). */
-  slug: string;
-  descripcion: string;
-  iconoUrl: string | null;
 
-  /** Obligatorio cuando `tipo === 'subcategoria'`. */
+  /** Obligatorio cuando `tipo === 'subcategoria'` (id_categoria). */
   padreId: string | null;
   estado: EstadoCategoria;
+  /** Orden de visualización dentro de su nivel. */
   ordenVisualizacion: number;
-
-  /** Ids de atributos/filtros que heredan los productos de la categoría. */
-  filtros: string[];
-  /** Ids de líneas comerciales asociadas. */
-  lineas: string[];
-
-  tituloSeo: string;
-  metaDescripcion: string;
-  etiquetas: string[];
-  notas: string;
 }
 
 /** Nodo del árbol usado en la "Vista previa en la jerarquía". */
@@ -53,8 +46,6 @@ export interface NodoPreviewCategoria {
 /** Catálogos que llenan los selectores del formulario. */
 export interface OpcionesFormularioCategoria {
   categoriasPadre: OpcionSelect[];
-  filtros: OpcionSelect[];
-  lineas: OpcionSelect[];
   arbolPreview: NodoPreviewCategoria[];
 }
 
@@ -63,7 +54,6 @@ export interface ResumenImpactoCategoria {
   productosAsociados: number;
   subcategorias: number;
   visibilidadPublica: boolean;
-  herenciaFiltros: number;
   nivel: 1 | 2;
 }
 

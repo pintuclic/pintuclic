@@ -23,14 +23,14 @@ export const RESUMEN_MARCAS_DEMO: ResumenMarcas = {
 };
 
 export const MARCAS_DEMO: MarcaListado[] = [
-  { id: 'pintuco', nombre: 'Pintuco', descripcionCorta: 'El color de la calidad', logoUrl: null, lineasAsociadas: 12, productos: 342, colores: 48, estado: 'activa' },
-  { id: 'corona', nombre: 'Corona', descripcionCorta: 'Hogares que inspiran', logoUrl: null, lineasAsociadas: 8, productos: 218, colores: 36, estado: 'activa' },
-  { id: 'sika', nombre: 'Sika', descripcionCorta: 'Construyendo confianza', logoUrl: null, lineasAsociadas: 6, productos: 124, colores: 22, estado: 'activa' },
-  { id: 'viniltex', nombre: 'Viniltex', descripcionCorta: 'Pintura que perdura', logoUrl: null, lineasAsociadas: 5, productos: 180, colores: 28, estado: 'activa' },
-  { id: '3m', nombre: '3M', descripcionCorta: 'Ciencia. Aplicada a la vida.', logoUrl: null, lineasAsociadas: 4, productos: 96, colores: 16, estado: 'activa' },
-  { id: 'rust-oleum', nombre: 'Rust-Oleum', descripcionCorta: 'Protege y renueva', logoUrl: null, lineasAsociadas: 3, productos: 72, colores: 14, estado: 'inactiva' },
-  { id: 'flex', nombre: 'Flex', descripcionCorta: 'Soluciones en pintura', logoUrl: null, lineasAsociadas: 4, productos: 68, colores: 12, estado: 'activa' },
-  { id: 'tak', nombre: 'Tak', descripcionCorta: 'Innovación en cada obra', logoUrl: null, lineasAsociadas: 3, productos: 54, colores: 10, estado: 'inactiva' },
+  { id: 'pintuco', nombre: 'Pintuco', logoUrl: null, lineasAsociadas: 12, productos: 342, colores: 48, estado: 'activa' },
+  { id: 'corona', nombre: 'Corona', logoUrl: null, lineasAsociadas: 8, productos: 218, colores: 36, estado: 'activa' },
+  { id: 'sika', nombre: 'Sika', logoUrl: null, lineasAsociadas: 6, productos: 124, colores: 22, estado: 'activa' },
+  { id: 'viniltex', nombre: 'Viniltex', logoUrl: null, lineasAsociadas: 5, productos: 180, colores: 28, estado: 'activa' },
+  { id: '3m', nombre: '3M', logoUrl: null, lineasAsociadas: 4, productos: 96, colores: 16, estado: 'activa' },
+  { id: 'rust-oleum', nombre: 'Rust-Oleum', logoUrl: null, lineasAsociadas: 3, productos: 72, colores: 14, estado: 'inactiva' },
+  { id: 'flex', nombre: 'Flex', logoUrl: null, lineasAsociadas: 4, productos: 68, colores: 12, estado: 'activa' },
+  { id: 'tak', nombre: 'Tak', logoUrl: null, lineasAsociadas: 3, productos: 54, colores: 10, estado: 'inactiva' },
 ];
 
 // Logo de la maqueta "ADMIN 06": monograma de la marca mientras el backend no
@@ -39,22 +39,11 @@ for (const marca of MARCAS_DEMO) {
   marca.logoUrl = LOGO_MARCA_DEMO[marca.id] ?? null;
 }
 
-/** Líneas de ejemplo para el panel de edición (marca "Pintuco"). */
-export const LINEAS_MARCA_DEMO: Record<string, string[]> = {
-  pintuco: [
-    'Pinturas interiores',
-    'Pinturas exteriores',
-    'Esmaltes',
-    'Impermeabilizantes',
-    'Maderas',
-  ],
-};
-
 export function consultarMarcasDemo(filtros: FiltrosMarcasDTO): PaginaMarcas {
   const q = filtros.busqueda.trim().toLowerCase();
 
   const filtrados = MARCAS_DEMO.filter((m) => {
-    if (q && !`${m.nombre} ${m.descripcionCorta}`.toLowerCase().includes(q)) return false;
+    if (q && !m.nombre.toLowerCase().includes(q)) return false;
     if (filtros.estado && m.estado !== filtros.estado) return false;
     return true;
   });

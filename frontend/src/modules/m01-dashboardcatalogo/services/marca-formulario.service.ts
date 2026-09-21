@@ -2,7 +2,6 @@ import { apiClient } from '@/core/api/axios';
 import type {
   ApiResponse,
   FormularioMarca,
-  OpcionesFormularioMarca,
   ResultadoGuardadoMarca,
 } from '../interfaces';
 
@@ -19,14 +18,6 @@ import type {
 const BASE = '/catalogo/marcas';
 
 export const MarcaFormularioService = {
-  /** GET /api/catalogo/marcas/opciones-formulario — catálogos de los selectores. */
-  async obtenerOpciones(): Promise<ApiResponse<OpcionesFormularioMarca>> {
-    const { data } = await apiClient.get<ApiResponse<OpcionesFormularioMarca>>(
-      `${BASE}/opciones-formulario`
-    );
-    return data;
-  },
-
   /** GET /api/catalogo/marcas/:id — carga una marca para editar. */
   async obtenerMarca(id: string): Promise<ApiResponse<FormularioMarca>> {
     const { data } = await apiClient.get<ApiResponse<FormularioMarca>>(`${BASE}/${id}`);

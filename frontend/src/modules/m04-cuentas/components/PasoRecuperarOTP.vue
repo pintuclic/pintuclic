@@ -11,7 +11,7 @@
       <input 
         v-for="(_, index) in code" 
         :key="index"
-        :ref="el => inputs[index] = el"
+        :ref="(el) => { inputs[index] = el as HTMLInputElement | null; }"
         v-model="code[index]"
         type="text"
         inputmode="numeric"

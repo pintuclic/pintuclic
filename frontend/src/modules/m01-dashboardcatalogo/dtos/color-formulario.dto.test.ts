@@ -25,9 +25,9 @@ describe('hexARgb', () => {
 describe('validarColorFormulario', () => {
   const base = {
     nombre: 'Amarillo Profundo',
+    marcaId: 'pintuco',
     familiaClave: 'amarillos',
     hex: '#FFC928',
-    basesCompatibles: ['base-agua'],
   };
 
   it('acepta un formulario válido con solo los campos obligatorios', () => {
@@ -42,16 +42,23 @@ describe('validarColorFormulario', () => {
     expect(errores.nombre).toBeDefined();
   });
 
+  it('exige la marca (id_marca es obligatorio en el backend)', () => {
+    const { valido, errores } = validarColorFormulario({ ...base, marcaId: '' });
+    expect(valido).toBe(false);
+    expect(errores.marcaId).toBeDefined();
+  });
+
+  it('acepta un código opcional y lo limita a 60 caracteres', () => {
+    expect(validarColorFormulario({ ...base, codigo: 'AP-001' }).valido).toBe(true);
+    const { valido, errores } = validarColorFormulario({ ...base, codigo: 'x'.repeat(61) });
+    expect(valido).toBe(false);
+    expect(errores.codigo).toBeDefined();
+  });
+
   it('exige un HEX con formato válido', () => {
     const { valido, errores } = validarColorFormulario({ ...base, hex: 'azul' });
     expect(valido).toBe(false);
     expect(errores.hex).toBeDefined();
-  });
-
-  it('exige al menos una base compatible', () => {
-    const { valido, errores } = validarColorFormulario({ ...base, basesCompatibles: [] });
-    expect(valido).toBe(false);
-    expect(errores.basesCompatibles).toBeDefined();
   });
 
   it('reporta un solo error por campo aunque el schema falle en varios lugares', () => {

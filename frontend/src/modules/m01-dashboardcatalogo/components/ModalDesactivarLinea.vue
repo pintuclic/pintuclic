@@ -24,7 +24,7 @@
         </span>
         <div class="min-w-0">
           <p class="font-medium text-neutral-black">{{ linea.nombre }}</p>
-          <p class="truncate text-xs text-neutral-medium">{{ linea.descripcionCorta }}</p>
+          <p class="truncate text-xs text-neutral-medium">Gama {{ linea.gamaComercial }}</p>
         </div>
         <span class="ml-auto shrink-0 rounded-button bg-neutral-light px-2 py-0.5 text-[11px] font-medium text-neutral-medium">
           {{ linea.marca }}

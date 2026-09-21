@@ -29,6 +29,10 @@
       row-key="id"
       :loading="cargando"
       mobile-cards
+      selectable
+      selection-label-key="productoNombre"
+      :model-value="seleccion"
+      @update:model-value="(claves) => $emit('update:seleccion', claves.map(String))"
     >
       <template #empty>
         <p class="text-sm text-neutral-medium">No hay variantes que coincidan con los filtros aplicados.</p>
@@ -172,9 +176,12 @@ const props = defineProps<{
   pagina: PaginaVariantes;
   filtros: FiltrosVariantes;
   cargando?: boolean;
+  /** Ids de las filas seleccionadas (`v-model:seleccion` desde la vista). */
+  seleccion?: string[];
 }>();
 
 const emit = defineEmits<{
+  (e: 'update:seleccion', ids: string[]): void;
   (e: 'ordenar', campo: CampoOrdenVariantes): void;
   (e: 'ir-pagina', numero: number): void;
   (e: 'por-pagina', numero: number): void;

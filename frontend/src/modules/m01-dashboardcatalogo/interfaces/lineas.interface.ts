@@ -21,8 +21,6 @@ export type OrdenLineas = 'recientes' | 'nombre_asc' | 'nombre_desc' | 'producto
 export interface LineaListado {
   id: string;
   nombre: string;
-  /** Subtítulo descriptivo de la gama (p. ej. "Línea premium interior"). */
-  descripcionCorta: string;
   /** URL de la imagen representativa; `null` mientras no se ha cargado. */
   imagenUrl: string | null;
   marca: string;

@@ -2,46 +2,29 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import axios from 'axios';
 import { MarcaFormularioService } from '../services/marca-formulario.service';
-import {
-  OPCIONES_FORMULARIO_MARCA_DEMO,
-  FORMULARIO_MARCA_DEMO,
-  formularioMarcaVacio,
-} from '../services/marca-formulario.mock';
+import { FORMULARIO_MARCA_DEMO, formularioMarcaVacio } from '../services/marca-formulario.mock';
 import { validarMarcaFormulario } from '../dtos/marca-formulario.dto';
 import type {
   FormularioMarca,
-  OpcionesFormularioMarca,
   ModoFormularioMarca,
   SeccionChecklistMarca,
   ProgresoChecklist,
-  ResumenPreviaMarca,
   EstadoMarca,
   ApiErrorResponse,
 } from '../interfaces';
-
-const OPCIONES_VACIAS: OpcionesFormularioMarca = {
-  paises: [],
-  lineas: [],
-  bases: [],
-  politicasColor: [],
-};
-
-const PREVIA_VACIA: ResumenPreviaMarca = { productos: 0, lineas: 0, colores: 0 };
 
 /**
  * ==============================================================================
  * M01 - STORE DEL FORMULARIO DE MARCA (Pinia, sintaxis setup)
  * Ubicación: src/modules/m01-dashboardcatalogo/store/marca-formulario.store.ts
  *
- * Estado de la maqueta "ADMIN 13 - Crear / editar marca": modelo editable,
- * catálogos, checklist de publicación derivado, resumen de la vista previa y
- * guardado. Ante fallo o ausencia de endpoint usa las semillas.
+ * Estado de la maqueta "ADMIN 13 - Crear / editar marca": modelo editable
+ * (nombre + logotipo), checklist de publicación derivado y guardado. Ante
+ * fallo o ausencia de endpoint usa la semilla local.
  * ==============================================================================
  */
 export const useMarcaFormularioStore = defineStore('m01-marca-formulario', () => {
   const formulario = ref<FormularioMarca>(formularioMarcaVacio());
-  const opciones = ref<OpcionesFormularioMarca>({ ...OPCIONES_VACIAS });
-  const resumenPrevia = ref<ResumenPreviaMarca>({ ...PREVIA_VACIA });
   const modo = ref<ModoFormularioMarca>('crear');
   const marcaId = ref<string | null>(null);
 
@@ -55,12 +38,8 @@ export const useMarcaFormularioStore = defineStore('m01-marca-formulario', () =>
   const checklist = computed<SeccionChecklistMarca[]>(() => {
     const f = formulario.value;
     return [
-      { clave: 'general', etiqueta: 'Información general', completa: f.nombre.trim().length >= 2 && f.descripcion.trim().length > 0, opcional: false },
-      { clave: 'identidad', etiqueta: 'Identidad visual (logo)', completa: Boolean(f.logoUrl), opcional: false },
-      { clave: 'datos', etiqueta: 'Datos de la marca', completa: f.sitioWeb.trim().length > 0 || f.paisOrigen.trim().length > 0, opcional: false },
-      { clave: 'relaciones', etiqueta: 'Relaciones del catálogo', completa: f.lineas.length > 0, opcional: false },
-      { clave: 'seo', etiqueta: 'SEO y etiquetas', completa: f.tituloSeo.trim().length > 0 || f.etiquetas.length > 0, opcional: false },
-      { clave: 'notas', etiqueta: 'Notas internas', completa: f.notasInternas.trim().length > 0, opcional: true },
+      { clave: 'nombre', etiqueta: 'Nombre de la marca', completa: f.nombre.trim().length > 0, opcional: false },
+      { clave: 'logo', etiqueta: 'Logotipo', completa: Boolean(f.logoUrl), opcional: false },
     ];
   });
 
@@ -69,21 +48,9 @@ export const useMarcaFormularioStore = defineStore('m01-marca-formulario', () =>
     total: checklist.value.length,
   }));
 
-  const puedePublicar = computed(() =>
-    checklist.value.filter((s) => !s.opcional).every((s) => s.completa)
-  );
+  const puedePublicar = computed(() => checklist.value.every((s) => s.completa));
 
   // --- Acciones -----------------------------------------------------------
-  async function cargarOpciones(): Promise<void> {
-    try {
-      const respuesta = await MarcaFormularioService.obtenerOpciones();
-      opciones.value = respuesta.data;
-    } catch {
-      opciones.value = OPCIONES_FORMULARIO_MARCA_DEMO;
-      usandoDatosDemo.value = true;
-    }
-  }
-
   async function inicializar(id?: string): Promise<void> {
     cargando.value = true;
     error.value = null;
@@ -91,25 +58,20 @@ export const useMarcaFormularioStore = defineStore('m01-marca-formulario', () =>
     guardadoOk.value = false;
     usandoDatosDemo.value = false;
 
-    await cargarOpciones();
-
     if (id) {
       modo.value = 'editar';
       marcaId.value = id;
       try {
         const respuesta = await MarcaFormularioService.obtenerMarca(id);
         formulario.value = respuesta.data;
-        resumenPrevia.value = { productos: 245, lineas: respuesta.data.lineas.length, colores: 72 };
       } catch {
         formulario.value = { ...FORMULARIO_MARCA_DEMO };
-        resumenPrevia.value = { productos: 245, lineas: 5, colores: 72 };
         usandoDatosDemo.value = true;
       }
     } else {
       modo.value = 'crear';
       marcaId.value = null;
       formulario.value = formularioMarcaVacio();
-      resumenPrevia.value = { ...PREVIA_VACIA };
     }
 
     cargando.value = false;
@@ -120,23 +82,6 @@ export const useMarcaFormularioStore = defineStore('m01-marca-formulario', () =>
     for (const campo of Object.keys(parcial)) delete erroresValidacion.value[campo];
   }
 
-  function alternarLista(campo: 'lineas' | 'basesCompatibles', valor: string): void {
-    const actuales = formulario.value[campo];
-    actualizar({
-      [campo]: actuales.includes(valor)
-        ? actuales.filter((v) => v !== valor)
-        : [...actuales, valor],
-    } as Partial<FormularioMarca>);
-  }
-
-  function agregarEtiqueta(texto: string): void {
-    const limpia = texto.trim().toLowerCase();
-    if (!limpia || formulario.value.etiquetas.includes(limpia)) return;
-    actualizar({ etiquetas: [...formulario.value.etiquetas, limpia] });
-  }
-  function quitarEtiqueta(texto: string): void {
-    actualizar({ etiquetas: formulario.value.etiquetas.filter((t) => t !== texto) });
-  }
   function quitarLogo(): void {
     actualizar({ logoUrl: null });
   }
@@ -182,8 +127,6 @@ export const useMarcaFormularioStore = defineStore('m01-marca-formulario', () =>
 
   function reiniciar(): void {
     formulario.value = formularioMarcaVacio();
-    opciones.value = { ...OPCIONES_VACIAS };
-    resumenPrevia.value = { ...PREVIA_VACIA };
     modo.value = 'crear';
     marcaId.value = null;
     error.value = null;
@@ -194,8 +137,6 @@ export const useMarcaFormularioStore = defineStore('m01-marca-formulario', () =>
 
   return {
     formulario,
-    opciones,
-    resumenPrevia,
     modo,
     marcaId,
     cargando,
@@ -209,9 +150,6 @@ export const useMarcaFormularioStore = defineStore('m01-marca-formulario', () =>
     puedePublicar,
     inicializar,
     actualizar,
-    alternarLista,
-    agregarEtiqueta,
-    quitarEtiqueta,
     quitarLogo,
     validar,
     guardarBorrador,

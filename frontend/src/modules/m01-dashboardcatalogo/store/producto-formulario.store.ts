@@ -8,7 +8,8 @@ import {
   EDICION_PRODUCTO_DEMO,
   formularioProductoVacio,
 } from '../services/producto-formulario.mock';
-import { validarProductoFormulario } from '../dtos/producto-formulario.dto';
+import { PRODUCTOS_DEMO } from '../services/productos.mock';
+import { validarProductoFormulario, validarImagenProducto } from '../dtos/producto-formulario.dto';
 import type {
   FormularioProducto,
   OpcionesFormularioProducto,
@@ -19,25 +20,16 @@ import type {
   ColorCatalogo,
   DetalleEdicionProducto,
   ApiErrorResponse,
+  ProductoListado,
 } from '../interfaces';
 
 const OPCIONES_VACIAS: OpcionesFormularioProducto = {
   categorias: [],
   subcategorias: [],
-  tiposProducto: [],
+  tiposResina: [],
   marcas: [],
   lineas: [],
   colores: [],
-  atributos: {
-    presentaciones: [],
-    rendimientos: [],
-    acabados: [],
-    usos: [],
-    secados: [],
-    repintados: [],
-  },
-  bases: [],
-  sistemasEntonado: [],
 };
 
 /**
@@ -68,9 +60,6 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
   const desactivado = ref<boolean>(false);
 
   // --- Getters: opciones dependientes --------------------------------------
-  const subcategoriasDisponibles = computed(() =>
-    opciones.value.subcategorias.filter((s) => s.categoriaId === formulario.value.categoriaId)
-  );
   const lineasDisponibles = computed(() =>
     opciones.value.lineas.filter((l) => l.marcaId === formulario.value.marcaId)
   );
@@ -86,10 +75,8 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
       .filter((c): c is ColorCatalogo => c !== undefined)
   );
 
-  /** RF-CAT-02-02: las pinturas exigen línea; un producto sin color puede no declararla. */
-  const requiereLinea = computed(
-    () => formulario.value.categoriaId === 'pinturas' || formulario.value.claseColor === 'entonable'
-  );
+  /** RF-CAT-02-02: las pinturas entonables exigen línea (y resina, validado en backend). */
+  const requiereLinea = computed(() => formulario.value.claseColor === 'entonable');
   const usaColor = computed(() => formulario.value.claseColor !== 'sin_color');
 
   // --- Getters: checklist de publicación (RF-CAT-02-05) -------------------
@@ -105,7 +92,7 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
       {
         clave: 'clasificacion',
         etiqueta: 'Clasificación',
-        completa: Boolean(f.categoriaId && f.subcategoriaId && f.tipoProductoId),
+        completa: f.subcategoriasIds.length > 0,
         opcional: false,
       },
       {
@@ -125,23 +112,6 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
         etiqueta: 'Imágenes del producto',
         completa: f.imagenes.length > 0,
         opcional: false,
-      },
-      {
-        clave: 'informacion_comercial',
-        etiqueta: 'Información comercial',
-        completa:
-          f.precioVenta !== null &&
-          f.precioVenta > 0 &&
-          f.sku.trim().length > 0 &&
-          f.stockInicial !== null &&
-          f.stockInicial >= 0,
-        opcional: false,
-      },
-      {
-        clave: 'etiquetas',
-        etiqueta: 'Etiquetas',
-        completa: f.etiquetas.length > 0,
-        opcional: true,
       },
     ];
   });
@@ -201,17 +171,10 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
     cargando.value = false;
   }
 
-  /** Aplica cambios y reajusta dependencias (subcategoría por categoría, línea/colores por marca). */
+  /** Aplica cambios y reajusta dependencias (línea/colores por marca). */
   function actualizar(parcial: Partial<FormularioProducto>): void {
     const anterior = formulario.value;
     const siguiente: FormularioProducto = { ...anterior, ...parcial };
-
-    if (parcial.categoriaId !== undefined && parcial.categoriaId !== anterior.categoriaId) {
-      const valida = opciones.value.subcategorias.some(
-        (s) => s.categoriaId === siguiente.categoriaId && s.valor === siguiente.subcategoriaId
-      );
-      if (!valida) siguiente.subcategoriaId = null;
-    }
 
     if (parcial.marcaId !== undefined && parcial.marcaId !== anterior.marcaId) {
       const lineaValida = opciones.value.lineas.some(
@@ -253,34 +216,50 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
     });
   }
 
-  function agregarEtiqueta(texto: string): void {
-    const limpia = texto.trim().toLowerCase();
-    if (!limpia || formulario.value.etiquetas.includes(limpia)) return;
-    actualizar({ etiquetas: [...formulario.value.etiquetas, limpia] });
-  }
-
-  function quitarEtiqueta(texto: string): void {
-    actualizar({ etiquetas: formulario.value.etiquetas.filter((t) => t !== texto) });
+  /** Alterna una subcategoría en `subcategoriasIds` (RF-CAT-02-02: al menos una). */
+  function alternarSubcategoria(subcategoriaId: string): void {
+    const actuales = formulario.value.subcategoriasIds;
+    actualizar({
+      subcategoriasIds: actuales.includes(subcategoriaId)
+        ? actuales.filter((id) => id !== subcategoriaId)
+        : [...actuales, subcategoriaId],
+    });
   }
 
   /** El archivo se lee en el navegador (data URL); el upload al backend es HU-CAT-07, endpoint aparte. */
-  function agregarImagen(nombre: string, url = ''): void {
+  /**
+   * Agrega una imagen a la galería. Valida formato y peso en el navegador con
+   * las mismas reglas que aplica `CrearImagenDto` (jpeg/png/webp, ≤ 5MB) para
+   * no esperar a que el servidor rechace la subida. Devuelve el mensaje de
+   * error si la imagen no es aceptable, o `null` si se agregó.
+   */
+  function agregarImagen(nombre: string, url = ''): string | null {
+    const mensaje = validarImagenProducto(url);
+    if (mensaje) {
+      erroresValidacion.value = { ...erroresValidacion.value, imagenes: mensaje };
+      return mensaje;
+    }
     const nueva = {
       id: `img-${Date.now()}`,
       url,
       nombre,
+      orden: formulario.value.imagenes.length,
       esPrincipal: formulario.value.imagenes.length === 0,
     };
     actualizar({ imagenes: [...formulario.value.imagenes, nueva] });
+    return null;
   }
 
   function quitarImagen(id: string): void {
     const restantes = formulario.value.imagenes.filter((img) => img.id !== id);
     const necesitaPrincipal = restantes.length > 0 && !restantes.some((img) => img.esPrincipal);
+    // `orden` se recompacta: el backend lo usa para ordenar la galería.
     actualizar({
-      imagenes: necesitaPrincipal
-        ? restantes.map((img, i) => ({ ...img, esPrincipal: i === 0 }))
-        : restantes,
+      imagenes: restantes.map((img, i) => ({
+        ...img,
+        orden: i,
+        esPrincipal: necesitaPrincipal ? i === 0 : img.esPrincipal,
+      })),
     });
   }
 
@@ -294,6 +273,41 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
     const { valido, errores } = validarProductoFormulario(formulario.value);
     erroresValidacion.value = errores;
     return valido;
+  }
+
+  /**
+   * Sin backend real, `PRODUCTOS_DEMO` (services/productos.mock.ts) es la única
+   * fuente que alimenta el listado. Si al guardar no reflejamos el cambio ahí,
+   * el producto editado se ve "sin cambios" al volver a Productos. Deriva la
+   * fila de listado a partir del formulario + las etiquetas de `opciones`.
+   */
+  function sincronizarListadoDemo(id: string): void {
+    const marca = opciones.value.marcas.find((m) => m.valor === formulario.value.marcaId);
+    const primeraSubcategoria = opciones.value.subcategorias.find((s) =>
+      formulario.value.subcategoriasIds.includes(s.valor)
+    );
+    const categoriaPadre = primeraSubcategoria
+      ? opciones.value.categorias.find((c) => c.valor === primeraSubcategoria.categoriaId)
+      : undefined;
+    const linea = opciones.value.lineas.find((l) => l.valor === formulario.value.lineaId);
+
+    const fila: ProductoListado = {
+      id,
+      nombre: formulario.value.nombre,
+      imagenUrl: formulario.value.imagenes[0]?.url ?? null,
+      marca: marca?.etiqueta ?? '—',
+      categoria: categoriaPadre?.etiqueta ?? '—',
+      linea: linea?.etiqueta ?? null,
+      claseColor: formulario.value.claseColor,
+      totalVariantes: PRODUCTOS_DEMO.find((p) => p.id === id)?.totalVariantes ?? 0,
+      estado: formulario.value.estado,
+      actualizadoEn: new Date().toISOString(),
+      actualizadoPor: 'Administrador',
+    };
+
+    const indice = PRODUCTOS_DEMO.findIndex((p) => p.id === id);
+    if (indice === -1) PRODUCTOS_DEMO.unshift(fila);
+    else PRODUCTOS_DEMO[indice] = fila;
   }
 
   async function guardar(estado: EstadoPublicacion): Promise<boolean> {
@@ -313,10 +327,15 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
       productoId.value = respuesta.data.id;
       modo.value = 'editar';
       guardadoOk.value = true;
+      sincronizarListadoDemo(productoId.value);
       return true;
     } catch (e) {
       if (usandoDatosDemo.value) {
-        // Sin backend: simulamos el guardado para poder revisar el flujo.
+        // Sin backend: simulamos el guardado, pero igual reflejamos el cambio
+        // en el listado de ejemplo para que no se vea "como si nada hubiera pasado".
+        productoId.value ??= `prd-demo-${Date.now()}`;
+        modo.value = 'editar';
+        sincronizarListadoDemo(productoId.value);
         guardadoOk.value = true;
         return true;
       }
@@ -329,12 +348,17 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
 
   const guardarBorrador = () => guardar('borrador');
   const publicar = () => guardar('publicado');
+  /** Guarda sin cambiar el estado efectivo (un producto inactivo sigue inactivo). */
+  const guardarCambios = () => guardar(formulario.value.estado);
 
   /**
-   * Desactiva el producto (maqueta ADMIN 04). Sin backend deja el formulario en
-   * borrador y marca `desactivado` para el aviso de la vista.
+   * Desactiva / reactiva el producto (maqueta ADMIN 04). En el backend real es
+   * el eje `/desactivar` · `/reactivar`, INDEPENDIENTE de publicar/despublicar:
+   * un producto desactivado queda `'inactivo'`, nunca `'borrador'`.
+   * Al reactivar vuelve a `'borrador'`, que es el estado no publicado por
+   * defecto; publicarlo de nuevo es una acción aparte.
    */
-  async function desactivar(): Promise<boolean> {
+  async function cambiarActivacion(estado: 'inactivo' | 'borrador'): Promise<boolean> {
     if (modo.value !== 'editar' || !productoId.value) return false;
     guardando.value = true;
     error.value = null;
@@ -342,11 +366,12 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
       if (!usandoDatosDemo.value) {
         await ProductoFormularioService.actualizar(productoId.value, {
           ...formulario.value,
-          estado: 'borrador',
+          estado,
         });
       }
-      formulario.value = { ...formulario.value, estado: 'borrador' };
-      desactivado.value = true;
+      formulario.value = { ...formulario.value, estado };
+      desactivado.value = estado === 'inactivo';
+      sincronizarListadoDemo(productoId.value);
       return true;
     } catch (e) {
       error.value = extraerMensajeError(e);
@@ -355,6 +380,9 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
       guardando.value = false;
     }
   }
+
+  const desactivar = () => cambiarActivacion('inactivo');
+  const reactivar = () => cambiarActivacion('borrador');
 
   function reiniciar(): void {
     formulario.value = formularioProductoVacio();
@@ -384,7 +412,6 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
     guardadoOk,
     desactivado,
     // getters
-    subcategoriasDisponibles,
     lineasDisponibles,
     coloresDeLaMarca,
     colorPrincipal,
@@ -399,15 +426,16 @@ export const useProductoFormularioStore = defineStore('m01-producto-formulario',
     actualizar,
     definirColorPrincipal,
     alternarColorDisponible,
-    agregarEtiqueta,
-    quitarEtiqueta,
+    alternarSubcategoria,
     agregarImagen,
     quitarImagen,
     marcarImagenPrincipal,
     validar,
     guardarBorrador,
     publicar,
+    guardarCambios,
     desactivar,
+    reactivar,
     reiniciar,
   };
 });

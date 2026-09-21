@@ -1,12 +1,14 @@
 import { apiClient } from '@/core/api/axios';
 import { normalizarFiltrosColores } from '../dtos/colores.dto';
 import type { FiltrosColoresDTO } from '../dtos/colores.dto';
+import type { FilaCargaMasivaColorDTO } from '../dtos/colores-carga-masiva.dto';
 import type {
   ApiResponse,
   PaginaColores,
   OpcionesFiltroColores,
   FamiliaCromatica,
   ResumenColores,
+  ResultadoCargaMasivaColores,
 } from '../interfaces';
 
 /**
@@ -46,6 +48,17 @@ export const ColoresService = {
   /** GET /api/catalogo/colores/resumen — indicadores del panel lateral. */
   async resumen(): Promise<ApiResponse<ResumenColores>> {
     const { data } = await apiClient.get<ApiResponse<ResumenColores>>(`${BASE}/resumen`);
+    return data;
+  },
+
+  /** POST /api/catalogo/colores/carga-masiva — crea varios colores desde un CSV (RF-CAT-05-03). */
+  async cargarMasivo(
+    filas: FilaCargaMasivaColorDTO[]
+  ): Promise<ApiResponse<ResultadoCargaMasivaColores>> {
+    const { data } = await apiClient.post<ApiResponse<ResultadoCargaMasivaColores>>(
+      `${BASE}/carga-masiva`,
+      { colores: filas }
+    );
     return data;
   },
 };

@@ -5,13 +5,18 @@ import { z } from 'zod';
  * M01 - DTO DEL FORMULARIO DE COLOR (CREAR / EDITAR)
  * Ubicación: src/modules/m01-dashboardcatalogo/dtos/color-formulario.dto.ts
  *
- * RF-CAT-05-01/02: nombre comercial obligatorio y valor cromático obligatorio y
- * válido. Sincronizado 1:1 con `FormularioColor`.
+ * Sincronizado con `CrearColorDto` / `ActualizarColorDto` del backend real
+ * (backend/src/modules/m01-catalogo/dtos/colores.dto.ts).
+ * RF-CAT-05-01: nombre obligatorio (máx. 100), marca obligatoria, código
+ * opcional (máx. 60).
+ * RF-CAT-05-02: valor cromático CIELAB obligatorio; en la UI se captura como
+ * HEX y el CIELAB se deriva de él (`composables/useColorCielab.ts`).
+ * RF-CAT-05-03: familia cromática administrable.
+ * Prohibido declarar este esquema inline en la vista (.vue).
  * ==============================================================================
  */
 
 export const estadoColorFormSchema = z.enum(['publicado', 'borrador']);
-export const politicaProductoColorSchema = z.enum(['todos', 'especificos', 'personalizadas']);
 
 const requerido = (mensaje: string) =>
   z.string({ required_error: mensaje }).trim().min(1, mensaje);
@@ -22,29 +27,37 @@ export const hexSchema = requerido('El código HEX es obligatorio').regex(
   'Usa un HEX válido, p. ej. #FFC928'
 );
 
+/** Rangos estándar del espacio CIELAB, idénticos a los del backend. */
+export const cielabSchema = z.object({
+  l: z.number().min(0, 'L* debe ser ≥ 0').max(100, 'L* debe ser ≤ 100'),
+  a: z.number().min(-128, 'a* debe ser ≥ -128').max(128, 'a* debe ser ≤ 128'),
+  b: z.number().min(-128, 'b* debe ser ≥ -128').max(128, 'b* debe ser ≤ 128'),
+});
+
 export const colorFormularioSchema = z.object({
   nombre: requerido('El nombre del color es obligatorio').max(100, 'Máximo 100 caracteres'),
-  nombreCorto: z.string().trim().max(40, 'Máximo 40 caracteres').default(''),
-  descripcion: z.string().trim().max(500, 'Máximo 500 caracteres').default(''),
+  marcaId: requerido('Selecciona la marca a la que pertenece el color'),
+  codigo: z.string().trim().max(60, 'Máximo 60 caracteres').default(''),
   familiaClave: requerido('Selecciona la familia cromática'),
 
   hex: hexSchema,
 
   estado: estadoColorFormSchema.default('publicado'),
-  mostrarEnTienda: z.boolean().default(true),
-  incluirEnBuscador: z.boolean().default(true),
-
-  basesCompatibles: z.array(z.string()).min(1, 'Selecciona al menos una base compatible'),
-  politicaProductos: politicaProductoColorSchema.default('todos'),
-
-  tituloSeo: z.string().trim().max(60, 'Máximo 60 caracteres').default(''),
-  metaDescripcion: z.string().trim().max(160, 'Máximo 160 caracteres').default(''),
-  etiquetas: z.array(z.string().trim().min(1)).max(20, 'Máximo 20 etiquetas').default([]),
-
-  notasInternas: z.string().trim().max(1000, 'Máximo 1000 caracteres').default(''),
 });
 
 export type ColorFormularioDTO = z.infer<typeof colorFormularioSchema>;
+
+/** Payload que viaja al backend: `cielab` en lugar de `hex`, `codigo` omitido si va vacío. */
+export const colorPayloadSchema = z.object({
+  nombre: requerido('El nombre del color es obligatorio').max(100, 'Máximo 100 caracteres'),
+  marcaId: requerido('Selecciona la marca a la que pertenece el color'),
+  codigo: z.string().trim().min(1).max(60, 'Máximo 60 caracteres').optional(),
+  cielab: cielabSchema,
+  familiaClave: requerido('Selecciona la familia cromática'),
+  estado: estadoColorFormSchema,
+});
+
+export type ColorPayloadDTO = z.infer<typeof colorPayloadSchema>;
 
 /** Convierte un HEX (#RRGGBB o #RGB) a componentes RGB; null si es inválido. */
 export function hexARgb(hex: string): { r: number; g: number; b: number } | null {

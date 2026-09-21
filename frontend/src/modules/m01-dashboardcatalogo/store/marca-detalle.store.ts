@@ -52,7 +52,7 @@ export const useMarcaDetalleStore = defineStore('m01-marca-detalle', () => {
       if (!usandoDatosDemo.value) {
         await MarcaDetalleService.cambiarEstado(detalle.value.id, 'inactiva');
       }
-      detalle.value = { ...detalle.value, estado: 'inactiva', visibleEnTienda: false };
+      detalle.value = { ...detalle.value, estado: 'inactiva' };
       desactivado.value = true;
       return true;
     } catch {

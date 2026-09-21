@@ -39,8 +39,6 @@ export interface OpcionSelect {
 /** Fila del listado de productos. */
 export interface ProductoListado {
   id: string;
-  /** Código interno / referencia comercial (RF-CAT-03-06). */
-  sku: string;
   nombre: string;
   /** Miniatura optimizada; `null` mientras no se ha cargado imagen (RF-CAT-07-01). */
   imagenUrl: string | null;

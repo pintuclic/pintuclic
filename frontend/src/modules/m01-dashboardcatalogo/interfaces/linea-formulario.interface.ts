@@ -4,8 +4,11 @@
  * Ubicación: src/modules/m01-dashboardcatalogo/interfaces/linea-formulario.interface.ts
  *
  * Tipos de la maqueta "ADMIN 16 - Crear / editar línea comercial" (RF-CAT-11).
- * Una línea pertenece a una marca y clasifica un conjunto de productos por gama
- * de uso. Se puede controlar su visibilidad en el catálogo público.
+ * Sincronizado 1:1 con `CrearLineaDto` / `ActualizarLineaDto` del backend real
+ * (backend/src/modules/m01-catalogo/dtos/lineas.dto.ts): nombre, id_marca
+ * (obligatorios) y gama_comercial (opcional). `estado` es un concepto de UI
+ * local (activar/pausar/desactivar la línea) que no viaja en ese DTO — mismo
+ * tratamiento que `EstadoPublicacion` en el formulario de producto.
  *
  * Permiso M17 requerido: «Gestión del catálogo», revalidado en el servidor.
  * Pureza estricta de compilación TypeScript: 0 bytes de runtime.
@@ -20,37 +23,16 @@ export type ModoFormularioLinea = 'crear' | 'editar';
 /** Modelo editable de la línea comercial. */
 export interface FormularioLinea {
   nombre: string;
-  descripcion: string;
-  imagenUrl: string | null;
-
-  // Clasificación y uso
-  marca: string;
-  categoria: string;
-  subcategoria: string;
-  tipoLinea: string;
-
-  // Estado y visibilidad
+  /** Marca a la que pertenece la línea (id_marca). */
+  marcaId: string;
+  /** Gama comercial: dato descriptivo opcional (gama_comercial). */
+  gamaComercial: string;
   estado: EstadoLinea;
-  mostrarEnCatalogo: boolean;
-  mostrarEnFiltros: boolean;
-  destacarEnPortada: boolean;
-
-  // Productos asociados
-  productosAsociados: string[];
-
-  // SEO / etiquetas
-  etiquetas: string[];
-
-  notasInternas: string;
 }
 
 /** Catálogos que llenan los selectores del formulario. */
 export interface OpcionesFormularioLinea {
   marcas: OpcionSelect[];
-  categorias: OpcionSelect[];
-  subcategorias: OpcionSelect[];
-  tiposLinea: OpcionSelect[];
-  productos: OpcionSelect[];
 }
 
 /** Bloque del checklist de publicación de la línea. */
@@ -59,12 +41,6 @@ export interface SeccionChecklistLinea {
   etiqueta: string;
   completa: boolean;
   opcional: boolean;
-}
-
-/** Indicadores de la tarjeta "Dependencias / Resumen de impacto". */
-export interface ResumenImpactoLinea {
-  productosAsociados: number;
-  reglasVigentes: number;
 }
 
 /** Respuesta de crear / actualizar línea. */

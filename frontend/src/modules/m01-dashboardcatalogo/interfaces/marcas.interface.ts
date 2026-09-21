@@ -18,7 +18,6 @@ export type EstadoMarca = 'activa' | 'inactiva';
 export interface MarcaListado {
   id: string;
   nombre: string;
-  descripcionCorta: string;
   /** URL del logotipo optimizado; `null` mientras no se ha cargado. */
   logoUrl: string | null;
   lineasAsociadas: number;
@@ -50,13 +49,15 @@ export interface ResumenMarcas {
   coloresDisponibles: { valor: number; variacionPorcentaje: number };
 }
 
-/** Modelo editable del panel lateral "Editar marca". */
+/**
+ * Modelo editable del panel lateral "Editar marca". Sincronizado 1:1 con
+ * `CrearMarcaDto` / `ActualizarMarcaDto` del backend real: solo nombre y
+ * logotipo. `lineas` no vive aquí — una línea referencia su marca por
+ * `id_marca`, la marca no guarda la lista de sus líneas.
+ */
 export interface MarcaFormulario {
   id: string | null;
   nombre: string;
-  descripcionCorta: string;
   logoUrl: string | null;
   estado: EstadoMarca;
-  /** Nombres de las líneas de la marca (RF-CAT-11: líneas por marca). */
-  lineas: string[];
 }

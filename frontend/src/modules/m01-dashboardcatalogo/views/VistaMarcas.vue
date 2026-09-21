@@ -1,15 +1,15 @@
 <template>
   <div class="space-y-6 p-6 lg:p-8">
-    <EncabezadoSeccion
-      titulo="Marcas"
-      descripcion="Gestiona las marcas de tu catálogo. Agrega, edita o desactiva marcas según tus necesidades."
+    <PageHeader
+      title="Marcas"
+      description="Gestiona las marcas de tu catálogo. Agrega, edita o desactiva marcas según tus necesidades."
     >
-      <template #acciones>
+      <template #default>
         <Button variant="action" :icon="Plus" @click="irA('/admin/catalogo/marcas/nueva')">
           Nueva marca
         </Button>
       </template>
-    </EncabezadoSeccion>
+    </PageHeader>
 
     <p
       v-if="error"
@@ -89,8 +89,7 @@
  */
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, Search, Bookmark, Package, Layers, Droplet } from 'lucide-vue-next';
-import { Button } from '@/core/components';
-import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
+import { Button, PageHeader } from '@/core/components';
 import TarjetaEstadistica from '../components/TarjetaEstadistica.vue';
 import TablaMarcas from '../components/TablaMarcas.vue';
 import PanelEditarMarca from '../components/PanelEditarMarca.vue';

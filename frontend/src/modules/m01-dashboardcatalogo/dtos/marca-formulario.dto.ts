@@ -6,7 +6,8 @@ import { z } from 'zod';
  * Ubicación: src/modules/m01-dashboardcatalogo/dtos/marca-formulario.dto.ts
  *
  * RF-CAT-04-01/02: nombre y logotipo obligatorios; unicidad de nombre validada
- * en el servidor. Sincronizado 1:1 con `FormularioMarca`.
+ * en el servidor. Sincronizado 1:1 con `FormularioMarca`, que a su vez refleja
+ * `CrearMarcaDto` del backend real (nombre máx. 100 caracteres).
  * ==============================================================================
  */
 
@@ -15,39 +16,17 @@ export const estadoMarcaFormSchema = z.enum(['activa', 'inactiva']);
 const requerido = (mensaje: string) =>
   z.string({ required_error: mensaje }).trim().min(1, mensaje);
 
-const urlOpcional = z
-  .string()
-  .trim()
-  .max(200, 'Máximo 200 caracteres')
-  .refine((v) => v === '' || /^https?:\/\/.+/.test(v), 'Debe ser una URL válida (http/https)')
-  .default('');
-
 export const marcaFormularioSchema = z.object({
-  nombre: requerido('El nombre de la marca es obligatorio')
-    .min(2, 'Debe tener al menos 2 caracteres')
-    .max(80, 'Máximo 80 caracteres'),
-  descripcion: requerido('La descripción es obligatoria').max(1000, 'Máximo 1000 caracteres'),
-  logoUrl: requerido('El logo principal es obligatorio'),
-
-  sitioWeb: urlOpcional,
-  paisOrigen: z.string().trim().max(60).default(''),
-  contactoEmail: z
+  nombre: requerido('El nombre de la marca es obligatorio').max(100, 'Máximo 100 caracteres'),
+  // `logoUrl` empieza en `null` (sin logo cargado); no puede validarse con
+  // z.string() a secas porque Zod reporta "Expected string, received null"
+  // en vez del mensaje de campo obligatorio.
+  logoUrl: z
     .string()
-    .trim()
-    .max(120)
-    .refine((v) => v === '' || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v), 'Correo no válido')
-    .default(''),
-  telefono: z.string().trim().max(40).default(''),
-
-  lineas: z.array(z.string()).default([]),
-  politicaColor: z.string().trim().default('todos'),
-  basesCompatibles: z.array(z.string()).default([]),
-
-  tituloSeo: z.string().trim().max(60, 'Máximo 60 caracteres').default(''),
-  descripcionSeo: z.string().trim().max(160, 'Máximo 160 caracteres').default(''),
-  etiquetas: z.array(z.string().trim().min(1)).max(20, 'Máximo 20 etiquetas').default([]),
-
-  notasInternas: z.string().trim().max(500, 'Máximo 500 caracteres').default(''),
+    .nullable()
+    .refine((v): v is string => v !== null && v.trim().length > 0, {
+      message: 'El logotipo de la marca es obligatorio',
+    }),
   estado: estadoMarcaFormSchema,
 });
 

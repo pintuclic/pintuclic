@@ -4,9 +4,19 @@
  * Ubicación: src/modules/m01-dashboardcatalogo/interfaces/color-formulario.interface.ts
  *
  * Tipos de la maqueta "ADMIN 18 - Crear / editar color" (HU-CAT-05).
- * RF-CAT-05-01: nombre comercial obligatorio, código opcional.
- * RF-CAT-05-02: el valor cromático es obligatorio y la muestra se deriva de él
- * (aquí se captura como HEX; el RGB se deriva del HEX para la vista).
+ * Sincronizado con `CrearColorDto` / `ActualizarColorDto` del backend real
+ * (backend/src/modules/m01-catalogo/dtos/colores.dto.ts): `nombre`, `id_marca`
+ * y `cielab` son obligatorios; `codigo` es opcional.
+ *
+ * RF-CAT-05-01: nombre comercial obligatorio, código opcional, color asociado
+ * a una marca.
+ * RF-CAT-05-02: el valor cromático (CIELAB) es obligatorio y la muestra se
+ * deriva de él. En la UI se captura como HEX (un color-picker es la UX
+ * correcta) y el CIELAB del payload se deriva del HEX con `useColorCielab`.
+ * RF-CAT-05-03: familias cromáticas administrables (`familiaClave`).
+ *
+ * `estado` es un concepto de UI local (publicar / borrador) que no viaja en el
+ * DTO del backend — mismo tratamiento que en los demás formularios del módulo.
  *
  * Permiso M17 requerido: «Gestión del catálogo», revalidado en el servidor.
  * Pureza estricta de compilación TypeScript: 0 bytes de runtime.
@@ -17,38 +27,50 @@ import type { EstadoColor } from './colores.interface';
 
 export type ModoFormularioColor = 'crear' | 'editar';
 
-/** Política de productos donde el color puede usarse. */
-export type PoliticaProductoColor = 'todos' | 'especificos' | 'personalizadas';
+/**
+ * Valor cromático CIELAB tal como lo exige el backend (RF-CAT-05-02).
+ * L* ∈ [0, 100]; a*, b* ∈ [-128, 128].
+ */
+export interface Cielab {
+  l: number;
+  a: number;
+  b: number;
+}
 
 /** Modelo editable del color. */
 export interface FormularioColor {
   nombre: string;
-  nombreCorto: string;
-  descripcion: string;
+
+  /** Marca a la que pertenece el color (id_marca, obligatorio en el backend). */
+  marcaId: string;
+
+  /** Código interno opcional del color (`codigo`). */
+  codigo: string;
+
+  /** Familia cromática administrable (RF-CAT-05-03). */
   familiaClave: string;
 
-  /** Valor cromático capturado como HEX (RF-CAT-05-02). */
+  /** Valor cromático capturado como HEX; el `cielab` del payload se deriva de él. */
   hex: string;
 
   estado: EstadoColor;
-  mostrarEnTienda: boolean;
-  incluirEnBuscador: boolean;
+}
 
-  /** Bases sobre las que puede prepararse (RF-CAT-12-04). */
-  basesCompatibles: string[];
-  politicaProductos: PoliticaProductoColor;
-
-  tituloSeo: string;
-  metaDescripcion: string;
-  etiquetas: string[];
-
-  notasInternas: string;
+/** Payload real enviado al backend (RF-CAT-05-01/02). */
+export interface PayloadColor {
+  nombre: string;
+  marcaId: string;
+  codigo?: string;
+  cielab: Cielab;
+  /** Familia cromática administrable; no forma parte del DTO mínimo del backend. */
+  familiaClave: string;
+  estado: EstadoColor;
 }
 
 /** Catálogos que llenan los selectores del formulario. */
 export interface OpcionesFormularioColor {
+  marcas: OpcionSelect[];
   familias: OpcionSelect[];
-  bases: OpcionSelect[];
 }
 
 /** Ítem del bloque "Impacto y uso" (checklist informativo). */

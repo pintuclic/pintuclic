@@ -46,7 +46,6 @@
                     {{ detalle.estado === 'activa' ? 'Activa' : 'Inactiva' }}
                   </span>
                 </div>
-                <p class="mt-0.5 text-sm text-neutral-medium">{{ detalle.eslogan }}</p>
               </div>
 
               <div class="flex flex-wrap gap-2">
@@ -62,32 +61,16 @@
               </div>
             </div>
 
-            <p class="text-sm text-neutral-dark">{{ detalle.descripcion }}</p>
-
-            <dl class="grid gap-3 pt-1 sm:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <dt class="text-xs text-neutral-medium">Sitio web</dt>
-                <dd class="truncate text-sm font-medium text-action">{{ detalle.sitioWeb }}</dd>
-              </div>
-              <div>
-                <dt class="text-xs text-neutral-medium">País de origen</dt>
-                <dd class="text-sm font-medium text-neutral-dark">{{ detalle.paisOrigen }}</dd>
-              </div>
-              <div>
-                <dt class="text-xs text-neutral-medium">Año de fundación</dt>
-                <dd class="text-sm font-medium text-neutral-dark">{{ detalle.anioFundacion }}</dd>
-              </div>
-              <div>
-                <dt class="text-xs text-neutral-medium">Tipo de marca</dt>
-                <dd class="text-sm font-medium text-neutral-dark">{{ detalle.tipoMarca }}</dd>
-              </div>
-            </dl>
+            <p class="text-sm text-neutral-medium">
+              Última actualización: {{ formatearFecha(detalle.actualizadoEn) }} · por
+              {{ detalle.actualizadoPor }}
+            </p>
           </div>
         </div>
       </section>
 
       <!-- Indicadores -->
-      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <article
           v-for="kpi in indicadores"
           :key="kpi.etiqueta"
@@ -128,47 +111,39 @@
           </div>
 
           <!-- Información general -->
-          <div v-if="pestanaActiva === 'general'" class="space-y-5">
-            <section class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm">
-              <h2 class="mb-2 text-base font-semibold text-neutral-black">Descripción de la marca</h2>
-              <p class="text-sm text-neutral-dark">{{ detalle.descripcion }}</p>
-            </section>
-
-            <section class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm">
-              <h2 class="mb-3 text-base font-semibold text-neutral-black">Imágenes y recursos de marca</h2>
-              <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <figure
-                  v-for="img in detalle.imagenes"
-                  :key="img.id"
-                  class="space-y-1.5"
-                >
-                  <div class="grid aspect-square place-items-center overflow-hidden rounded-input border border-neutral-light bg-neutral-lightest">
-                    <img :src="img.url" :alt="img.nombre" class="h-full w-full object-contain p-2" />
-                  </div>
-                  <figcaption class="text-center text-[11px] text-neutral-medium">{{ img.nombre }}</figcaption>
-                </figure>
+          <section
+            v-if="pestanaActiva === 'general'"
+            class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm"
+          >
+            <h2 class="mb-3 text-base font-semibold text-neutral-black">Resumen de la marca</h2>
+            <dl class="grid gap-3 sm:grid-cols-2">
+              <div>
+                <dt class="text-xs text-neutral-medium">Nombre</dt>
+                <dd class="text-sm font-medium text-neutral-dark">{{ detalle.nombre }}</dd>
               </div>
-            </section>
-
-            <section class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm">
-              <h2 class="mb-3 text-base font-semibold text-neutral-black">Documentos y enlaces</h2>
-              <ul class="grid gap-3 sm:grid-cols-3">
-                <li
-                  v-for="doc in detalle.documentos"
-                  :key="doc.id"
-                  class="flex items-center justify-between gap-2 rounded-card border border-neutral-light p-3"
-                >
-                  <div class="min-w-0">
-                    <p class="truncate text-sm font-medium text-neutral-dark">{{ doc.nombre }}</p>
-                    <p class="text-xs text-neutral-medium">{{ doc.peso }}</p>
-                  </div>
-                  <span class="grid h-8 w-8 shrink-0 place-items-center rounded-button text-neutral-medium" aria-hidden="true">
-                    <Download class="h-4 w-4" />
-                  </span>
-                </li>
-              </ul>
-            </section>
-          </div>
+              <div>
+                <dt class="text-xs text-neutral-medium">Estado</dt>
+                <dd class="text-sm font-medium text-neutral-dark">
+                  {{ detalle.estado === 'activa' ? 'Activa' : 'Inactiva' }}
+                </dd>
+              </div>
+              <div>
+                <dt class="text-xs text-neutral-medium">Logotipo</dt>
+                <dd class="text-sm font-medium text-neutral-dark">
+                  {{ detalle.logoUrl ? 'Cargado' : 'Sin logotipo' }}
+                </dd>
+              </div>
+              <div>
+                <dt class="text-xs text-neutral-medium">Última actualización</dt>
+                <dd class="text-sm font-medium text-neutral-dark">
+                  {{ formatearFecha(detalle.actualizadoEn) }} · por {{ detalle.actualizadoPor }}
+                </dd>
+              </div>
+            </dl>
+            <p class="mt-3 text-xs text-neutral-medium">
+              Los contadores de productos, líneas y colores son datos derivados de solo lectura.
+            </p>
+          </section>
 
           <!-- Líneas comerciales -->
           <section
@@ -221,14 +196,14 @@
             </div>
           </section>
 
-          <!-- Productos destacados -->
+          <!-- Productos patrocinados -->
           <section
-            v-else-if="pestanaActiva === 'destacados'"
+            v-else-if="pestanaActiva === 'patrocinados'"
             class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm"
           >
             <ul class="divide-y divide-neutral-light text-sm">
               <li
-                v-for="p in detalle.productosDestacados"
+                v-for="p in detalle.productosPatrocinados"
                 :key="p.id"
                 class="flex items-center justify-between gap-3 py-2.5"
               >
@@ -242,22 +217,6 @@
                 <span class="tabular-nums text-neutral-dark">${{ formatearNumero(p.precio) }}</span>
               </li>
             </ul>
-          </section>
-
-          <!-- Bases -->
-          <section
-            v-else-if="pestanaActiva === 'bases'"
-            class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm"
-          >
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="base in detalle.bases"
-                :key="base"
-                class="rounded-button bg-neutral-lightest px-2.5 py-1 text-xs font-medium text-neutral-dark"
-              >
-                {{ base }}
-              </span>
-            </div>
           </section>
 
           <!-- Historial -->
@@ -295,7 +254,7 @@
         <!-- Columna derecha -->
         <aside class="space-y-5">
           <section class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm">
-            <h2 class="mb-3 text-base font-semibold text-neutral-black">Estado y visibilidad</h2>
+            <h2 class="mb-3 text-base font-semibold text-neutral-black">Estado</h2>
             <p
               class="flex items-center gap-2 rounded-card p-3 text-sm font-medium"
               :class="detalle.estado === 'activa' ? 'bg-conversion/10 text-conversion' : 'bg-neutral-lightest text-neutral-medium'"
@@ -304,18 +263,6 @@
               {{ detalle.estado === 'activa' ? 'Marca activa · visible en el catálogo' : 'Marca inactiva' }}
             </p>
             <dl class="mt-3 space-y-2.5 text-sm">
-              <div class="flex justify-between gap-3">
-                <dt class="text-neutral-medium">Visible en la tienda</dt>
-                <dd class="font-medium text-neutral-dark">{{ detalle.visibleEnTienda ? 'Sí' : 'No' }}</dd>
-              </div>
-              <div class="flex justify-between gap-3">
-                <dt class="text-neutral-medium">Aparece en búsquedas</dt>
-                <dd class="font-medium text-neutral-dark">{{ detalle.apareceEnBusquedas ? 'Sí' : 'No' }}</dd>
-              </div>
-              <div class="flex justify-between gap-3">
-                <dt class="text-neutral-medium">Orden de visualización</dt>
-                <dd class="font-medium text-neutral-dark tabular-nums">{{ detalle.ordenVisualizacion }}</dd>
-              </div>
               <div class="flex justify-between gap-3">
                 <dt class="text-neutral-medium">Última actualización</dt>
                 <dd class="text-right font-medium text-neutral-dark">
@@ -354,6 +301,13 @@
       No se encontró la marca solicitada.
     </p>
   </div>
+
+  <ModalConfirmarAccion
+    v-model="mostrarConfirmarDesactivar"
+    titulo="¿Desactivar marca?"
+    mensaje="Dejará de mostrarse en el catálogo público."
+    @confirmar="ejecutarDesactivar"
+  />
 </template>
 
 <script setup lang="ts">
@@ -362,25 +316,27 @@
  * M01 - VISTA: MARCAS · DETALLE ADMINISTRATIVO  (maqueta "ADMIN 14")
  * Ubicación: src/modules/m01-dashboardcatalogo/views/VistaMarcaDetalle.vue
  *
- * Ficha de solo lectura de la marca: encabezado con logo y datos, 4 indicadores
- * y pestañas (información general, líneas comerciales, colores, productos
- * destacados, bases, historial), con estado/visibilidad y relaciones a la vista.
+ * Ficha de solo lectura de la marca: encabezado con logo y estado, indicadores
+ * derivados (productos, líneas, colores) y pestañas (resumen, líneas
+ * comerciales, colores, productos patrocinados, historial). Solo `nombre`,
+ * `logotipo` y el `estado` de UI son datos propios de la marca; el resto
+ * proviene del modelo de lectura del backend.
  *
  * Permiso requerido: «Gestión del catálogo» (M17), revalidado en el servidor.
  * ==============================================================================
  */
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import {
   ArrowLeft,
   Pencil,
   List,
   Power,
-  Download,
   CheckCircle2,
   ChevronRight,
   Image as ImageIcon,
 } from 'lucide-vue-next';
 import { Button } from '@/core/components';
+import ModalConfirmarAccion from '../components/ModalConfirmarAccion.vue';
 import { useMarcaDetalle } from '../composables/useMarcaDetalle';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import type { PestanaDetalleMarca } from '../interfaces';
@@ -411,11 +367,14 @@ onMounted(() => {
 
 const PESTANAS = computed<{ clave: PestanaDetalleMarca; etiqueta: string; contador?: number }[]>(
   () => [
-    { clave: 'general', etiqueta: 'Información general' },
+    { clave: 'general', etiqueta: 'Resumen' },
     { clave: 'lineas', etiqueta: 'Líneas', contador: detalle.value?.lineas.length },
     { clave: 'colores', etiqueta: 'Colores', contador: detalle.value?.colores.length },
-    { clave: 'destacados', etiqueta: 'Destacados', contador: detalle.value?.productosDestacados.length },
-    { clave: 'bases', etiqueta: 'Bases', contador: detalle.value?.bases.length },
+    {
+      clave: 'patrocinados',
+      etiqueta: 'Patrocinados',
+      contador: detalle.value?.productosPatrocinados.length,
+    },
     { clave: 'historial', etiqueta: 'Historial' },
   ]
 );
@@ -427,13 +386,16 @@ const indicadores = computed(() => {
     { etiqueta: 'Productos asociados', valor: d.productosAsociados, enlace: 'Ver productos', destino: '/admin/catalogo/productos' },
     { etiqueta: 'Líneas comerciales', valor: d.lineasComerciales, enlace: 'Ver líneas', destino: '/admin/catalogo/variantes' },
     { etiqueta: 'Colores activos', valor: d.coloresActivos, enlace: 'Ver colores', destino: '/admin/catalogo/colores' },
-    { etiqueta: 'Bases asociadas', valor: d.basesAsociadas, enlace: 'Ver bases', destino: '/admin/catalogo/colores' },
   ];
 });
 
+const mostrarConfirmarDesactivar = ref(false);
 function confirmarDesactivar(): void {
-  const ok = globalThis.confirm?.('¿Desactivar esta marca? Dejará de mostrarse en el catálogo público.');
-  if (ok) void desactivar();
+  mostrarConfirmarDesactivar.value = true;
+}
+function ejecutarDesactivar(): void {
+  mostrarConfirmarDesactivar.value = false;
+  void desactivar();
 }
 
 // Navegación del panel: la provee el router (dashboardCatalogoRoutes).

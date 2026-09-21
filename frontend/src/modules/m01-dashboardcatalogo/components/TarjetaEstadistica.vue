@@ -1,5 +1,5 @@
 <template>
-  <article class="rounded-card border border-neutral-light bg-neutral-white p-4 shadow-sm">
+  <Card no-padding class="p-4">
     <div class="flex items-center gap-2.5">
       <span
         v-if="icono"
@@ -12,18 +12,17 @@
 
     <p class="mt-2.5 text-2xl font-bold text-neutral-black tabular-nums">{{ valorFormateado }}</p>
 
-    <p v-if="variacionPorcentaje !== undefined" class="mt-1 flex items-center gap-1 text-xs">
-      <component :is="iconoTendencia" class="h-3.5 w-3.5" :class="colorTendencia" aria-hidden="true" />
-      <span class="font-semibold" :class="colorTendencia">{{ variacionTexto }}</span>
-      <span class="text-neutral-medium">vs. mes anterior</span>
-    </p>
-  </article>
+    <div v-if="variacionPorcentaje !== undefined" class="mt-1.5">
+      <Badge :estado="tonoTendencia" :label="variacionTexto" />
+      <span class="ml-1.5 text-xs text-neutral-medium">vs. mes anterior</span>
+    </div>
+  </Card>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-vue-next';
 import type { Component } from 'vue';
+import { Card, Badge } from '@/core/components';
 import { useFormatoCatalogo } from '../composables/useFormatoCatalogo';
 
 const props = defineProps<{
@@ -41,15 +40,6 @@ const variacionTexto = computed(() =>
   props.variacionPorcentaje === undefined ? '' : formatearVariacion(props.variacionPorcentaje)
 );
 
-const iconoTendencia = computed<Component>(() => {
-  const v = props.variacionPorcentaje ?? 0;
-  if (v > 0) return TrendingUp;
-  if (v < 0) return TrendingDown;
-  return Minus;
-});
-
-// La paleta no tiene rol "negativo": una bajada va en neutro.
-const colorTendencia = computed(() =>
-  (props.variacionPorcentaje ?? 0) > 0 ? 'text-conversion' : 'text-neutral-medium'
-);
+// La paleta no tiene rol "negativo": una bajada usa el mismo tono neutro que "sin cambio".
+const tonoTendencia = computed(() => ((props.variacionPorcentaje ?? 0) > 0 ? 'success' : 'inactivo'));
 </script>

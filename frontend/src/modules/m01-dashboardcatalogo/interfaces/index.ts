@@ -1,5 +1,4 @@
 export * from './api.interface';
-export * from './dashboard.interface';
 export * from './productos.interface';
 export * from './producto-formulario.interface';
 export * from './producto-detalle.interface';
@@ -12,6 +11,5 @@ export * from './marca-formulario.interface';
 export * from './marca-detalle.interface';
 export * from './colores.interface';
 export * from './color-formulario.interface';
-export * from './busquedas.interface';
 export * from './lineas.interface';
 export * from './linea-formulario.interface';

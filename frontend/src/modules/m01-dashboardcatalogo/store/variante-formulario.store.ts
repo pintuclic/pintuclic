@@ -9,6 +9,7 @@ import {
   formularioVarianteVacio,
 } from '../services/variante-formulario.mock';
 import { validarVarianteFormulario } from '../dtos/variante-formulario.dto';
+import { validarImagenProducto } from '../dtos/producto-formulario.dto';
 import type {
   FormularioVariante,
   OpcionesFormularioVariante,
@@ -25,11 +26,8 @@ import type {
 const OPCIONES_VACIAS: OpcionesFormularioVariante = {
   productos: [],
   presentaciones: [],
-  unidades: [],
   bases: [],
   colores: [],
-  impuestos: [],
-  bodegas: [],
 };
 
 /**
@@ -66,54 +64,26 @@ export const useVarianteFormularioStore = defineStore('m01-variante-formulario',
     () => opciones.value.colores.find((c) => c.id === formulario.value.colorId) ?? null
   );
 
-  /** Margen estimado = (precio - costo) / precio. `null` si falta el precio. */
-  const margenEstimado = computed<number | null>(() => {
-    const { precioVenta, costoCompra } = formulario.value;
-    if (!precioVenta || precioVenta <= 0 || costoCompra === null) return null;
-    return Math.round(((precioVenta - costoCompra) / precioVenta) * 1000) / 10;
-  });
-
   const checklist = computed<SeccionChecklistVariante[]>(() => {
     const f = formulario.value;
     const producto = productoAsociado.value;
     const requierePresentacion = producto?.requierePresentacion ?? true;
     const requiereColor = producto?.requiereColor ?? true;
-    const requiereDimensiones = producto?.requiereDimensiones ?? true;
-    const baseOColor = !requiereColor || Boolean(f.base) || Boolean(f.colorId);
+    const baseOColor = !requiereColor || Boolean(f.baseId) || Boolean(f.colorId);
     return [
       { clave: 'producto', etiqueta: 'Producto asociado', completa: Boolean(f.productoId), opcional: false },
       {
         clave: 'presentacion',
-        etiqueta: 'Presentación y unidad',
-        completa: !requierePresentacion || Boolean(f.presentacion && f.unidadMedida),
+        etiqueta: 'Presentación',
+        completa: !requierePresentacion || Boolean(f.presentacionId),
         opcional: false,
       },
-      { clave: 'base', etiqueta: 'Base / entonado', completa: baseOColor, opcional: !requiereColor },
-      { clave: 'color', etiqueta: 'Color asociado', completa: baseOColor, opcional: !requiereColor },
-      { clave: 'codigos', etiqueta: 'Códigos e identificación', completa: f.sku.trim().length > 0, opcional: false },
+      { clave: 'base_color', etiqueta: 'Base y color', completa: baseOColor, opcional: !requiereColor },
       {
         clave: 'comercial',
-        etiqueta: 'Información comercial',
-        completa: f.precioVenta !== null && f.precioVenta > 0,
+        etiqueta: 'Precio y existencia',
+        completa: f.precioVigente !== null && f.precioVigente >= 0,
         opcional: false,
-      },
-      {
-        clave: 'inventario',
-        etiqueta: 'Inventario',
-        completa:
-          f.stockInicial !== null && f.stockInicial >= 0 && f.stockMinimo !== null && Boolean(f.bodegaId),
-        opcional: false,
-      },
-      {
-        clave: 'dimensiones',
-        etiqueta: 'Dimensiones / peso',
-        completa:
-          !requiereDimensiones ||
-          f.pesoKg !== null ||
-          f.altoCm !== null ||
-          f.anchoCm !== null ||
-          f.profundidadCm !== null,
-        opcional: true,
       },
       { clave: 'imagenes', etiqueta: 'Imágenes', completa: f.imagenes.length > 0, opcional: true },
     ];
@@ -177,25 +147,18 @@ export const useVarianteFormularioStore = defineStore('m01-variante-formulario',
   /**
    * Aplica cambios al formulario. Al cambiar de producto, normaliza los campos
    * que no aplican a ese producto (p. ej. una herramienta no tiene presentación
-   * en galones ni base/color) para que no queden huérfanos ni bloqueen el
-   * checklist de publicación.
+   * ni base/color) para que no queden huérfanos ni bloqueen el checklist de
+   * publicación.
    */
   function actualizar(parcial: Partial<FormularioVariante>): void {
     let cambios: Partial<FormularioVariante> = parcial;
     if ('productoId' in parcial) {
       const producto = opciones.value.productos.find((p) => p.valor === parcial.productoId) ?? null;
       if (producto && !producto.requierePresentacion) {
-        cambios = { ...cambios, presentacion: 'unica', unidadMedida: 'unidad' };
-      } else if (formulario.value.presentacion === 'unica') {
-        // Vuelve a un producto que sí necesita presentación: limpia el valor
-        // "sentinela" que se puso al pasar por un producto sin presentación.
-        cambios = { ...cambios, presentacion: '', unidadMedida: '' };
+        cambios = { ...cambios, presentacionId: null };
       }
       if (producto && !producto.requiereColor) {
-        cambios = { ...cambios, base: '', colorId: null };
-      }
-      if (producto && !producto.requiereDimensiones) {
-        cambios = { ...cambios, pesoKg: null, altoCm: null, anchoCm: null, profundidadCm: null };
+        cambios = { ...cambios, baseId: null, colorId: null };
       }
     }
     formulario.value = { ...formulario.value, ...cambios };
@@ -206,23 +169,37 @@ export const useVarianteFormularioStore = defineStore('m01-variante-formulario',
     actualizar({ colorId });
   }
 
-  function agregarImagen(nombre: string, url = ''): void {
+  function definirBase(baseId: string | null): void {
+    actualizar({ baseId });
+  }
+
+  /** Mismas reglas de `CrearImagenDto` que en el formulario de producto. */
+  function agregarImagen(nombre: string, url = ''): string | null {
+    const mensaje = validarImagenProducto(url);
+    if (mensaje) {
+      erroresValidacion.value = { ...erroresValidacion.value, imagenes: mensaje };
+      return mensaje;
+    }
     const nueva = {
       id: `img-${Date.now()}`,
       url,
       nombre,
+      orden: formulario.value.imagenes.length,
       esPrincipal: formulario.value.imagenes.length === 0,
     };
     actualizar({ imagenes: [...formulario.value.imagenes, nueva] });
+    return null;
   }
 
   function quitarImagen(id: string): void {
     const restantes = formulario.value.imagenes.filter((img) => img.id !== id);
     const necesitaPrincipal = restantes.length > 0 && !restantes.some((img) => img.esPrincipal);
     actualizar({
-      imagenes: necesitaPrincipal
-        ? restantes.map((img, i) => ({ ...img, esPrincipal: i === 0 }))
-        : restantes,
+      imagenes: restantes.map((img, i) => ({
+        ...img,
+        orden: i,
+        esPrincipal: necesitaPrincipal ? i === 0 : img.esPrincipal,
+      })),
     });
   }
 
@@ -322,13 +299,13 @@ export const useVarianteFormularioStore = defineStore('m01-variante-formulario',
     desactivado,
     productoAsociado,
     colorAsociado,
-    margenEstimado,
     checklist,
     progresoChecklist,
     puedePublicar,
     inicializar,
     actualizar,
     definirColor,
+    definirBase,
     agregarImagen,
     quitarImagen,
     marcarImagenPrincipal,

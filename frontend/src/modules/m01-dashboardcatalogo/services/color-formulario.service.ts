@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   FormularioColor,
   OpcionesFormularioColor,
+  PayloadColor,
   ResultadoGuardadoColor,
 } from '../interfaces';
 
@@ -31,14 +32,15 @@ export const ColorFormularioService = {
     return data;
   },
 
-  async crear(payload: FormularioColor): Promise<ApiResponse<ResultadoGuardadoColor>> {
+  /** El payload viaja con `cielab` (RF-CAT-05-02), no con el HEX de captura. */
+  async crear(payload: PayloadColor): Promise<ApiResponse<ResultadoGuardadoColor>> {
     const { data } = await apiClient.post<ApiResponse<ResultadoGuardadoColor>>(BASE, payload);
     return data;
   },
 
   async actualizar(
     id: string,
-    payload: FormularioColor
+    payload: PayloadColor
   ): Promise<ApiResponse<ResultadoGuardadoColor>> {
     const { data } = await apiClient.put<ApiResponse<ResultadoGuardadoColor>>(
       `${BASE}/${id}`,

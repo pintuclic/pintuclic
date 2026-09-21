@@ -9,7 +9,10 @@
         :type="inputType"
         :placeholder="placeholder"
         :disabled="disabled"
-        v-model="value"
+        :step="step"
+        :min="min"
+        :max="max"
+        v-model="modelo"
         @blur="handleBlur"
         class="w-full px-4 py-2.5 rounded-lg border outline-none transition-colors duration-200 font-sans"
         :class="[
@@ -50,10 +53,42 @@ const props = defineProps({
   placeholder: { type: String, default: '' },
   id: { type: String, default: () => `input-${Math.random().toString(36).substring(2, 9)}` },
   disabled: { type: Boolean, default: false },
-  icon: { type: Object, default: null }
+  icon: { type: Object, default: null },
+  // Atributos nativos de los campos numéricos (se ignoran en los demás tipos).
+  step: { type: [String, Number], default: undefined },
+  min: { type: [String, Number], default: undefined },
+  max: { type: [String, Number], default: undefined }
 });
 
-const { value, errorMessage, handleBlur } = useField(props.name);
+const { value, errorMessage, handleBlur } = useField<unknown>(props.name);
+
+/**
+ * `useField` guarda lo que le entregue el `v-model`, y un `<input>` siempre
+ * entrega string: con `type="number"` un esquema Zod `z.number()` fallaba
+ * siempre («Expected number, received string»). Este proxy convierte a número
+ * real (o `null` cuando el campo queda vacío) solo en los campos numéricos; el
+ * resto de tipos sigue guardando el string tal cual.
+ *
+ * Se resuelve con un `computed` + `v-model` (en lugar de `@input` con `:value`)
+ * a propósito: la directiva `v-model` de Vue no reescribe el DOM mientras el
+ * campo tiene el foco y `looseToNumber(el.value) === value`, así que escribir
+ * "1.20" o "1." no se corrompe a mitad de tecleo.
+ */
+const modelo = computed<string | number | null>({
+  get: () => (value.value ?? null) as string | number | null,
+  set: (nuevo) => {
+    if (props.type !== 'number') {
+      value.value = nuevo;
+      return;
+    }
+    if (nuevo === null || nuevo === '') {
+      value.value = null;
+      return;
+    }
+    const numero = Number(nuevo);
+    value.value = Number.isNaN(numero) ? null : numero;
+  }
+});
 
 const showPassword = ref(false);
 

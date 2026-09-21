@@ -44,14 +44,14 @@ export const OPCIONES_FILTRO_LINEAS_DEMO: OpcionesFiltroLineas = {
 };
 
 export const LINEAS_DEMO: LineaListado[] = [
-  { id: 'viniltex-advanced', nombre: 'Viniltex Advanced', descripcionCorta: 'Línea premium interior', imagenUrl: null, marca: 'Pintuco', gamaComercial: 'Premium', productosAsociados: 42, estado: 'activa', actualizadoEn: '2025-05-27T10:24:00-05:00', actualizadoPor: 'Laura Gómez' },
-  { id: 'koraza', nombre: 'Koraza', descripcionCorta: 'Protección exterior', imagenUrl: null, marca: 'Pintuco', gamaComercial: 'Profesional', productosAsociados: 36, estado: 'activa', actualizadoEn: '2025-05-27T09:18:00-05:00', actualizadoPor: 'Carlos Álvarez' },
-  { id: 'aqualock', nombre: 'Aqualock', descripcionCorta: 'Impermeabilizantes', imagenUrl: null, marca: 'Pintuco', gamaComercial: 'Profesional', productosAsociados: 28, estado: 'activa', actualizadoEn: '2025-05-26T16:42:00-05:00', actualizadoPor: 'María Torres' },
-  { id: 'osel', nombre: 'Osel', descripcionCorta: 'Esmaltes y barnices', imagenUrl: null, marca: 'Pintuco', gamaComercial: 'Estándar', productosAsociados: 21, estado: 'activa', actualizadoEn: '2025-05-26T14:11:00-05:00', actualizadoPor: 'Juan Pérez' },
-  { id: 'pro-4000', nombre: 'Pro 4000', descripcionCorta: 'Línea contratista', imagenUrl: null, marca: 'Pintuco', gamaComercial: 'Económica', productosAsociados: 18, estado: 'inactiva', actualizadoEn: '2025-05-26T11:03:00-05:00', actualizadoPor: 'Laura Gómez' },
-  { id: 'dewalt-herramientas', nombre: 'DeWalt Herramientas', descripcionCorta: 'Herramientas eléctricas', imagenUrl: null, marca: 'DeWalt', gamaComercial: 'Profesional', productosAsociados: 15, estado: 'activa', actualizadoEn: '2025-05-25T18:20:00-05:00', actualizadoPor: 'Carlos Álvarez' },
-  { id: '3m-accesorios', nombre: '3M Accesorios', descripcionCorta: 'Cintas y adhesivos', imagenUrl: null, marca: '3M', gamaComercial: 'Estándar', productosAsociados: 12, estado: 'activa', actualizadoEn: '2025-05-25T10:15:00-05:00', actualizadoPor: 'María Torres' },
-  { id: 'eler-impermeabilizantes', nombre: 'Eler Impermeabilizantes', descripcionCorta: 'Soluciones de construcción', imagenUrl: null, marca: 'Eler', gamaComercial: 'Profesional', productosAsociados: 8, estado: 'pausada', actualizadoEn: '2025-05-24T09:32:00-05:00', actualizadoPor: 'Juan Pérez' },
+  { id: 'viniltex-advanced', nombre: 'Viniltex Advanced', imagenUrl: null, marca: 'Pintuco', gamaComercial: 'Premium', productosAsociados: 42, estado: 'activa', actualizadoEn: '2025-05-27T10:24:00-05:00', actualizadoPor: 'Laura Gómez' },
+  { id: 'koraza', nombre: 'Koraza', imagenUrl: null, marca: 'Pintuco', gamaComercial: 'Profesional', productosAsociados: 36, estado: 'activa', actualizadoEn: '2025-05-27T09:18:00-05:00', actualizadoPor: 'Carlos Álvarez' },
+  { id: 'aqualock', nombre: 'Aqualock', imagenUrl: null, marca: 'Pintuco', gamaComercial: 'Profesional', productosAsociados: 28, estado: 'activa', actualizadoEn: '2025-05-26T16:42:00-05:00', actualizadoPor: 'María Torres' },
+  { id: 'osel', nombre: 'Osel', imagenUrl: null, marca: 'Pintuco', gamaComercial: 'Estándar', productosAsociados: 21, estado: 'activa', actualizadoEn: '2025-05-26T14:11:00-05:00', actualizadoPor: 'Juan Pérez' },
+  { id: 'pro-4000', nombre: 'Pro 4000', imagenUrl: null, marca: 'Pintuco', gamaComercial: 'Económica', productosAsociados: 18, estado: 'inactiva', actualizadoEn: '2025-05-26T11:03:00-05:00', actualizadoPor: 'Laura Gómez' },
+  { id: 'dewalt-herramientas', nombre: 'DeWalt Herramientas', imagenUrl: null, marca: 'DeWalt', gamaComercial: 'Profesional', productosAsociados: 15, estado: 'activa', actualizadoEn: '2025-05-25T18:20:00-05:00', actualizadoPor: 'Carlos Álvarez' },
+  { id: '3m-accesorios', nombre: '3M Accesorios', imagenUrl: null, marca: '3M', gamaComercial: 'Estándar', productosAsociados: 12, estado: 'activa', actualizadoEn: '2025-05-25T10:15:00-05:00', actualizadoPor: 'María Torres' },
+  { id: 'eler-impermeabilizantes', nombre: 'Eler Impermeabilizantes', imagenUrl: null, marca: 'Eler', gamaComercial: 'Profesional', productosAsociados: 8, estado: 'pausada', actualizadoEn: '2025-05-24T09:32:00-05:00', actualizadoPor: 'Juan Pérez' },
 ];
 
 // Miniatura de la maqueta "ADMIN 15": reutiliza las fotos de producto (tarros)
@@ -79,7 +79,7 @@ export function consultarLineasDemo(filtros: FiltrosLineasDTO): PaginaLineas {
   const q = plano(filtros.busqueda.trim());
 
   const filtrados = LINEAS_DEMO.filter((l) => {
-    if (q && !plano(`${l.nombre} ${l.descripcionCorta} ${l.marca} ${l.gamaComercial}`).includes(q)) {
+    if (q && !plano(`${l.nombre} ${l.marca} ${l.gamaComercial}`).includes(q)) {
       return false;
     }
     if (filtros.marca && plano(l.marca) !== plano(filtros.marca)) return false;

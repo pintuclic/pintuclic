@@ -30,7 +30,6 @@
             >
               {{ (row as unknown as MarcaListado).nombre }}
             </button>
-            <span class="text-xs text-neutral-medium">{{ (row as unknown as MarcaListado).descripcionCorta }}</span>
           </div>
         </div>
       </template>

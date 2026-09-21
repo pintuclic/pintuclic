@@ -49,7 +49,6 @@ const TOTAL_CATALOGO_DEMO = 248;
 export const PRODUCTOS_DEMO: ProductoListado[] = [
   {
     id: 'prd-001',
-    sku: 'VIN-ADV-001',
     nombre: 'Viniltex Advanced',
     imagenUrl: null,
     marca: 'Pintuco',
@@ -63,7 +62,6 @@ export const PRODUCTOS_DEMO: ProductoListado[] = [
   },
   {
     id: 'prd-002',
-    sku: 'BRO-PRM-003',
     nombre: 'Brocha Premium 3"',
     imagenUrl: null,
     marca: 'Pintuco',
@@ -77,7 +75,6 @@ export const PRODUCTOS_DEMO: ProductoListado[] = [
   },
   {
     id: 'prd-003',
-    sku: 'CIN-ENM-001',
     nombre: 'Cinta de Enmascarar',
     imagenUrl: null,
     marca: '3M',
@@ -91,7 +88,6 @@ export const PRODUCTOS_DEMO: ProductoListado[] = [
   },
   {
     id: 'prd-004',
-    sku: 'ROD-PRO-009',
     nombre: 'Rodillo Profesional 9"',
     imagenUrl: null,
     marca: 'Pintuco',
@@ -105,7 +101,6 @@ export const PRODUCTOS_DEMO: ProductoListado[] = [
   },
   {
     id: 'prd-005',
-    sku: 'TAL-20V-001',
     nombre: 'Taladro Inalámbrico 20V',
     imagenUrl: null,
     marca: 'DeWalt',
@@ -119,7 +114,6 @@ export const PRODUCTOS_DEMO: ProductoListado[] = [
   },
   {
     id: 'prd-006',
-    sku: 'PIN-ACR-001',
     nombre: 'Pintura Acrílica Premium',
     imagenUrl: null,
     marca: 'Pintuco',
@@ -133,7 +127,6 @@ export const PRODUCTOS_DEMO: ProductoListado[] = [
   },
   {
     id: 'prd-007',
-    sku: 'VIN-TRA-001',
     nombre: 'Viniltex Tradicional',
     imagenUrl: null,
     marca: 'Pintuco',
@@ -147,7 +140,6 @@ export const PRODUCTOS_DEMO: ProductoListado[] = [
   },
   {
     id: 'prd-008',
-    sku: 'IMP-ELR-001',
     nombre: 'Impermeabilizante Eler',
     imagenUrl: null,
     marca: 'Eler',
@@ -187,7 +179,7 @@ export function consultarProductosDemo(filtros: FiltrosProductosDTO): PaginaProd
   const termino = filtros.busqueda.trim().toLowerCase();
 
   const filtrados = PRODUCTOS_DEMO.filter((p) => {
-    if (termino && !`${p.nombre} ${p.sku}`.toLowerCase().includes(termino)) return false;
+    if (termino && !p.nombre.toLowerCase().includes(termino)) return false;
     if (!coincideOpcion(filtros.categoriaId, p.categoria)) return false;
     if (!coincideOpcion(filtros.marcaId, p.marca)) return false;
     if (!coincideOpcion(filtros.lineaId, p.linea)) return false;

@@ -1,10 +1,10 @@
 <template>
   <div class="space-y-6 p-6 lg:p-8">
-    <EncabezadoSeccion
-      titulo="Gestión de líneas comerciales"
-      descripcion="Organiza y administra las líneas comerciales de tus marcas. Define gamas, asocia productos y gestiona su visibilidad."
+    <PageHeader
+      title="Gestión de líneas comerciales"
+      description="Organiza y administra las líneas comerciales de tus marcas. Define gamas, asocia productos y gestiona su visibilidad."
     >
-      <template #acciones>
+      <template #default>
         <Button variant="conversion" :icon="Plus" @click="irA('/admin/catalogo/lineas/nueva')">
           Nueva línea
         </Button>
@@ -12,7 +12,7 @@
           Exportar
         </Button>
       </template>
-    </EncabezadoSeccion>
+    </PageHeader>
 
     <p
       v-if="error"
@@ -112,6 +112,7 @@
 
     <TablaLineas
       v-if="pagina"
+      v-model:seleccion="seleccion"
       :pagina="pagina"
       :orden="filtros.orden"
       :cargando="cargando"
@@ -119,6 +120,14 @@
       @desactivar="(linea) => (lineaADesactivar = linea)"
       @ordenar="(orden) => aplicarFiltros({ orden })"
       @ir-pagina="irAPagina"
+    />
+
+    <BarraAccionesMasivas
+      :cantidad="seleccion.length"
+      @limpiar="seleccion = []"
+      @activar-lote="seleccion = []"
+      @desactivar-lote="seleccion = []"
+      @exportar-lote="exportarSeleccion"
     />
   </div>
 
@@ -149,10 +158,10 @@ import { computed, ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, Download, Search, FilterX, Boxes, Tag, Layers, Settings } from 'lucide-vue-next';
 import type { Component } from 'vue';
-import { Button } from '@/core/components';
-import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
+import { Button, PageHeader } from '@/core/components';
 import TablaLineas from '../components/TablaLineas.vue';
 import ModalDesactivarLinea from '../components/ModalDesactivarLinea.vue';
+import BarraAccionesMasivas from '../components/BarraAccionesMasivas.vue';
 import { useLineas } from '../composables/useLineas';
 import type { EstadoLinea, LineaListado } from '../interfaces';
 
@@ -171,6 +180,18 @@ const {
 } = useLineas();
 
 const lineaADesactivar = ref<LineaListado | null>(null);
+
+/**
+ * Selección de filas para las acciones masivas. Sin endpoint por lotes en la
+ * API real, «Activar»/«Desactivar» solo limpian la selección; «Exportar» va a
+ * la misma ruta que el botón «Exportar» de la cabecera.
+ */
+const seleccion = ref<string[]>([]);
+
+function exportarSeleccion(): void {
+  irA('/admin/catalogo/lineas/exportar');
+  seleccion.value = [];
+}
 
 // KPIs de la maqueta ADMIN 15: ícono en caja de color + número + etiqueta +
 // subtítulo. Colores solo con tokens oficiales (sin morado/rojo del mockup).

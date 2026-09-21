@@ -28,7 +28,6 @@ export function useVarianteFormulario() {
     desactivado,
     productoAsociado,
     colorAsociado,
-    margenEstimado,
     checklist,
     progresoChecklist,
     puedePublicar,
@@ -50,7 +49,6 @@ export function useVarianteFormulario() {
     // getters
     productoAsociado,
     colorAsociado,
-    margenEstimado,
     checklist,
     progresoChecklist,
     puedePublicar,
@@ -58,6 +56,7 @@ export function useVarianteFormulario() {
     inicializar: store.inicializar,
     actualizar: store.actualizar,
     definirColor: store.definirColor,
+    definirBase: store.definirBase,
     agregarImagen: store.agregarImagen,
     quitarImagen: store.quitarImagen,
     marcarImagenPrincipal: store.marcarImagenPrincipal,

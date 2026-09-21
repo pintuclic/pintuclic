@@ -1,10 +1,10 @@
 <template>
   <div class="space-y-6 p-6 lg:p-8">
-    <EncabezadoSeccion
-      titulo="Gestión de colores"
-      descripcion="Administra la paleta de colores de tu catálogo. Organiza, edita y crea nuevos colores."
+    <PageHeader
+      title="Gestión de colores"
+      description="Administra la paleta de colores de tu catálogo. Organiza, edita y crea nuevos colores."
     >
-      <template #acciones>
+      <template #default>
         <Button variant="outline" :icon="Upload" @click="irA('/admin/catalogo/colores/carga-masiva')">
           Carga masiva
         </Button>
@@ -12,7 +12,7 @@
           Nuevo color
         </Button>
       </template>
-    </EncabezadoSeccion>
+    </PageHeader>
 
     <p
       v-if="error"
@@ -124,8 +124,7 @@
  */
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Plus, Upload, Search, Palette, Droplet, LayoutGrid } from 'lucide-vue-next';
-import { Button } from '@/core/components';
-import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
+import { Button, PageHeader } from '@/core/components';
 import TarjetaEstadistica from '../components/TarjetaEstadistica.vue';
 import TablaColores from '../components/TablaColores.vue';
 import { useColores } from '../composables/useColores';

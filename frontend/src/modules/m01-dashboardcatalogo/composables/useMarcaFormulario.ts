@@ -15,8 +15,6 @@ export function useMarcaFormulario() {
   const store = useMarcaFormularioStore();
   const {
     formulario,
-    opciones,
-    resumenPrevia,
     modo,
     cargando,
     guardando,
@@ -32,8 +30,6 @@ export function useMarcaFormulario() {
   return {
     // estado
     formulario,
-    opciones,
-    resumenPrevia,
     modo,
     cargando,
     guardando,
@@ -48,9 +44,6 @@ export function useMarcaFormulario() {
     // acciones
     inicializar: store.inicializar,
     actualizar: store.actualizar,
-    alternarLista: store.alternarLista,
-    agregarEtiqueta: store.agregarEtiqueta,
-    quitarEtiqueta: store.quitarEtiqueta,
     quitarLogo: store.quitarLogo,
     guardarBorrador: store.guardarBorrador,
     guardarCambios: store.guardarCambios,

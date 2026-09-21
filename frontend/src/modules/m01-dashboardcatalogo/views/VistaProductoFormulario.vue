@@ -39,7 +39,7 @@
       class="rounded-card border border-conversion/40 bg-conversion/10 px-4 py-3 text-sm text-neutral-dark"
     >
       Cambios guardados. El producto quedó como
-      <strong>{{ formulario.estado === 'publicado' ? 'publicado' : 'borrador' }}</strong>.
+      <strong>{{ ETIQUETA_ESTADO[formulario.estado] }}</strong>.
     </p>
     <p
       v-else-if="error"
@@ -176,7 +176,16 @@
 
     <!-- Modo editar -->
     <template v-else>
-      <Button variant="outline" :icon="Power" :disabled="guardando" @click="confirmarDesactivar">
+      <Button
+        v-if="formulario.estado === 'inactivo'"
+        variant="outline"
+        :icon="Power"
+        :disabled="guardando"
+        @click="reactivar"
+      >
+        Reactivar producto
+      </Button>
+      <Button v-else variant="outline" :icon="Power" :disabled="guardando" @click="confirmarDesactivar">
         Desactivar producto
       </Button>
       <Button variant="action" :icon="Save" :disabled="guardando" @click="guardarCambios">
@@ -184,6 +193,13 @@
       </Button>
     </template>
   </div>
+
+  <ModalConfirmarAccion
+    v-model="mostrarConfirmarDesactivar"
+    titulo="¿Desactivar producto?"
+    mensaje="Dejará de mostrarse en el catálogo público."
+    @confirmar="ejecutarDesactivar"
+  />
 </template>
 
 <script setup lang="ts">
@@ -203,7 +219,7 @@
  * Permiso requerido: «Gestión de productos» (M17), revalidado en el servidor.
  * ==============================================================================
  */
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import {
   ArrowLeft,
   Save,
@@ -218,8 +234,10 @@ import { Button } from '@/core/components';
 import FormularioProducto from '../components/FormularioProducto.vue';
 import VistaPreviaProducto from '../components/VistaPreviaProducto.vue';
 import ChecklistPublicacion from '../components/ChecklistPublicacion.vue';
+import ModalConfirmarAccion from '../components/ModalConfirmarAccion.vue';
 import { useProductoFormulario } from '../composables/useProductoFormulario';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
+import type { EstadoPublicacion } from '../interfaces';
 
 const props = defineProps<{
   /** Id del producto a editar (lo inyecta el router con `props: true`). Vacío = crear. */
@@ -242,7 +260,9 @@ const {
   inicializar,
   guardarBorrador,
   publicar,
+  guardarCambios,
   desactivar,
+  reactivar,
   formatearFecha,
   formatearFechaHora,
 } = useProductoFormulario();
@@ -253,26 +273,33 @@ onMounted(() => {
 
 const esEdicion = computed(() => modo.value === 'editar');
 
+/**
+ * Publicación y activación son ejes distintos en el backend: un producto
+ * desactivado queda `inactivo`, no `borrador`.
+ */
+const ETIQUETA_ESTADO: Record<EstadoPublicacion, string> = {
+  publicado: 'publicado',
+  borrador: 'borrador',
+  inactivo: 'inactivo',
+};
+
 /** Metadatos de auditoría de la vista previa (solo en modo editar). */
 const metaVistaPrevia = computed(() =>
   detalleEdicion.value
     ? {
         actualizadoEn: formatearFecha(detalleEdicion.value.actualizadoEn),
         creadoPor: detalleEdicion.value.creadoPor,
-        sku: formulario.value.sku,
       }
     : null
 );
 
-function guardarCambios(): void {
-  void (formulario.value.estado === 'publicado' ? publicar() : guardarBorrador());
-}
-
+const mostrarConfirmarDesactivar = ref(false);
 function confirmarDesactivar(): void {
-  const ok = globalThis.confirm?.(
-    '¿Desactivar este producto? Dejará de mostrarse en el catálogo público.'
-  );
-  if (ok) void desactivar();
+  mostrarConfirmarDesactivar.value = true;
+}
+function ejecutarDesactivar(): void {
+  mostrarConfirmarDesactivar.value = false;
+  void desactivar();
 }
 
 // Navegación del panel: la provee el router (dashboardCatalogoRoutes).

@@ -454,6 +454,13 @@
       No se encontró el producto solicitado.
     </p>
   </div>
+
+  <ModalConfirmarAccion
+    v-model="mostrarConfirmarDesactivar"
+    titulo="¿Desactivar producto?"
+    mensaje="Dejará de mostrarse en el catálogo público."
+    @confirmar="ejecutarDesactivar"
+  />
 </template>
 
 <script setup lang="ts">
@@ -483,6 +490,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-vue-next';
 import { Badge, Button } from '@/core/components';
+import ModalConfirmarAccion from '../components/ModalConfirmarAccion.vue';
 import { useProductoDetalle } from '../composables/useProductoDetalle';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import type { EstadoProducto, PestanaDetalleProducto, VarianteResumenDetalle } from '../interfaces';
@@ -582,11 +590,13 @@ async function copiarSku(): Promise<void> {
   }
 }
 
+const mostrarConfirmarDesactivar = ref(false);
 function confirmarDesactivar(): void {
-  const ok = globalThis.confirm?.(
-    '¿Desactivar este producto? Dejará de mostrarse en el catálogo público.'
-  );
-  if (ok) void desactivar();
+  mostrarConfirmarDesactivar.value = true;
+}
+function ejecutarDesactivar(): void {
+  mostrarConfirmarDesactivar.value = false;
+  void desactivar();
 }
 
 // Navegación del panel: la provee el router (dashboardCatalogoRoutes).

@@ -52,6 +52,10 @@
       :rows="elementosPaginados as unknown as Record<string, unknown>[]"
       row-key="id"
       mobile-cards
+      selectable
+      selection-label-key="nombre"
+      :model-value="seleccion"
+      @update:model-value="(claves) => $emit('update:seleccion', claves.map(String))"
     >
       <template #empty>
         <p class="text-sm text-neutral-medium">No hay elementos que coincidan con la búsqueda.</p>
@@ -178,9 +182,12 @@ const props = defineProps<{
   elementos: NodoCategoria[];
   filtros: FiltrosElementosCategoria;
   total: number;
+  /** Ids de las filas seleccionadas (`v-model:seleccion` desde la vista). */
+  seleccion?: string[];
 }>();
 
 const emit = defineEmits<{
+  (e: 'update:seleccion', ids: string[]): void;
   (e: 'ordenar', campo: CampoOrdenElementoCategoria): void;
   (e: 'buscar', texto: string): void;
   (e: 'filtrar-tipo', valor: string): void;

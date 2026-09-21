@@ -19,7 +19,7 @@ import type {
 const BASE = '/catalogo/lineas';
 
 export const LineaFormularioService = {
-  /** GET /api/catalogo/lineas/opciones-formulario — catálogos de los selectores. */
+  /** GET /api/catalogo/lineas/opciones-formulario — catálogo de marcas del selector. */
   async obtenerOpciones(): Promise<ApiResponse<OpcionesFormularioLinea>> {
     const { data } = await apiClient.get<ApiResponse<OpcionesFormularioLinea>>(
       `${BASE}/opciones-formulario`

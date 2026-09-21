@@ -1,11 +1,13 @@
 import type { FiltrosColoresDTO } from '../dtos/colores.dto';
 import { hayFiltrosColoresActivos } from '../dtos/colores.dto';
+import type { FilaCargaMasivaColorDTO } from '../dtos/colores-carga-masiva.dto';
 import type {
   ColorListado,
   FamiliaCromatica,
   OpcionesFiltroColores,
   PaginaColores,
   ResumenColores,
+  ResultadoCargaMasivaColores,
 } from '../interfaces';
 
 /**
@@ -82,4 +84,29 @@ export function consultarColoresDemo(filtros: FiltrosColoresDTO): PaginaColores 
     porPagina: filtros.porPagina,
     totalPaginas,
   };
+}
+
+/**
+ * Simula POST /catalogo/colores/carga-masiva: agrega cada fila a `COLORES_DEMO`
+ * para que el listado y el resumen reflejen la carga sin backend real.
+ */
+export function cargarColoresMasivoDemo(
+  filas: FilaCargaMasivaColorDTO[]
+): ResultadoCargaMasivaColores {
+  const coloresCreados: ColorListado[] = filas.map((fila, i) => {
+    const familia = FAMILIAS_CROMATICAS_DEMO.find((f) => f.clave === fila.familiaClave);
+    return {
+      id: `col-carga-${Date.now()}-${i}`,
+      nombre: fila.nombre,
+      codigo: fila.codigo || null,
+      marca: fila.marca || '—',
+      familiaClave: fila.familiaClave,
+      familiaNombre: familia?.nombre ?? fila.familiaClave,
+      valorCromatico: fila.hex,
+      estado: 'borrador',
+    };
+  });
+
+  COLORES_DEMO.unshift(...coloresCreados);
+  return { creados: coloresCreados.length, coloresCreados };
 }

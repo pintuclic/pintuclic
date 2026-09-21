@@ -11,27 +11,23 @@ import { GALERIA_PRODUCTO_DEMO } from '../assets/imagenes-catalogo';
  * Ubicación: src/modules/m01-dashboardcatalogo/services/variante-formulario.mock.ts
  *
  * Refleja las maquetas "ADMIN 07 - Crear variante" y "ADMIN 08 - Editar
- * variante" (ejemplo: "Viniltex Advanced · 1 galón · Blanco Nieve"). El store
- * usa estos datos mientras el backend no expone los endpoints.
+ * variante" (ejemplo: "Viniltex Advanced · 1 galón · Blanco Nieve"), acotada a
+ * los campos reales del backend (CrearVarianteDto). El store usa estos datos
+ * mientras el backend no expone los endpoints.
  * ==============================================================================
  */
 
 export const OPCIONES_FORMULARIO_VARIANTE_DEMO: OpcionesFormularioVariante = {
   productos: [
-    { valor: 'viniltex-advanced', etiqueta: 'Viniltex Advanced', sku: 'VIN-ADV-001', marca: 'Pintuco', linea: 'Pinturas interiores', requierePresentacion: true, requiereColor: true, requiereDimensiones: true },
-    { valor: 'pintura-acrilica-premium', etiqueta: 'Pintura Acrílica Premium', sku: 'PIN-ACR-001', marca: 'Pintuco', linea: 'Premium', requierePresentacion: true, requiereColor: true, requiereDimensiones: true },
-    { valor: 'brocha-premium', etiqueta: 'Brocha Premium 3"', sku: 'BRO-PRM-003', marca: 'Pintuco', linea: 'Profesional', requierePresentacion: false, requiereColor: false, requiereDimensiones: false },
-    { valor: 'taladro-20v', etiqueta: 'Taladro Inalámbrico 20V', sku: 'TAL-20V-001', marca: 'DeWalt', linea: '20V MAX', requierePresentacion: false, requiereColor: false, requiereDimensiones: false },
+    { valor: 'viniltex-advanced', etiqueta: 'Viniltex Advanced', marca: 'Pintuco', linea: 'Pinturas interiores', requierePresentacion: true, requiereColor: true },
+    { valor: 'pintura-acrilica-premium', etiqueta: 'Pintura Acrílica Premium', marca: 'Pintuco', linea: 'Premium', requierePresentacion: true, requiereColor: true },
+    { valor: 'brocha-premium', etiqueta: 'Brocha Premium 3"', marca: 'Pintuco', linea: 'Profesional', requierePresentacion: false, requiereColor: false },
+    { valor: 'taladro-20v', etiqueta: 'Taladro Inalámbrico 20V', marca: 'DeWalt', linea: '20V MAX', requierePresentacion: false, requiereColor: false },
   ],
   presentaciones: [
     { valor: '1-4-galon', etiqueta: '1/4 galón' },
     { valor: '1-galon', etiqueta: '1 galón' },
     { valor: '5-galones', etiqueta: '5 galones' },
-    { valor: 'otra', etiqueta: 'Otra' },
-  ],
-  unidades: [
-    { valor: 'galon', etiqueta: 'Galón' },
-    { valor: 'litro', etiqueta: 'Litro' },
     { valor: 'unidad', etiqueta: 'Unidad' },
   ],
   bases: [
@@ -47,41 +43,18 @@ export const OPCIONES_FORMULARIO_VARIANTE_DEMO: OpcionesFormularioVariante = {
     { id: 'col-rojo-carmesi', nombre: 'Rojo Carmesí', codigo: 'RC-015', hex: '#C42B2B', familia: 'Rojos' },
     { id: 'col-verde-olivo', nombre: 'Verde Olivo', codigo: 'VO-008', hex: '#5A7D2A', familia: 'Verdes' },
   ],
-  impuestos: [
-    { valor: '0', etiqueta: '0% (exento)' },
-    { valor: '5', etiqueta: '5%' },
-    { valor: '19', etiqueta: '19%' },
-  ],
-  bodegas: [
-    { valor: 'bodega-norte', etiqueta: 'Bodega Norte' },
-    { valor: 'bodega-sur', etiqueta: 'Bodega Sur' },
-    { valor: 'bodega-central', etiqueta: 'Bodega Central' },
-  ],
 };
 
 /** Formulario en blanco para el modo "crear". */
 export function formularioVarianteVacio(): FormularioVariante {
   return {
     productoId: null,
-    presentacion: '',
-    unidadMedida: '',
-    base: '',
+    presentacionId: null,
+    baseId: null,
     colorId: null,
-    sku: '',
     codigoProveedor: '',
-    codigoBarras: '',
-    precioVenta: null,
-    precioReferencia: null,
-    costoCompra: null,
-    impuestoIva: 19,
-    stockInicial: null,
-    stockMinimo: null,
-    bodegaId: null,
-    pesoKg: null,
-    altoCm: null,
-    anchoCm: null,
-    profundidadCm: null,
-    notasLogisticas: '',
+    precioVigente: null,
+    existenciaReferencial: null,
     imagenes: [],
     estado: 'borrador',
   };
@@ -90,28 +63,14 @@ export function formularioVarianteVacio(): FormularioVariante {
 /** Variante de ejemplo para el modo "editar" (la de la maqueta ADMIN 08). */
 export const FORMULARIO_VARIANTE_DEMO: FormularioVariante = {
   productoId: 'viniltex-advanced',
-  presentacion: '1-galon',
-  unidadMedida: 'galon',
-  base: 'blanco',
+  presentacionId: '1-galon',
+  baseId: 'blanco',
   colorId: 'col-blanco-nieve',
-  sku: 'VIN-ADV-100-BN',
   codigoProveedor: 'VIN-ADV-100',
-  codigoBarras: '7701234567890',
-  precioVenta: 89900,
-  precioReferencia: 0,
-  costoCompra: 52300,
-  impuestoIva: 19,
-  stockInicial: 24,
-  stockMinimo: 5,
-  bodegaId: 'bodega-norte',
-  pesoKg: 1.2,
-  altoCm: 18,
-  anchoCm: 16,
-  profundidadCm: 16,
-  notasLogisticas:
-    'Disponible en todas las tiendas. Manejar con cuidado. Almacenar en lugar fresco y seco.',
+  precioVigente: 89900,
+  existenciaReferencial: 24,
   imagenes: [
-    { id: 'img-1', url: GALERIA_PRODUCTO_DEMO.frontal, nombre: 'viniltex-advanced-1g.jpg', esPrincipal: true },
+    { id: 'img-1', url: GALERIA_PRODUCTO_DEMO.frontal, nombre: 'viniltex-advanced-1g.jpg', orden: 0, esPrincipal: true },
   ],
   estado: 'activo',
 };

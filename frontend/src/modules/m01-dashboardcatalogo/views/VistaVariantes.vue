@@ -1,8 +1,8 @@
 <template>
   <div class="space-y-6 p-6 lg:p-8">
-    <EncabezadoSeccion
-      titulo="Gestión de variantes"
-      descripcion="Administra las variantes de tus productos. Edita precios, existencias y estados."
+    <PageHeader
+      title="Gestión de variantes"
+      description="Administra las variantes de tus productos. Edita precios, existencias y estados."
     />
 
     <p
@@ -25,6 +25,7 @@
 
         <TablaVariantes
           v-if="pagina"
+          v-model:seleccion="seleccion"
           :pagina="pagina"
           :filtros="filtros"
           :cargando="cargando"
@@ -68,6 +69,14 @@
         </div>
       </aside>
     </div>
+
+    <BarraAccionesMasivas
+      :cantidad="seleccion.length"
+      @limpiar="seleccion = []"
+      @activar-lote="seleccion = []"
+      @desactivar-lote="seleccion = []"
+      @exportar-lote="exportarSeleccion"
+    />
   </div>
 </template>
 
@@ -84,12 +93,13 @@
  * Permiso requerido: «Gestión de productos» (M17), revalidado en el servidor.
  * ==============================================================================
  */
-import { computed } from 'vue';
+import { PageHeader } from '@/core/components';
+import { computed, ref } from 'vue';
 import { usePanelNavegacion } from '../composables/usePanelNavegacion';
 import { Layers, PackageX, FileText } from 'lucide-vue-next';
-import EncabezadoSeccion from '../components/EncabezadoSeccion.vue';
 import FiltrosVariantes from '../components/FiltrosVariantes.vue';
 import TablaVariantes from '../components/TablaVariantes.vue';
+import BarraAccionesMasivas from '../components/BarraAccionesMasivas.vue';
 import { useVariantes } from '../composables/useVariantes';
 
 const {
@@ -115,4 +125,16 @@ const filasResumen = computed(() => [
 ]);
 
 const { irA } = usePanelNavegacion();
+
+/**
+ * Selección de filas para las acciones masivas. Sin endpoint por lotes en la
+ * API real, «Activar»/«Desactivar» solo limpian la selección; «Exportar» va a
+ * la misma ruta que el botón «Exportar» de la cabecera de la tabla.
+ */
+const seleccion = ref<string[]>([]);
+
+function exportarSeleccion(): void {
+  irA('/admin/catalogo/variantes/exportar');
+  seleccion.value = [];
+}
 </script>
