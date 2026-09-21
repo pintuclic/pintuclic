@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <component
     :is="tag"
     v-bind="routeProps"
@@ -9,6 +9,7 @@
         'bg-transparent hover:bg-subaction text-action': tone === 'action',
         'bg-transparent hover:bg-conversion/20 text-conversion': tone === 'success',
         'bg-transparent hover:bg-highlight/20 text-highlight': tone === 'warning',
+        'bg-transparent hover:bg-danger-subtle text-danger hover:text-danger-hover': tone === 'danger',
         'opacity-50 cursor-not-allowed pointer-events-none': disabled
       }
     ]"
@@ -42,7 +43,7 @@ import Icon from '../data-display/Icon.vue';
 const props = defineProps<{
   icon?: Component | string;
   label: string;
-  tone?: 'neutral' | 'action' | 'success' | 'warning';
+  tone?: 'neutral' | 'action' | 'success' | 'warning' | 'danger';
   to?: string | object;
   href?: string;
   disabled?: boolean;

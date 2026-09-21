@@ -1,13 +1,16 @@
 <template>
   <Teleport to="body">
-    <dialog ref="dialog" :aria-labelledby="title ? titleId : undefined"
+    <dialog
+      ref="dialog"
+      :aria-labelledby="title ? titleId : undefined"
       class="fixed inset-0 m-auto max-h-none border-0 bg-transparent p-4 backdrop:bg-neutral-black/50 backdrop:backdrop-blur-sm"
       :class="[maxWidthClass, modelValue ? 'w-full' : 'hidden']"
       @cancel.prevent="close"
-      @click="$event.target === $event.currentTarget && close()">
-
+      @click="$event.target === $event.currentTarget && close()"
+    >
       <!-- Modal Content -->
-      <div v-if="modelValue"
+      <div
+        v-if="modelValue"
         class="relative bg-white rounded-modal shadow-xl w-full max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden"
       >
         <!--
@@ -28,12 +31,14 @@
           type="button"
           aria-label="Cerrar ventana"
           @click="close"
-          class="absolute top-4 right-4 p-1 rounded-full text-neutral-medium hover:bg-neutral-lightest hover:text-neutral-dark transition-colors z-10 cursor-pointer"
+          class="absolute right-4 flex h-8 w-8 items-center justify-center rounded-full text-neutral-medium hover:bg-neutral-light hover:text-corporate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action transition-all z-10 cursor-pointer"
+          :class="accent ? 'top-5' : 'top-4'"
         >
-          <XIcon class="w-5 h-5" />
+          <XIcon class="w-4 h-4" />
         </button>
 
         <div class="p-4 sm:p-6 md:p-8 min-h-0 flex-1 overflow-y-auto custom-scrollbar">
+          <!-- Encabezado de marca institucional (opcional vía prop :brand-header="true") -->
           <div v-if="brandHeader" class="flex items-center gap-3 mb-6">
             <img :src="logoSrc" alt="PintuClic" class="w-9 h-9 rounded-lg object-contain" />
             <span class="text-lg font-heading font-bold text-corporate">PintuClic</span>
@@ -91,7 +96,7 @@ const maxWidthClass = computed(() => {
     xl: 'max-w-xl',
     '2xl': 'max-w-2xl'
   };
-  return props.wide ? 'max-w-3xl' : map[props.maxWidth];
+  return map[props.maxWidth] || 'max-w-md';
 });
 
 const close = () => {
@@ -103,10 +108,12 @@ const dialog = ref<HTMLDialogElement>();
 let previousOverflow = '';
 let locked = false;
 let disposed = false;
+
 function unlock() {
   if (locked) document.body.style.overflow = previousOverflow;
   locked = false;
 }
+
 watch(() => props.modelValue, async (isOpen) => {
   await nextTick();
   if (disposed || props.modelValue !== isOpen) return;
@@ -122,27 +129,10 @@ watch(() => props.modelValue, async (isOpen) => {
     unlock();
   }
 }, { immediate: true, flush: 'post' });
+
 onBeforeUnmount(() => {
   disposed = true;
   dialog.value?.close();
   unlock();
 });
 </script>
-
-<style>
-/* Custom Scrollbar para el modal */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 12px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: var(--color-subaction);
-  border-radius: 10px;
-  border: 4px solid transparent;
-  background-clip: padding-box;
-}
-</style>

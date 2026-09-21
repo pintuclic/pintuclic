@@ -1,9 +1,9 @@
-﻿<template>
+<template>
   <component
     :is="tag"
     v-bind="routeProps"
     :class="[
-      'inline-flex items-center justify-center font-sans font-medium rounded-lg cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+      'inline-flex items-center justify-center font-title font-medium rounded-lg cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
       resolvedVariantClass,
       sizeClasses[size],
       { 'opacity-50 cursor-not-allowed pointer-events-none': disabled },
@@ -37,7 +37,7 @@ import type { Component } from 'vue';
 import Icon from '../data-display/Icon.vue';
 
 const props = defineProps<{
-  variant?: 'corporate' | 'action' | 'subaction' | 'conversion' | 'outline' | 'text' | 'danger' | 'google' | 'primary' | 'secondary' | 'green' | 'ghost';
+  variant?: 'corporate' | 'action' | 'subaction' | 'conversion' | 'outline' | 'text' | 'danger' | 'danger-outline' | 'neutral' | 'cancel' | 'google' | 'primary' | 'secondary' | 'green' | 'ghost';
   size?: 'sm' | 'md' | 'lg' | 'full';
   type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
@@ -69,6 +69,7 @@ const variant = computed(() => {
   if (v === 'secondary') return 'subaction';
   if (v === 'green') return 'conversion';
   if (v === 'ghost') return 'text';
+  if (v === 'cancel') return 'neutral';
   return v;
 });
 
@@ -80,8 +81,10 @@ const variantClasses: Record<string, string> = {
   subaction: 'bg-subaction hover:bg-subaction/80 text-action focus-visible:ring-action',
   conversion: 'bg-conversion hover:bg-conversion-hover text-white focus-visible:ring-conversion',
   outline: 'border border-action bg-white hover:bg-action hover:text-white text-action focus-visible:ring-action',
+  neutral: 'border border-neutral-light bg-white hover:bg-neutral-lightest text-neutral-dark hover:text-neutral-black focus-visible:ring-neutral-medium shadow-xs',
   text: 'bg-transparent text-action hover:underline focus-visible:ring-action px-0 py-0',
   danger: 'bg-danger hover:bg-danger-hover text-white focus-visible:ring-danger shadow-sm',
+  'danger-outline': 'border border-danger/40 bg-danger-subtle/50 text-danger hover:bg-danger hover:text-white hover:border-danger focus-visible:ring-danger shadow-xs transition-colors',
   google: 'bg-white border border-neutral-light text-neutral-dark shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:bg-neutral-lightest focus-visible:ring-neutral-light transition-all duration-200 flex items-center justify-center gap-2 font-medium',
 };
 

@@ -80,14 +80,6 @@
               <BuildingIcon class="w-4 h-4 shrink-0" />
               Aprobación Empresas
             </router-link>
-            <router-link to="/admin/perfil" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <UserIcon class="w-4 h-4 shrink-0" />
-              Mi Perfil
-            </router-link>
-            <router-link to="/admin/configuracion" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <SettingsIcon class="w-4 h-4 shrink-0" />
-              Configuración
-            </router-link>
           </div>
         </div>
 
@@ -175,14 +167,78 @@
         </div>
 
         <div class="flex items-center gap-4">
-          <div class="flex items-center gap-3 cursor-pointer group">
-            <div class="text-right hidden sm:block">
-              <div class="text-sm font-bold text-corporate group-hover:text-action transition-colors">Administrador</div>
-            </div>
-            <div class="w-9 h-9 bg-corporate text-neutral-white rounded-full flex items-center justify-center font-bold">
-              A
-            </div>
-          </div>
+          <!-- Dropdown Global de Administrador -->
+          <Dropdown align="right" width="w-56">
+            <template #trigger="{ isOpen }">
+              <button
+                type="button"
+                class="flex items-center gap-3 p-1.5 rounded-button hover:bg-subaction/50 transition-colors cursor-pointer group focus:outline-none"
+                aria-label="Menú de cuenta de administrador"
+              >
+                <div class="text-right hidden sm:block">
+                  <div class="text-sm font-bold text-corporate group-hover:text-action transition-colors">
+                    {{ authStore.user?.nombre || 'Administrador' }}
+                  </div>
+                  <div class="text-[11px] text-neutral-medium leading-none">
+                    {{ authStore.user?.rol_nombre || 'Superadmin' }}
+                  </div>
+                </div>
+                <div class="w-9 h-9 bg-corporate text-neutral-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm group-hover:bg-action transition-colors">
+                  {{ (authStore.user?.nombre?.[0] || 'A').toUpperCase() }}
+                </div>
+                <ChevronDownIcon
+                  class="w-4 h-4 text-neutral-medium group-hover:text-action transition-transform duration-200"
+                  :class="{ 'rotate-180': isOpen }"
+                />
+              </button>
+            </template>
+
+            <template #default="{ close }">
+              <!-- Resumen de Usuario -->
+              <div class="px-4 py-2.5 border-b border-neutral-light bg-neutral-lightest/40">
+                <p class="text-xs text-neutral-medium">Sesión activa</p>
+                <p class="text-sm font-bold text-corporate truncate">
+                  {{ authStore.user?.nombre || 'Administrador' }}
+                </p>
+                <p class="text-[11px] text-neutral-medium truncate">
+                  {{ authStore.user?.correo || 'admin@pintuclic.com' }}
+                </p>
+              </div>
+
+              <!-- Enlaces: Mi Perfil y Configuración -->
+              <div class="py-1">
+                <router-link
+                  to="/admin/perfil"
+                  @click="close"
+                  class="flex items-center gap-2.5 px-4 py-2 text-sm text-corporate hover:bg-subaction hover:text-action transition-colors font-medium"
+                >
+                  <UserIcon class="w-4 h-4 shrink-0" />
+                  <span>Mi Perfil</span>
+                </router-link>
+
+                <router-link
+                  to="/admin/configuracion"
+                  @click="close"
+                  class="flex items-center gap-2.5 px-4 py-2 text-sm text-corporate hover:bg-subaction hover:text-action transition-colors font-medium"
+                >
+                  <SettingsIcon class="w-4 h-4 shrink-0" />
+                  <span>Configuración</span>
+                </router-link>
+              </div>
+
+              <!-- Separador y Cerrar Sesión -->
+              <div class="border-t border-neutral-light pt-1">
+                <button
+                  type="button"
+                  @click="handleLogout(); close();"
+                  class="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-danger hover:bg-neutral-lightest transition-colors font-medium text-left cursor-pointer"
+                >
+                  <LogOutIcon class="w-4 h-4 shrink-0" />
+                  <span>Cerrar sesión</span>
+                </button>
+              </div>
+            </template>
+          </Dropdown>
         </div>
       </header>
 
@@ -198,8 +254,8 @@
         <h3 class="text-xl font-bold text-corporate mb-2">¿Cerrar sesión?</h3>
         <p class="text-neutral-medium text-sm mb-6">¿Estás seguro de que deseas salir de tu cuenta?</p>
         <div class="flex gap-3 justify-center">
-          <button class="flex-1 py-2 px-4 rounded-lg border border-neutral-light text-neutral-dark font-semibold hover:bg-neutral-lightest transition-colors cursor-pointer" @click="showLogoutConfirm = false">Cancelar</button>
-          <button class="flex-1 py-2 px-4 rounded-lg bg-danger text-white font-semibold hover:bg-danger-hover transition-colors cursor-pointer" @click="confirmLogout">Aceptar</button>
+          <Button variant="neutral" class="flex-1" @click="showLogoutConfirm = false">Cancelar</Button>
+          <Button variant="danger" class="flex-1" @click="confirmLogout">Aceptar</Button>
         </div>
       </div>
     </Modal>
@@ -212,6 +268,8 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import logoSrc from '@/assets/Pintu_Transparent.png';
 import Modal from '@/core/components/overlays/Modal.vue';
+import Button from '@/core/components/buttons/Button.vue';
+import Dropdown from '@/core/components/overlays/Dropdown.vue';
 import {
   Shield as ShieldIcon,
   Users as UsersIcon,

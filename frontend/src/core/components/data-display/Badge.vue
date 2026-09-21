@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <span
     :class="[
       'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
@@ -40,7 +40,7 @@ const computedLabel = computed(() => {
 const resolvedClasses = computed(() => {
   if (props.tone) {
     const toneMap = {
-      success: 'bg-conversion/12 text-conversion-hover ring-conversion/20',
+      success: 'bg-conversion/12 text-conversion ring-conversion/20',
       warning: 'bg-highlight/20 text-neutral-dark ring-highlight/40',
       info: 'bg-subaction text-action ring-action/20',
       neutral: 'bg-neutral-lightest text-neutral-dark ring-neutral-light/50',
@@ -50,7 +50,7 @@ const resolvedClasses = computed(() => {
 
   const est = props.estado?.toLowerCase();
   if (est === 'activo' || est === 'success') {
-    return 'bg-conversion/12 text-conversion-hover ring-conversion/20';
+    return 'bg-conversion/12 text-conversion ring-conversion/20';
   }
   if (est === 'inactivo') {
     return 'bg-neutral-lightest text-neutral-dark ring-neutral-light/50';

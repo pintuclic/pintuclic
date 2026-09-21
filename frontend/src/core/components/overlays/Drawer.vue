@@ -115,6 +115,7 @@ watch(() => props.modelValue, async (isOpen) => {
     restore();
   }
 }, { immediate: true, flush: 'post' });
+
 onBeforeUnmount(() => {
   disposed = true;
   restore();
