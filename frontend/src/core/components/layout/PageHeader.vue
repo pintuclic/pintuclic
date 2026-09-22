@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 defineProps<{ title: string; description?: string }>();
 </script>
 
@@ -6,7 +6,7 @@ defineProps<{ title: string; description?: string }>();
   <div class="mb-7 flex flex-wrap items-center justify-between gap-4">
     <div class="min-w-0">
       <h1
-        class="break-words text-2xl font-bold tracking-tight text-corporate xl:text-3xl"
+        class="break-words font-title text-2xl font-bold tracking-tight text-corporate xl:text-3xl"
       >
         {{ title }}
       </h1>

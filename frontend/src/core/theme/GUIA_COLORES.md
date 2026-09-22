@@ -1,14 +1,14 @@
 # 🎨 Sistema de Colores Globales - PINTUCLIC
 
-> **Ubicación de Definición:** [`src/core/theme/colors.ts`](./colors.ts)  
-> **Configuración Tailwind:** [`tailwind.config.ts`](../../../tailwind.config.ts)  
+> **Ubicación de Definición:** [`src/core/theme/colors.ts`](./colors.ts)
+> **Configuración Tailwind:** [`tailwind.config.ts`](../../../tailwind.config.ts)
 > **Estado:** Oficial y Obligatorio para todo el Frontend.
 
 ---
 
 ## ⛔ DIRECTIVA ESTRICTA DE DISEÑO (Zero Tolerance)
 
-> 🚨 **PROHIBICIÓN ABSOLUTA DE COLORES ARBITRARIOS:**  
+> 🚨 **PROHIBICIÓN ABSOLUTA DE COLORES ARBITRARIOS:**
 > Queda terminantemente PROHIBIDO para cualquier desarrollador humano o Agente de Inteligencia Artificial (IA):
 > 1. Utilizar valores hexadecimales arbitrarios en clases de Tailwind (ej: `bg-[#002855]`, `text-[#333]`).
 > 2. Utilizar nombres de colores por defecto de Tailwind que no formen parte de la identidad aprobada (ej: `bg-purple-600`, `text-red-400`, `bg-pink-500`).

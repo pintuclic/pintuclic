@@ -34,27 +34,20 @@
             <span class="sr-only">Anterior</span>
             <ChevronLeft class="h-5 w-5" aria-hidden="true" />
           </button>
-          
-          <template v-for="(page, i) in paginasVisibles" :key="i">
-            <span
-              v-if="page === '…'"
-              class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-neutral-medium ring-1 ring-inset ring-neutral-light"
-            >
-              …
-            </span>
-            <button
-              v-else
-              @click="$emit('update:modelValue', page)"
-              :aria-current="page === modelValue ? 'page' : undefined"
-              :class="[
-                page === modelValue
-                  ? 'relative z-10 inline-flex items-center bg-action px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action'
-                  : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-corporate ring-1 ring-inset ring-neutral-light hover:bg-neutral-lightest focus:z-20 focus:outline-offset-0'
-              ]"
-            >
-              {{ page }}
-            </button>
-          </template>
+
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            @click="$emit('update:modelValue', page)"
+            :aria-current="page === modelValue ? 'page' : undefined"
+            :class="[
+              page === modelValue
+                ? 'relative z-10 inline-flex items-center bg-action px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action'
+                : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-corporate ring-1 ring-inset ring-neutral-light hover:bg-neutral-lightest focus:z-20 focus:outline-offset-0'
+            ]"
+          >
+            {{ page }}
+          </button>
 
           <button
             @click="nextPage"
@@ -101,21 +94,4 @@ const nextPage = () => {
     emit('update:modelValue', props.modelValue + 1);
   }
 };
-
-/** Con muchas páginas, trunca con elipsis: 1 … 4 [5] 6 … 21 en vez de listarlas todas. */
-const paginasVisibles = computed<(number | '…')[]>(() => {
-  const ultima = totalPages.value;
-  const actual = props.modelValue;
-  if (ultima <= 7) return Array.from({ length: ultima }, (_, i) => i + 1);
-
-  const rango = new Set<number>([1, ultima, actual, actual - 1, actual + 1]);
-  const ordenadas = [...rango].filter((n) => n >= 1 && n <= ultima).sort((a, b) => a - b);
-
-  const salida: (number | '…')[] = [];
-  ordenadas.forEach((n, i) => {
-    if (i > 0 && n - ordenadas[i - 1] > 1) salida.push('…');
-    salida.push(n);
-  });
-  return salida;
-});
 </script>
