@@ -14,3 +14,12 @@ docker compose -f docker-compose.yml up --build -d
 - Backend (API): http://localhost:3000/api
 - Logs: `docker compose -f docker-compose.yml logs -f`
 
+
+## Versionamiento
+El versionamiento de la web se va requerir de la siguiente forma:
+### Ejemplo
+- 3.28.0
+Se requiere tomar estos puntos para su versionamiento.
+- 3 -> versionamiento grande nueva
+- 28 -> Cambios pequeños de la versión
+- 0 -> Arreglos de problemas que presenta la web
