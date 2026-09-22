@@ -16,7 +16,7 @@
       Hemos recibido tu solicitud de cuenta empresarial. <strong>Un administrador revisará tus datos</strong> y te notificaremos cuando esté activa.
     </p>
 
-    <Button variant="primary" size="full" @click="$emit('finalizar')">
+    <Button variant="corporate" size="full" @click="$emit('finalizar')">
       ¡Entendido, ir a inicio!
     </Button>
   </div>

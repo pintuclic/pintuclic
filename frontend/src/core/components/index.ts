@@ -35,6 +35,7 @@ export { default as Tabs } from './navigation/Tabs.vue';
 export { default as Migas } from './navigation/Migas.vue';
 export { default as Paginacion } from './navigation/Paginacion.vue';
 export { default as PasosProceso } from './navigation/PasosProceso.vue';
+export { default as PasosProgreso } from './navigation/PasosProceso.vue';
 export { default as LineaTiempo } from './navigation/LineaTiempo.vue';
 
 // 6. Visualización y presentación de datos
@@ -44,7 +45,11 @@ export { default as Badge } from './data-display/Badge.vue';
 export { default as Avatar } from './data-display/Avatar.vue';
 export { default as MuestraColor } from './data-display/MuestraColor.vue';
 
-// 7. Layouts globales compartidos
+export { default as Icon } from './data-display/Icon.vue';
+export type { TableColumn } from '../types/table.type';
+
+// 7. Piezas estructurales y de layout
+export { default as PageHeader } from './layout/PageHeader.vue';
 export { default as FooterPrincipal } from '../layouts/FooterPrincipal.vue';
 
 // 8. Herramientas de soporte y depuración interna

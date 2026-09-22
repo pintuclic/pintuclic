@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen flex flex-col bg-neutral-lightest font-sans">
-    
+
     <!-- Top Bar Azul Oscuro -->
     <div class="bg-corporate text-white py-1.5 text-xs font-medium tracking-wide">
       <div class="container mx-auto px-4 lg:px-8 flex justify-end items-center gap-6">
@@ -25,16 +25,16 @@
     <!-- Main Navbar Blanco -->
     <header class="bg-white border-b border-neutral-light sticky top-0 z-40 shadow-sm">
       <div class="container mx-auto px-4 lg:px-8 h-20 flex items-center justify-between">
-        
+
         <!-- Logo y Categorías -->
         <div class="flex items-center gap-6">
           <router-link to="/" class="flex-shrink-0 cursor-pointer">
             <img src="@/assets/logo.png" alt="Pintu Clic" class="h-10 object-contain" />
           </router-link>
-          
-          <button 
+
+          <button
             type="button"
-            class="flex items-center gap-2 bg-action hover:bg-action-hover text-white transition-colors px-4 py-2.5 rounded-lg font-bold text-sm cursor-pointer shadow-sm"
+            class="flex items-center gap-2 bg-action hover:bg-action/90 text-white transition-colors px-4 py-2.5 rounded-lg font-bold text-sm cursor-pointer shadow-sm"
             @click="openCategorias"
           >
             <MenuIcon class="w-5 h-5" />
@@ -45,40 +45,40 @@
 
         <!-- Enlaces Principales -->
         <nav class="hidden xl:flex items-center gap-6 font-semibold text-neutral-dark text-[15px]">
-          <router-link 
-            to="/" 
+          <router-link
+            to="/"
             class="relative py-1 cursor-pointer group transition-colors"
             :class="isActivo('/') ? 'text-action' : 'hover:text-action'"
           >
             Inicio
-            <span 
+            <span
               class="absolute bottom-0 left-0 w-full h-[2px] bg-action transition-transform origin-left"
               :class="isActivo('/') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
             ></span>
           </router-link>
-          <router-link 
-            to="/catalogo" 
+          <router-link
+            to="/catalogo"
             class="relative py-1 cursor-pointer group transition-colors"
             :class="isActivo('/catalogo') ? 'text-action' : 'hover:text-action'"
           >
             Productos
-            <span 
+            <span
               class="absolute bottom-0 left-0 w-full h-[2px] bg-action transition-transform origin-left"
               :class="isActivo('/catalogo') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
             ></span>
           </router-link>
-          <a href="#" class="bg-[#D62828] hover:bg-[#B71C1C] text-white px-3 py-1 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer">OFERTAS</a>
+          <a href="#" class="bg-offer hover:bg-offer-hover text-white px-3 py-1 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer">OFERTAS</a>
           <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
             Servicios
             <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
           </a>
-          <router-link 
-            to="/paleta-colores" 
+          <router-link
+            to="/paleta-colores"
             class="relative py-1 cursor-pointer group transition-colors"
             :class="isActivo('/paleta-colores') ? 'text-action' : 'hover:text-action'"
           >
             Paleta de Color
-            <span 
+            <span
               class="absolute bottom-0 left-0 w-full h-[2px] bg-action transition-transform origin-left"
               :class="isActivo('/paleta-colores') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
             ></span>
@@ -91,32 +91,47 @@
 
         <!-- Acciones Derecha -->
         <div class="flex items-center gap-6">
-          
+
           <!-- Acciones: Mi Cuenta -->
-          <div v-if="authStore.isAuthenticated" class="relative group">
-            <button class="flex items-center gap-2 text-neutral-dark hover:text-action transition-colors text-left cursor-pointer focus:outline-none">
-              <UserIcon class="w-7 h-7" />
-              <div class="hidden md:block">
-                <span class="block text-xs text-neutral-medium leading-none">Mi Cuenta</span>
-                <span class="block font-bold leading-tight">{{ authStore.user?.nombre || 'Usuario' }}</span>
-              </div>
-              <ChevronDownIcon class="w-4 h-4 ml-1 text-neutral-medium" />
-            </button>
-            
-            <!-- Dropdown Menu -->
-            <div class="absolute right-0 mt-0 w-48 bg-white rounded-lg shadow-lg border border-neutral-light overflow-hidden z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+          <Dropdown v-if="authStore.isAuthenticated" align="right" width="w-48">
+            <template #trigger="{ isOpen }">
+              <button
+                type="button"
+                class="flex items-center gap-2 text-neutral-dark hover:text-action transition-colors text-left cursor-pointer focus:outline-none"
+              >
+                <UserIcon class="w-7 h-7" />
+                <div class="hidden md:block">
+                  <span class="block text-xs text-neutral-medium leading-none">Mi Cuenta</span>
+                  <span class="block font-bold leading-tight">{{ authStore.user?.nombre || 'Usuario' }}</span>
+                </div>
+                <ChevronDownIcon
+                  class="w-4 h-4 ml-1 text-neutral-medium transition-transform duration-200"
+                  :class="{ 'rotate-180': isOpen }"
+                />
+              </button>
+            </template>
+
+            <template #default="{ close }">
               <div class="py-1">
-                <router-link to="/perfil" class="block px-4 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest hover:text-action transition-colors">
+                <router-link
+                  to="/perfil"
+                  @click="close"
+                  class="block px-4 py-2 text-sm text-neutral-dark hover:bg-neutral-lightest hover:text-action transition-colors"
+                >
                   Mi Perfil
                 </router-link>
                 <div class="border-t border-neutral-lightest"></div>
-                <button @click="handleLogout" class="w-full text-left block px-4 py-2 text-sm text-[#E63946] hover:bg-neutral-lightest transition-colors font-medium">
+                <button
+                  type="button"
+                  @click="handleLogout(); close();"
+                  class="w-full text-left block px-4 py-2 text-sm text-danger hover:bg-neutral-lightest transition-colors font-medium cursor-pointer"
+                >
                   Cerrar sesión
                 </button>
               </div>
-            </div>
-          </div>
-          
+            </template>
+          </Dropdown>
+
           <button v-else @click="openLogin" class="flex items-center gap-2 text-neutral-dark hover:text-action transition-colors text-left cursor-pointer focus:outline-none">
             <UserIcon class="w-7 h-7" />
             <div class="hidden md:block">
@@ -132,7 +147,7 @@
           <button class="relative flex items-center gap-2 text-neutral-dark hover:text-action transition-all duration-300 text-left cursor-pointer" :class="{ '-translate-y-1': cartTotalItems > 0 }">
             <div class="relative">
               <ShoppingCartIcon class="w-7 h-7" />
-              <span v-if="cartTotalItems > 0" class="absolute -top-1.5 -right-1.5 bg-highlight text-corporate text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              <span v-if="cartTotalItems > 0" class="absolute -top-1.5 -right-1.5 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                 {{ cartTotalItems }}
               </span>
             </div>
@@ -156,18 +171,35 @@
     <FooterPrincipal />
 
     <!-- Modales Globales de la Tienda (Login/Registro M04) -->
-    <ModalLogin 
-      v-model="showLogin" 
-      @goToRegister="openRegister" 
-      @success="handleLoginSuccess" 
-    />
-    
-    <RegistroWizard 
-      v-model="showWizard" 
-      @irALogin="openLogin" 
-      @exito="handleWizardSuccess" 
+    <ModalLogin
+      v-model="showLogin"
+      @goToRegister="openRegister"
+      @goToRecover="openRecover"
+      @success="handleLoginSuccess"
     />
 
+    <RegistroWizard
+      v-model="showWizard"
+      @goToLogin="openLogin"
+      @success="handleWizardSuccess"
+    />
+
+    <RecuperarPasswordWizard
+      v-model="showRecover"
+      @openLogin="openLogin"
+    />
+
+    <!-- Modal Confirmación Cerrar Sesión -->
+    <Modal v-model="showLogoutConfirm" maxWidth="sm">
+      <div class="text-center py-4">
+        <h3 class="text-xl font-bold text-corporate mb-2">¿Cerrar sesión?</h3>
+        <p class="text-neutral-medium text-sm mb-6">¿Estás seguro de que deseas salir de tu cuenta?</p>
+        <div class="flex gap-3 justify-center">
+          <Button variant="neutral" class="flex-1" @click="showLogoutConfirm = false">Cancelar</Button>
+          <Button variant="danger" class="flex-1" @click="confirmLogout">Aceptar</Button>
+        </div>
+      </div>
+    </Modal>
     <!-- Modal Global de Categorías M01 -->
     <MenuCategoriasPublico
       :abierto="showCategorias"
@@ -181,9 +213,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { 
-  MapPin as MapPinIcon, 
-  ShieldCheck as ShieldCheckIcon, 
+import {
+  MapPin as MapPinIcon,
+  ShieldCheck as ShieldCheckIcon,
   Headset as HeadsetIcon,
   HelpCircle as HelpCircleIcon,
   Phone as PhoneIcon,
@@ -193,48 +225,19 @@ import {
   ShoppingCart as ShoppingCartIcon
 } from 'lucide-vue-next';
 
-import { FooterPrincipal } from '@/core/components';
+import FooterPrincipal from './FooterPrincipal.vue';
+import Button from '@/core/components/buttons/Button.vue';
+import Modal from '@/core/components/overlays/Modal.vue';
+import Dropdown from '@/core/components/overlays/Dropdown.vue';
 import ModalLogin from '@/modules/m04-cuentas/components/ModalLogin.vue';
 import RegistroWizard from '@/modules/m04-cuentas/components/RegistroWizard.vue';
+import RecuperarPasswordWizard from '@/modules/m04-cuentas/components/RecuperarPasswordWizard.vue';
 import MenuCategoriasPublico from '@/modules/m01-dashboardcatalogo/components/publicas/MenuCategoriasPublico.vue';
 import { CatalogoPublicoService } from '@/modules/m01-dashboardcatalogo/services/catalogo-publico.service';
 import type { CategoriaPublica } from '@/modules/m01-dashboardcatalogo/interfaces/catalogo-publico.interface';
-import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import { watchEffect } from 'vue';
-
-// Categorías predefinidas de respaldo (garantiza UI funcional incluso si el backend está iniciando)
-const CATEGORIAS_FALLBACK: readonly CategoriaPublica[] = [
-  {
-    id_categoria: 1,
-    nombre: 'Pinturas',
-    subcategorias: [
-      { id_subcategoria: 1, nombre: 'Pinturas Interiores' },
-      { id_subcategoria: 2, nombre: 'Pinturas Exteriores' },
-      { id_subcategoria: 3, nombre: 'Esmaltes y Barnices' },
-      { id_subcategoria: 4, nombre: 'Pinturas en Spray' },
-    ],
-  },
-  {
-    id_categoria: 2,
-    nombre: 'Herramientas',
-    subcategorias: [
-      { id_subcategoria: 5, nombre: 'Brochas y Rodillos' },
-      { id_subcategoria: 6, nombre: 'Espátulas y Llanas' },
-      { id_subcategoria: 7, nombre: 'Cintas y Protección' },
-    ],
-  },
-  {
-    id_categoria: 3,
-    nombre: 'Preparación y Acabados',
-    subcategorias: [
-      { id_subcategoria: 8, nombre: 'Estucos y Masillas' },
-      { id_subcategoria: 9, nombre: 'Lijas y Abrasivos' },
-      { id_subcategoria: 10, nombre: 'Selladores y Primer' },
-    ],
-  },
-];
 
 // Estado global local del layout para modales
 const showLogin = ref(false);
@@ -243,6 +246,9 @@ const showCategorias = ref(false);
 const cargandoCategorias = ref(false);
 const categorias = ref<readonly CategoriaPublica[]>([]);
 const route = useRoute();
+const showRecover = ref(false);
+const showLogoutConfirm = ref(false);
+
 const router = useRouter();
 const authStore = useAuthStore();
 
@@ -266,6 +272,7 @@ watchEffect(() => {
 const closeAllModals = () => {
   showLogin.value = false;
   showWizard.value = false;
+  showRecover.value = false;
   showCategorias.value = false;
 };
 
@@ -279,10 +286,10 @@ const openCategorias = async () => {
       if (Array.isArray(data) && data.length > 0) {
         categorias.value = data;
       } else {
-        categorias.value = CATEGORIAS_FALLBACK;
+        categorias.value = [];
       }
     } catch {
-      categorias.value = CATEGORIAS_FALLBACK;
+      categorias.value = [];
     } finally {
       cargandoCategorias.value = false;
     }
@@ -304,8 +311,12 @@ const openRegister = () => {
   showWizard.value = true;
 };
 
+const openRecover = () => {
+  closeAllModals();
+  showRecover.value = true;
+};
+
 const handleLoginSuccess = () => {
-  console.log('Login exitoso en layout global');
   closeAllModals();
   const rol = authStore.user?.rol_nombre?.toLowerCase() || authStore.user?.tipo?.toLowerCase();
   if (rol === 'administrador' || rol === 'empleado' || rol === 'admin') {
@@ -314,12 +325,16 @@ const handleLoginSuccess = () => {
 };
 
 const handleLogout = () => {
+  showLogoutConfirm.value = true;
+};
+
+const confirmLogout = () => {
+  showLogoutConfirm.value = false;
   authStore.logout();
   router.push('/');
 };
 
-const handleWizardSuccess = (tipoCuenta: TipoCuentaRegistro) => {
-  console.log('Registro finalizado exitosamente. Tipo de cuenta:', tipoCuenta);
+const handleWizardSuccess = () => {
   closeAllModals();
 };
 

@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.35.8] - 2026-09-22
+### Integración: M01 / Core Frontend
+- **Alcance:** Integración de core-layouts conservando rutas públicas, categorías y muestras de color con los nuevos componentes globales.
+- **Hitos:** Tabla genérica tipada, variantes de Badge combinadas y categorías consultadas exclusivamente a la API.
+- **Calidad:** TypeScript/Vite, ESLint sin errores ni advertencias y prueba Core aprobados.
+- **Walkthrough:** [Integración Core](./walkthroughs/M01/walkthrough_v3.35.8_M01_integracion_core_frontend.md).
+
+---
+
 ## [v3.35.7] - 2026-09-20
 ### Módulo: M01 Catálogo / Vistas Públicas (Frontend)
 - **Alcance:** Simulador de cinco ambientes en el detalle de pinturas, conectado al color de la variante, con alternancia a la galería del envase y ficha más compacta.
@@ -525,6 +534,14 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md](./walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md)
 
 ---
+## [v2.4.0] - 2026-09-15
+### Módulo: Core Frontend (Layouts)
+- **Alcance General:** Salto a versión **MINOR (v2.4.0)**. Se importaron los componentes globales de `feature/m04-cuentas-auth-perfil` hacia `feature/core-frontend-layouts`.
+- **Hitos Clave Frontend:**
+  - **Botones y Tablas:** Corrección en renderizado del `:key` en `Table.vue` y estilos del botón outline en `Button.vue`.
+  - **Layouts y Modales:** Inyección de modales de autenticación y confirmación de "Cerrar sesión" en `LayoutHome.vue` y `LayoutAdmin.vue`.
+  - **Enrutador Central:** Refactorización de `routes/index.ts` usando el patrón de Layouts globales, en lugar de importar explícitamente M01.
+- **Estado:** ✅ Validado. Cambios sincronizados.
 
 ## [v2.3.0] - 2026-09-15
 ### Módulo: Core Frontend (Design System Components)

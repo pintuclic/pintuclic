@@ -131,4 +131,32 @@ export const CuentasService = {
     );
     return data;
   },
+
+  /**
+   * POST /api/cuentas/recuperar-password/solicitar (HU-CUE-06)
+   */
+  async solicitarRecuperacion(
+    correo: string
+  ): Promise<ApiResponse<{ mensaje: string }>> {
+    const { data } = await apiClient.post<ApiResponse<{ mensaje: string }>>(
+      '/cuentas/recuperar-password/solicitar',
+      { correo }
+    );
+    return data;
+  },
+
+  /**
+   * POST /api/cuentas/recuperar-password/confirmar (HU-CUE-06)
+   */
+  async confirmarRecuperacion(
+    correo: string,
+    codigo: string,
+    contrasena_nueva: string
+  ): Promise<ApiResponse<{ mensaje: string }>> {
+    const { data } = await apiClient.post<ApiResponse<{ mensaje: string }>>(
+      '/cuentas/recuperar-password/confirmar',
+      { correo, codigo, contrasena_nueva }
+    );
+    return data;
+  },
 };
