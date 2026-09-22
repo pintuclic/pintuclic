@@ -34,9 +34,9 @@
     </div>
 
     <div class="w-full">
-      <Boton type="submit" variant="primary" size="full" :disabled="!otpCompleto || cargando">
+      <Button type="submit" variant="primary" size="full" :disabled="!otpCompleto || cargando">
         {{ cargando ? 'Verificando...' : 'Verificar y crear cuenta' }}
-      </Boton>
+      </Button>
     </div>
   </form>
 
@@ -58,7 +58,7 @@
 import { ref, computed, onUnmounted } from 'vue';
 import EncabezadoModal from './EncabezadoModal.vue';
 import PasosProgreso from './PasosProgreso.vue';
-import Boton from '@/core/components/Boton.vue';
+import Button from '@/core/components/Button.vue';
 import { useCuentas } from '../composables/useCuentas';
 
 const props = defineProps<{

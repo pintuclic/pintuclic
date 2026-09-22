@@ -4,7 +4,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.28.0] - 2026-09-13
+### Core: Layouts Globales, Enrutador Central y Sincronización con M01 Catálogo (Frontend)
+- **Alcance General:** Incremento **MINOR (v3.28.0)** que formaliza la arquitectura visual y estructural de layouts del frontend para Pintu Clic. Unifica los layouts globales (`LayoutHome`, `LayoutAdmin`, `LayoutAcceso`, `FooterPrincipal`), sincroniza el enrutamiento central con el módulo completo de catálogo `M01` recién integrado en `develop` y resuelve conflictos de merge en el contenedor raíz.
+- **Hitos Clave de Arquitectura y Frontend:**
+  - **Layout de Tienda Pública (`LayoutHome.vue`):** Maquetación de la experiencia e-commerce con Topbar institucional de cobertura Caquetá, Header responsive, Navbar con navegación y selector de categorías, menú de usuario activo con logout y contenedor de modales globales de autenticación `M04` (`ModalLogin`, `RegistroWizard`).
+  - **Shell de Administración (`LayoutAdmin.vue`):** Panel administrativo colapsable con menús tipo acordeón para Gestión Administrativa y Gestión de Catálogo, integración de branding oficial y topbar administrativo.
+  - **Shell de Acceso Minimalista (`LayoutAcceso.vue`):** Estructura base centrada para pantallas completas de inicio de sesión o restablecimiento de credenciales.
+  - **Enrutador Central Unificado (`src/core/routes/index.ts`):** Fusión armónica de la tienda pública como raíz de `LayoutHome`, montaje de `...dashboardCatalogoRoutes` de `M01`, redirección defensiva de `/admin` a `/admin/catalogo` (evitando pantallas en blanco) y alias para búsquedas administrativas (`/admin/catalogo/busquedas-sin-resultado`).
+  - **Contenedores Limpios (`App.vue` & `main.ts`):** Simplificación de `App.vue` a un `<router-view />` puro y montaje ordenado de Pinia y Vue Router en `main.ts`.
+  - **Corrección de Linter y TypeScript:** Saneamiento de variables huérfanas en `LayoutHome.vue` (`showMobileMenu`), logrando 0 errores en compilación estricta (`vue-tsc -b`) y 0 advertencias en ESLint.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/CORE/walkthrough_v3.28.0_CORE_layouts_globales_enrutador_frontend.md](./walkthroughs/CORE/walkthrough_v3.28.0_CORE_layouts_globales_enrutador_frontend.md)
+
+---
+
 ## [v3.27.0] - 2026-09-11
+
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** feat(M01): integrar soporte para `id_categoria_complementaria` y `patrocinado` en la creación de productos (HU-CAT-08).
 - **Hitos Clave:** Se agregó al `CrearProductoDto` y a la lógica `crear` en el `ProductosService`.
