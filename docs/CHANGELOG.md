@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.30.1] - 2026-09-22
+### Módulo: M08 Orden de Venta (Backend)
+- **Alcance:** Montaje del router de M08 en el enrutador central. Las tres consultas entregadas en `v3.30.0` ya responden bajo `/api/ordenes`; antes devolvían 404 porque el módulo no estaba registrado. Sin cambios de lógica.
+- **Hitos Clave:** `backend/src/app.routes.ts` registra `appRouter.use('/ordenes', ordenesRoutes)`, siguiendo el mismo patrón que el resto de módulos. Habilita las pruebas de API del equipo de testing.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m08.test.ts`: 18/18.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v3.30.1_M08_montaje_rutas_backend.md](./walkthroughs/M08/walkthrough_v3.30.1_M08_montaje_rutas_backend.md)
+
+---
+
 ## [v3.30.0] - 2026-09-15
 ### Módulo: M08 Orden de Venta (Backend)
 - **Alcance:** Primera entrega del backend de M08. El cliente consulta su sección de pedidos (en curso / finalizados, con buscador) y el detalle de un pedido propio; el personal autorizado localiza órdenes por código visible. La creación de órdenes y el ciclo de estados quedan bloqueados por el esquema de BD (ver walkthrough).
