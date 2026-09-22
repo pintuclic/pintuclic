@@ -42,8 +42,6 @@ El esquema de base de datos de **Pintuclic** soporta las operaciones integrales 
    - Almacenamiento histórico inmutable en `linea_orden` (preservando nombre de producto, copia de variante y precio cobrado en el momento de la transacción).
 5. **Blindaje de Integridad:**  
    - 10 tipos `ENUM` nativos de PostgreSQL para evitar estados inconsistentes o errores tipográficos.
-   - Restricción `UNIQUE(id_usuario)` en `usuario_rol` para forzar que ningún usuario tenga más de 1 rol simultáneo.
-   - Restricción `UNIQUE(id_carrito, id_variante)` en `linea_carrito` para unificar cantidades de un mismo ítem.
    - Restricción `UNIQUE` en `usuario(correo)`, `rol(nombre)`, `permisos(nombre)`, `asignacion_permiso(id_rol, id_permiso)`, `orden(codigo_visible)` y `variante_combo(id_variante, id_combo)`.
 
 ---
@@ -52,44 +50,260 @@ El esquema de base de datos de **Pintuclic** soporta las operaciones integrales 
 
 ```mermaid
 erDiagram
-    descuento ||--o{ sub_rol_empresa : "aplica a"
-    sub_rol_empresa ||--o{ rol : "agrupa"
-    rol ||--o{ asignacion_permiso : "tiene"
-    permisos ||--o{ asignacion_permiso : "asignado en"
-    rol ||--o{ usuario : "define perfil"
-    usuario ||--|| usuario_rol : "posee (1:1)"
-    rol ||--o{ usuario_rol : "asignado a"
-    usuario ||--o{ sesion : "mantiene abiertas"
-    usuario ||--o{ consentimiento_usuario : "otorga"
-    aviso_privacidad ||--o{ consentimiento_usuario : "recibe"
-    usuario ||--o{ solicitud_supresion : "radica"
+    %% ==== Catálogo / Jerarquía de producto ====
+    Categoria {
+        int UniqueID PK
+        string nombre
+    }
+    Subcategorias {
+        int UniqueID PK
+        int id_categoria FK
+        string nombre
+    }
+    Sub_Subcategorias {
+        int UniqueID PK
+        int id_subcategoria FK
+        string nombre
+    }
+    Marca {
+        int UniqueID PK
+        string nombre
+    }
+    Linea {
+        int UniqueID PK
+        int id_sub_subcategoria FK
+        string nombre
+        string marca
+    }
+    Producto {
+        int UniqueID PK
+        int id_linea FK
+        string nombre
+    }
 
-    usuario ||--o{ carrito : "crea (opcional)"
-    carrito ||--o{ linea_carrito : "contiene"
-    variante ||--o{ linea_carrito : "agregada a"
+    %% ==== Bloque fusionado (diagrama 1: Variante -> Bases -> Color -> tonos) ====
+    Variante {
+        int UniqueID PK
+        int id_producto FK
+        float precio_vigente
+        string estado
+    }
+    Bases {
+        int id_base PK
+        string nombre
+        int id_variante FK
+        string prefijo
+    }
+    Color {
+        int UniqueID PK
+        string nombre
+        int id_base FK
+    }
+    tonos {
+        int UniqueID PK
+        int id_color FK
+        string nombre
+        string hexagesimal
+        float precio
+    }
 
-    cotizacion ||--o{ orden : "origina (opcional)"
-    usuario ||--o{ orden : "realiza"
-    orden ||--o{ linea_orden : "contiene (snapshot)"
-    orden ||--o{ pagos : "registra"
-    metodo_pago ||--o{ pagos : "utilizado en"
-    orden ||--o{ factura : "emite"
-    usuario ||--o{ reservaciones : "realiza"
+    Caracteristica {
+        int UniqueID PK
+        int id_variante FK
+        string nombre
+    }
+    Combo {
+        int UniqueID PK
+        int id_producto FK
+    }
+    variante_Combo {
+        int UniqueID PK
+        int id_variante FK
+        int id_combo FK
+        int cantidad
+    }
 
-    categoria ||--o{ subcategorias : "divide en"
-    subcategorias ||--o{ sub_subcategorias : "subdivide en"
-    sub_subcategorias ||--o{ linea : "agrupa"
-    linea ||--o{ producto : "clasifica"
+    %% ==== Roles, permisos y descuentos ====
+    descuento {
+        int id_descuento PK
+        float tope
+        float porcentaje_descuento
+        string estado
+    }
+    sub_roll_empresa {
+        int id_sub_roll_empresa PK
+        string nombre
+        int id_descuento FK
+        string estado
+    }
+    roll {
+        int id_roll PK
+        string nombre
+        int id_sub_roll_empresa FK
+        string estado
+    }
+    permisos {
+        int id_permiso PK
+        string nombre
+        string descripcion
+        string estado
+    }
+    asignacion_permiso {
+        int id_asignacion_permiso PK
+        int id_roll FK
+        int id_permiso FK
+    }
 
-    producto ||--o{ combo : "es un"
-    producto ||--o{ variante : "tiene"
-    color ||--o{ variante : "define"
-    color ||--o{ tonos : "desglosa en"
-    variante ||--o{ variante_combo : "incluida en"
-    combo ||--o{ variante_combo : "compuesto por"
-    variante ||--o{ caracteristica : "describe"
+    %% ==== Usuarios y privacidad ====
+    usuario {
+        int id PK
+        string nombre
+        string telefono
+        string correo
+        string contrasena
+        int id_roll FK
+        string estado
+        string tipo "normal_o_empresa"
+    }
+    usuario_rol {
+        int id_usuario_rol PK
+        int id_usuario FK
+        int id_rol FK
+    }
+    solicitud_supresion {
+        int id_solicitud_supresion PK
+        int id_usuario FK
+        date fecha_solicitud
+        string fecha_resolucion
+        string estado
+    }
+    aviso_privacidad {
+        int id_aviso_privacidad PK
+        string version
+        string descripcion
+        boolean es_vigente
+    }
+    consentimiento_usuario {
+        int id_consentimiento PK
+        int id_usuario FK
+        int id_aviso_privacidad FK
+        date fecha
+    }
 
-    producto ||--o{ reservaciones : "reservado en"
+    %% ==== Ventas: cotización, carrito, reservas, orden ====
+    Cotizacion {
+        int id PK
+        int id_usuario FK
+        int id_rol FK
+        string estado "M21_no_analizado"
+    }
+    Carrito {
+        int id PK
+        string token_visitante "nullable"
+        int cliente_id FK "nullable"
+        date fecha_ultima_actividad
+    }
+    LineaCarrito {
+        int id PK
+        int carrito_id FK
+        int variante_id FK
+        int ref_viva
+        int cantidad
+    }
+    reservaciones {
+        int id_reservacion PK
+        int id_producto FK
+        int id_usuario FK
+        date fecha
+        time hora
+        string estado
+    }
+    Orden {
+        int id PK "interno"
+        string codigo_visible
+        int cliente_id FK
+        string origen
+        int cotizacion_id FK "nullable"
+        string carrito_o_cotizacion
+        string estado
+        int transaccion_pago_id "unico"
+    }
+    LineaOrden {
+        int id PK
+        int orden_id FK
+        string nombre_producto "copia"
+        string variante_copia "copia"
+        float precio_aplicado "copia"
+        int cantidad
+    }
+    factura {
+        int id_factura PK
+        int id_orden FK
+        date fecha
+        string estado
+    }
+    pagos {
+        int id_pago PK
+        int id_orden FK
+        int id_metodo_pago FK
+        string estado
+        float monto
+    }
+    metodo_pago {
+        int id_metodo_pago PK
+        string nombre
+        string descripcion
+        string estado
+    }
+
+    %% ================== RELACIONES ==================
+
+    %% Jerarquía de catálogo
+    Categoria         ||--o{ Subcategorias        : "divide_en"
+    Subcategorias      ||--o{ Sub_Subcategorias     : "subdivide_en"
+    Sub_Subcategorias  ||--o{ Linea                 : "agrupa"
+    Marca               ||--o{ Linea                 : "agrupa"
+    Linea               ||--o{ Producto              : "clasifica"
+    Producto            ||--o{ Combo                 : "es_un"
+
+    %% Bloque fusionado: Variante -> Bases -> Color -> tonos
+    Producto  ||--o{ Variante          : "tiene"
+    Variante  ||--o{ Bases             : "tiene"
+    Bases     ||--o{ Color             : "clasifica"
+    Color     ||--o{ tonos             : "desglosa_en"
+    Variante  ||--o{ Caracteristica    : "describe"
+    Combo     ||--o{ variante_Combo    : "compuesto_por"
+    Variante  ||--o{ variante_Combo    : "incluida_en"
+    Variante  ||--o{ LineaCarrito      : "referencia (ref_viva)"
+
+    %% Roles / permisos / descuentos
+    descuento          ||--o{ sub_roll_empresa   : "aplica_a"
+    sub_roll_empresa   ||--o{ roll               : "agrupa"
+    roll               ||--o{ usuario            : "define_perfil"
+    roll               ||--o{ asignacion_permiso : "asignado_en"
+    permisos           ||--o{ asignacion_permiso : "asignado_en"
+    usuario            ||--o{ usuario_rol        : "posee"
+    roll               ||--o{ usuario_rol        : "posee"
+
+    %% Usuario y privacidad
+    usuario                 ||--o{ solicitud_supresion    : "solicita"
+    usuario                 ||--o{ consentimiento_usuario : "puede_tener"
+    aviso_privacidad        ||--o{ consentimiento_usuario : "puede_aceptar"
+
+    %% Ventas
+    usuario      ||--o{ Cotizacion     : "1:N (realiza)"
+    roll         ||--o{ Cotizacion     : "1:N (realiza)"
+    usuario      ||--o{ Carrito        : "tiene"
+    Cotizacion   ||--o{ Orden          : "origen_opcional"
+    Carrito      ||--o{ Orden          : "revalidado_en_checkout"
+    usuario      ||--o{ Orden          : "realiza"
+    Carrito      ||--o{ LineaCarrito   : "1:N"
+    usuario      ||--o{ reservaciones  : "1_0_N (crea)"
+    Producto     ||--o{ reservaciones  : "reservado_en"
+    Orden        ||--o{ factura        : "emite"
+    Orden        ||--o{ pagos          : "registra"
+    metodo_pago  ||--o{ pagos          : "utilizado_en"
+    Orden        ||--o{ LineaOrden     : "1:N"
 ```
 
 ---
@@ -110,9 +324,9 @@ erDiagram
 | :--- | :--- | :--- | :--- |
 | **`usuario`** | `id_usuario` | `id_rol` $\rightarrow$ `rol` | Cuentas con `correo` UNIQUE, hash BCrypt en `contrasena`, tipo (`normal`/`empresa`) y estado. |
 | **`usuario_rol`** | `id_usuario_rol` | `id_usuario`, `id_rol` | Asignación con restricción `UNIQUE(id_usuario)` (máximo 1 rol por usuario). |
-| **`sesion`** | `id_sesion` (**UUID**) | `id_usuario` $ightarrow$ `usuario` (CASCADE) | Sesiones abiertas por dispositivo (M20 / HU-SEG-02). Guarda último acceso y expiración para aplicar la caducidad por inactividad en servidor, y estado más motivo de cierre para poder revocar un token ya emitido. Admite varias filas activas por usuario (sesiones simultáneas). PK `UUID` por seguridad: el identificador viaja en el JWT y no debe ser enumerable. |
+| **`sesion`** | `id_sesion` (**UUID**) | `id_usuario` $\rightarrow$ `usuario` (CASCADE) | Sesiones abiertas por dispositivo (M20 / HU-SEG-02). Guarda último acceso y expiración. |
 
-### Módulo 3: Catálogo Multinivel, Colores y Variantes (11 Tablas)
+### Módulo 3: Catálogo Multinivel, Colores, Bases y Variantes (11 Tablas)
 | Tabla | PK | FKs | Descripción |
 | :--- | :--- | :--- | :--- |
 | **`categoria`** | `id_categoria` | Ninguna | Nivel 1 del catálogo (e.g. Pinturas Arquitectónicas, Esmaltes). |
@@ -120,9 +334,10 @@ erDiagram
 | **`sub_subcategorias`** | `id_sub_subcategoria` | `id_subcategoria` $\rightarrow$ `subcategorias` | Nivel 3 de agrupación. |
 | **`linea`** | `id_linea` | `id_sub_subcategoria` $\rightarrow$ `sub_subcategorias` | Nivel 4: Línea de marca (e.g. Viniltex, Koraza). |
 | **`producto`** | `id_producto` | `id_linea` $\rightarrow$ `linea` | Entidad base del producto. |
-| **`color`** | `id_color` | Ninguna | Catálogo maestro de colores base (`nombre` UNIQUE). |
-| **`tonos`** | `id_tono` | `id_color` $\rightarrow$ `color` | Tonos/matices derivados de un color con su precio adicional. |
-| **`variante`** | `id_variante` | `id_producto`, `id_color` | SKU vendible con `precio_vigente`, `estado` comercial y color opcional. |
+| **`variante`** | `id_variante` | `id_producto` $\rightarrow$ `producto` | SKU vendible con `precio_vigente`, `estado` comercial y presentación. |
+| **`base`** | `id_base` | `id_variante` $\rightarrow$ `variante` | Base vinculada a variante con `prefijo` y nombre. |
+| **`color`** | `id_color` | `id_base` $\rightarrow$ `base` | Catálogo de colores clasificados por base (`id_base`). |
+| **`tonos`** | `id_tono` | `id_color` $\rightarrow$ `color` | Tonos/matices derivados con `nombre`, `hexagesimal` y precio adicional. |
 | **`caracteristica`** | `id_caracteristica` | `id_variante` $\rightarrow$ `variante` | Ficha técnica o especificaciones de la variante. |
 | **`combo`** | `id_combo` | `id_producto` $\rightarrow$ `producto` | Paquete comercial ligado a un producto. |
 | **`variante_combo`** | `id_variante_combo` | `id_variante`, `id_combo` | Detalle N:M de las variantes y `cantidad` que componen el combo. |
@@ -131,14 +346,14 @@ erDiagram
 | Tabla | PK | FKs | Descripción |
 | :--- | :--- | :--- | :--- |
 | **`carrito`** | `id_carrito` | `id_usuario` $\rightarrow$ `usuario` (opcional) | Carrito vivo con `token_visitante` para usuarios anónimos y fecha de actividad. |
-| **`linea_carrito`** | `id_linea_carrito` | `id_carrito`, `id_variante` | Ítems agregados vivos vinculados a la variante de producto con `cantidad`. |
+| **`linea_carrito`** | `id_linea_carrito` | `id_carrito`, `id_variante` | Ítems agregados vivos vinculados a variante con `ref_viva` y `cantidad`. |
 
 ### Módulo 5: Cotizaciones y Órdenes Inmutables (3 Tablas)
 | Tabla | PK | FKs | Descripción |
 | :--- | :--- | :--- | :--- |
-| **`cotizacion`** | `id_cotizacion` | Ninguna | Cotización comercial B2B/B2C con ciclo de vida (`enum_estado_cotizacion`). |
-| **`orden`** | `id_orden` | `id_usuario`, `id_cotizacion` | Orden de compra confirmada con `codigo_visible`, `origen`, pasarela, montos y estado. |
-| **`linea_orden`** | `id_linea_orden` | `id_orden` $\rightarrow$ `orden` | Snapshot congelado inmutable (`nombre_producto`, `variante_copia`, `precio_aplicado`, `cantidad`). |
+| **`cotizacion`** | `id_cotizacion` | `id_usuario`, `id_rol` | Cotización comercial B2B/B2C vinculada a usuario y rol. |
+| **`orden`** | `id_orden` | `id_usuario`, `id_cotizacion` | Orden de compra confirmada con `codigo_visible`, `origen`, `carrito_o_cotizacion`, pasarela y estado. |
+| **`linea_orden`** | `id_linea_orden` | `id_orden` $\rightarrow$ `orden` | Snapshot congelado inmutable (`nombre_producto`, `variante_copia`, `precio_aplicado`, `cantidad`). |w$ `orden` | Snapshot congelado inmutable (`nombre_producto`, `variante_copia`, `precio_aplicado`, `cantidad`). |
 
 ### Módulo 6: Pagos y Facturación (3 Tablas)
 | Tabla | PK | FKs | Descripción |
