@@ -53,8 +53,16 @@ function notify(text: string) {
   const canAttend = computed(
     () => isAdmin.value || !!state.session?.permisos.includes("personal.ver"),
   );
-  async function refresh() {
-    state.loading = true;
+  async function refresh(options?: { background?: boolean } | unknown) {
+    const isBackground = Boolean(
+      typeof options === 'object' &&
+      options !== null &&
+      'background' in options &&
+      (options as { background?: boolean }).background
+    );
+    if (!isBackground) {
+      state.loading = true;
+    }
     state.error = "";
     try {
       state.session = await service.session();
@@ -75,7 +83,9 @@ function notify(text: string) {
         state.ready = false;
       }
     } finally {
-      state.loading = false;
+      if (!isBackground) {
+        state.loading = false;
+      }
     }
   }
   return { state, isAdmin, canAttend, refresh, message, notify };

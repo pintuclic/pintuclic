@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, Icon, Modal, PageHeader, Input } from "@/core/components";
+import { Button, Icon, Modal, PageHeader, Input, Alert } from "@/core/components";
 import { computed, onMounted, reactive, ref } from "vue";
 import {
   RouterLink,
@@ -175,18 +175,17 @@ async function submit() {
               ? "El correo y el documento no se pueden modificar desde este formulario."
               : "El correo debe ser único en Pintu Clic."
           }}</span></div>
-        <p
+        <Alert
           v-if="error"
-          role="alert"
-          class="rounded-lg bg-highlight/5 p-4 text-sm text-neutral-dark sm:col-span-2"
-        >
-          {{ error }}
-        </p>
+          variant="danger"
+          :message="error"
+          class="sm:col-span-2"
+        />
       </div>
       <footer
         class="flex flex-col justify-end gap-3 sm:flex-row sm:flex-wrap border-t border-neutral-light p-4 sm:p-6"
       >
-        <Button variant="outline" :disabled="busy" @click="cancel"
+        <Button variant="neutral" :disabled="busy" @click="cancel"
           >Cancelar</Button
         ><Button type="submit" variant="action" icon="check" :disabled="busy">{{
           busy ? "Guardando…" : editing ? "Guardar cambios" : "Crear empleado"

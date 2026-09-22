@@ -67,12 +67,11 @@ async function save() {
           class="mt-5"
           placeholder="Describe el motivo (mínimo 10 caracteres)"
         ></Textarea>
-      <p v-if="error" role="alert" class="mt-4 text-sm text-neutral-dark">
+      <p v-if="error" role="alert" class="mt-4 text-sm text-danger font-medium">
         {{ error }}
       </p>
       <div class="mt-6 flex flex-col justify-end gap-3 sm:flex-row">
-        <Button variant="outline" :disabled="busy" @click="emit('close')">Cancelar</Button
-        ><Button
+        <Button variant="neutral" :disabled="busy" @click="emit('close')">Cancelar</Button><Button
           type="submit"
           :variant="active ? 'danger' : 'green'"
           :disabled="busy"

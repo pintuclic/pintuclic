@@ -11,7 +11,7 @@ let interval: ReturnType<typeof setInterval> | undefined;
 onMounted(() => {
   void refresh();
   interval = setInterval(() => {
-    if (document.visibilityState === 'visible') void refresh();
+    if (document.visibilityState === 'visible') void refresh({ background: true });
   }, 60000);
 });
 onBeforeUnmount(() => clearInterval(interval));

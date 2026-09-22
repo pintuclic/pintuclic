@@ -202,7 +202,7 @@ onBeforeRouteLeave(
       </div>
     </dl>
     <div class="flex flex-col justify-end gap-3 sm:flex-row">
-      <Button variant="outline" :disabled="busy" @click="confirm = false">Cancelar</Button
+      <Button variant="neutral" :disabled="busy" @click="confirm = false">Cancelar</Button
       ><Button variant="green" :disabled="busy" @click="save">{{
         busy ? "Guardando…" : "Confirmar cambios"
       }}</Button>

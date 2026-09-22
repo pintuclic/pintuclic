@@ -172,7 +172,7 @@ async function logout() {
       contraseña.
     </p>
     <div class="mt-6 flex flex-col justify-end gap-3 sm:flex-row">
-      <Button variant="outline" :disabled="busy" @click="confirm = false">Cancelar</Button
+      <Button variant="neutral" :disabled="busy" @click="confirm = false">Cancelar</Button
       ><Button variant="action" :disabled="busy" @click="password">{{
         busy ? "Actualizando…" : "Confirmar cambio"
       }}</Button>
@@ -185,7 +185,7 @@ async function logout() {
       Tendrás que iniciar sesión de nuevo para acceder al panel.
     </p>
     <div class="mt-6 flex flex-col justify-end gap-3 sm:flex-row">
-      <Button variant="outline" :disabled="busy" @click="logoutConfirm = false">Cancelar</Button
+      <Button variant="neutral" :disabled="busy" @click="logoutConfirm = false">Cancelar</Button
       ><Button variant="danger" :disabled="busy" @click="logout">Cerrar sesión</Button>
     </div></Modal
   >

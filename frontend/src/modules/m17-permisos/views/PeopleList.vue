@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Table, Paginacion, Button, IconButton, Icon, Drawer, PageHeader, Badge, Input, Select } from "@/core/components";
+import { Table, Paginacion, Button, IconButton, Icon, Drawer, PageHeader, Badge, Input, Select, SinResultados } from "@/core/components";
 import { computed, defineAsyncComponent, ref, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useM17 } from "../store/useM17";
@@ -196,12 +196,14 @@ function exportCsv() {
                   v-if="isEmployees"
                   :to="`/admin/${kind}/${p.id_usuario}${isEmployees ? '/editar' : ''}`"
                   icon="edit"
+                  tone="neutral"
                   :label="`Editar a ${p.nombre}`"
                 />
                 <IconButton class="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
                   v-else
                   has-popup="dialog"
                   icon="eye"
+                  tone="action"
                   :label="`Ver a ${p.nombre}`"
                   @click="viewingClient = p.id_usuario"
                 />
@@ -209,41 +211,39 @@ function exportCsv() {
                   v-if="isEmployees"
                   :to="{ path: '/admin/permisos', query: { empleado: p.id_usuario } }"
                   icon="shield"
+                  tone="action"
                   :label="`Permisos de ${p.nombre}`"
                 />
                 <IconButton class="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
                   v-if="isAdmin"
                   icon="power"
                   :label="`${p.estado === 'activo' ? 'Desactivar' : 'Activar'} a ${p.nombre}`"
-                  :tone="p.estado === 'activo' ? 'neutral' : 'success'"
+                  :tone="p.estado === 'activo' ? 'danger' : 'success'"
                   @click="selected = p"
                 />
               </div>
             </template>
       <template #empty>
-              <Icon
-                name="users"
-                class="mx-auto mb-4 h-10 w-10 text-neutral-medium"
-              />
-              <p class="font-semibold text-corporate">
-                {{
-                  rows.length
-                    ? "No hay resultados para estos filtros"
-                    : isEmployees
-                      ? "Tu equipo empieza aquí"
-                      : "No hay clientes registrados"
-                }}
-              </p>
-              <p class="mt-2 text-neutral-medium">
-                {{
-                  rows.length
-                    ? "Prueba con otro nombre o cambia los filtros."
-                    : isEmployees
-                      ? "Crea el primer empleado y asigna sus permisos."
-                      : "Los clientes aparecerán cuando se registren en Pintu Clic."
-                }}
-              </p>
-            </template>
+        <SinResultados
+          :bordered="false"
+          compact
+          :icon="rows.length ? 'search' : 'users'"
+          :title="
+            rows.length
+              ? 'No hay resultados para estos filtros'
+              : isEmployees
+                ? 'Tu equipo empieza aquí'
+                : 'No hay clientes registrados'
+          "
+          :description="
+            rows.length
+              ? 'Prueba con otro nombre o cambia los filtros.'
+              : isEmployees
+                ? 'Crea el primer empleado y asigna sus permisos.'
+                : 'Los clientes aparecerán cuando se registren en Pintu Clic.'
+          "
+        />
+      </template>
     </Table>
     <Paginacion v-model="page" :total="filtered.length" :page-size="8" />
   </section>

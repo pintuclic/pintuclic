@@ -365,7 +365,7 @@ onBeforeRouteLeave(
       </li>
     </ul>
     <div class="flex flex-col justify-end gap-3 sm:flex-row">
-      <Button variant="outline" @click="pending = ''">Cancelar</Button
+      <Button variant="neutral" @click="pending = ''">Cancelar</Button
       ><Button variant="danger" @click="revoke">Retirar permisos</Button>
     </div></Modal
   >
