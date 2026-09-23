@@ -42,7 +42,7 @@ graph LR
 > - **Al subir `MINOR`:** Se suma a `MINOR` y el `PATCH` se reinicia a cero $\rightarrow$ Ej: `1.5.4` pasa a **`1.6.0`** *(nunca `1.6.4` ni `1.6.1`)*.  
 > - **Al subir `MAJOR`:** Se suma a `MAJOR` y tanto `MINOR` como `PATCH` se reinician a cero $\rightarrow$ Ej: `1.5.4` pasa a **`2.0.0`**.
 
-> ⚠️ **Regla vigente del bot:** el nivel lo determina la marca `[X.Y.Z]` del commit (ver Sección 5): `[0.0.1]` sube **PATCH**, `[0.1.0]` sube **MINOR** y `[1.0.0]` o mayor sube **MAJOR**.
+> ⚠️ **Regla vigente del bot:** la marca `[X.Y.Z]` del commit es la **versión nueva del proyecto** (ver Sección 5): se elige subiendo el tercer dígito para un patch, el segundo para un cambio menor o el primero para un cambio mayor.
 
 ---
 
@@ -118,27 +118,27 @@ El Walkthrough debe contener obligatoriamente las siguientes 6 secciones:
 
 ## 5. Automatización Oficial del Versionado (Bot de GitHub Actions)
 
-> 🤖 **Vigente:** la versión absoluta del proyecto ya **NO** se edita a mano. El bot oficial ([`.github/workflows/version-bot.yml`](../../../.github/workflows/version-bot.yml)) lee el mensaje del último commit, calcula la versión y actualiza el archivo de versión.
+> 🤖 **Vigente:** la versión absoluta del proyecto ya **NO** se edita a mano. El bot oficial ([`.github/workflows/version-bot.yml`](../../../.github/workflows/version-bot.yml)) lee la versión del mensaje del último commit, la registra en el archivo de versión y publica el tag y el Release.
 
 ### 5.1 Responsabilidad del Desarrollador
 
-Incluir en el **mensaje del commit** la marca de nivel relativo entre corchetes, según el tipo de cambio:
+Incluir en el **mensaje del commit** la marca `[X.Y.Z]` con la **versión nueva** del proyecto, subiendo el dígito según el tipo de cambio:
 
-| Marca | Nivel | Cuándo usarla |
+| Nivel | Dígito que sube | Ejemplo desde `3.27.0` |
 | :--- | :--- | :--- |
-| `[0.0.1]` | **PATCH** | Corrección puntual (fix): bug o ajuste sin cambiar contratos. |
-| `[0.1.0]` | **MINOR** | Cambio normal: feature o mejora (nueva HU, endpoint, caso de uso). |
-| `[1.0.0]` o mayor | **MAJOR** | Cambio grande / breaking change: cierre de módulo o cambio estructural de arquitectura. |
+| **PATCH** | el tercero | `[3.27.1]` |
+| **MINOR** | el segundo | `[3.28.0]` |
+| **MAJOR** | el primero | `[4.0.0]` |
 
-Ejemplo: `feat(M01): [0.1.0] agregar validación de formulario de login`.
+Ejemplo: `feat(M01): [3.28.0] agregar validación de formulario de login`.
 
-> ⚠️ Los números dentro del corchete indican el **nivel del incremento**, NO la versión destino. `[0.0.1]` sobre `3.12.4` produce `3.12.5`; `[0.1.0]` sobre `3.12.4` produce `3.13.0`; `[1.0.0]` o mayor sobre `3.13.0` produce `4.0.0`.
+> ⚠️ La marca es la **versión absoluta** con la que queda el proyecto, no un nivel: el bot la usa tal cual.
 
 ### 5.2 Responsabilidad del Bot
 
 1. **Leer:** toma el mensaje del último commit del push a `main` o `release`.
-2. **Calcular:** detecta la marca `[X.Y.Z]` y aplica el nivel (`[0.0.1]` = PATCH, `[0.1.0]` = MINOR, `[1.0.0]` o mayor = MAJOR) con efecto odómetro sobre la versión registrada en `docs/CHANGELOG.md`.
-3. **Registrar:** actualiza el archivo de versión `docs/CHANGELOG.md` y sube ese cambio con su propio commit (`chore(release): [skip ci] ...`).
-4. **Sin marca no hay versión:** si el commit no trae `[X.Y.Z]`, el bot no toca la versión.
-5. **Idempotencia:** si la versión ya existe en el CHANGELOG, el bot no duplica la entrada.
+2. **Registrar:** escribe la versión `[X.Y.Z]` en `docs/CHANGELOG.md` y sube ese cambio con su propio commit (`chore(release): [skip ci] ...`).
+3. **Publicar:** crea el tag `vX.Y.Z` y el GitHub Release `vX.Y.Z` con el nombre de la versión dada.
+4. **Sin marca no hay versión:** si el commit no trae `[X.Y.Z]`, el bot no toca la versión ni publica Release.
+5. **Idempotencia:** si la versión ya existe en el CHANGELOG o el Release ya existe, el bot no lo duplica.
 

@@ -17,8 +17,8 @@ Cada commit debe seguir la siguiente estructura:
 ```
 
 > 📌 **Regla de la Versión en el Commit:**
-> - La marca `[X.Y.Z]` es un **nivel relativo**, no la versión destino: `[0.0.1]` = PATCH, `[0.1.0]` = MINOR y `[1.0.0]` o mayor = MAJOR.
-> - Si el commit incluye una Historia de Usuario, un fix o una entrega funcional, **debe incluir obligatoriamente la marca `[X.Y.Z]`**; el bot de versionado calcula la versión absoluta y actualiza `CHANGELOG.md`.
+> - La marca `[X.Y.Z]` es la **versión nueva absoluta** del proyecto (se sube el tercer dígito para un patch, el segundo para un cambio menor o el primero para un cambio mayor).
+> - Si el commit incluye una Historia de Usuario, un fix o una entrega funcional, **debe incluir obligatoriamente la marca `[X.Y.Z]`**; el bot de versionado la registra en `CHANGELOG.md` y publica el tag y el Release `vX.Y.Z`.
 > - Si es un commit puramente administrativo o de ajuste de documentación interna sin impacto en la versión del software, la marca es opcional.
 
 ---
@@ -27,11 +27,11 @@ Cada commit debe seguir la siguiente estructura:
 
 | Tipo | Propósito | ¿Aplica Versión? | Ejemplo |
 | :--- | :--- | :---: | :--- |
-| **`feat`** | Nueva funcionalidad o Historia de Usuario (HU) implementada | **SÍ (MINOR / MAJOR)** | `feat(M04): [0.1.0] implementar registro con confirmacion de correo HU-CUE-01` |
-| **`fix`** | Corrección de un defecto o bug en el código | **SÍ (PATCH)** | `fix(M04): [0.0.1] corregir expiracion de tokens de verificacion en backend` |
-| **`security`** | Ajuste o refuerzo de políticas de seguridad (M20/M17) | **SÍ (PATCH / MINOR)** | `security(M20): [0.0.1] aplicar costo 12 en salt de bcrypt para contraseñas` |
+| **`feat`** | Nueva funcionalidad o Historia de Usuario (HU) implementada | **SÍ (MINOR / MAJOR)** | `feat(M04): [3.28.0] implementar registro con confirmacion de correo HU-CUE-01` |
+| **`fix`** | Corrección de un defecto o bug en el código | **SÍ (PATCH)** | `fix(M04): [3.27.1] corregir expiracion de tokens de verificacion en backend` |
+| **`security`** | Ajuste o refuerzo de políticas de seguridad (M20/M17) | **SÍ (PATCH / MINOR)** | `security(M20): [3.27.1] aplicar costo 12 en salt de bcrypt para contraseñas` |
 | **`docs`** | Creación o actualización de documentación, diagramas o reportes | Opcional | `docs(sistema): actualizar matriz de trazabilidad y guia de versionado` |
-| **`refactor`** | Reestructuración de código sin alterar funcionalidad | **SÍ (PATCH)** | `refactor(M04): [0.0.1] modularizar repositorio kysely de cuentas` |
+| **`refactor`** | Reestructuración de código sin alterar funcionalidad | **SÍ (PATCH)** | `refactor(M04): [3.27.1] modularizar repositorio kysely de cuentas` |
 | **`test`** | Creación o modificación de pruebas automatizadas | Opcional | `test(M04): añadir pruebas de integracion para login HU-CUE-04` |
 | **`chore`** | Tareas de mantenimiento, dependencias o configuración | Opcional | `chore(deps): actualizar tipos de express y zod` |
 
@@ -41,7 +41,7 @@ Cada commit debe seguir la siguiente estructura:
 
 ### A. Implementación de una Historia de Usuario (`feat`)
 ```text
-feat(M04): [0.1.0] implementar registro con confirmacion de correo HU-CUE-01
+feat(M04): [3.28.0] implementar registro con confirmacion de correo HU-CUE-01
 
 - Añadido endpoint POST /api/v1/auth/register con validación Zod.
 - Integrado hashing seguro BCrypt y emisión de evento SMTP.
@@ -50,10 +50,10 @@ feat(M04): [0.1.0] implementar registro con confirmacion de correo HU-CUE-01
 
 ### B. Corrección de Defecto (`fix`)
 ```text
-fix(M04): [0.0.1] corregir regex de validacion de contraseñas en schema zod
+fix(M04): [3.27.1] corregir regex de validacion de contraseñas en schema zod
 
 - Ajustada validación de mayúsculas y números en RegisterUserSchema.
-- Actualizado Walkthrough de la versión v1.1.1.
+- Actualizado Walkthrough de la versión v3.27.1.
 ```
 
 ### C. Documentación y Reporte QA (`docs`)
