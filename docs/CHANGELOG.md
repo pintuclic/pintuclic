@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.35.9] - 2026-09-23
+### Integración: M01 panel administrativo y vistas públicas
+- **Alcance:** Merge de `feature/m01-dashboard-catalogo` en `dd0c8be`; el panel se conserva sin alteraciones y las vistas públicas se organizan dentro de `m01-catalogo`.
+- **Hitos:** Separación `admin`/`publicas`, rutas públicas preservadas y scripts Core/Vitest combinados. Backend, SQL y M04 conservan el contenido previo.
+- **Calidad:** Build y ESLint aprobados; 15 pruebas Vitest y 1 prueba Core aprobadas. El N+1 queda pendiente de la rama responsable de backend.
+- **Walkthrough:** [Integración del panel y vistas públicas](./walkthroughs/M01/walkthrough_v3.35.9_M01_integracion_panel_y_vistas_publicas_frontend.md).
+
+---
+
 ## [v3.35.8] - 2026-09-22
 ### Integración: M01 / Core Frontend
 - **Alcance:** Integración de core-layouts conservando rutas públicas, categorías y muestras de color con los nuevos componentes globales.
@@ -205,10 +214,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **Hitos Clave:** Nueva ruta pública `/`, carga paginada bajo demanda, ficha mínima de destacados para precio e imagen, estados de carga/error y modal de categorías conforme a las maquetas compartidas.
 - **Estado de Calidad:** ✅ `npm run build` y `npm run lint` sin errores; verificación visual del Home y del modal en navegador local. Integración con datos reales pendiente de disponer del backend en ejecución.
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.28.0_M01_home_storefront_frontend.md](./walkthroughs/M01/walkthrough_v3.28.0_M01_home_storefront_frontend.md)
+## [v3.28.0] - 2026-09-13
+### Core: Layouts Globales, Enrutador Central y Sincronización con M01 Catálogo (Frontend)
+- **Alcance General:** Incremento **MINOR (v3.28.0)** que formaliza la arquitectura visual y estructural de layouts del frontend para Pintu Clic. Unifica los layouts globales (`LayoutHome`, `LayoutAdmin`, `LayoutAcceso`, `FooterPrincipal`), sincroniza el enrutamiento central con el módulo completo de catálogo `M01` recién integrado en `develop` y resuelve conflictos de merge en el contenedor raíz.
+- **Hitos Clave de Arquitectura y Frontend:**
+  - **Layout de Tienda Pública (`LayoutHome.vue`):** Maquetación de la experiencia e-commerce con Topbar institucional de cobertura Caquetá, Header responsive, Navbar con navegación y selector de categorías, menú de usuario activo con logout y contenedor de modales globales de autenticación `M04` (`ModalLogin`, `RegistroWizard`).
+  - **Shell de Administración (`LayoutAdmin.vue`):** Panel administrativo colapsable con menús tipo acordeón para Gestión Administrativa y Gestión de Catálogo, integración de branding oficial y topbar administrativo.
+  - **Shell de Acceso Minimalista (`LayoutAcceso.vue`):** Estructura base centrada para pantallas completas de inicio de sesión o restablecimiento de credenciales.
+  - **Enrutador Central Unificado (`src/core/routes/index.ts`):** Fusión armónica de la tienda pública como raíz de `LayoutHome`, montaje de `...dashboardCatalogoRoutes` de `M01`, redirección defensiva de `/admin` a `/admin/catalogo` (evitando pantallas en blanco) y alias para búsquedas administrativas (`/admin/catalogo/busquedas-sin-resultado`).
+  - **Contenedores Limpios (`App.vue` & `main.ts`):** Simplificación de `App.vue` a un `<router-view />` puro y montaje ordenado de Pinia y Vue Router en `main.ts`.
+  - **Corrección de Linter y TypeScript:** Saneamiento de variables huérfanas en `LayoutHome.vue` (`showMobileMenu`), logrando 0 errores en compilación estricta (`vue-tsc -b`) y 0 advertencias en ESLint.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/CORE/walkthrough_v3.28.0_CORE_layouts_globales_enrutador_frontend.md](./walkthroughs/CORE/walkthrough_v3.28.0_CORE_layouts_globales_enrutador_frontend.md)
 
 ---
 
 ## [v3.27.0] - 2026-09-11
+
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** feat(M01): integrar soporte para `id_categoria_complementaria` y `patrocinado` en la creación de productos (HU-CAT-08).
 - **Hitos Clave:** Se agregó al `CrearProductoDto` y a la lógica `crear` en el `ProductosService`.

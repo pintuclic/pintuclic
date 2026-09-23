@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
@@ -16,6 +17,12 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  test: {
+    // Las pruebas .mjs de Core usan node:test mediante npm run test:core.
+    include: ['src/**/*.{test,spec}.ts'],
+    environment: 'jsdom',
+    globals: true,
   },
 })
 
