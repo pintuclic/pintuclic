@@ -10,7 +10,7 @@ const props = defineProps<{
   kind: "empleados" | "clientes";
 }>();
 const emit = defineEmits<{ close: []; saved: [] }>();
-const { refresh } = useM17();
+const { refreshPeople } = useM17();
 const reason = ref("");
 const busy = ref(false);
 const error = ref("");
@@ -31,7 +31,7 @@ async function save() {
     const result = cambioEstadoSchema.safeParse({ active: active.value, reason: reason.value });
     if (!result.success) throw new Error(result.error.issues[0]?.message);
     await service.status(props.kind, props.person, reason.value.trim());
-    await refresh();
+    await refreshPeople(props.kind);
     notify("Estado actualizado correctamente.");
     emit("saved");
     emit("close");
@@ -73,7 +73,7 @@ async function save() {
       <div class="mt-6 flex flex-col justify-end gap-3 sm:flex-row">
         <Button variant="neutral" :disabled="busy" @click="emit('close')">Cancelar</Button><Button
           type="submit"
-          :variant="active ? 'danger' : 'green'"
+          :variant="active ? 'danger' : 'conversion'"
           :disabled="busy"
           >{{ busy ? "Guardando…" : action }}</Button
         >

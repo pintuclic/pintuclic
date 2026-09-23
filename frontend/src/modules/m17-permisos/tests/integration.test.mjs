@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { setTimeout as delay } from 'node:timers/promises';
 import { createServer } from 'vite';
 import { createPinia, setActivePinia } from 'pinia';
 import { createRouter, createMemoryHistory } from 'vue-router';
@@ -63,12 +64,73 @@ test('integración: rutas bajo /admin, DTOs compartidos y aislamiento de Pinia',
     first.state.session = { id_usuario: 20, id_rol: 2, permisos: ['personal.ver'] };
     assert.equal(facade.isAdmin.value, false);
     assert.equal(facade.canAttend.value, true);
+
+    first.state.employees = Array.from({ length: 6 }, (_, index) => ({
+      id_usuario: index + 10,
+      nombre: `Empleado ${index + 1}`,
+      correo: `empleado${index + 1}@example.test`,
+      telefono: null,
+      estado: 'activo',
+    }));
+    let permissionCalls = 0;
+    let activePermissionCalls = 0;
+    let maximumConcurrency = 0;
+    apiClient.defaults.adapter = async config => {
+      if (config.url?.endsWith('/permisos')) {
+        permissionCalls++;
+        activePermissionCalls++;
+        maximumConcurrency = Math.max(maximumConcurrency, activePermissionCalls);
+        await delay(5);
+        activePermissionCalls--;
+        const id = Number(config.url.split('/').at(-2));
+        return {
+          data: {
+            success: true,
+            data: { permisos: id % 2 === 0 ? ['personal.ver'] : [] },
+          },
+          status: 200, statusText: 'OK', headers: {}, config,
+        };
+      }
+      return {
+        data: { success: true, data: [] },
+        status: 200, statusText: 'OK', headers: {}, config,
+      };
+    };
+    assert.deepEqual(
+      await first.permissionHolders('personal.ver'),
+      ['Empleado 1', 'Empleado 3', 'Empleado 5'],
+    );
+    assert.equal(permissionCalls, 6);
+    assert.ok(maximumConcurrency <= 4);
+    await first.permissionHolders('catalogo.ver');
+    assert.equal(permissionCalls, 6);
+    first.cachePermissions(10, ['catalogo.ver']);
+    assert.deepEqual(await first.permissions(10), ['catalogo.ver']);
+    assert.equal(permissionCalls, 6);
+
     first.message({ isAxiosError: true, response: { status: 403 } });
     assert.equal(first.state.ready, false);
     assert.deepEqual(first.state.clients, []);
     assert.notEqual(first.state.session, null);
+    await first.permissions(10);
+    assert.equal(permissionCalls, 7);
     first.message({ isAxiosError: true, response: { status: 401 } });
     assert.equal(first.state.session, null);
+    first.clearPermissionCache();
+    const staleRead = first.permissions(10);
+    first.clearPermissionCache();
+    await assert.rejects(staleRead, /caducado/);
+    const callsAfterStaleRead = permissionCalls;
+    await first.permissions(10);
+    assert.equal(permissionCalls, callsAfterStaleRead + 1);
+    first.clearPermissionCache();
+    const oldRead = first.permissions(10);
+    first.cachePermissions(10, ['catalogo.ver']);
+    assert.deepEqual(await oldRead, ['catalogo.ver']);
+    assert.deepEqual(await first.permissions(10), ['catalogo.ver']);
+    first.clearPermissionCache();
+    await Promise.all(Array.from({ length: 12 }, (_, index) => first.permissions(index + 10)));
+    assert.ok(maximumConcurrency <= 4);
     setActivePinia(createPinia());
     const second = useM17Store();
     assert.notEqual(first, second);

@@ -4,6 +4,13 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v2.5.2] - 2026-09-23
+### Módulo: M17 — Optimización de permisos y flujos en Drawer
+- **Alcance:** La búsqueda inversa reutiliza permisos en caché con concurrencia limitada; se elimina el polling global que reemplazaba listados completos.
+- **Hitos:** Alta y edición de empleados en Drawer, ficha compacta de cliente actualizada y rutas profundas conservadas sin cambiar la estructura del módulo.
+- **Calidad:** ESLint sin advertencias, TypeScript, build y pruebas Core/M17 correctos; la prueba de integración verifica caché, invalidación por sesión y máximo de cuatro solicitudes concurrentes.
+- **Walkthrough:** [Optimización de permisos y Drawers](./walkthroughs/M17/walkthrough_v2.5.2_M17_optimizacion_permisos_drawers_frontend.md).
+
 ## [v2.5.1] - 2026-09-15
 ### Módulo: M17 — Actualización del menú Core
 - **Alcance:** Merge de `f1ce953` de Core, cuyo único archivo de código modificado es LayoutAdmin; enlaces de M17 y catálogo actualizados sin duplicar perfil ni configuración.

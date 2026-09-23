@@ -3,18 +3,14 @@ import { computed, onMounted, onBeforeUnmount } from 'vue';
 import { RouterView, RouterLink, useRoute } from 'vue-router';
 import { Button, Icon, Toast } from '@/core/components';
 import { useM17 } from './store/useM17';
-const { state, isAdmin, canAttend, refresh } = useM17();
+const { state, isAdmin, canAttend, refresh, clearPermissionCache } = useM17();
+onBeforeUnmount(clearPermissionCache);
 const route = useRoute();
 const allowed = computed(() => route.path === '/admin/perfil' ||
   (route.path.startsWith('/admin/clientes') ? canAttend.value : isAdmin.value));
-let interval: ReturnType<typeof setInterval> | undefined;
 onMounted(() => {
   void refresh();
-  interval = setInterval(() => {
-    if (document.visibilityState === 'visible') void refresh({ background: true });
-  }, 60000);
 });
-onBeforeUnmount(() => clearInterval(interval));
 </script>
 <template>
   <div>

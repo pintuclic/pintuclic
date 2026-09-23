@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, Icon, Modal, PageHeader, Input, Alert } from "@/core/components";
+import { Button, Icon, PageHeader, Input, Alert } from "@/core/components";
 import { computed, onMounted, reactive, ref } from "vue";
 import {
   RouterLink,
@@ -12,10 +12,16 @@ import { message, notify, useM17 } from "../store/useM17";
 import { crearEmpleadoSchema, actualizarEmpleadoSchema } from "../dtos/empleado.dto";
 const route = useRoute();
 const router = useRouter();
-const { refresh } = useM17();
-const props = withDefaults(defineProps<{ modal?: boolean }>(), { modal: false });
-const emit = defineEmits<{ close: [] }>();
-const editing = computed(() => !props.modal && !!route.params.id);
+const { refreshPeople } = useM17();
+const props = withDefaults(
+  defineProps<{ drawer?: boolean; employeeId?: number }>(),
+  { drawer: false, employeeId: undefined },
+);
+const emit = defineEmits<{ close: []; saved: [id: number] }>();
+const resolvedEmployeeId = computed(
+  () => (props.employeeId ?? Number(route.params.id)) || 0,
+);
+const editing = computed(() => resolvedEmployeeId.value > 0);
 const form = reactive({
   nombre: "",
   doc_identidad: "",
@@ -33,7 +39,7 @@ async function load() {
   loading.value = editing.value;
   if (editing.value)
     try {
-      const p = await service.employee(Number(route.params.id));
+      const p = await service.employee(resolvedEmployeeId.value);
       Object.assign(form, {
         nombre: p.nombre,
         doc_identidad: p.doc_identidad || "",
@@ -56,11 +62,12 @@ onBeforeRouteLeave(
 );
 function cancel() {
   if (busy.value) return;
-  if (!props.modal) { void router.push('/admin/empleados'); return; }
+  if (!props.drawer) { void router.push('/admin/empleados'); return; }
   if (dirty.value && !saved.value && !window.confirm('Tienes cambios sin guardar. ¿Quieres cerrar el formulario?')) return;
   emit('close');
 }
 async function submit() {
+  if (busy.value || saved.value) return;
   busy.value = true;
   error.value = "";
   try {
@@ -68,7 +75,7 @@ async function submit() {
     if (editing.value) {
       const result = actualizarEmpleadoSchema.safeParse(form);
       if (!result.success) throw new Error(result.error.issues[0]?.message);
-      id = Number(route.params.id);
+      id = resolvedEmployeeId.value;
       await service.update(id, result.data);
     } else {
       const result = crearEmpleadoSchema.safeParse(form);
@@ -76,13 +83,15 @@ async function submit() {
       id = await service.create(result.data);
     }
     saved.value = true;
-    await refresh();
+    await refreshPeople("empleados");
     notify(
       editing.value
         ? "Empleado actualizado."
         : "Empleado creado sin permisos. Ya puedes asignar sus accesos.",
     );
-    if (props.modal) { emit('close'); return; }
+    emit("saved", id);
+    if (props.drawer) { emit('close'); return; }
+    busy.value = false;
     await router.push(
       editing.value
         ? `/admin/empleados/${id}`
@@ -94,16 +103,16 @@ async function submit() {
     busy.value = false;
   }
 }
+defineExpose({ cancel });
 </script>
 <template>
-  <component :is="modal ? Modal : 'div'" v-bind="modal ? {title: 'Crear empleado', wide: true} : {}" @close="cancel">
   <RouterLink
-    v-if="!modal"
+    v-if="!drawer"
     to="/admin/empleados"
     class="mb-4 inline-flex items-center gap-2 text-sm text-action"
     ><Icon name="back" class="h-4 w-4" />Volver a empleados</RouterLink
   ><PageHeader
-    v-if="!modal"
+    v-if="!drawer"
     :title="editing ? 'Editar empleado' : 'Nuevo empleado'"
     :description="
       editing
@@ -123,7 +132,7 @@ async function submit() {
   <form
     v-else
     class="grid min-w-0 grid-cols-1 items-start gap-6"
-    :class="modal ? '' : 'xl:grid-cols-[minmax(0,1fr)_310px]'"
+    :class="drawer ? '' : 'xl:grid-cols-[minmax(0,1fr)_310px]'"
     @submit.prevent="submit"
   >
     <section class="rounded-xl border border-neutral-light bg-neutral-white">
@@ -140,7 +149,7 @@ async function submit() {
       <div class="grid min-w-0 grid-cols-1 gap-6 p-4 sm:p-6 sm:grid-cols-2">
         <div class="text-sm font-semibold sm:col-span-2"
           ><Input label="Nombre completo *" v-model="form.nombre"
-            :autofocus="modal"
+            :autofocus="drawer"
             required
             minlength="2"
             maxlength="150"
@@ -192,7 +201,7 @@ async function submit() {
         }}</Button>
       </footer>
     </section>
-    <aside v-if="!modal" class="space-y-5">
+    <aside v-if="!drawer" class="space-y-5">
       <section
         class="rounded-xl border border-neutral-light bg-neutral-white p-4 sm:p-6"
       >
@@ -229,5 +238,4 @@ async function submit() {
       </section>
     </aside>
   </form>
-  </component>
 </template>

@@ -10,7 +10,7 @@ import {
   dependentPermissions,
   togglePermission,
 } from "../services/permission-rules";
-const { state } = useM17();
+const { state, permissions, permissionHolders, cachePermissions } = useM17();
 const route = useRoute();
 const employeeId = ref(Number(route.query.empleado) || 0);
 const selected = ref<string[]>([]);
@@ -65,10 +65,10 @@ async function load() {
   if (!employeeId.value) return;
   loading.value = true;
   try {
-    const permissions = await service.permissions(employeeId.value);
+    const employeePermissions = await permissions(employeeId.value);
     if (version === generation) {
-      selected.value = [...permissions];
-      initial.value = [...permissions];
+      selected.value = [...employeePermissions];
+      initial.value = [...employeePermissions];
       loaded.value = true;
     }
   } catch (e) {
@@ -123,9 +123,9 @@ async function save() {
   error.value = "";
   try {
     await service.savePermissions(employeeId.value, selected.value);
+    cachePermissions(employeeId.value, selected.value);
     initial.value = [...selected.value];
     inverse.value = "";
-    await load();
     notify(
       "Permisos guardados. Los cambios se aplican en las próximas solicitudes.",
     );
@@ -138,19 +138,12 @@ async function save() {
 watch(inverse, async (name) => {
   const version = ++inverseGeneration;
   holders.value = [];
+  inverseBusy.value = false;
   if (!name) return;
   inverseBusy.value = true;
   try {
-    const results = await Promise.all(
-      state.employees.map(async (p) => ({
-        name: p.nombre,
-        permissions: await service.permissions(p.id_usuario),
-      })),
-    );
-    if (version === inverseGeneration)
-      holders.value = results
-        .filter((p) => p.permissions.includes(name))
-        .map((p) => p.name);
+    const names = await permissionHolders(name);
+    if (version === inverseGeneration) holders.value = names;
   } catch (e) {
     if (version === inverseGeneration) error.value = message(e);
   } finally {

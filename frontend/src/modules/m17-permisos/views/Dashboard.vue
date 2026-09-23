@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Table, Button, Icon, Badge, PageHeader, IconButton } from "@/core/components";
+import { Table, Button, Icon, Badge, Drawer, PageHeader, IconButton } from "@/core/components";
 import { computed, defineAsyncComponent, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { useM17 } from "../store/useM17";
 const EmployeeForm = defineAsyncComponent(() => import("./EmployeeForm.vue"));
 const creatingEmployee = ref(false);
+const employeeForm = ref<{ cancel: () => void } | null>(null);
 const { state } = useM17();
 const columns = [
   { key: 'cliente', label: 'Cliente' },
@@ -219,5 +220,16 @@ const quick = [
       </div>
     </section>
   </div>
-  <EmployeeForm v-if="creatingEmployee" modal @close="creatingEmployee = false" />
+  <Drawer
+    :model-value="creatingEmployee"
+    title="Nuevo empleado"
+    @close="employeeForm?.cancel()"
+  >
+    <EmployeeForm
+      ref="employeeForm"
+      v-if="creatingEmployee"
+      drawer
+      @close="creatingEmployee = false"
+    />
+  </Drawer>
 </template>

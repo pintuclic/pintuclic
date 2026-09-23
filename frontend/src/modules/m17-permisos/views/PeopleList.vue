@@ -10,8 +10,10 @@ const PersonDetail = defineAsyncComponent(() => import("./PersonDetail.vue"));
 const viewingClient = ref<number | null>(null);
 const EmployeeForm = defineAsyncComponent(() => import("./EmployeeForm.vue"));
 const creatingEmployee = ref(false);
+const employeeForm = ref<{ cancel: () => void } | null>(null);
+const editingEmployee = ref<number | null>(null);
 const props = defineProps<{ kind: "empleados" | "clientes" }>();
-const { state, isAdmin, refresh } = useM17();
+const { state, isAdmin, refreshPeople } = useM17();
 const route = useRoute();
 const q = ref(String(route.query.q || ""));
 const status = ref(String(route.query.estado || ""));
@@ -75,6 +77,10 @@ function exportCsv() {
   a.download = `${props.kind}.csv`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function closeEmployeeDrawer() {
+  creatingEmployee.value = false;
+  editingEmployee.value = null;
 }
 </script>
 <template>
@@ -153,12 +159,13 @@ function exportCsv() {
         icon="refresh"
         aria-label="Actualizar listado"
         :disabled="state.loading"
-        @click="refresh"
+        @click="refreshPeople(kind)"
       />
     </div>
     <Table mobile-cards :rows="visible" :columns="columns" row-key="id_usuario" :caption="isEmployees ? 'Empleados' : 'Clientes'" :loading="state.loading">
       <template #cell-nombre="{ row: p }">
               <RouterLink
+                v-if="isEmployees"
                 :to="`/admin/${kind}/${p.id_usuario}`"
                 class="flex items-center gap-3 font-semibold text-corporate hover:text-action"
                 ><span
@@ -180,8 +187,31 @@ function exportCsv() {
                         ? "Empresa"
                         : "Persona natural"
                   }}</small></span
-                ></RouterLink
+                ></RouterLink>
+              <button
+                v-else
+                type="button"
+                class="flex items-center gap-3 text-left font-semibold text-corporate hover:text-action"
+                aria-haspopup="dialog"
+                @click="viewingClient = p.id_usuario"
               >
+                <span
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-subaction/65 font-medium text-action"
+                  >{{
+                    p.nombre
+                      .split(" ")
+                      .map((x) => x[0])
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase()
+                  }}</span
+                ><span
+                  >{{ p.nombre
+                  }}<small class="mt-1 block font-normal text-neutral-medium">{{
+                    p.tipo === "empresa" ? "Empresa" : "Persona natural"
+                  }}</small></span
+                >
+              </button>
             </template>
       <template #cell-contacto="{ row: p }">
               <p>{{ p.correo }}</p>
@@ -194,10 +224,10 @@ function exportCsv() {
               <div class="flex justify-end gap-2">
                 <IconButton class="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
                   v-if="isEmployees"
-                  :to="`/admin/${kind}/${p.id_usuario}${isEmployees ? '/editar' : ''}`"
                   icon="edit"
-                  tone="neutral"
+                  has-popup="dialog"
                   :label="`Editar a ${p.nombre}`"
+                  @click="editingEmployee = p.id_usuario"
                 />
                 <IconButton class="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
                   v-else
@@ -253,12 +283,32 @@ function exportCsv() {
     :kind="kind"
     @close="selected = null"
   />
-  <EmployeeForm
-    v-if="creatingEmployee && isEmployees"
-    modal
-    @close="creatingEmployee = false"
-  />
-  <Drawer :model-value="viewingClient !== null && !isEmployees" title="Ficha del cliente" @close="viewingClient = null">
-    <PersonDetail v-if="viewingClient !== null" :key="viewingClient" kind="clientes" :person-id="viewingClient" compact />
+  <Drawer
+    :model-value="(creatingEmployee || editingEmployee !== null) && isEmployees"
+    :title="editingEmployee !== null ? 'Editar empleado' : 'Nuevo empleado'"
+    @close="employeeForm?.cancel()"
+  >
+    <EmployeeForm
+      ref="employeeForm"
+      v-if="creatingEmployee || editingEmployee !== null"
+      :key="editingEmployee ?? 'new'"
+      :employee-id="editingEmployee ?? undefined"
+      drawer
+      @close="closeEmployeeDrawer"
+    />
+  </Drawer>
+  <Drawer
+    :model-value="viewingClient !== null && !isEmployees"
+    title="Ficha del cliente"
+    @close="viewingClient = null"
+  >
+    <PersonDetail
+      v-if="viewingClient !== null"
+      :key="viewingClient"
+      kind="clientes"
+      :person-id="viewingClient"
+      compact
+      @close="viewingClient = null"
+    />
   </Drawer>
 </template>
