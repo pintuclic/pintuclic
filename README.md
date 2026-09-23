@@ -62,14 +62,11 @@ Es decir: el `[0.1.0]` o `[1.0.0]` que escribe el desarrollador no es la versió
 
 ### Qué pasa automáticamente
 1. El desarrollador hace push con un commit en ese formato.
-2. El bot de GitHub Actions ([.github/workflows/version-bot.yml](.github/workflows/version-bot.yml)) lee el mensaje del último commit con marca.
+2. El bot de GitHub Actions ([.github/workflows/version-bot.yml](.github/workflows/version-bot.yml)) lee el mensaje del último commit.
 3. Detecta el número entre corchetes y calcula la nueva versión del proyecto (efecto odómetro).
 4. Actualiza el archivo de versión `docs/CHANGELOG.md` y sube ese cambio con su propio commit.
 
-Flujo por ramas:
-- Push/merge a `release`: el bot crea el tag `vX.Y.Z` y publica un **pre-release** con el zip.
-- Merge `release` → `main`: el bot publica la versión **estable**, escribe la entrada final en `docs/CHANGELOG.md` y marca el Release como latest. La versión estable solo sale desde `main`.
-- Los PRs hacia `main` y `release` se validan automáticamente: sin marca en el título o en algún commit, el check falla.
+El bot corre en cada push a `main` y `release`.
 
 ### Por qué lo hacemos así
 - Evita errores humanos al actualizar versiones a mano.
@@ -79,4 +76,4 @@ Flujo por ramas:
 ### Importante
 Si el commit no trae el tag `[X.Y.Z]`, el bot simplemente no toca la versión — así que si un cambio no debe afectar el versionado (como un ajuste de documentación menor), basta con omitir el corchete.
 
-> El CHANGELOG, los tags y los Releases los gestiona el bot: no se editan a mano. Detalle completo: [GUIA_VERSIONADO_Y_WALKTHROUGHS.md](docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md) (Sección 5).
+> El CHANGELOG lo gestiona el bot: no se edita a mano. Detalle completo: [GUIA_VERSIONADO_Y_WALKTHROUGHS.md](docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md) (Sección 5).

@@ -12,7 +12,7 @@ Aplica de forma estricta tanto a **desarrolladores humanos** como a **Agentes de
 > **CADA implementación de código, por pequeña que sea, DEBE generar un incremento de versión, actualizar el archivo central `CHANGELOG.md` y documentar un Walkthrough de Implementación.**  
 > Queda terminantemente prohibido dar por concluida una tarea sin registrar la versión y su respectivo Walkthrough.
 
-> ℹ️ **Automatización vigente:** el incremento de versión, el tag `vX.Y.Z`, el Release y la entrada de `docs/CHANGELOG.md` los publica el **bot oficial de versionado** a partir de la marca `[X.Y.Z]` incluida en el asunto del commit. Ver **Sección 5**.
+> ℹ️ **Automatización vigente:** el incremento de versión y la entrada de `docs/CHANGELOG.md` los publica el **bot oficial de versionado** a partir de la marca `[X.Y.Z]` incluida en el mensaje del commit. Ver **Sección 5**.
 
 ---
 
@@ -117,11 +117,11 @@ El Walkthrough debe contener obligatoriamente las siguientes 6 secciones:
 
 ## 5. Automatización Oficial del Versionado (Bot de GitHub Actions)
 
-> 🤖 **Vigente:** la versión absoluta del proyecto ya **NO** se edita a mano. El bot oficial ([`.github/workflows/version-bot.yml`](../../../.github/workflows/version-bot.yml) + [`scripts/version-bump.mjs`](../../../scripts/version-bump.mjs)) lee las marcas de los commits y publica la versión.
+> 🤖 **Vigente:** la versión absoluta del proyecto ya **NO** se edita a mano. El bot oficial ([`.github/workflows/version-bot.yml`](../../../.github/workflows/version-bot.yml)) lee el mensaje del último commit, calcula la versión y actualiza el archivo de versión.
 
 ### 5.1 Responsabilidad del Desarrollador
 
-Incluir en el **asunto del commit** la marca de nivel relativo entre corchetes, según el tipo de cambio:
+Incluir en el **mensaje del commit** la marca de nivel relativo entre corchetes, según el tipo de cambio:
 
 | Marca | Nivel | Cuándo usarla |
 | :--- | :--- | :--- |
@@ -134,19 +134,9 @@ Ejemplo: `feat(M01): [0.1.0] agregar validación de formulario de login`.
 
 ### 5.2 Responsabilidad del Bot
 
-1. **Calcular:** lee el mensaje del commit más reciente con marca `[X.Y.Z]` del push o PR, aplica el nivel (`[0.x.x]` = MINOR, `[1.0.0]` o mayor = MAJOR) con efecto odómetro sobre la última versión registrada (CHANGELOG y/o tag más alto).
-2. **Pre-release (`release`):** crea el tag `vX.Y.Z` y publica un GitHub Release marcado como **pre-release** con el zip del repositorio. No toca el CHANGELOG.
-3. **Estable (`main`):** al mergear la rama `release`, escribe la entrada final en `docs/CHANGELOG.md` (archivo de versión del proyecto, no existe un `VERSION` aparte), convierte el Release en estable (`--latest`) y no vuelve a taggear. Si llega un hotfix directo con marca, versiona, registra en CHANGELOG y publica el tag estable. La versión estable solo se publica desde `main`.
-4. **Sin marca no hay versión:** si el rango no contiene ninguna marca `[X.Y.Z]`, el bot no genera tag ni release.
+1. **Leer:** toma el mensaje del último commit del push a `main` o `release`.
+2. **Calcular:** detecta la marca `[X.Y.Z]` y aplica el nivel (`[0.x.x]` = MINOR, `[1.0.0]` o mayor = MAJOR) con efecto odómetro sobre la versión registrada en `docs/CHANGELOG.md`.
+3. **Registrar:** actualiza el archivo de versión `docs/CHANGELOG.md` y sube ese cambio con su propio commit (`chore(release): [skip ci] ...`).
+4. **Sin marca no hay versión:** si el commit no trae `[X.Y.Z]`, el bot no toca la versión.
 5. **Idempotencia:** si la versión ya existe en el CHANGELOG, el bot no duplica la entrada.
-
-### 5.3 Validación
-
-El workflow [`.github/workflows/pr-commit-check.yml`](../../../.github/workflows/pr-commit-check.yml) valida que los Pull Requests hacia `main` y `release` incluyan la marca `[X.Y.Z]` en el título o en alguno de sus commits, y falla con la guía de formato si no la encuentran.
-
-### 5.4 Pruebas del Script
-
-```bash
-node --test scripts/version-bump.test.mjs
-```
 
