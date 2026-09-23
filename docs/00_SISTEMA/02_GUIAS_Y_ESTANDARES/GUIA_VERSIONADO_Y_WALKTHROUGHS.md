@@ -12,6 +12,8 @@ Aplica de forma estricta tanto a **desarrolladores humanos** como a **Agentes de
 > **CADA implementación de código, por pequeña que sea, DEBE generar un incremento de versión, actualizar el archivo central `CHANGELOG.md` y documentar un Walkthrough de Implementación.**  
 > Queda terminantemente prohibido dar por concluida una tarea sin registrar la versión y su respectivo Walkthrough.
 
+> ℹ️ **Automatización vigente:** el incremento de versión, el tag `vX.Y.Z`, el Release y la entrada de `docs/CHANGELOG.md` los publica el **bot oficial de versionado** a partir de la marca `[X.Y.Z]` incluida en el asunto del commit. Ver **Sección 5**.
+
 ---
 
 ## 2. Esquema de Versionado Semántico (SemVer)
@@ -64,6 +66,8 @@ El archivo central `docs/CHANGELOG.md` es el **resumen ejecutivo de producto** p
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M[XX]/walkthrough_vX.Y.Z.md](./walkthroughs/M[XX]/walkthrough_vX.Y.Z.md)
 ```
 
+> 🤖 **Generación automática:** las entradas nuevas las escribe el bot de versionado en la rama `main` respetando este formato. Los desarrolladores ya no editan `CHANGELOG.md` manualmente (ver **Sección 5**).
+
 ---
 
 ## 4. Estructura y Nomenclatura Obligatoria del Walkthrough de Implementación
@@ -107,3 +111,42 @@ El Walkthrough debe contener obligatoriamente las siguientes 6 secciones:
 
 ### 6. Registro de Archivos Modificados / Creados
 - Lista estricta de archivos creados o modificados, confirmando que **todos pertenecen al módulo asignado** sin haber tocado archivos de otros equipos.
+
+---
+
+## 5. Automatización Oficial del Versionado (Bot de GitHub Actions)
+
+> 🤖 **Vigente:** la versión absoluta del proyecto ya **NO** se edita a mano. El bot oficial ([`.github/workflows/version-bot.yml`](../../../.github/workflows/version-bot.yml) + [`scripts/version-bump.mjs`](../../../scripts/version-bump.mjs)) lee las marcas de los commits y publica la versión.
+
+### 5.1 Responsabilidad del Desarrollador
+
+Incluir en el **asunto del commit** la marca de nivel relativo entre corchetes, según el tipo de cambio:
+
+| Marca | Nivel | Cuándo usarla |
+| :--- | :--- | :--- |
+| `[0.0.1]` | **PATCH** | Fix de bug, refactor interno, ajuste Zod sin alterar contratos. |
+| `[0.1.0]` | **MINOR** | Nueva HU, endpoint, caso de uso o funcionalidad completa. |
+| `[1.0.0]` | **MAJOR** | Breaking change, cierre de módulo o cambio estructural de arquitectura. |
+
+Ejemplo: `feat(M01): [0.1.0] implementar consulta publica de catalogo`.
+
+> ⚠️ Los números dentro del corchete indican el **nivel del incremento**, NO la versión destino. `[0.1.0]` sobre `3.12.4` produce `3.13.0`; `[1.0.0]` sobre `3.12.4` produce `4.0.0`.
+
+### 5.2 Responsabilidad del Bot
+
+1. **Calcular:** lee los commits del rango y determina el nivel más alto (`MAJOR > MINOR > PATCH`); aplica el efecto odómetro sobre la última versión registrada (CHANGELOG y/o tag más alto).
+2. **Pre-release (`release`):** crea el tag `vX.Y.Z` y publica un GitHub Release marcado como **pre-release** con el zip del repositorio. No toca el CHANGELOG.
+3. **Estable (`main`):** al mergear la rama `release`, escribe la entrada final en `docs/CHANGELOG.md`, convierte el Release en estable (`--latest`) y no vuelve a taggear. Si llega un hotfix directo con marca, versiona, registra en CHANGELOG y publica el tag estable.
+4. **Sin marca no hay versión:** si el rango no contiene ninguna marca `[X.Y.Z]`, el bot no genera tag ni release.
+5. **Idempotencia:** si la versión ya existe en el CHANGELOG, el bot no duplica la entrada.
+
+### 5.3 Validación
+
+El workflow [`.github/workflows/pr-commit-check.yml`](../../../.github/workflows/pr-commit-check.yml) valida que los Pull Requests hacia `main` y `release` incluyan la marca `[X.Y.Z]` en el título o en alguno de sus commits, y falla con la guía de formato si no la encuentran.
+
+### 5.4 Pruebas del Script
+
+```bash
+node --test scripts/version-bump.test.mjs
+```
+

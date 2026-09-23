@@ -1,0 +1,32 @@
+name: PR Commit Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches:
+      - main
+      - release
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validar formato [X.Y.Z]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validar titulo y commits del PR
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          printf '%s\n%s\n' "$PR_TITLE" "$PR_BODY" > /tmp/pr-check.txt
+          node scripts/version-bump.mjs check-pr --file /tmp/pr-check.txt --from "$BASE_SHA" --to "$HEAD_SHA"
