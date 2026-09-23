@@ -67,7 +67,7 @@ Es decir: el `[0.1.0]` o `[1.0.0]` que escribe el desarrollador no es la versió
 4. Actualiza el archivo de versión `docs/CHANGELOG.md` y sube ese cambio con su propio commit.
 
 El bot corre en cada push a `main` y `release`.
-
+    
 ### Por qué lo hacemos así
 - Evita errores humanos al actualizar versiones a mano.
 - Da trazabilidad clara: cualquiera puede ver en el historial de commits por qué subió la versión.
