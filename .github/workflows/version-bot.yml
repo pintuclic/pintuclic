@@ -35,19 +35,22 @@ jobs:
             exit 0
           fi
           BRACKET=$(printf '%s' "$MSG" | grep -oE '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' | head -1 | tr -d '[]v')
-          SIGNAL=$(printf '%s' "$BRACKET" | cut -d. -f1)
           CURRENT=$(grep -m1 -E '^## \[v?[0-9]+\.[0-9]+\.[0-9]+\]' docs/CHANGELOG.md | sed -E 's/^## \[v?([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/')
           if [ -z "$CURRENT" ]; then
             echo "No se encontro la version actual en docs/CHANGELOG.md" >&2
             exit 1
           fi
           IFS=. read -r MA MI PA <<< "$CURRENT"
-          if [ "$SIGNAL" -gt 0 ]; then
+          IFS=. read -r B1 B2 B3 <<< "$BRACKET"
+          if [ "$B1" -gt 0 ]; then
             NEW="$((MA + 1)).0.0"
             NIVEL="MAJOR"
-          else
+          elif [ "$B2" -gt 0 ]; then
             NEW="$MA.$((MI + 1)).0"
             NIVEL="MINOR"
+          else
+            NEW="$MA.$MI.$((PA + 1))"
+            NIVEL="PATCH"
           fi
           if grep -qE "^## \[v?$NEW\]" docs/CHANGELOG.md; then
             echo "La version v$NEW ya esta registrada; no se duplica."

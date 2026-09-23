@@ -55,10 +55,11 @@ El bot no toma el número tal cual, lo usa solo como señal de qué tipo de camb
 
 | Lo que escribes | Qué significa | Qué hace el bot |
 | :--- | :--- | :--- |
-| `[0.x.x]` | Cambio normal (feature, mejora, fix) | Sube el **minor** de la versión actual del proyecto. Ej: `3.12.4 → 3.13.0` |
-| `[1.0.0]` o mayor | Cambio grande / breaking change | Sube el **major** de la versión actual. Ej: `3.13.0 → 4.0.0` |
+| `[0.0.1]` | **Patch**: corrección puntual (fix) | Sube el **patch** de la versión actual. Ej: `3.12.4 → 3.12.5` |
+| `[0.1.0]` | **Menor (minor)**: feature o mejora | Sube el **minor** de la versión actual. Ej: `3.12.4 → 3.13.0` |
+| `[1.0.0]` o mayor | **Mayor (major)**: cambio grande / breaking change | Sube el **major** de la versión actual. Ej: `3.13.0 → 4.0.0` |
 
-Es decir: el `[0.1.0]` o `[1.0.0]` que escribe el desarrollador no es la versión final del proyecto, es solo una bandera para decirle al bot "esto es un cambio chico" o "esto es un cambio grande".
+Es decir: el número entre corchetes (`[0.0.1]`, `[0.1.0]` o `[1.0.0]`) no es la versión final del proyecto, es solo una bandera para decirle al bot si el cambio es un patch, un cambio menor o un cambio mayor.
 
 ### Qué pasa automáticamente
 1. El desarrollador hace push con un commit en ese formato.
@@ -74,6 +75,6 @@ El bot corre en cada push a `main` y `release`.
 - Estandariza cómo describimos nuestros cambios, lo cual también ayuda a generar changelogs más adelante.
 
 ### Importante
-Si el commit no trae el tag `[X.Y.Z]`, el bot simplemente no toca la versión — así que si un cambio no debe afectar el versionado (como un ajuste de documentación menor), basta con omitir el corchete.
+Si el commit no trae la marca `[X.Y.Z]`, el bot simplemente no toca la versión — así que si un cambio no debe afectar el versionado (como un ajuste de documentación menor), basta con omitir el corchete.
 
 > El CHANGELOG lo gestiona el bot: no se edita a mano. Detalle completo: [GUIA_VERSIONADO_Y_WALKTHROUGHS.md](docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md) (Sección 5).
