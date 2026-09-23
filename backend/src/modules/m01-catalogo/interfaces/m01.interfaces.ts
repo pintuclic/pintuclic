@@ -207,12 +207,34 @@ export interface ProductoPublicoResumen {
   readonly id_producto: number;
   readonly nombre: string;
   readonly id_marca: number;
+  readonly marca: string;
   readonly clase_color: EnumClaseColor;
+  readonly precio_desde: number | null;
+  readonly imagen_principal_url: string | null;
+  readonly cantidad_colores: number;
+  readonly patrocinado: boolean;
 }
 
 /** Página del listado público (RNF-CAT-06-01: no se descarga todo el catálogo). */
 export interface PaginaProductosPublicos {
   readonly items: ProductoPublicoResumen[];
+  readonly total: number;
+  readonly pagina: number;
+  readonly limite: number;
+}
+
+/** Color en el listado público de colores. */
+export interface ColorProductoPublico {
+  readonly id_color: number;
+  readonly nombre: string;
+  readonly codigo_color: string | null;
+  readonly muestra_hex: string;
+  readonly familia_color: string;
+}
+
+/** Página de colores para el listado público. */
+export interface PaginaColoresProductoPublico {
+  readonly items: ColorProductoPublico[];
   readonly total: number;
   readonly pagina: number;
   readonly limite: number;
@@ -226,6 +248,9 @@ export interface VariantePublica {
   readonly volumen: number;
   readonly id_color: number | null;
   readonly color: string | null;
+  readonly codigo_color: string | null;
+  readonly muestra_hex: string | null;
+  readonly familia_color: string | null;
   readonly id_base: number | null;
   readonly base: string | null;
   readonly precio_vigente: number;

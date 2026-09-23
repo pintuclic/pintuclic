@@ -654,8 +654,36 @@ async function ejecutarPruebasM01(): Promise<void> {
       }
       return filas;
     },
-    listarProductos: async (filtros: { idSubcategoria?: number; busqueda?: string; limite: number; offset: number }) =>
-      filtrarProductosPublicos(filtros).slice(filtros.offset, filtros.offset + filtros.limite),
+    listarProductos: async (filtros: { idSubcategoria?: number; busqueda?: string; limite: number; offset: number }) => {
+      const prods = filtrarProductosPublicos(filtros).slice(filtros.offset, filtros.offset + filtros.limite);
+      return prods.map(p => {
+        const pVars = Array.from(variantes.values()).filter(v => v.id_producto === p.id_producto && v.estado === 'activo');
+        let precio = null;
+        if (pVars.length > 0) {
+          precio = Math.min(...pVars.map(v => Number(v.precio_vigente)));
+        }
+        let cantidad = 0;
+        if (p.clase_color === 'colores_fijos') {
+          cantidad = new Set(pVars.filter(v => v.id_color !== null).map(v => v.id_color)).size;
+        } else if (p.clase_color === 'entonable') {
+          if (pVars.some(v => v.id_base !== null && bases.get(v.id_base)?.estado === 'activo')) {
+             cantidad = Array.from(colores.values()).filter(c => c.id_marca === p.id_marca && c.estado === 'activo').length;
+          }
+        }
+        
+        return {
+          id_producto: p.id_producto,
+          nombre: p.nombre,
+          id_marca: p.id_marca,
+          marca: marcas.get(p.id_marca)?.nombre ?? '',
+          clase_color: p.clase_color,
+          precio_desde: precio !== null ? String(precio) : null,
+          id_imagen_principal: Array.from(imagenes.values()).find(i => i.id_producto === p.id_producto && i.es_principal)?.id_imagen ?? null,
+          cantidad_colores: cantidad,
+          patrocinado: p.patrocinado,
+        };
+      });
+    },
     contarProductos: async (filtros: { idSubcategoria?: number; busqueda?: string }) => filtrarProductosPublicos(filtros).length,
     obtenerProductoPublico: async (id: number) => (esPublico(id) ? productos.get(id) : undefined),
     complementariosPorCategoria: async (idCategoria: number, excluirId: number, limite: number) =>
@@ -674,18 +702,40 @@ async function ejecutarPruebasM01(): Promise<void> {
     listarVariantesPublicas: async (idProducto: number) =>
       Array.from(variantes.values())
         .filter((v) => v.id_producto === idProducto && v.estado === 'activo')
-        .map((v) => ({
-          id_variante: v.id_variante,
-          id_presentacion: v.id_presentacion,
-          presentacion: presentaciones.get(v.id_presentacion)?.nombre ?? '',
-          volumen: presentaciones.get(v.id_presentacion)?.volumen ?? '0',
-          id_color: v.id_color,
-          color: v.id_color !== null ? colores.get(v.id_color)?.nombre ?? null : null,
-          id_base: v.id_base,
-          base: v.id_base !== null ? bases.get(v.id_base)?.nombre ?? null : null,
-          precio_vigente: v.precio_vigente,
-          existencia_referencial: v.existencia_referencial,
-        })),
+        .map((v) => {
+          const c = v.id_color !== null ? colores.get(v.id_color) : null;
+          return {
+            id_variante: v.id_variante,
+            id_presentacion: v.id_presentacion,
+            presentacion: presentaciones.get(v.id_presentacion)?.nombre ?? '',
+            volumen: presentaciones.get(v.id_presentacion)?.volumen ?? '0',
+            id_color: v.id_color,
+            color: c?.nombre ?? null,
+            codigo_color: c?.codigo ?? null,
+            cie_l: c?.cie_l ?? null,
+            cie_a: c?.cie_a ?? null,
+            cie_b: c?.cie_b ?? null,
+            id_base: v.id_base,
+            base: v.id_base !== null ? bases.get(v.id_base)?.nombre ?? null : null,
+            precio_vigente: v.precio_vigente,
+            existencia_referencial: v.existencia_referencial,
+          };
+        }),
+    listarColoresActivosDeProducto: async (idProducto: number, idMarca: number, claseColor: string) => {
+      if (claseColor === 'sin_color') return [];
+      const todos = Array.from(colores.values()).filter(c => c.estado === 'activo');
+      if (claseColor === 'colores_fijos') {
+        const idColores = new Set(Array.from(variantes.values()).filter(v => v.id_producto === idProducto && v.estado === 'activo' && v.id_color !== null).map(v => v.id_color));
+        return todos.filter(c => idColores.has(c.id_color));
+      } else if (claseColor === 'entonable') {
+        const vars = Array.from(variantes.values()).filter(v => v.id_producto === idProducto && v.estado === 'activo');
+        if (vars.some(v => v.id_base !== null && bases.get(v.id_base)?.estado === 'activo')) {
+          return todos.filter(c => c.id_marca === idMarca);
+        }
+        return [];
+      }
+      return [];
+    },
     listarImagenesPublicas: async (idProducto: number) =>
       Array.from(imagenes.values())
         .filter((i) => i.id_producto === idProducto)

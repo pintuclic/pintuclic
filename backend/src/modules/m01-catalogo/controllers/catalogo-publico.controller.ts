@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { sendSuccess } from '../../../core/utils/apiResponse';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { CatalogoPublicoService } from '../services/catalogo-publico.service';
+import { ListarProductosQuerySchema, PaginaColoresQuerySchema } from '../dtos/catalogo-publico.dto';
 
 // ==============================================================================
 // M01 - CONTROLADOR DE CONSULTA PÚBLICA (HU-CAT-06) — sin autenticación
@@ -15,13 +16,6 @@ function idDeParametro(req: Request, nombre: string): number {
   return id;
 }
 
-function enteroDeQuery(req: Request, nombre: string): number | undefined {
-  const valor = req.query[nombre];
-  if (typeof valor !== 'string' || valor.trim() === '') return undefined;
-  const n = Number(valor);
-  return Number.isInteger(n) && n > 0 ? n : undefined;
-}
-
 export class CatalogoPublicoController {
   constructor(private readonly service: CatalogoPublicoService) {}
 
@@ -30,16 +24,18 @@ export class CatalogoPublicoController {
   };
 
   productos = async (req: Request, res: Response): Promise<void> => {
-    const opciones: { idSubcategoria?: number; busqueda?: string; pagina?: number; limite?: number } = {};
-    const idSubcategoria = enteroDeQuery(req, 'subcategoria');
-    const pagina = enteroDeQuery(req, 'pagina');
-    const limite = enteroDeQuery(req, 'limite');
-    if (idSubcategoria !== undefined) opciones.idSubcategoria = idSubcategoria;
-    if (pagina !== undefined) opciones.pagina = pagina;
-    if (limite !== undefined) opciones.limite = limite;
-    if (typeof req.query.q === 'string' && req.query.q.trim() !== '') opciones.busqueda = req.query.q.trim();
+    const validacion = ListarProductosQuerySchema.safeParse(req.query);
+    if (!validacion.success) {
+      throw new AppError('Parámetros de consulta inválidos', 400, 'VALIDATION_ERROR', validacion.error.errors);
+    }
+    const { subcategoria, q, pagina, limite } = validacion.data;
 
-    const resultado = await this.service.listarProductos(opciones);
+    const resultado = await this.service.listarProductos({
+      idSubcategoria: subcategoria,
+      busqueda: q,
+      pagina,
+      limite,
+    });
     sendSuccess(res, resultado);
   };
 
@@ -47,7 +43,17 @@ export class CatalogoPublicoController {
     sendSuccess(res, await this.service.obtenerFicha(idDeParametro(req, 'id')));
   };
 
+  colores = async (req: Request, res: Response): Promise<void> => {
+    const validacion = PaginaColoresQuerySchema.safeParse(req.query);
+    if (!validacion.success) {
+      throw new AppError('Parámetros de consulta inválidos', 400, 'VALIDATION_ERROR', validacion.error.errors);
+    }
+    
+    sendSuccess(res, await this.service.obtenerColoresPaginados(idDeParametro(req, 'id'), validacion.data));
+  };
+
   complementarios = async (req: Request, res: Response): Promise<void> => {
     sendSuccess(res, await this.service.complementarios(idDeParametro(req, 'id')));
   };
 }
+

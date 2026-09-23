@@ -4,6 +4,19 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.29.0] - 2026-09-22
+### Módulo: M01 Catálogo de Productos (Backend)
+- **Alcance:** Decimocuarta entrega del módulo M01: Resolución del patrón N+1 en el contrato público del catálogo y adición del endpoint de paginación de colores.
+- **Hitos Clave:** 
+  - Corrección del contrato público para listar `precio_desde`, `imagen_principal_url` y `cantidad_colores` directamente desde subconsultas en `CatalogoPublicoRepository`, eliminando el problema de consultas N+1 en la vista principal.
+  - Implementación del nuevo endpoint paginado `GET /api/catalogo/publico/productos/:id/colores` para devolver los colores activos de un producto.
+  - Generación de `muestra_hex` en tiempo real desde valores CIELAB en el servicio y cálculo de la `familia_color`.
+  - Integración estricta de validaciones Zod para parámetros y query.
+- **Diferido:** La asociación de colores a bases (`RF-CAT-12-12`) sigue sin formalizarse, por lo que el retorno de colores de productos entonables asume temporalmente la lista completa de colores activos de la misma marca mientras el producto tenga al menos una variante activa y base activa.
+- **Estado de Calidad:** ✅ Suite en `tsx` con `m01.test.ts` ejecutado: 123/123 pruebas superadas. 0 errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.29.0_M01_contrato_publico_n1_backend.md](./walkthroughs/M01/walkthrough_v3.29.0_M01_contrato_publico_n1_backend.md)
+
+
 ## [v3.28.0] - 2026-09-13
 ### Core: Layouts Globales, Enrutador Central y Sincronización con M01 Catálogo (Frontend)
 - **Alcance General:** Incremento **MINOR (v3.28.0)** que formaliza la arquitectura visual y estructural de layouts del frontend para Pintu Clic. Unifica los layouts globales (`LayoutHome`, `LayoutAdmin`, `LayoutAcceso`, `FooterPrincipal`), sincroniza el enrutamiento central con el módulo completo de catálogo `M01` recién integrado en `develop` y resuelve conflictos de merge en el contenedor raíz.

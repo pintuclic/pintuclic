@@ -119,6 +119,11 @@ catalogoRoutes.get(
 );
 
 catalogoRoutes.get(
+  '/publico/productos/:id/colores',
+  (req, res, next) => { void catalogoPublicoCtrl.colores(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
   '/publico/productos/:id/complementarios',
   (req, res, next) => { void catalogoPublicoCtrl.complementarios(req, res).catch(next); }
 );
