@@ -3,14 +3,9 @@ name: Version Bot
 on:
   push:
     branches:
-      - release
       - main
+      - release
   workflow_dispatch:
-    inputs:
-      dry_run:
-        description: "Solo calcular y mostrar; no publica tag ni release"
-        type: boolean
-        default: true
 
 permissions:
   contents: write
@@ -20,9 +15,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Pre-release (release)
-    if: github.ref_name == 'release' && github.actor != 'github-actions[bot]'
+  version:
+    name: Actualizar version
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -31,105 +26,45 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Calcular version
-        id: bump
-        env:
-          BEFORE_SHA: ${{ github.event.before }}
-        run: node scripts/version-bump.mjs compute --from "$BEFORE_SHA" --notes-out /tmp/release-notes.md
-
-      - name: Publicar tag y pre-release
-        if: steps.bump.outputs.has_bump == 'true' && inputs.dry_run != true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.bump.outputs.new_version }}
+      - name: Calcular y registrar version
         run: |
           set -euo pipefail
-          git config user.name "pintuclic-version-bot"
-          git config user.email "pintuclic-version-bot@users.noreply.github.com"
-          git tag -a "v$VERSION" -m "Pre-release v$VERSION"
-          git push origin "v$VERSION"
-          git archive --format=zip --output="/tmp/pintuclic-$VERSION.zip" HEAD
-          gh release create "v$VERSION" \
-            --title "v$VERSION (pre-release)" \
-            --notes-file /tmp/release-notes.md \
-            --prerelease
-          gh release upload "v$VERSION" "/tmp/pintuclic-$VERSION.zip"
-
-  stable:
-    name: Estabilizar (main)
-    if: github.ref_name == 'main' && github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Detectar pre-release pendiente
-        id: pending
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -uo pipefail
-          PENDING=""
-          while IFS= read -r TAG; do
-            [ -z "$TAG" ] && continue
-            if [ -f docs/CHANGELOG.md ] && grep -qE "^## \[v?${TAG#v}\]" docs/CHANGELOG.md; then
-              continue
-            fi
-            if gh release view "$TAG" --json isPrerelease --jq '.isPrerelease' 2>/dev/null | grep -q '^true$'; then
-              PENDING="$TAG"
-              break
-            fi
-          done < <(git tag --list 'v*' --sort=-v:refname)
-          echo "found=$([ -n "$PENDING" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "version=${PENDING#v}" >> "$GITHUB_OUTPUT"
-
-      - name: Finalizar version estable
-        if: steps.pending.outputs.found == 'true' && inputs.dry_run != true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.pending.outputs.version }}
-        run: |
-          set -euo pipefail
-          node scripts/version-bump.mjs write-changelog --version "$VERSION"
-          if git diff --quiet -- docs/CHANGELOG.md; then
-            echo "CHANGELOG sin cambios (version ya registrada)."
-          else
-            git config user.name "pintuclic-version-bot"
-            git config user.email "pintuclic-version-bot@users.noreply.github.com"
-            git add docs/CHANGELOG.md
-            git commit -m "chore(release): [skip ci] registrar v$VERSION en CHANGELOG"
-            git push origin "HEAD:${{ github.ref_name }}"
+          MSG=$(git log -1 --pretty=%B)
+          if ! printf '%s' "$MSG" | grep -qE '\[v?[0-9]+\.[0-9]+\.[0-9]+\]'; then
+            echo "El ultimo commit no trae la marca [X.Y.Z]; no se toca la version."
+            exit 0
           fi
-          gh release edit "v$VERSION" --prerelease=false --latest
-
-      - name: Calcular version (hotfix en main)
-        id: hotfix
-        if: steps.pending.outputs.found != 'true'
-        env:
-          BEFORE_SHA: ${{ github.event.before }}
-        run: node scripts/version-bump.mjs compute --from "$BEFORE_SHA" --notes-out /tmp/release-notes.md
-
-      - name: Publicar version estable (hotfix)
-        if: steps.hotfix.outputs.has_bump == 'true' && inputs.dry_run != true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.hotfix.outputs.new_version }}
-        run: |
-          set -euo pipefail
-          node scripts/version-bump.mjs write-changelog --version "$VERSION"
+          BRACKET=$(printf '%s' "$MSG" | grep -oE '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' | head -1 | tr -d '[]v')
+          SIGNAL=$(printf '%s' "$BRACKET" | cut -d. -f1)
+          CURRENT=$(grep -m1 -E '^## \[v?[0-9]+\.[0-9]+\.[0-9]+\]' docs/CHANGELOG.md | sed -E 's/^## \[v?([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/')
+          if [ -z "$CURRENT" ]; then
+            echo "No se encontro la version actual en docs/CHANGELOG.md" >&2
+            exit 1
+          fi
+          IFS=. read -r MA MI PA <<< "$CURRENT"
+          if [ "$SIGNAL" -gt 0 ]; then
+            NEW="$((MA + 1)).0.0"
+            NIVEL="MAJOR"
+          else
+            NEW="$MA.$((MI + 1)).0"
+            NIVEL="MINOR"
+          fi
+          if grep -qE "^## \[v?$NEW\]" docs/CHANGELOG.md; then
+            echo "La version v$NEW ya esta registrada; no se duplica."
+            exit 0
+          fi
+          echo "Nivel: $NIVEL | Version: v$CURRENT -> v$NEW"
+          ENTRY=$(mktemp)
+          {
+            echo "## [v$NEW] - $(date +%F)"
+            echo
+            echo "- **Cambio:** $(printf '%s' "$MSG" | grep -m1 -E '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' | head -1)"
+            echo
+          } > "$ENTRY"
+          awk -v entry="$ENTRY" 'BEGIN{done=0} /^## \[v/{if(!done){while((getline line < entry)>0) print line; close(entry); done=1}} {print}' docs/CHANGELOG.md > /tmp/changelog.new
+          mv /tmp/changelog.new docs/CHANGELOG.md
           git config user.name "pintuclic-version-bot"
           git config user.email "pintuclic-version-bot@users.noreply.github.com"
           git add docs/CHANGELOG.md
-          git commit -m "chore(release): [skip ci] registrar v$VERSION en CHANGELOG"
+          git commit -m "chore(release): [skip ci] registrar v$NEW en CHANGELOG"
           git push origin "HEAD:${{ github.ref_name }}"
-          git tag -a "v$VERSION" -m "Release v$VERSION"
-          git push origin "v$VERSION"
-          git archive --format=zip --output="/tmp/pintuclic-$VERSION.zip" HEAD
-          gh release create "v$VERSION" \
-            --title "v$VERSION" \
-            --notes-file /tmp/release-notes.md \
-            --latest
-          gh release upload "v$VERSION" "/tmp/pintuclic-$VERSION.zip"
