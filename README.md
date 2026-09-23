@@ -14,6 +14,12 @@ docker compose -f docker-compose.yml up --build -d
 - Backend (API): http://localhost:3000/api
 - Logs: `docker compose -f docker-compose.yml logs -f`
 
+### Version dev
+El versión dev para probar de test debe ser con
+```bash
+docker compose -f docker-compose.dev.yml up --build -d
+```
+
 
 ## Versionamiento
 El versionamiento de la web se va requerir de la siguiente forma:
