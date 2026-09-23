@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+export const IdParamSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
 export const ListarProductosQuerySchema = z.object({
   subcategoria: z.coerce.number().int().positive().optional(),
   q: z.string().trim().min(1).optional(),

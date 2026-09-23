@@ -2,19 +2,12 @@ import { Request, Response } from 'express';
 import { sendSuccess } from '../../../core/utils/apiResponse';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { CatalogoPublicoService } from '../services/catalogo-publico.service';
-import { ListarProductosQuerySchema, PaginaColoresQuerySchema } from '../dtos/catalogo-publico.dto';
+import { ListarProductosQuerySchema, PaginaColoresQuerySchema, IdParamSchema } from '../dtos/catalogo-publico.dto';
 
 // ==============================================================================
 // M01 - CONTROLADOR DE CONSULTA PÚBLICA (HU-CAT-06) — sin autenticación
 // ==============================================================================
 
-function idDeParametro(req: Request, nombre: string): number {
-  const id = Number(req.params[nombre]);
-  if (!Number.isInteger(id) || id <= 0) {
-    throw new AppError('Identificador inválido', 400, 'BAD_REQUEST');
-  }
-  return id;
-}
 
 export class CatalogoPublicoController {
   constructor(private readonly service: CatalogoPublicoService) {}
@@ -40,20 +33,30 @@ export class CatalogoPublicoController {
   };
 
   ficha = async (req: Request, res: Response): Promise<void> => {
-    sendSuccess(res, await this.service.obtenerFicha(idDeParametro(req, 'id')));
+    const validacionId = IdParamSchema.safeParse(req.params);
+    if (!validacionId.success) {
+      throw new AppError('Identificador inválido', 400, 'VALIDATION_ERROR', validacionId.error.errors);
+    }
+    sendSuccess(res, await this.service.obtenerFicha(validacionId.data.id));
   };
 
   colores = async (req: Request, res: Response): Promise<void> => {
-    const validacion = PaginaColoresQuerySchema.safeParse(req.query);
-    if (!validacion.success) {
-      throw new AppError('Parámetros de consulta inválidos', 400, 'VALIDATION_ERROR', validacion.error.errors);
+    const validacionId = IdParamSchema.safeParse(req.params);
+    if (!validacionId.success) {
+      throw new AppError('Identificador inválido', 400, 'VALIDATION_ERROR', validacionId.error.errors);
+    }
+    const validacionQuery = PaginaColoresQuerySchema.safeParse(req.query);
+    if (!validacionQuery.success) {
+      throw new AppError('Parámetros de consulta inválidos', 400, 'VALIDATION_ERROR', validacionQuery.error.errors);
     }
     
-    sendSuccess(res, await this.service.obtenerColoresPaginados(idDeParametro(req, 'id'), validacion.data));
+    sendSuccess(res, await this.service.obtenerColoresPaginados(validacionId.data.id, validacionQuery.data));
   };
-
   complementarios = async (req: Request, res: Response): Promise<void> => {
-    sendSuccess(res, await this.service.complementarios(idDeParametro(req, 'id')));
+    const validacionId = IdParamSchema.safeParse(req.params);
+    if (!validacionId.success) {
+      throw new AppError('Identificador inválido', 400, 'VALIDATION_ERROR', validacionId.error.errors);
+    }
+    sendSuccess(res, await this.service.complementarios(validacionId.data.id));
   };
 }
-

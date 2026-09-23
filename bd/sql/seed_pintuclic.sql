@@ -148,12 +148,23 @@ ON CONFLICT (id_tipo_resina) DO NOTHING;
 
 -- 3.7 Producto (HU-CAT-02): marca obligatoria, clase de color, y línea/resina en pinturas
 -- rendimiento en m2 por galón (HU-CAT-10) solo aplica a pinturas
-INSERT INTO producto (id_producto, id_marca, id_linea, id_tipo_resina, nombre, clase_color, rendimiento_min, rendimiento_max, id_categoria_complementaria, patrocinado) VALUES
-    (1, 1, 1, 1,    'Viniltex Máxima Protección Antibacterial', 'colores_fijos', 40.00, 45.00, 2,    false),
-    (2, 1, 1, NULL, 'Kit Renovación Hogar Premium',             'sin_color',     NULL,  NULL,  NULL, false),
-    (3, 2, 2, 2,    'Esmalte Anticorrosivo Secado Rápido',      'colores_fijos', 15.00, 20.00, NULL, true)
+INSERT INTO producto (id_producto, id_marca, id_linea, id_tipo_resina, nombre, descripcion, clase_color, estado, publicado, rendimiento_min, rendimiento_max, id_categoria_complementaria, patrocinado) VALUES
+    (1, 1, 1, 1,    'Viniltex Máxima Protección Antibacterial', 'Pintura interior y exterior de alta lavabilidad con acabado mate.', 'colores_fijos', 'activo', true, 40.00, 45.00, 2,    false),
+    (2, 1, 1, NULL, 'Kit Renovación Hogar Premium',             'Kit práctico para renovar espacios interiores con acabado uniforme.', 'sin_color',     'activo', true, NULL,  NULL,  NULL, false),
+    (3, 2, 2, 2,    'Esmalte Anticorrosivo Secado Rápido',      'Esmalte de alta resistencia para proteger superficies metálicas.', 'colores_fijos', 'activo', true, 15.00, 20.00, NULL, true)
 ON CONFLICT (id_producto) DO NOTHING;
 
+-- Habilita los registros históricos del seed para el storefront público.
+-- UPDATE es idempotente y permite actualizar bases creadas con versiones previas.
+UPDATE producto
+SET descripcion = CASE id_producto
+        WHEN 1 THEN 'Pintura interior y exterior de alta lavabilidad con acabado mate.'
+        WHEN 2 THEN 'Kit práctico para renovar espacios interiores con acabado uniforme.'
+        WHEN 3 THEN 'Esmalte de alta resistencia para proteger superficies metálicas.'
+    END,
+    estado = 'activo',
+    publicado = true
+WHERE id_producto IN (1, 2, 3);
 -- 3.7b Producto ↔ Subcategoría (RF-CAT-02-02: al menos una subcategoría)
 INSERT INTO producto_subcategoria (id_producto, id_subcategoria) VALUES
     (1, 1),
@@ -165,7 +176,34 @@ ON CONFLICT (id_producto, id_subcategoria) DO NOTHING;
 INSERT INTO color (id_color, id_marca, nombre, codigo, cie_l, cie_a, cie_b) VALUES
     (1, 1, 'Blanco Puro',  'PIN-BLA-01', 96.000,  0.000,   0.500),
     (2, 1, 'Azul Océano',  'PIN-AZU-07', 45.000, -5.000, -35.000),
-    (3, 2, 'Gris Titanio', NULL,         60.000,  0.000,   0.000)
+    (3, 2, 'Gris Titanio', NULL,         60.000,  0.000,   0.000),
+    (4, 1, 'Amarillo Sol',      'PIN-AMA-01', 85.000,   5.000,  80.000),
+    (5, 1, 'Amarillo Maíz',     'PIN-AMA-02', 78.000,   8.000,  68.000),
+    (6, 1, 'Amarillo Arena',    'PIN-AMA-03', 82.000,   4.000,  35.000),
+    (7, 1, 'Amarillo Mostaza',  'PIN-AMA-04', 65.000,  12.000,  55.000),
+    (8, 1, 'Amarillo Vainilla', 'PIN-AMA-05', 90.000,   1.000,  25.000),
+    (9, 1, 'Amarillo Dorado',   'PIN-AMA-06', 74.000,  15.000,  70.000),
+    (10, 1, 'Azul Marino',      'PIN-AZU-01', 30.000,   5.000, -35.000),
+    (11, 1, 'Azul Cielo',       'PIN-AZU-02', 75.000, -15.000, -25.000),
+    (12, 1, 'Azul Turquesa',    'PIN-AZU-03', 68.000, -28.000, -18.000),
+    (13, 1, 'Azul Noche',       'PIN-AZU-04', 22.000,   2.000, -25.000),
+    (14, 1, 'Azul Índigo',      'PIN-AZU-05', 38.000,  18.000, -42.000),
+    (15, 1, 'Verde Bosque',     'PIN-VER-01', 42.000, -40.000,  22.000),
+    (16, 1, 'Verde Menta',      'PIN-VER-02', 80.000, -34.000,  15.000),
+    (17, 1, 'Verde Oliva',      'PIN-VER-03', 55.000, -24.000,  14.000),
+    (18, 1, 'Verde Esmeralda',  'PIN-VER-04', 58.000, -52.000,  25.000),
+    (19, 1, 'Verde Salvia',     'PIN-VER-05', 72.000, -22.000,  18.000),
+    (20, 1, 'Verde Pino',       'PIN-VER-06', 34.000, -32.000,  16.000),
+    (21, 1, 'Rojo Coral',       'PIN-ROJ-01', 58.000,  55.000,  35.000),
+    (22, 1, 'Rojo Carmesí',     'PIN-ROJ-02', 42.000,  58.000,  25.000),
+    (23, 1, 'Rojo Terracota',   'PIN-ROJ-03', 50.000,  45.000,  35.000),
+    (24, 1, 'Rojo Rubí',        'PIN-ROJ-04', 40.000,  58.000,  18.000),
+    (25, 1, 'Rojo Cereza',      'PIN-ROJ-05', 48.000,  62.000,  28.000),
+    (26, 1, 'Rojo Arcilla',     'PIN-ROJ-06', 56.000,  38.000,  32.000),
+    (27, 1, 'Gris Niebla',      'PIN-GRI-01', 78.000,   0.000,   0.000),
+    (28, 1, 'Gris Plata',       'PIN-GRI-02', 68.000,  -1.000,  -1.000),
+    (29, 1, 'Gris Cemento',     'PIN-GRI-03', 52.000,   1.000,   2.000),
+    (30, 1, 'Gris Carbón',      'PIN-GRI-04', 28.000,   0.000,   0.000)
 ON CONFLICT (id_color) DO NOTHING;
 
 -- 3.9 Tonos Derivados con recargo de precio
@@ -185,7 +223,35 @@ ON CONFLICT (id_presentacion) DO NOTHING;
 INSERT INTO variante (id_variante, id_producto, id_presentacion, id_color, precio_vigente, existencia_referencial, estado) VALUES
     (1, 1, 1, 1, 85900.00,  50, 'activo'),
     (2, 1, 1, 2, 95900.00,  30, 'activo'),
-    (3, 3, 1, 3, 115000.00, 20, 'activo')
+    (3, 3, 1, 3, 115000.00, 20, 'activo'),
+    (4, 2, 3, NULL, 129900.00, 12, 'activo'),
+    (5, 1, 1, 4,  95900.00, 20, 'activo'),
+    (6, 1, 1, 5,  95900.00, 20, 'activo'),
+    (7, 1, 1, 6,  95900.00, 20, 'activo'),
+    (8, 1, 1, 7,  95900.00, 20, 'activo'),
+    (9, 1, 1, 8,  95900.00, 20, 'activo'),
+    (10, 1, 1, 9, 95900.00, 20, 'activo'),
+    (11, 1, 1, 10, 95900.00, 20, 'activo'),
+    (12, 1, 1, 11, 95900.00, 20, 'activo'),
+    (13, 1, 1, 12, 95900.00, 20, 'activo'),
+    (14, 1, 1, 13, 95900.00, 20, 'activo'),
+    (15, 1, 1, 14, 95900.00, 20, 'activo'),
+    (16, 1, 1, 15, 95900.00, 20, 'activo'),
+    (17, 1, 1, 16, 95900.00, 20, 'activo'),
+    (18, 1, 1, 17, 95900.00, 20, 'activo'),
+    (19, 1, 1, 18, 95900.00, 20, 'activo'),
+    (20, 1, 1, 19, 95900.00, 20, 'activo'),
+    (21, 1, 1, 20, 95900.00, 20, 'activo'),
+    (22, 1, 1, 21, 95900.00, 20, 'activo'),
+    (23, 1, 1, 22, 95900.00, 20, 'activo'),
+    (24, 1, 1, 23, 95900.00, 20, 'activo'),
+    (25, 1, 1, 24, 95900.00, 20, 'activo'),
+    (26, 1, 1, 25, 95900.00, 20, 'activo'),
+    (27, 1, 1, 26, 95900.00, 20, 'activo'),
+    (28, 1, 1, 27, 95900.00, 20, 'activo'),
+    (29, 1, 1, 28, 95900.00, 20, 'activo'),
+    (30, 1, 1, 29, 95900.00, 20, 'activo'),
+    (31, 1, 1, 30, 95900.00, 20, 'activo')
 ON CONFLICT (id_variante) DO NOTHING;
 
 -- 3.11 Características Técnicas

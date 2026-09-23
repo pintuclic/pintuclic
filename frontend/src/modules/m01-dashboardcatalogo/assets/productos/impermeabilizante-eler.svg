@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none" role="img">
+  <rect width="240" height="240" rx="16" fill="#F7F8FA"/>
+  <ellipse cx="120" cy="214" rx="58" ry="10" fill="#000000" opacity="0.06"/>
+  <rect x="66" y="52" width="108" height="150" rx="8" fill="#6C757D"/>
+  <rect x="66" y="52" width="16" height="150" fill="#7f8a93" opacity="0.5"/>
+  <rect x="66" y="92" width="108" height="16" fill="#4d545a"/>
+  <rect x="66" y="150" width="108" height="16" fill="#4d545a"/>
+  <rect x="66" y="116" width="108" height="26" fill="#002855"/>
+  <text x="120" y="134" text-anchor="middle" font-family="Poppins, Arial, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">ELER</text>
+  <ellipse cx="120" cy="52" rx="54" ry="11" fill="#7f8a93"/>
+  <ellipse cx="120" cy="49" rx="54" ry="11" fill="#4d545a"/>
+  <circle cx="120" cy="49" r="9" fill="#6C757D"/>
+
+</svg>

@@ -176,7 +176,6 @@ export function cielabAHex(l: number, a: number, b: number): string {
 
   return `#${aByte(r)}${aByte(g)}${aByte(bl)}`.toUpperCase();
 }
-
 /**
  * RF-CAT-05-03 / REQ-3: Clasifica el color en una familia cromática basándose 
  * en su valor CIELAB (hue y croma).
@@ -201,4 +200,3 @@ export function clasificarFamiliaCromatica(l: number, a: number, b: number): str
   if (h >= 260 && h < 330) return 'Morado';
   return 'Rojo / Rosa';
 }
-

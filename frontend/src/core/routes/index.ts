@@ -1,43 +1,51 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
-import { adminCatalogoRoutes } from '@/modules/m01-catalogo/catalogo.routes';
+import {
+  publicStorefrontRoutes,
+  adminCatalogoRoutes,
+} from '@/modules/m01-dashboardcatalogo/dashboard-catalogo.routes';
 
 export const routes: RouteRecordRaw[] = [
-  // 1. Portal Público / Tienda (LayoutHome)
+  // 1. Tienda Pública / Storefront (LayoutHome maestro permanente)
   {
     path: '/',
     name: 'Tienda',
     component: () => import('@/core/layouts/LayoutHome.vue'),
     children: [
-      {
-        path: '',
-        name: 'Inicio',
-        component: () => import('@/modules/m02-productos/views/VistaInicio.vue'),
-      },
+      ...publicStorefrontRoutes,
     ],
   },
 
-  // 2. Panel Administrativo (LayoutAdmin puro, sin M01 inyectado)
+  // 2. Panel Administrativo (LayoutAdmin maestro permanente con sidebar + acordeón)
   {
     path: '/admin',
     name: 'Administracion',
     component: () => import('@/core/layouts/LayoutAdmin.vue'),
-    children: [...adminCatalogoRoutes]
+    children: [
+      { path: '', redirect: '/admin/catalogo' },
+      ...adminCatalogoRoutes,
+    ],
   },
 
-  // 3. Layout de Acceso / Auth independiente
+  // Redirección directa para búsquedas del catálogo administrativo
+  {
+    path: '/admin/catalogo/busquedas',
+    redirect: '/admin/catalogo/busquedas-sin-resultado',
+  },
+
+  // 3. Layout de Acceso / Auth independiente (fullscreen si aplica)
   {
     path: '/acceso',
     name: 'Acceso',
     component: () => import('@/core/layouts/LayoutAcceso.vue'),
-    children: []
+    children: [],
   },
-  
+
   // 4. Fallback: Cualquier ruta no reconocida redirige al inicio
   {
     path: '/:pathMatch(.*)*',
     redirect: '/',
-  }
+  },
 ];
 
 const router = createRouter({

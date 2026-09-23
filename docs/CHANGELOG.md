@@ -4,6 +4,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.35.7] - 2026-09-20
+### Módulo: M01 Catálogo / Vistas Públicas (Frontend)
+- **Alcance:** Simulador de cinco ambientes en el detalle de pinturas, conectado al color de la variante, con alternancia a la galería del envase y ficha más compacta.
+- **Hitos:** PNG RGBA de 1024 × 1024 aislados en M01, baño actualizado, muestras del color comercial y visor limitado a 384 px de alto.
+- **Calidad:** TypeScript de la aplicación y ESLint de todo src aprobados sin errores ni advertencias. Build completo y validación visual pendientes; entrega parcial del detalle.
+- **Walkthrough:** [Simulador de ambientes y ficha compacta](./walkthroughs/M01/walkthrough_v3.35.7_M01_ficha_compacta_ambientes_completos_frontend.md).
+
+---
+
 ## [v3.29.0] - 2026-09-22
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** Decimocuarta entrega del módulo M01: Resolución del patrón N+1 en el contrato público del catálogo y adición del endpoint de paginación de colores.
@@ -16,6 +25,7 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **Estado de Calidad:** ✅ Suite en `tsx` con `m01.test.ts` ejecutado: 123/123 pruebas superadas. 0 errores.
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.29.0_M01_contrato_publico_n1_backend.md](./walkthroughs/M01/walkthrough_v3.29.0_M01_contrato_publico_n1_backend.md)
 
+---
 
 ## [v3.28.0] - 2026-09-13
 ### Core: Layouts Globales, Enrutador Central y Sincronización con M01 Catálogo (Frontend)
@@ -29,10 +39,199 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Corrección de Linter y TypeScript:** Saneamiento de variables huérfanas en `LayoutHome.vue` (`showMobileMenu`), logrando 0 errores en compilación estricta (`vue-tsc -b`) y 0 advertencias en ESLint.
   - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/CORE/walkthrough_v3.28.0_CORE_layouts_globales_enrutador_frontend.md](./walkthroughs/CORE/walkthrough_v3.28.0_CORE_layouts_globales_enrutador_frontend.md)
 
+## [v3.35.2] - 2026-09-19
+### Módulo: M01 Catálogo de Productos / Vistas Públicas & Core (Frontend)
+- **Avance preliminar en Detalle de Producto (`VistaDetalleProductoPublico`):** ⚠️ *Nota de alcance: La vista de detalle de producto NO está finalizada; representa un avance técnico preliminar en desarrollo.* Se implementó la restricción condicional de la calculadora de pintura (`esPintura`) para que solo aplique a pinturas y no a herramientas/taladros, se deduplicaron las muestras cromáticas por `id_color` limitándolas a 6 con botón de apertura `+N más` hacia la carta completa, y se sincronizó el color inicial mediante query parameter (`?color=...`).
+- **Centralización en Zona Global (`src/core/`):** Creación del módulo utilitario oficial `src/core/utils/moneda.ts` (`formatearCOP`, `formatearPrecio`, `formatearPrecioConSufijo`), erradicando duplicaciones de `Intl.NumberFormat`. Creación del componente oficial `MuestraColor.vue` en `src/core/components/data-display/` con relieve, sombra y anillo perimetral para alto contraste. Estandarización de variantes `descuento` y `destacado` en `Badge.vue`.
+- **Sincronización en Paleta de Colores y Tarjetas:** Enlace reactivo de `:muestra-color="colorSeleccionado?.muestra_hex"` en `VistaPaletaColoresPublica` hacia `TarjetaProductoPublico`, y fallback automático para pinturas con variantes coloreadas. Eliminación de color inline arbitrario `bg-[#D62828]` en favor del componente oficial `<Badge estado="descuento">`.
+- **Estado de Calidad:** ESLint (0 errores, 0 advertencias), TypeScript (`vue-tsc -b`) y Vite Build 100% exitosos sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.35.2_M01_avance_detalle_producto_y_core_frontend.md](./walkthroughs/M01/walkthrough_v3.35.2_M01_avance_detalle_producto_y_core_frontend.md)
+
+---
+
+## [v3.35.1] - 2026-09-17
+### Módulo: M01 Catálogo de Productos / Vistas Públicas (Frontend)
+- **Estandarización visual de tarjetas:** Alineación de `TarjetaProductoPublico` conforme a especificaciones oficiales con esquinas redondeadas `rounded-2xl`, insignia de descuento `-15%`, precios en una línea con precio tachado, y botón de compra alineado al pie (`mt-auto`) usando tokens oficiales (`bg-conversion-hover hover:bg-conversion-accent`).
+- **Filas de 5 productos:** Reorganización de las grillas a 5 columnas (`lg:grid-cols-5`) en productos destacados (Home), pinturas y herramientas (Paleta de Colores), y productos complementarios (Detalle de Producto).
+- **Distribución del combinador y abanico:** Cuadrícula de 2x2 para el combinador de colores con tarjetas de altura completa, y optimización de espaciados en el abanico de colores eliminando espacios en blanco innecesarios.
+- **Identidad institucional en modales:** Incorporación de la barra superior decorativa con degradado multicolor Pintu Clic en el componente `Modal.vue` del Core, y eliminación del botón circular de slider en productos destacados.
+- **Estado de Calidad:** ESLint (0 errores, 0 advertencias), TypeScript (`vue-tsc -b`) y Vite Build 100% exitosos sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.35.1_M01_diseno_storefront_tarjetas_frontend.md](./walkthroughs/M01/walkthrough_v3.35.1_M01_diseno_storefront_tarjetas_frontend.md)
+
+---
+
+## [v3.35.0] - 2026-09-16
+### Módulo: M01 Catálogo de Productos / Vistas Públicas (Frontend)
+- **Integración con Core Layouts:** Unificación de todas las vistas públicas (`VistaInicioPublica`, `VistaCatalogoPublico`, `VistaDetalleProductoPublico`, `VistaPaletaColoresPublica`) bajo el layout maestro unificado `LayoutHome.vue` configurado como rutas anidadas (`children: publicStorefrontRoutes`). Las vistas administrativas de catálogo se alojan correspondientemente como hijas de `/admin` en `LayoutAdmin.vue`.
+- **Erradicación de Duplicidad:** Eliminados definitivamente los componentes duplicados `EncabezadoTiendaPublica.vue` y `PieTiendaPublica.vue`, delegando navegación, cabecera y pie al Core (`LayoutHome`, `HeaderPrincipal`, `FooterPrincipal`).
+- **Estandarización Tipográfica y de Componentes:** Aplicadas fuentes institucionales del Design System (`font-title` / Poppins para títulos de sección, nombres de producto y precios; `font-sans` / Inter para textos, botones e inputs). Migrados modales y botones a componentes oficiales del Core (`Modal`, `Button`, `Paginacion`).
+- **Estado de Calidad:** ESLint (0 errores, 0 advertencias), TypeScript (`vue-tsc -b`) y Vite Build 100% exitosos sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.35.0_M01_integracion_core_layouts_frontend.md](./walkthroughs/M01/walkthrough_v3.35.0_M01_integracion_core_layouts_frontend.md)
+
+---
+
+## [v3.34.10] - 2026-09-14
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Corrección visual:** El panel preliminar reemplaza los selects deshabilitados por secciones compactas con buscador, checkboxes, muestras circulares y rango de precio, siguiendo el mockup del catálogo.
+- **Datos provisionales:** Marcas, colores, familias y presentaciones visibles se deducen de la página pública cargada; la aplicación completa continúa pendiente de facetas M02.
+- **Estado de Calidad:** ESLint, TypeScript/Vite y validación visual local superados.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.10_M01_corregir_diseno_filtros_frontend.md](./walkthroughs/M01/walkthrough_v3.34.10_M01_corregir_diseno_filtros_frontend.md)
+
+---
+
+## [v3.34.9] - 2026-09-14
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** El catálogo público presenta la estructura completa de filtros avanzados exigida por HU-BUS-02 como vista preliminar.
+- **Integración pendiente:** Marca, línea, resina, color, familia cromática, presentación y precio quedan deshabilitados hasta consumir las facetas y la búsqueda paginada de M02; no se hardcodearon catálogos.
+- **Estado de Calidad:** ESLint, TypeScript/Vite y verificación visual local.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.9_M01_filtros_catalogo_estaticos_frontend.md](./walkthroughs/M01/walkthrough_v3.34.9_M01_filtros_catalogo_estaticos_frontend.md)
+
+---
+
+## [v3.34.8] - 2026-09-13
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance en revisión:** La Paleta pública adopta un abanico de láminas físicas y un combinador visual compacto, conservando la selección reactiva de HU-CAT-06.
+- **Integridad visual:** Seis colores por lámina, armonías 2/4/3/5 con código revelado en hover, Tailwind y tokens oficiales; las muestras cromáticas continúan proviniendo de la API.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint, `git diff --check` y validación interactiva local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.8_M01_abanico_laminas_fisicas_frontend.md](./walkthroughs/M01/walkthrough_v3.34.8_M01_abanico_laminas_fisicas_frontend.md)
+
+---
+
+## [v3.34.7] - 2026-09-13
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Uniformidad estructural del storefront de HU-CAT-06 mediante un encabezado público compartido y un ancho máximo común para Home, Catálogo, Detalle y Paleta.
+- **Hitos Clave:** Home conserva sus anclas internas; el encabezado unifica el alcance de envíos y sus estados accesibles; Paleta adopta `max-w-7xl` en todas sus secciones principales.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint, `git diff --check` y comprobación visual local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.7_M01_encabezado_ancho_storefront_frontend.md](./walkthroughs/M01/walkthrough_v3.34.7_M01_encabezado_ancho_storefront_frontend.md)
+
+---
+
+## [v3.34.6] - 2026-09-13
+### Módulo: M01 Catálogo de Productos (Backend + Frontend)
+- **Alcance parcial:** Avance funcional de la paleta pública de HU-CAT-06; la vista continúa en iteración visual y no se declara terminada.
+- **Hitos Clave:** La API expone código, muestra cromática y familia de cada variante; la interfaz habilita filtros, abanico móvil, combinaciones interactivas y muestras en productos recomendados.
+- **Estado de Calidad:** ✅ Backend TypeScript, ESLint y 123 pruebas M01; frontend TypeScript/Vite y ESLint sin errores ni advertencias.
+- 🔗 **Walkthrough Backend:** [walkthroughs/M01/walkthrough_v3.34.6_M01_paleta_interactiva_backend.md](./walkthroughs/M01/walkthrough_v3.34.6_M01_paleta_interactiva_backend.md)
+- 🔗 **Walkthrough Frontend:** [walkthroughs/M01/walkthrough_v3.34.6_M01_paleta_interactiva_frontend.md](./walkthroughs/M01/walkthrough_v3.34.6_M01_paleta_interactiva_frontend.md)
+
+---
+
+## [v3.34.5] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Paleta pública ajustada a la referencia visual aprobada, con ancho de contenido uniforme, hero compacto, filtros simplificados y composición de dos columnas.
+- **Abanico:** Nuevo componente interactivo con láminas superpuestas, apertura lateral desde un pivote único, marca frontal y selección accesible de colores publicados.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint y validación visual e interactiva local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.5_M01_paleta_abanico_referencia_frontend.md](./walkthroughs/M01/walkthrough_v3.34.5_M01_paleta_abanico_referencia_frontend.md)
+
+---
+
+## [v3.34.4] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Paleta pública, menú de categorías y calculadora alineados con la UI Spec oficial mediante radios, espaciado, jerarquía y estados interactivos consistentes.
+- **Accesibilidad:** Controles táctiles de al menos 44 px, focos visibles, etiquetas accesibles y estado deshabilitado explícito para la asesoría aún no disponible.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint y validación visual local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.4_M01_paleta_herramientas_ui_spec_frontend.md](./walkthroughs/M01/walkthrough_v3.34.4_M01_paleta_herramientas_ui_spec_frontend.md)
+
+---
+
+## [v3.34.3] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Detalle público alineado con la UI Spec oficial: superficie en tarjeta, ambiente visual, descripción colapsable, swatches, presentaciones, controles táctiles y nota de color referencial.
+- **Interacción:** La selección de color mantiene la variante/precio y muestra la imagen asociada cuando la API aporta una imagen para ese color.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint y validación visual local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.3_M01_detalle_ui_spec_frontend.md](./walkthroughs/M01/walkthrough_v3.34.3_M01_detalle_ui_spec_frontend.md)
+
+---
+
+## [v3.34.2] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Catálogo público alineado con la UI Spec oficial: encabezado, toolbar sticky, orden, vista grid/lista, sidebar y drawer móvil, estados y sección de complementos.
+- **Compatibilidad:** Se preservó la búsqueda y paginación en servidor; disponibilidad y orden visual operan únicamente sobre la página recibida, sin simular filtros que la API no soporta.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint y validación visual local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.2_M01_catalogo_ui_spec_frontend.md](./walkthroughs/M01/walkthrough_v3.34.2_M01_catalogo_ui_spec_frontend.md)
+
+---
+
+## [v3.34.1] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Ajuste visual del Home y la tarjeta pública de producto conforme a la UI Spec oficial v1.0.
+- **Hitos Clave:** Jerarquía Poppins/Inter, precio destacado, grid 24/32 px, radios oficiales, áreas táctiles de 44 px y estados hover/active/focus consistentes.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite y ESLint sin errores ni advertencias.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.1_M01_home_ui_spec_frontend.md](./walkthroughs/M01/walkthrough_v3.34.1_M01_home_ui_spec_frontend.md)
+
+---
+
+## [v3.34.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Carta de colores modal integrada en la ficha pública de producto para HU-CAT-06, con búsqueda, selección, paginación visual y conservación de la presentación compatible.
+- **Integridad:** La interfaz utiliza únicamente variantes públicas del producto, no expone la base al cliente y diferencia claramente las muestras ilustrativas de los datos aún ausentes en la API.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint y verificación visual e interactiva en navegador local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.34.0_M01_carta_colores_producto_frontend.md](./walkthroughs/M01/walkthrough_v3.34.0_M01_carta_colores_producto_frontend.md)
+
+---
+
+## [v3.33.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Vista pública `/paleta-colores` de HU-CAT-06, construida a partir de los colores y productos publicados por la API de catálogo.
+- **Experiencia:** Hero, búsqueda por nombre, selector visual, combinador inspiracional, productos recomendados, complementarios, beneficios y navegación integrada con el storefront.
+- **Integridad de datos:** No se inventaron códigos, muestras HEX ni familias cromáticas. Los filtros por familia quedan visibles pero deshabilitados hasta que el backend exponga la clasificación pública y la compatibilidad color–base.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite, ESLint y verificación visual en navegador local sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.33.0_M01_paleta_colores_publica_frontend.md](./walkthroughs/M01/walkthrough_v3.33.0_M01_paleta_colores_publica_frontend.md)
+
+---
+
+## [v3.32.0] - 2026-09-12
+### Integración: Core Frontend + M01 Catálogo
+- **Alcance:** Integración de `feature/core-frontend-layouts` en la rama de vistas públicas, incorporando layouts, componentes UI base, tipos globales y agregador único de rutas.
+- **Compatibilidad:** Se conservaron las rutas públicas y administrativas de M01; `/admin` redirige al dashboard de catálogo mientras se incorporan los demás módulos.
+- **Correcciones de Integración:** Se eliminó estado sin uso en `LayoutHome` y se sustituyeron colores hexadecimales inline por tokens oficiales.
+- **Estado de Calidad:** ✅ Build TypeScript/Vite y ESLint sin errores ni advertencias.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.32.0_M01_integracion_core_frontend.md](./walkthroughs/M01/walkthrough_v3.32.0_M01_integracion_core_frontend.md)
+
+---
+
+## [v3.31.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Calculadora pública de pintura integrada en Home, catálogo y ficha de producto para HU-CAT-06.
+- **Cálculo:** Valida superficie, dimensiones y cantidad con Zod; estima galones usando el rendimiento mínimo/máximo real del producto y dos manos de aplicación.
+- **Experiencia:** Modal responsive de tres etapas conforme a la maqueta, con resultado, producto recomendado y dependencia de carrito claramente delimitada.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.31.0_M01_calculadora_pintura_frontend.md](./walkthroughs/M01/walkthrough_v3.31.0_M01_calculadora_pintura_frontend.md)
+
+---
+
+## [v3.30.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Ficha pública de producto de HU-CAT-06 con galería, descripción, variantes, precio, cantidad y productos complementarios.
+- **Navegación:** Las tarjetas del Home y del catálogo abren `/productos/:productoId`; los productos no disponibles muestran el estado contractual correspondiente.
+- **Estado de Calidad:** Datos obtenidos exclusivamente de los endpoints públicos de M01 y respaldo visual local mientras HU-CAT-07 no exponga imágenes.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.30.0_M01_detalle_producto_publico_frontend.md](./walkthroughs/M01/walkthrough_v3.30.0_M01_detalle_producto_publico_frontend.md)
+
+---
+
+## [v3.29.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Vista de catálogo público de HU-CAT-06 con búsqueda, filtro por subcategoría, paginación y navegación hacia la ficha de producto.
+- **Datos:** El seed oficial habilita tres productos activos y publicados con descripción, precio y variante verificable para el storefront.
+- **Estado de Calidad:** Catálogo conectado exclusivamente a los endpoints públicos de M01, sin mocks de producto en Vue.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.29.0_M01_catalogo_publico_frontend.md](./walkthroughs/M01/walkthrough_v3.29.0_M01_catalogo_publico_frontend.md)
+
+---
+
+## [v3.28.0] - 2026-09-12
+### Módulo: M01 Catálogo de Productos (Frontend)
+- **Alcance:** Primera entrega del storefront público de HU-CAT-06: Home responsive conectado a categorías y productos públicos, con buscador y menú de categorías sin autenticación.
+- **Hitos Clave:** Nueva ruta pública `/`, carga paginada bajo demanda, ficha mínima de destacados para precio e imagen, estados de carga/error y modal de categorías conforme a las maquetas compartidas.
+- **Estado de Calidad:** ✅ `npm run build` y `npm run lint` sin errores; verificación visual del Home y del modal en navegador local. Integración con datos reales pendiente de disponer del backend en ejecución.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.28.0_M01_home_storefront_frontend.md](./walkthroughs/M01/walkthrough_v3.28.0_M01_home_storefront_frontend.md)
+>>>>>>> 68cdeff3faaf24885b05d2fc64862633a153d94e
+
 ---
 
 ## [v3.27.0] - 2026-09-11
+<<<<<<< HEAD
 
+=======
+>>>>>>> 68cdeff3faaf24885b05d2fc64862633a153d94e
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** feat(M01): integrar soporte para `id_categoria_complementaria` y `patrocinado` en la creación de productos (HU-CAT-08).
 - **Hitos Clave:** Se agregó al `CrearProductoDto` y a la lógica `crear` en el `ProductosService`.
@@ -358,6 +557,7 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md](./walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md)
 
 ---
+<<<<<<< HEAD
 ## [v2.4.0] - 2026-09-15
 ### Módulo: Core Frontend (Layouts)
 - **Alcance General:** Salto a versión **MINOR (v2.4.0)**. Se importaron los componentes globales de `feature/m04-cuentas-auth-perfil` hacia `feature/core-frontend-layouts`.
@@ -366,6 +566,8 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Layouts y Modales:** Inyección de modales de autenticación y confirmación de "Cerrar sesión" en `LayoutHome.vue` y `LayoutAdmin.vue`.
   - **Enrutador Central:** Refactorización de `routes/index.ts` usando el patrón de Layouts globales, en lugar de importar explícitamente M01.
 - **Estado:** ✅ Validado. Cambios sincronizados.
+=======
+>>>>>>> 68cdeff3faaf24885b05d2fc64862633a153d94e
 
 ## [v2.3.0] - 2026-09-15
 ### Módulo: Core Frontend (Design System Components)

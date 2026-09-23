@@ -23,7 +23,7 @@
         <div
           v-if="accent"
           class="h-2 w-full shrink-0"
-          style="background: linear-gradient(90deg, #2E7D32 0%, #8BC34A 20%, #FFC107 40%, #E63946 60%, #7B2FF7 80%, #0877E8 100%);"
+          style="background: linear-gradient(90deg, #FF4D4D 0%, #FFB703 20%, #4CAF50 40%, #00B4D8 65%, #0877E8 80%, #7B2FF7 100%);"
         />
 
         <!-- Close Button -->

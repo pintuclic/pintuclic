@@ -1,5 +1,5 @@
 import { Kysely } from 'kysely';
-import { Database, Producto } from '../../../core/db/types';
+import { Database, Producto, Color, EnumClaseColor } from '../../../core/db/types';
 
 // ==============================================================================
 // M01 - REPOSITORIO DE CONSULTA PÚBLICA (HU-CAT-06)
@@ -10,6 +10,7 @@ import { Database, Producto } from '../../../core/db/types';
 export interface FiltrosProductosPublicos {
   idSubcategoria?: number;
   busqueda?: string;
+  ids?: number[];
   limite: number;
   offset: number;
 }
@@ -29,6 +30,10 @@ export interface FilaVariantePublica {
   volumen: string;
   id_color: number | null;
   color: string | null;
+  codigo_color: string | null;
+  cie_l: string | number | null;
+  cie_a: string | number | null;
+  cie_b: string | number | null;
   id_base: number | null;
   base: string | null;
   precio_vigente: string;
@@ -56,7 +61,6 @@ export interface FilaProductoResumenPublico {
   cantidad_colores: string | number;
   patrocinado: boolean;
 }
-
 export class CatalogoPublicoRepository {
   constructor(private readonly db: Kysely<Database>) {}
 
@@ -91,7 +95,7 @@ export class CatalogoPublicoRepository {
 
   /** RF-CAT-06-01 / RNF-CAT-06-01: productos activos+publicados, filtrables y paginados con resumen sin N+1. */
   async listarProductos(filtros: FiltrosProductosPublicos): Promise<FilaProductoResumenPublico[]> {
-    let query = this.aplicarFiltros(filtros)
+    const query = this.aplicarFiltros(filtros)
       .innerJoin('marca as m', 'm.id_marca', 'p.id_marca')
       .select([
         'p.id_producto',
@@ -179,7 +183,7 @@ export class CatalogoPublicoRepository {
       .executeTakeFirst();
   }
 
-  async listarVariantesPublicas(idProducto: number): Promise<any[]> {
+  async listarVariantesPublicas(idProducto: number): Promise<FilaVariantePublica[]> {
     return this.db
       .selectFrom('variante as v')
       .innerJoin('presentacion as pr', 'pr.id_presentacion', 'v.id_presentacion')
@@ -208,7 +212,7 @@ export class CatalogoPublicoRepository {
   }
 
   /** Recupera colores activos para el paginado en memoria, evaluando la disponibilidad según clase. */
-  async listarColoresActivosDeProducto(idProducto: number, idMarca: number, claseColor: EnumClaseColor): Promise<any[]> {
+  async listarColoresActivosDeProducto(idProducto: number, idMarca: number, claseColor: EnumClaseColor): Promise<Color[]> {
     if (claseColor === 'sin_color') return [];
 
     let query = this.db.selectFrom('color as c')
@@ -292,6 +296,9 @@ export class CatalogoPublicoRepository {
       .selectFrom('producto as p')
       .where('p.estado', '=', 'activo')
       .where('p.publicado', '=', true);
+    if (filtros.ids && filtros.ids.length > 0) {
+      query = query.where('p.id_producto', 'in', filtros.ids);
+    }
     if (filtros.idSubcategoria !== undefined) {
       const idSub = filtros.idSubcategoria;
       query = query.where((eb) =>

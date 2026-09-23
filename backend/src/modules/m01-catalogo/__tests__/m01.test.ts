@@ -1586,9 +1586,17 @@ async function ejecutarPruebasM01(): Promise<void> {
     const ficha = await catalogoPublicoService.obtenerFicha(prodFijo.id_producto);
     assert(
       ficha.id_producto === prodFijo.id_producto &&
-        ficha.variantes.some((v) => v.id_variante === varFijo.id_variante && v.presentacion === 'Galón' && typeof v.precio_vigente === 'number') &&
+
+        ficha.variantes.some((v) =>
+          v.id_variante === varFijo.id_variante &&
+          v.presentacion === 'Galón' &&
+          typeof v.precio_vigente === 'number' &&
+          v.codigo_color === blanco.codigo &&
+          v.muestra_hex === '#FFFFFF' &&
+          v.familia_color === 'Blanco / Off-white'
+        ) &&
         ficha.imagenes.length > 0,
-      'CA-CAT-06-02: la ficha pública trae variantes (con presentación y precio) e imágenes'
+      'CA-CAT-06-02: la ficha pública trae variante, color navegable e imágenes'
     );
 
     // --------------------------------------------------------------------------

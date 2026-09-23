@@ -1,4 +1,4 @@
-import { CatalogoPublicoRepository, FilaImagenPublica, FilaProductoResumenPublico } from '../repositories/catalogo-publico.repository';
+import { CatalogoPublicoRepository, FilaVariantePublica, FilaImagenPublica, FilaProductoResumenPublico } from '../repositories/catalogo-publico.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import {
   CategoriaPublica,
@@ -18,6 +18,7 @@ const MAX_COMPLEMENTARIOS = 4;
 // M01 - SERVICIO DE CONSULTA PÚBLICA (HU-CAT-06)
 // Expone el catálogo sin autenticación, mostrando solo elementos activos y
 // publicados (RF-CAT-06-01, RF-CAT-09-02). El listado se pagina (RNF-CAT-06-01).
+
 // ==============================================================================
 
 const LIMITE_POR_DEFECTO = 20;
@@ -92,6 +93,7 @@ export class CatalogoPublicoService {
   }
 
   /**
+  /**
    * RF-CAT-06-03: Endpoint paginado para colores. Filtro opcional por familia y búsqueda.
    */
   async obtenerColoresPaginados(idProducto: number, opciones: { q?: string; familia?: string; pagina?: number; limite?: number }): Promise<PaginaColoresProductoPublico> {
@@ -140,6 +142,9 @@ export class CatalogoPublicoService {
     };
   }
 
+  /**
+   * RF-CAT-08-02/03: hasta 4 productos complementarios, patrocinados primero.
+   */
   async complementarios(idProducto: number): Promise<ProductoPublicoResumen[]> {
     const producto = await this.repo.obtenerProductoPublico(idProducto);
     if (!producto) {
@@ -155,33 +160,19 @@ export class CatalogoPublicoService {
       candidatos = await this.repo.patrocinados(idProducto, MAX_COMPLEMENTARIOS);
     }
 
-    // Como los complementarios también devuelven el array de ProductoPublicoResumen,
-    // necesitamos los campos nuevos. Dado que se recuperaron sólo Productos puros,
-    // usamos una simulación de los campos en N+1... espera! Los requerimientos
-    // dicen "El listado no hace consultas independientes", pero complementarios es otro endpoint.
-    // De todos modos, para mantener el contrato, llamaremos a listarProductos() por los IDs.
     if (candidatos.length === 0) return [];
     
     const idsCandidatos = candidatos.map(c => c.id_producto);
-    const paginados = await this.repo.listarProductos({ limite: MAX_COMPLEMENTARIOS, offset: 0, busqueda: '' });
+    const paginados = await this.repo.listarProductos({ ids: idsCandidatos, limite: MAX_COMPLEMENTARIOS, offset: 0 });
     
-    // Filtrar sólo los que sean candidatos (porque no hay un IN id_producto en los filtros)
-    // Para simplificar y no alterar el repositorio, como listarProductos no tiene filtro de IDs,
-    // devolvemos los datos básicos si es complementarios o cambiamos el respositorio.
-    // Lo más rápido es mapearlos con defaults si faltan.
-    return candidatos.map((p) => ({
-      id_producto: p.id_producto,
-      nombre: p.nombre,
-      id_marca: p.id_marca,
-      marca: '', // Mock, pues no viaja en el viejo contrato y la query actual no lo trae.
-      clase_color: p.clase_color,
-      precio_desde: null,
-      imagen_principal_url: null,
-      cantidad_colores: 0,
-      patrocinado: p.patrocinado,
-    }));
+    const map = new Map(paginados.map(p => [p.id_producto, p]));
+    return candidatos
+      .map(c => map.get(c.id_producto))
+      .filter((p): p is FilaProductoResumenPublico => p !== undefined)
+      .map(aProductoPublicoResumen);
   }
 }
+
 
 function aProductoPublicoResumen(p: FilaProductoResumenPublico): ProductoPublicoResumen {
   return {
@@ -197,11 +188,11 @@ function aProductoPublicoResumen(p: FilaProductoResumenPublico): ProductoPublico
   };
 }
 
-function aVariantePublica(v: any): VariantePublica {
+function aVariantePublica(v: FilaVariantePublica): VariantePublica {
   let hex: string | null = null;
   let familia: string | null = null;
 
-  if (v.id_color !== null && v.cie_l !== null) {
+  if (v.id_color !== null && v.cie_l !== null && v.cie_l !== undefined) {
     const l = Number(v.cie_l);
     const a = Number(v.cie_a);
     const b = Number(v.cie_b);
@@ -225,7 +216,6 @@ function aVariantePublica(v: any): VariantePublica {
     existencia_referencial: v.existencia_referencial,
   };
 }
-
 function aImagenDetalle(i: FilaImagenPublica): ImagenDetalle {
   return {
     id_imagen: i.id_imagen,
