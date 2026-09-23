@@ -10,7 +10,6 @@ const SEMVER_RE = /^v?(\d+)\.(\d+)\.(\d+)$/;
 const BRACKET_GLOBAL_RE = /\[v?(\d+)\.(\d+)\.(\d+)\]/g;
 const BOT_SUBJECT_RE = /\[skip ci\]|^chore\(release\):|^Merge\b/i;
 const WALKTHROUGH_GLOBAL_RE = /docs\/walkthroughs\/[A-Za-z0-9_\-./]+\.md/g;
-const LEVEL_RANK = { patch: 1, minor: 2, major: 3 };
 
 export function parseVersion(value) {
   const match = SEMVER_RE.exec(String(value || '').trim());
@@ -25,10 +24,7 @@ export function formatVersion(version) {
 export function bumpLevelOf(value) {
   const version = parseVersion(value);
   if (!version) return null;
-  if (version.major > 0) return 'major';
-  if (version.minor > 0) return 'minor';
-  if (version.patch > 0) return 'patch';
-  return null;
+  return version.major > 0 ? 'major' : 'minor';
 }
 
 export function compareVersions(left, right) {
@@ -49,23 +45,21 @@ export function applyBump(baseVersion, level) {
   if (!version) throw new Error(`Version base invalida: ${baseVersion}`);
   if (level === 'major') return `${version.major + 1}.0.0`;
   if (level === 'minor') return `${version.major}.${version.minor + 1}.0`;
-  if (level === 'patch') return `${version.major}.${version.minor}.${version.patch + 1}`;
   return formatVersion(version);
 }
 
 export function findBumpLevel(subjects) {
-  let best = null;
   for (const subject of subjects) {
     const line = String(subject || '').trim();
     if (!line || BOT_SUBJECT_RE.test(line)) continue;
     BRACKET_GLOBAL_RE.lastIndex = 0;
-    let match;
-    while ((match = BRACKET_GLOBAL_RE.exec(line)) !== null) {
+    const match = BRACKET_GLOBAL_RE.exec(line);
+    if (match) {
       const level = bumpLevelOf(`${match[1]}.${match[2]}.${match[3]}`);
-      if (level && (!best || LEVEL_RANK[level] > LEVEL_RANK[best])) best = level;
+      if (level) return level;
     }
   }
-  return best;
+  return null;
 }
 
 export function parseCurrentVersion(changelog) {
@@ -338,8 +332,8 @@ function commandCheckPr(options) {
   }
   console.error('Falta la marca de version en el titulo o en los commits del PR.');
   console.error('Formato requerido: tipo(modulo): [X.Y.Z] descripcion');
-  console.error('Nivel relativo: [0.0.1] = PATCH, [0.1.0] = MINOR, [1.0.0] = MAJOR.');
-  console.error('Ejemplo: feat(M01): [0.1.0] implementar consulta publica de catalogo');
+  console.error('Senal de nivel: [0.x.x] = MINOR (cambio normal), [1.0.0] o mayor = MAJOR (cambio grande).');
+  console.error('Ejemplo: feat(M01): [0.1.0] agregar validacion de formulario de login');
   process.exitCode = 1;
 }
 

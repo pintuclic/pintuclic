@@ -51,36 +51,33 @@ function runCli(cwd, ...args) {
   return execFileSync(process.execPath, [SCRIPT_PATH, ...args], { cwd, encoding: 'utf8' });
 }
 
-test('bumpLevelOf interpreta el nivel relativo por el primer digito no-cero', () => {
+test('bumpLevelOf interpreta la senal relativa del documento', () => {
+  assert.equal(bumpLevelOf('0.1.0'), 'minor');
+  assert.equal(bumpLevelOf('0.0.1'), 'minor');
+  assert.equal(bumpLevelOf('0.0.0'), 'minor');
+  assert.equal(bumpLevelOf('0.9.9'), 'minor');
   assert.equal(bumpLevelOf('1.0.0'), 'major');
   assert.equal(bumpLevelOf('2.5.1'), 'major');
-  assert.equal(bumpLevelOf('0.1.0'), 'minor');
-  assert.equal(bumpLevelOf('0.3.2'), 'minor');
-  assert.equal(bumpLevelOf('0.0.1'), 'patch');
-  assert.equal(bumpLevelOf('0.0.7'), 'patch');
-  assert.equal(bumpLevelOf('0.0.0'), null);
   assert.equal(bumpLevelOf('invalido'), null);
 });
 
 test('applyBump aplica el efecto odometro sobre la version base', () => {
   assert.equal(applyBump('3.12.4', 'minor'), '3.13.0');
-  assert.equal(applyBump('3.12.4', 'major'), '4.0.0');
-  assert.equal(applyBump('3.12.4', 'patch'), '3.12.5');
+  assert.equal(applyBump('3.13.0', 'major'), '4.0.0');
   assert.equal(applyBump('1.5.4', 'minor'), '1.6.0');
   assert.equal(applyBump('1.5.4', 'major'), '2.0.0');
-  assert.equal(applyBump('1.5.4', 'patch'), '1.5.5');
 });
 
-test('findBumpLevel toma la severidad mas alta y descarta commits del bot', () => {
-  const subjects = [
-    'feat(M01): [0.0.1] corregir validacion',
-    'feat(M04): [0.1.0] nueva HU',
+test('findBumpLevel usa el commit mas reciente con marca y descarta commits del bot', () => {
+  const newestFirst = [
     'chore(release): [skip ci] registrar v3.29.0 en CHANGELOG',
     'Merge branch develop into release',
     'docs: actualizar readme',
+    'fix(M01): [0.0.1] corregir validacion',
+    'feat(M04): [1.0.0] cambio grande',
   ];
-  assert.equal(findBumpLevel(subjects), 'minor');
-  assert.equal(findBumpLevel(['fix(M01): [0.0.1] ajuste', 'feat(M04): [1.0.0] breaking']), 'major');
+  assert.equal(findBumpLevel(newestFirst), 'minor');
+  assert.equal(findBumpLevel(['feat(M04): [1.0.0] breaking', 'fix(M01): [0.0.1] ajuste']), 'major');
   assert.equal(findBumpLevel(['docs: sin marca', 'Merge pull request #1']), null);
   assert.equal(findBumpLevel([]), null);
 });
@@ -182,13 +179,13 @@ test('write-changelog crea la entrada, es idempotente y detecta walkthroughs', (
   writeFileSync(path.join(dir, 'docs', 'CHANGELOG.md'), '# CHANGELOG\n\n## [v3.12.4] - 2026-01-01\n- previo\n', 'utf8');
   gitRun(dir, 'add', 'docs/CHANGELOG.md');
   gitRun(dir, 'commit', '-q', '-m', 'docs: changelog base');
-  commitFile(dir, 'b.txt', 'b', 'feat(M01): [0.0.1] corregir filtro\n\nWalkthrough: docs/walkthroughs/M01/walkthrough_v3.12.5_M01_fix_backend.md');
-  const output = runCli(dir, 'write-changelog', '--version', '3.12.5');
-  assert.match(output, /CHANGELOG actualizado con v3\.12\.5/);
+  commitFile(dir, 'b.txt', 'b', 'feat(M01): [0.1.0] corregir filtro\n\nWalkthrough: docs/walkthroughs/M01/walkthrough_v3.13.0_M01_fix_backend.md');
+  const output = runCli(dir, 'write-changelog', '--version', '3.13.0');
+  assert.match(output, /CHANGELOG actualizado con v3\.13\.0/);
   const changelog = readFileSync(path.join(dir, 'docs', 'CHANGELOG.md'), 'utf8');
-  assert.ok(changelog.indexOf('## [v3.12.5]') < changelog.indexOf('## [v3.12.4]'));
-  assert.match(changelog, /walkthrough_v3\.12\.5_M01_fix_backend\.md/);
-  const second = runCli(dir, 'write-changelog', '--version', '3.12.5');
+  assert.ok(changelog.indexOf('## [v3.13.0]') < changelog.indexOf('## [v3.12.4]'));
+  assert.match(changelog, /walkthrough_v3\.13\.0_M01_fix_backend\.md/);
+  const second = runCli(dir, 'write-changelog', '--version', '3.13.0');
   assert.match(second, /ya existe/);
   assert.equal(readFileSync(path.join(dir, 'docs', 'CHANGELOG.md'), 'utf8'), changelog);
 });
