@@ -4,6 +4,33 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.35.10] - 2026-09-23
+### Integración: M01 Backend Catálogo Público con vistas públicas
+- **Alcance:** Resolución de conflictos de `feature/m01-backend-catalogo-publico` al incorporar `feature/m01-vistas-publicas`, preservando la estructura frontend pública y manteniendo el contrato backend de catálogo público.
+- **Hitos:** Se conserva el endpoint `GET /api/catalogo/publico/productos/:id/colores`, el contrato de colores (`codigo_color`, `muestra_hex`, `familia_color`) y el listado público enriquecido para evitar el patrón N+1.
+- **Calidad:** Validaciones backend ejecutadas durante la integración; conflictos de `m01.test.ts`, seed y changelog saneados sin marcadores residuales.
+- **Walkthrough:** [Resolución de conflictos backend M01](./walkthroughs/M01/walkthrough_v3.35.10_M01_resolucion_conflictos_backend.md).
+
+---
+
+## [v3.35.9] - 2026-09-23
+### Integración: M01 panel administrativo y vistas públicas
+- **Alcance:** Merge de `feature/m01-dashboard-catalogo` en `dd0c8be`; el panel se conserva sin alteraciones y las vistas públicas se organizan dentro de `m01-catalogo`.
+- **Hitos:** Separación `admin`/`publicas`, rutas públicas preservadas y scripts Core/Vitest combinados. Backend, SQL y M04 conservan el contenido previo.
+- **Calidad:** Build y ESLint aprobados; 15 pruebas Vitest y 1 prueba Core aprobadas. El N+1 queda pendiente de la rama responsable de backend.
+- **Walkthrough:** [Integración del panel y vistas públicas](./walkthroughs/M01/walkthrough_v3.35.9_M01_integracion_panel_y_vistas_publicas_frontend.md).
+
+---
+
+## [v3.35.8] - 2026-09-22
+### Integración: M01 / Core Frontend
+- **Alcance:** Integración de core-layouts conservando rutas públicas, categorías y muestras de color con los nuevos componentes globales.
+- **Hitos:** Tabla genérica tipada, variantes de Badge combinadas y categorías consultadas exclusivamente a la API.
+- **Calidad:** TypeScript/Vite, ESLint sin errores ni advertencias y prueba Core aprobados.
+- **Walkthrough:** [Integración Core](./walkthroughs/M01/walkthrough_v3.35.8_M01_integracion_core_frontend.md).
+
+---
+
 ## [v3.35.7] - 2026-09-20
 ### Módulo: M01 Catálogo / Vistas Públicas (Frontend)
 - **Alcance:** Simulador de cinco ambientes en el detalle de pinturas, conectado al color de la variante, con alternancia a la galería del envase y ficha más compacta.
@@ -12,33 +39,6 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **Walkthrough:** [Simulador de ambientes y ficha compacta](./walkthroughs/M01/walkthrough_v3.35.7_M01_ficha_compacta_ambientes_completos_frontend.md).
 
 ---
-
-## [v3.29.0] - 2026-09-22
-### Módulo: M01 Catálogo de Productos (Backend)
-- **Alcance:** Decimocuarta entrega del módulo M01: Resolución del patrón N+1 en el contrato público del catálogo y adición del endpoint de paginación de colores.
-- **Hitos Clave:** 
-  - Corrección del contrato público para listar `precio_desde`, `imagen_principal_url` y `cantidad_colores` directamente desde subconsultas en `CatalogoPublicoRepository`, eliminando el problema de consultas N+1 en la vista principal.
-  - Implementación del nuevo endpoint paginado `GET /api/catalogo/publico/productos/:id/colores` para devolver los colores activos de un producto.
-  - Generación de `muestra_hex` en tiempo real desde valores CIELAB en el servicio y cálculo de la `familia_color`.
-  - Integración estricta de validaciones Zod para parámetros y query.
-- **Diferido:** La asociación de colores a bases (`RF-CAT-12-12`) sigue sin formalizarse, por lo que el retorno de colores de productos entonables asume temporalmente la lista completa de colores activos de la misma marca mientras el producto tenga al menos una variante activa y base activa.
-- **Estado de Calidad:** ✅ Suite en `tsx` con `m01.test.ts` ejecutado: 123/123 pruebas superadas. 0 errores.
-- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.29.0_M01_contrato_publico_n1_backend.md](./walkthroughs/M01/walkthrough_v3.29.0_M01_contrato_publico_n1_backend.md)
-
----
-
-## [v3.28.0] - 2026-09-13
-### Core: Layouts Globales, Enrutador Central y Sincronización con M01 Catálogo (Frontend)
-- **Alcance General:** Incremento **MINOR (v3.28.0)** que formaliza la arquitectura visual y estructural de layouts del frontend para Pintu Clic. Unifica los layouts globales (`LayoutHome`, `LayoutAdmin`, `LayoutAcceso`, `FooterPrincipal`), sincroniza el enrutamiento central con el módulo completo de catálogo `M01` recién integrado en `develop` y resuelve conflictos de merge en el contenedor raíz.
-- **Hitos Clave de Arquitectura y Frontend:**
-  - **Layout de Tienda Pública (`LayoutHome.vue`):** Maquetación de la experiencia e-commerce con Topbar institucional de cobertura Caquetá, Header responsive, Navbar con navegación y selector de categorías, menú de usuario activo con logout y contenedor de modales globales de autenticación `M04` (`ModalLogin`, `RegistroWizard`).
-  - **Shell de Administración (`LayoutAdmin.vue`):** Panel administrativo colapsable con menús tipo acordeón para Gestión Administrativa y Gestión de Catálogo, integración de branding oficial y topbar administrativo.
-  - **Shell de Acceso Minimalista (`LayoutAcceso.vue`):** Estructura base centrada para pantallas completas de inicio de sesión o restablecimiento de credenciales.
-  - **Enrutador Central Unificado (`src/core/routes/index.ts`):** Fusión armónica de la tienda pública como raíz de `LayoutHome`, montaje de `...dashboardCatalogoRoutes` de `M01`, redirección defensiva de `/admin` a `/admin/catalogo` (evitando pantallas en blanco) y alias para búsquedas administrativas (`/admin/catalogo/busquedas-sin-resultado`).
-  - **Contenedores Limpios (`App.vue` & `main.ts`):** Simplificación de `App.vue` a un `<router-view />` puro y montaje ordenado de Pinia y Vue Router en `main.ts`.
-  - **Corrección de Linter y TypeScript:** Saneamiento de variables huérfanas en `LayoutHome.vue` (`showMobileMenu`), logrando 0 errores en compilación estricta (`vue-tsc -b`) y 0 advertencias en ESLint.
-  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/CORE/walkthrough_v3.28.0_CORE_layouts_globales_enrutador_frontend.md](./walkthroughs/CORE/walkthrough_v3.28.0_CORE_layouts_globales_enrutador_frontend.md)
-
 ## [v3.35.2] - 2026-09-19
 ### Módulo: M01 Catálogo de Productos / Vistas Públicas & Core (Frontend)
 - **Avance preliminar en Detalle de Producto (`VistaDetalleProductoPublico`):** ⚠️ *Nota de alcance: La vista de detalle de producto NO está finalizada; representa un avance técnico preliminar en desarrollo.* Se implementó la restricción condicional de la calculadora de pintura (`esPintura`) para que solo aplique a pinturas y no a herramientas/taladros, se deduplicaron las muestras cromáticas por `id_color` limitándolas a 6 con botón de apertura `+N más` hacia la carta completa, y se sincronizó el color inicial mediante query parameter (`?color=...`).
@@ -223,15 +223,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **Hitos Clave:** Nueva ruta pública `/`, carga paginada bajo demanda, ficha mínima de destacados para precio e imagen, estados de carga/error y modal de categorías conforme a las maquetas compartidas.
 - **Estado de Calidad:** ✅ `npm run build` y `npm run lint` sin errores; verificación visual del Home y del modal en navegador local. Integración con datos reales pendiente de disponer del backend en ejecución.
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.28.0_M01_home_storefront_frontend.md](./walkthroughs/M01/walkthrough_v3.28.0_M01_home_storefront_frontend.md)
->>>>>>> 68cdeff3faaf24885b05d2fc64862633a153d94e
+## [v3.28.0] - 2026-09-13
+### Core: Layouts Globales, Enrutador Central y Sincronización con M01 Catálogo (Frontend)
+- **Alcance General:** Incremento **MINOR (v3.28.0)** que formaliza la arquitectura visual y estructural de layouts del frontend para Pintu Clic. Unifica los layouts globales (`LayoutHome`, `LayoutAdmin`, `LayoutAcceso`, `FooterPrincipal`), sincroniza el enrutamiento central con el módulo completo de catálogo `M01` recién integrado en `develop` y resuelve conflictos de merge en el contenedor raíz.
+- **Hitos Clave de Arquitectura y Frontend:**
+  - **Layout de Tienda Pública (`LayoutHome.vue`):** Maquetación de la experiencia e-commerce con Topbar institucional de cobertura Caquetá, Header responsive, Navbar con navegación y selector de categorías, menú de usuario activo con logout y contenedor de modales globales de autenticación `M04` (`ModalLogin`, `RegistroWizard`).
+  - **Shell de Administración (`LayoutAdmin.vue`):** Panel administrativo colapsable con menús tipo acordeón para Gestión Administrativa y Gestión de Catálogo, integración de branding oficial y topbar administrativo.
+  - **Shell de Acceso Minimalista (`LayoutAcceso.vue`):** Estructura base centrada para pantallas completas de inicio de sesión o restablecimiento de credenciales.
+  - **Enrutador Central Unificado (`src/core/routes/index.ts`):** Fusión armónica de la tienda pública como raíz de `LayoutHome`, montaje de `...dashboardCatalogoRoutes` de `M01`, redirección defensiva de `/admin` a `/admin/catalogo` (evitando pantallas en blanco) y alias para búsquedas administrativas (`/admin/catalogo/busquedas-sin-resultado`).
+  - **Contenedores Limpios (`App.vue` & `main.ts`):** Simplificación de `App.vue` a un `<router-view />` puro y montaje ordenado de Pinia y Vue Router en `main.ts`.
+  - **Corrección de Linter y TypeScript:** Saneamiento de variables huérfanas en `LayoutHome.vue` (`showMobileMenu`), logrando 0 errores en compilación estricta (`vue-tsc -b`) y 0 advertencias en ESLint.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/CORE/walkthrough_v3.28.0_CORE_layouts_globales_enrutador_frontend.md](./walkthroughs/CORE/walkthrough_v3.28.0_CORE_layouts_globales_enrutador_frontend.md)
 
 ---
 
 ## [v3.27.0] - 2026-09-11
-<<<<<<< HEAD
 
-=======
->>>>>>> 68cdeff3faaf24885b05d2fc64862633a153d94e
 ### Módulo: M01 Catálogo de Productos (Backend)
 - **Alcance:** feat(M01): integrar soporte para `id_categoria_complementaria` y `patrocinado` en la creación de productos (HU-CAT-08).
 - **Hitos Clave:** Se agregó al `CrearProductoDto` y a la lógica `crear` en el `ProductosService`.
@@ -557,7 +564,6 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md](./walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md)
 
 ---
-<<<<<<< HEAD
 ## [v2.4.0] - 2026-09-15
 ### Módulo: Core Frontend (Layouts)
 - **Alcance General:** Salto a versión **MINOR (v2.4.0)**. Se importaron los componentes globales de `feature/m04-cuentas-auth-perfil` hacia `feature/core-frontend-layouts`.
@@ -566,8 +572,6 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Layouts y Modales:** Inyección de modales de autenticación y confirmación de "Cerrar sesión" en `LayoutHome.vue` y `LayoutAdmin.vue`.
   - **Enrutador Central:** Refactorización de `routes/index.ts` usando el patrón de Layouts globales, en lugar de importar explícitamente M01.
 - **Estado:** ✅ Validado. Cambios sincronizados.
-=======
->>>>>>> 68cdeff3faaf24885b05d2fc64862633a153d94e
 
 ## [v2.3.0] - 2026-09-15
 ### Módulo: Core Frontend (Design System Components)

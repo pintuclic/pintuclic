@@ -177,13 +177,13 @@ export function cielabAHex(l: number, a: number, b: number): string {
   return `#${aByte(r)}${aByte(g)}${aByte(bl)}`.toUpperCase();
 }
 /**
- * RF-CAT-05-03 / REQ-3: Clasifica el color en una familia cromática basándose 
+ * RF-CAT-05-03 / REQ-3: Clasifica el color en una familia cromática basándose
  * en su valor CIELAB (hue y croma).
  */
 export function clasificarFamiliaCromatica(l: number, a: number, b: number): string {
   // Croma
   const c = Math.sqrt(a * a + b * b);
-  
+
   if (l < 25) return 'Negro / Gris oscuro';
   if (l > 85 && c < 5) return 'Blanco / Off-white';
   if (c < 8) return 'Gris';

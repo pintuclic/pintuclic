@@ -18,7 +18,6 @@ const MAX_COMPLEMENTARIOS = 4;
 // M01 - SERVICIO DE CONSULTA PÚBLICA (HU-CAT-06)
 // Expone el catálogo sin autenticación, mostrando solo elementos activos y
 // publicados (RF-CAT-06-01, RF-CAT-09-02). El listado se pagina (RNF-CAT-06-01).
-
 // ==============================================================================
 
 const LIMITE_POR_DEFECTO = 20;
@@ -93,7 +92,6 @@ export class CatalogoPublicoService {
   }
 
   /**
-  /**
    * RF-CAT-06-03: Endpoint paginado para colores. Filtro opcional por familia y búsqueda.
    */
   async obtenerColoresPaginados(idProducto: number, opciones: { q?: string; familia?: string; pagina?: number; limite?: number }): Promise<PaginaColoresProductoPublico> {
@@ -106,7 +104,7 @@ export class CatalogoPublicoService {
     const limite = Math.min(opciones.limite && opciones.limite > 0 ? Math.floor(opciones.limite) : 100, 500);
 
     const filas = await this.repo.listarColoresActivosDeProducto(idProducto, producto.id_marca, producto.clase_color);
-    
+
     let colores: ColorProductoPublico[] = filas.map((c) => {
       const l = Number(c.cie_l);
       const a = Number(c.cie_a);
@@ -122,11 +120,11 @@ export class CatalogoPublicoService {
 
     if (opciones.q) {
       const qLower = opciones.q.toLowerCase();
-      colores = colores.filter(c => c.nombre.toLowerCase().includes(qLower) || c.codigo_color?.toLowerCase().includes(qLower));
+      colores = colores.filter((c) => c.nombre.toLowerCase().includes(qLower) || c.codigo_color?.toLowerCase().includes(qLower));
     }
     if (opciones.familia) {
       const famLower = opciones.familia.toLowerCase();
-      colores = colores.filter(c => c.familia_color.toLowerCase() === famLower);
+      colores = colores.filter((c) => c.familia_color.toLowerCase() === famLower);
     }
 
     colores.sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -161,18 +159,17 @@ export class CatalogoPublicoService {
     }
 
     if (candidatos.length === 0) return [];
-    
-    const idsCandidatos = candidatos.map(c => c.id_producto);
+
+    const idsCandidatos = candidatos.map((c) => c.id_producto);
     const paginados = await this.repo.listarProductos({ ids: idsCandidatos, limite: MAX_COMPLEMENTARIOS, offset: 0 });
-    
-    const map = new Map(paginados.map(p => [p.id_producto, p]));
+
+    const map = new Map(paginados.map((p) => [p.id_producto, p]));
     return candidatos
-      .map(c => map.get(c.id_producto))
+      .map((c) => map.get(c.id_producto))
       .filter((p): p is FilaProductoResumenPublico => p !== undefined)
       .map(aProductoPublicoResumen);
   }
 }
-
 
 function aProductoPublicoResumen(p: FilaProductoResumenPublico): ProductoPublicoResumen {
   return {

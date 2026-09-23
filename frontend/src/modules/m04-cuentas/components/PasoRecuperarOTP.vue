@@ -8,10 +8,10 @@
     </div>
 
     <div class="flex justify-center gap-2 mb-6">
-      <input 
-        v-for="(_, index) in code" 
+      <input
+        v-for="(_, index) in code"
         :key="index"
-        :ref="(el) => { inputs[index] = el as HTMLInputElement | null; }"
+        :ref="el => setInput(el, index)"
         v-model="code[index]"
         type="text"
         inputmode="numeric"
@@ -25,7 +25,7 @@
     </div>
 
     <!-- Error Global -->
-    <div v-if="errorMsg" class="bg-red-50 text-conversion text-sm p-3 rounded-lg flex items-start gap-2 mb-4 text-left">
+    <div v-if="errorMsg" class="bg-danger/10 text-danger text-sm p-3 rounded-lg flex items-start gap-2 mb-4 text-left">
       <AlertCircleIcon class="w-5 h-5 shrink-0" />
       <p>{{ errorMsg }}</p>
     </div>
@@ -49,8 +49,11 @@ const emit = defineEmits<{
   'verificado': [codigo: string];
 }>();
 
-const code = ref(Array(6).fill(''));
+const code = ref<string[]>(Array<string>(6).fill(''));
 const inputs = ref<(HTMLInputElement | null)[]>([]);
+function setInput(element: unknown, index: number): void {
+  inputs.value[index] = element instanceof HTMLInputElement ? element : null;
+}
 const errorMsg = ref('');
 const isLoading = ref(false);
 
@@ -65,12 +68,12 @@ const focusInput = (index: number) => {
 const onInput = (e: Event, index: number) => {
   const input = e.target as HTMLInputElement;
   const val = input.value;
-  
+
   if (val && !/^\d+$/.test(val)) {
     code.value[index] = '';
     return;
   }
-  
+
   if (val && index < 5) {
     focusInput(index + 1);
   }
