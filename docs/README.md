@@ -11,7 +11,7 @@ Esta documentación está organizada bajo una arquitectura modular y transversal
 ```text
 docs/
 ├── README.md                         <-- Este archivo (índice general)
-├── CHANGELOG.md                      <-- Registro central de versiones SemVer
+├── CHANGELOG.md                      <-- Registro histórico de cambios del proyecto
 │
 ├── 00_SISTEMA/                       <-- Gobernanza, arquitectura y plantillas del sistema
 │   ├── 01_ARQUITECTURA/              <-- Diseño estructural y dependencias
@@ -21,7 +21,7 @@ docs/
 │   │
 │   ├── 02_GUIAS_Y_ESTANDARES/        <-- Normativas de trabajo y contribución
 │   │   ├── GUIA_GIT_COMMITS_Y_PUSH.md        <-- Convención de Conventional Commits y flujo de push
-│   │   ├── GUIA_VERSIONADO_Y_WALKTHROUGHS.md <-- Normativa de SemVer y protocolo de walkthroughs
+│   │   ├── GUIA_VERSIONADO_Y_WALKTHROUGHS.md <-- Protocolo de walkthroughs de implementación
 │   │   └── ESTANDAR_Y_GUIA_INCORPORACION.md  <-- Guía para agregar o refactorizar módulos
 │   │
 │   └── 03_PLANTILLAS_Y_CHECKLISTS/   <-- Formatos de entrega y control de calidad

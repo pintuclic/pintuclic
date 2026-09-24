@@ -1,0 +1,157 @@
+name: Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Segmento a incrementar (se ignora si indicas una version exacta)"
+        required: true
+        default: build
+        type: choice
+        options:
+          - build
+          - patch
+          - minor
+          - major
+      version:
+        description: "Version exacta opcional con formato X.Y.Z.W (ej. 0.3.29.0)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: version-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Versionar y publicar
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calcular nueva version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+          EXPLICIT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          FILE=".github/version.txt"
+          if [ ! -f "$FILE" ]; then
+            echo "No existe $FILE en esta rama; crealo antes de versionar." >&2
+            exit 1
+          fi
+          CURRENT=$(tr -d '[:space:]' < "$FILE")
+          if ! printf '%s' "$CURRENT" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "La version actual '$CURRENT' no cumple el formato MAJOR.MINOR.PATCH.BUILD" >&2
+            exit 1
+          fi
+          IFS='.' read -r MAJOR MINOR PATCH BUILD <<< "$CURRENT"
+          if [ -n "$EXPLICIT_VERSION" ]; then
+            NEXT="$EXPLICIT_VERSION"
+            if ! printf '%s' "$NEXT" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "La version indicada '$NEXT' no cumple el formato MAJOR.MINOR.PATCH.BUILD" >&2
+              exit 1
+            fi
+            if [ "$NEXT" = "$CURRENT" ]; then
+              echo "La version indicada '$NEXT' es igual a la actual; no hay nada que versionar." >&2
+              exit 1
+            fi
+            if [ "$(printf '%s\n%s\n' "$CURRENT" "$NEXT" | sort -V | head -1)" != "$CURRENT" ]; then
+              echo "La version indicada '$NEXT' es menor que la actual '$CURRENT'." >&2
+              exit 1
+            fi
+            ORIGIN="version exacta"
+          else
+            case "$BUMP" in
+              major) NEXT="$((MAJOR + 1)).0.0.0" ;;
+              minor) NEXT="$MAJOR.$((MINOR + 1)).0.0" ;;
+              patch) NEXT="$MAJOR.$MINOR.$((PATCH + 1)).0" ;;
+              build) NEXT="$MAJOR.$MINOR.$PATCH.$((BUILD + 1))" ;;
+              *)
+                echo "Segmento de incremento invalido: '$BUMP'" >&2
+                exit 1
+                ;;
+            esac
+            ORIGIN="incremento $BUMP"
+          fi
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Version actual: $CURRENT"
+          echo "Version nueva: $NEXT ($ORIGIN)"
+
+      - name: Actualizar .github/version.txt
+        env:
+          VERSION: ${{ steps.version.outputs.next }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' "$VERSION" > .github/version.txt
+          cat .github/version.txt
+
+      - name: Commit y push de la version
+        env:
+          VERSION: ${{ steps.version.outputs.next }}
+        run: |
+          set -euo pipefail
+          git config user.name "pintuclic-version-bot"
+          git config user.email "pintuclic-version-bot@users.noreply.github.com"
+          git add .github/version.txt
+          git commit -m "chore(release): [$VERSION] actualizar version"
+          git push origin "HEAD:${{ github.ref_name }}"
+
+      - name: Crear tag
+        env:
+          VERSION: ${{ steps.version.outputs.next }}
+        run: |
+          set -euo pipefail
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "El tag v$VERSION ya existe; no se sobreescribe." >&2
+            exit 1
+          fi
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Crear GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.next }}
+        run: |
+          set -euo pipefail
+          NOTES=$(mktemp)
+          {
+            echo "## v$VERSION"
+            echo
+            echo "### Cambios"
+            PREV=$(git describe --tags --abbrev=0 --exclude "v$VERSION" 2>/dev/null || true)
+            if [ -n "$PREV" ]; then
+              git log --oneline "$PREV..HEAD" | sed 's/^/- /'
+            else
+              git log --oneline -20 | sed 's/^/- /'
+            fi
+          } > "$NOTES"
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --notes-file "$NOTES" \
+            --latest
+
+      - name: Resumen
+        env:
+          CURRENT: ${{ steps.version.outputs.current }}
+          VERSION: ${{ steps.version.outputs.next }}
+        run: |
+          {
+            echo "### Version publicada"
+            echo
+            echo "- Version anterior: $CURRENT"
+            echo "- Version nueva: v$VERSION"
+            echo "- Tag: v$VERSION"
+            echo "- Release: v$VERSION (GitHub adjunta el zip del codigo fuente)"
+          } >> "$GITHUB_STEP_SUMMARY"
