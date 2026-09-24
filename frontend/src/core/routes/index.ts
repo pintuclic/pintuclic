@@ -1,9 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
-import {
-  publicStorefrontRoutes,
-  adminCatalogoRoutes,
-} from '@/modules/m01-dashboardcatalogo/dashboard-catalogo.routes';
+import { publicStorefrontRoutes } from '@/modules/m01-catalogo/publico.routes';
+import { adminCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboard-catalogo.routes';
 
 export const routes: RouteRecordRaw[] = [
   // 1. Tienda Pública / Storefront (LayoutHome maestro permanente)
