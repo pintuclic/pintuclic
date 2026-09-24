@@ -34,3 +34,5 @@ la versión se estaría utilizando la antigua, ej: `3.28.0`, se va cambiar por l
 
 ### Empaquetado
 Para crear un realse y separar las versiones por paquetes de github actions requiere editar el archivo `.github/version.txt` para aplicar y utilizar los servidores de github para su respectivo empaquetado.
+
+
