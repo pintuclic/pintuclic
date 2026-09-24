@@ -18,13 +18,9 @@
         :style="{ backgroundColor: color.muestra_hex ?? undefined }"
         :aria-label="`Seleccionar ${color.nombre}, ${color.codigo ?? 'sin código comercial'}`"
         :aria-pressed="color.id_color === colorSeleccionadoId"
-        :title="`${color.nombre} · ${color.codigo ?? color.muestra_hex ?? 'Sin código'}`"
+        :title="`${color.nombre} · ${color.codigo ?? 'Sin código comercial'}`"
         @click="seleccionarColor(color.id_color)"
-      >
-        <span class="max-w-0 whitespace-nowrap font-mono text-[9px] font-bold opacity-0 drop-shadow transition-[max-width,opacity] duration-150 group-hover:max-w-32 group-hover:opacity-100 group-focus-visible:max-w-32 group-focus-visible:opacity-100" :class="claseTextoMuestra(color.muestra_hex)">
-          {{ color.codigo ?? color.muestra_hex ?? 'Sin código' }}
-        </span>
-      </button>
+      ></button>
     </div>
 
     <div v-else class="mt-4 rounded-card border border-dashed border-neutral-light bg-neutral-lightest p-4 text-center text-xs text-neutral-medium">
@@ -49,14 +45,6 @@ const iconosEsquema = {
 
 function iconoEsquema(nombre: string): (typeof iconosEsquema)[keyof typeof iconosEsquema] {
   return iconosEsquema[nombre as keyof typeof iconosEsquema] ?? Circle;
-}
-
-function claseTextoMuestra(hex: string | null): string {
-  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return 'text-neutral-black';
-  const rojo = Number.parseInt(hex.slice(1, 3), 16);
-  const verde = Number.parseInt(hex.slice(3, 5), 16);
-  const azul = Number.parseInt(hex.slice(5, 7), 16);
-  return (rojo * 299 + verde * 587 + azul * 114) / 1000 >= 150 ? 'text-neutral-black' : 'text-white';
 }
 
 function seleccionarColor(idColor: number): void {

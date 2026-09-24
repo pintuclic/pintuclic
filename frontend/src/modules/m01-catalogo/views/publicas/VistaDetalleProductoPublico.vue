@@ -4,7 +4,7 @@
       <button
         type="button"
         class="inline-flex items-center gap-2 rounded-button border border-action px-3 py-2 text-xs font-semibold text-action transition-colors hover:bg-subaction"
-        @click="router.back()"
+        @click="volverCatalogo"
       >
         <ArrowLeft :size="15" /> Anterior
       </button>
@@ -396,25 +396,46 @@ function seleccionarColor(idColor: number): void {
 
 function seleccionarDesdeCarta(idVariante: number): void {
   varianteSeleccionadaId.value = idVariante;
-  const variante = producto.value?.variantes.find((item) => item.id_variante === idVariante);
+  const variante = producto.value?.variantes.find(
+    (item) => item.id_variante === idVariante
+  );
+
   if (variante?.id_color) {
-    const indiceImagen = producto.value?.imagenes.findIndex((imagen) => imagen.id_color === variante.id_color) ?? -1;
+    const indiceImagen =
+      producto.value?.imagenes.findIndex(
+        (imagen) => imagen.id_color === variante.id_color
+      ) ?? -1;
+
     if (indiceImagen >= 0) indiceGaleria.value = indiceImagen;
   }
+}
+
+function volverCatalogo(): void {
+  console.log('VOLVER CATALOGO EJECUTADO');
+  void router.push({ name: 'CatalogoPublico' });
 }
 
 function irProducto(id: number): void {
   indiceGaleria.value = 0;
   cantidad.value = 1;
-  void router.push({ name: 'DetalleProductoPublico', params: { productoId: id } });
+  void router.push({
+    name: 'DetalleProductoPublico',
+    params: { productoId: id },
+  });
 }
 
 function irSubcategoria(id: number): void {
   menuCategoriasAbierto.value = false;
-  void router.push({ name: 'CatalogoPublico', query: { subcategoria: id } });
+  void router.push({
+    name: 'CatalogoPublico',
+    query: { subcategoria: id },
+  });
 }
 
 function irCalculadora(): void {
-  void router.push({ name: 'CalculadoraPinturaProductoPublica', params: { productoId: props.productoId } });
+  void router.push({
+    name: 'CalculadoraPinturaProductoPublica',
+    params: { productoId: props.productoId },
+  });
 }
 </script>

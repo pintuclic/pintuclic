@@ -49,7 +49,10 @@ const idProducto = computed(() => Number(props.productoId));
 const { cargando, error, producto } = useDetalleProductoPublico(toRef(idProducto));
 
 function volverProducto(): void {
-  void router.push({ name: 'DetalleProductoPublico', params: { productoId: props.productoId } });
+  void router.replace({
+    name: 'DetalleProductoPublico',
+    params: { productoId: props.productoId },
+  });
 }
 
 function mostrarMensaje(texto: string): void {
