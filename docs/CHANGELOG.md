@@ -4,6 +4,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.31.0] - 2026-09-24
+### Módulo: M08 Orden de Venta (Frontend)
+- **Alcance:** Primera entrega del frontend de M08 sobre los endpoints de consulta de `v3.30.0`/`v3.30.1`. Cubre la sección de pedidos del cliente (HU-ORD-07) y el seguimiento del pedido (HU-ORD-02, HU-ORD-04, HU-ORD-06) en vista maestro-detalle sobre una misma pantalla. La parte administrativa (HU-ORD-01, HU-ORD-03, HU-ORD-05) queda fuera por ausencia de endpoints.
+- **Hitos Clave:** Módulo autónomo en `frontend/src/modules/m08-ordenes/` con listado, buscador servidor, filtros y paginación en cliente, panel de seguimiento y respaldo de mocks. Expone el componente `SeccionMisPedidos` para que otros módulos lo incrusten.
+- **Estado de Calidad:** ✅ `vue-tsc --noEmit` y `eslint` sin errores ni advertencias. Paleta verificada: 0 hexadecimales arbitrarios, 0 estilos inline, 0 clases ajenas a la marca.
+- ⚠️ **Dependencias bloqueantes:** requiere aprobación del Líder Técnico para dos archivos compartidos (enrutador central y tokens de tema). Ver reporte de parada.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v3.31.0_M08_seccion_pedidos_cliente_frontend.md](./walkthroughs/M08/walkthrough_v3.31.0_M08_seccion_pedidos_cliente_frontend.md)
+
+---
+
 ## [v3.30.1] - 2026-09-22
 ### Módulo: M08 Orden de Venta (Backend)
 - **Alcance:** Montaje del router de M08 en el enrutador central. Las tres consultas entregadas en `v3.30.0` ya responden bajo `/api/ordenes`; antes devolvían 404 porque el módulo no estaba registrado. Sin cambios de lógica.
