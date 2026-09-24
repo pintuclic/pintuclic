@@ -18,6 +18,12 @@ on:
         required: false
         default: ""
         type: string
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - .github/version.txt
 
 permissions:
   contents: write
@@ -27,8 +33,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  version:
-    name: Versionar y publicar
+  bump:
+    name: Actualizar version
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -107,27 +114,72 @@ jobs:
           git commit -m "chore(release): [$VERSION] actualizar version"
           git push origin "HEAD:${{ github.ref_name }}"
 
-      - name: Crear tag
+  package:
+    name: Publicar release
+    needs:
+      - bump
+    if: >-
+      always() &&
+      (github.event_name == 'push' || needs.bump.result == 'success') &&
+      (github.ref_name == 'main' || github.ref_name == 'develop')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: version-package
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Leer y validar version
+        id: version
+        run: |
+          set -euo pipefail
+          FILE=".github/version.txt"
+          if [ ! -f "$FILE" ]; then
+            echo "No existe $FILE en esta rama; no hay version que publicar." >&2
+            exit 1
+          fi
+          VERSION=$(tr -d '[:space:]' < "$FILE")
+          if ! printf '%s' "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "La version '$VERSION' no cumple el formato MAJOR.MINOR.PATCH.BUILD" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version a publicar: $VERSION"
+
+      - name: Crear tag si no existe
         env:
-          VERSION: ${{ steps.version.outputs.next }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
           if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
-            echo "El tag v$VERSION ya existe; no se sobreescribe." >&2
-            exit 1
+            echo "El tag v$VERSION ya existe; no se sobreescribe."
+            exit 0
           fi
+          git config user.name "pintuclic-version-bot"
+          git config user.email "pintuclic-version-bot@users.noreply.github.com"
           git tag -a "v$VERSION" -m "Release v$VERSION"
           git push origin "v$VERSION"
 
-      - name: Crear GitHub Release
+      - name: Generar notas del release
+        id: notes
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.next }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BRANCH: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           NOTES=$(mktemp)
           {
             echo "## v$VERSION"
+            echo
+            if [ "$BRANCH" = "develop" ]; then
+              echo "Canal: develop (pre-release)"
+            else
+              echo "Canal: main (estable)"
+            fi
             echo
             echo "### Cambios"
             PREV=$(git describe --tags --abbrev=0 --exclude "v$VERSION" 2>/dev/null || true)
@@ -137,6 +189,42 @@ jobs:
               git log --oneline -20 | sed 's/^/- /'
             fi
           } > "$NOTES"
+          echo "file=$NOTES" >> "$GITHUB_OUTPUT"
+
+      - name: Publicar pre-release en develop
+        if: github.ref_name == 'develop'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          NOTES: ${{ steps.notes.outputs.file }}
+        run: |
+          set -euo pipefail
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "El Release v$VERSION ya existe; no se modifica en develop."
+            exit 0
+          fi
+          gh release create "v$VERSION" \
+            --title "v$VERSION (pre-release)" \
+            --notes-file "$NOTES" \
+            --prerelease
+
+      - name: Publicar o promover release estable en main
+        if: github.ref_name == 'main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          NOTES: ${{ steps.notes.outputs.file }}
+        run: |
+          set -euo pipefail
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "El Release v$VERSION existe; se promueve a estable."
+            gh release edit "v$VERSION" \
+              --title "v$VERSION" \
+              --notes-file "$NOTES" \
+              --prerelease=false
+            gh release edit "v$VERSION" --latest
+            exit 0
+          fi
           gh release create "v$VERSION" \
             --title "v$VERSION" \
             --notes-file "$NOTES" \
@@ -144,14 +232,18 @@ jobs:
 
       - name: Resumen
         env:
-          CURRENT: ${{ steps.version.outputs.current }}
-          VERSION: ${{ steps.version.outputs.next }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BRANCH: ${{ github.ref_name }}
         run: |
+          CHANNEL="pre-release"
+          if [ "$BRANCH" = "main" ]; then
+            CHANNEL="estable"
+          fi
           {
-            echo "### Version publicada"
+            echo "### Release v$VERSION"
             echo
-            echo "- Version anterior: $CURRENT"
-            echo "- Version nueva: v$VERSION"
+            echo "- Rama: $BRANCH"
+            echo "- Canal: $CHANNEL"
             echo "- Tag: v$VERSION"
-            echo "- Release: v$VERSION (GitHub adjunta el zip del codigo fuente)"
+            echo "- GitHub adjunta el zip del codigo fuente automaticamente"
           } >> "$GITHUB_STEP_SUMMARY"
