@@ -1,4 +1,4 @@
-# WALKTHROUGH DE IMPLEMENTACIÓN Y REPORTE DE VERSIÓN
+# WALKTHROUGH DE IMPLEMENTACIÓN
 
 > 🏷️ **CONVENCIÓN OBLIGATORIA DE NOMENCLATURA DEL ARCHIVO:**  
 > Guardar obligatoriamente en `docs/walkthroughs/M[XX]/` con el sufijo de capa técnica **al final del nombre**:  
@@ -10,7 +10,6 @@
 ## 1. METADATOS DE LA IMPLEMENTACIÓN
 
 * **Versión Generada:** `v[X.X.X]` *(Ej: v1.1.0)*
-* **Tipo de Incremento:** `[ MAJOR / MINOR / PATCH ]`
 * **Módulo de Origen:** `[MXX - Nombre del Módulo, ej: M04 Cuentas, Autenticación y Perfil]`
 * **Fecha de Entrega:** `[DD/MM/AAAA]`
 * **Autor / Responsable:** `[Desarrollador / Agente de IA]`
@@ -83,8 +82,7 @@
 
 ---
 
-## 7. DICTAMEN FINAL Y CONFIRMACIÓN DE VERSIONADO
+## 7. DICTAMEN FINAL
 
-* **Incremento Registrado en `CHANGELOG.md`:** `[ ✅ SÍ / ❌ NO ]`
 * **Pruebas de Calidad Superadas (QA Gate):** `[ ✅ SÍ / ❌ NO ]`
 * **Apego al Diagrama de Flujo:** `[ ✅ 100% Coincidente con Diagrama ]`

@@ -4,6 +4,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.29.0] - 2026-09-22
+### Base de Datos: Sincronización Completa de DDL, Mocks y Tipos Kysely según Diagrama ER (Backend)
+- **Alcance General:** Incremento **MINOR (v3.29.0)** que actualiza el esquema relacional de PostgreSQL (`bd/sql/schema_pintuclic.sql`), los datos iniciales de prueba y mocks (`bd/sql/seed_pintuclic.sql`), la documentación técnica oficial (`bd/docs/DOCUMENTACION_BASE_DATOS.md`) y los tipos TypeScript en Kysely (`backend/src/core/db/types.ts`) basándose en el diagrama Entidad-Relación (Mermaid ER) actualizado.
+- **Hitos Clave:**
+  - **Bloque Fusionado (`Variante` $\rightarrow$ `Bases` $\rightarrow$ `Color` $\rightarrow$ `tonos`):** Vinculación de `base` a `variante` (`id_variante`) con `prefijo`; clasificación de `color` por `id_base`; atributo `nombre` y `hexagesimal` en `tonos`.
+  - **Ventas y Carrito:** Soporte de `ref_viva` en `linea_carrito`, asociación de `cotizacion` a `id_usuario` e `id_rol`, y atributo `carrito_o_cotizacion` en `orden`.
+  - **Calidad y Verificación:** `npx tsc --noEmit` y `npm run lint` ejecutados con 0 errores y 0 advertencias.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/DATABASE/walkthrough_v3.29.0_DATABASE_actualizacion_esquema_diagrama_er_backend.md](./walkthroughs/DATABASE/walkthrough_v3.29.0_DATABASE_actualizacion_esquema_diagrama_er_backend.md)
+
+---
+
 ## [v3.28.0] - 2026-09-13
 ### Core: Layouts Globales, Enrutador Central y Sincronización con M01 Catálogo (Frontend)
 - **Alcance General:** Incremento **MINOR (v3.28.0)** que formaliza la arquitectura visual y estructural de layouts del frontend para Pintu Clic. Unifica los layouts globales (`LayoutHome`, `LayoutAdmin`, `LayoutAcceso`, `FooterPrincipal`), sincroniza el enrutamiento central con el módulo completo de catálogo `M01` recién integrado en `develop` y resuelve conflictos de merge en el contenedor raíz.
