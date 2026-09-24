@@ -26,7 +26,7 @@ El tipo de versión que se va utilizar es semantica y va estar conformado por:
 | Versión | Nombre | descripción |
 |:-----|:------|:------|
 | `1.X.X.X` | **Mayor** | Versión estable todo funcional |
-| `1.X.X.X` | **Version minior estable** | Versión estable de minior, separar los cambios grandes que se ha hecho para después enviarlo a la rama mian (estable) |
+| `X.1.X.X` | **Version minior estable** | Versión estable de minior, separar los cambios grandes que se ha hecho para después enviarlo a la rama mian (estable) |
 | `X.X.1.X` | **Minior** | Cambios pequeños que aporta a la web|
 | `X.X.X.1` | **Patch** | Arreglos de pequeños para el funcionamiento de la web|
 
@@ -34,3 +34,5 @@ la versión se estaría utilizando la antigua, ej: `3.28.0`, se va cambiar por l
 
 ### Empaquetado
 Para crear un realse y separar las versiones por paquetes de github actions requiere editar el archivo `.github/version.txt` para aplicar y utilizar los servidores de github para su respectivo empaquetado.
+
+

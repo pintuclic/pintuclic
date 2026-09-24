@@ -21,7 +21,7 @@ docs/
 │   │
 │   ├── 02_GUIAS_Y_ESTANDARES/        <-- Normativas de trabajo y contribución
 │   │   ├── GUIA_GIT_COMMITS_Y_PUSH.md        <-- Convención de Conventional Commits y flujo de push
-│   │   ├── GUIA_VERSIONADO_Y_WALKTHROUGHS.md <-- Protocolo de walkthroughs de implementación
+│   │   ├── GUIA_VERSIONADO_Y_WALKTHROUGHS.md <-- Protocolo de versionado semántico y walkthroughs
 │   │   └── ESTANDAR_Y_GUIA_INCORPORACION.md  <-- Guía para agregar o refactorizar módulos
 │   │
 │   └── 03_PLANTILLAS_Y_CHECKLISTS/   <-- Formatos de entrega y control de calidad
