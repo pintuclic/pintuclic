@@ -356,6 +356,27 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md](./walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md)
 
 ---
+## [v2.4.0] - 2026-09-15
+### Módulo: Core Frontend (Layouts)
+- **Alcance General:** Salto a versión **MINOR (v2.4.0)**. Se importaron los componentes globales de `feature/m04-cuentas-auth-perfil` hacia `feature/core-frontend-layouts`.
+- **Hitos Clave Frontend:**
+  - **Botones y Tablas:** Corrección en renderizado del `:key` en `Table.vue` y estilos del botón outline en `Button.vue`.
+  - **Layouts y Modales:** Inyección de modales de autenticación y confirmación de "Cerrar sesión" en `LayoutHome.vue` y `LayoutAdmin.vue`.
+  - **Enrutador Central:** Refactorización de `routes/index.ts` usando el patrón de Layouts globales, en lugar de importar explícitamente M01.
+- **Estado:** ✅ Validado. Cambios sincronizados.
+
+## [v2.3.0] - 2026-09-15
+### Módulo: Core Frontend (Design System Components)
+- **Alcance General:** Salto a versión **MINOR (v2.3.0)** con la estabilización, implementación y centralización de los componentes visuales core del frontend en la rama `feature/core-frontend-layouts`, unificando el diseño de botones, tarjetas, inputs, tablas y modales para que todos los módulos utilicen la misma fuente y se erradique la duplicidad de componentes.
+- **Hitos Clave Frontend:**
+  - **Tipografías y Tailwind:** Inyección de `Inter` (sans) y `Poppins` (title) en `tailwind.config.ts`.
+  - **Componentes Base (Botones):** Refactorización completa de `Button.vue` e `IconButton.vue` para soportar las variantes oficiales (`action`, `corporate`, `outline`, etc.) y consumir la librería `lucide-vue-next` dinámicamente mediante la prop `icon`, protegiendo el `index.ts` y evitando crear archivos innecesarios.
+  - **Formularios y Tarjetas (`GrupoOpciones.vue` y `Card.vue`):** Implementación del diseño interactivo de tarjeta seleccionable (check y borde activo) en `GrupoOpciones.vue` e implementación de un contenedor de tarjetas limpio en `Card.vue`.
+  - **Tablas y Paginación (M17/M01):** Consolidación de `Table.vue` con soporte para diseño adaptativo (mobile-cards) y `Paginacion.vue` estándar, reemplazando las tablas dispares de los módulos.
+  - **Modales y Drawers:** Verificación de `Modal.vue` con la franja de gradiente corporativa e implementación de un `Drawer.vue` lateral con transiciones.
+  - **Corrección Arquitectónica:** Migración y corrección de `FooterPrincipal.vue` (removido erróneamente de `components/layout/` hacia la carpeta correcta `src/core/layouts/`).
+  - 🔗 **Walkthrough Técnico Frontend Core:** [walkthrough_v2.3.0_core_design_system_frontend.md](./walkthroughs/core/walkthrough_v2.3.0_core_design_system_frontend.md)
+- **Estado:** ✅ Validado. Componentes implementados estrictamente sobre `src/core/components/` sin afectar otras ramas.
 
 ## [v2.2.0] - 2026-09-07
 ### Arquitectura Global: Estandarización de DTOs en Frontend (Globales vs Locales y Erradicación Inline)

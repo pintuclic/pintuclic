@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
-import { dashboardCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboard-catalogo.routes';
+import { adminCatalogoRoutes } from '@/modules/m01-catalogo/catalogo.routes';
 
 export const routes: RouteRecordRaw[] = [
   // 1. Portal Público / Tienda (LayoutHome)
@@ -17,35 +17,27 @@ export const routes: RouteRecordRaw[] = [
     ],
   },
 
-  // 2. Módulo M01: Panel Administrativo de Catálogo
-  ...dashboardCatalogoRoutes,
-
-  // Redirección y alias para enlaces directos de catálogo
-  {
-    path: '/admin/catalogo/busquedas',
-    redirect: '/admin/catalogo/busquedas-sin-resultado',
-  },
-
-  // Redirección raíz de administración al dashboard principal
+  // 2. Panel Administrativo (LayoutAdmin puro, sin M01 inyectado)
   {
     path: '/admin',
     name: 'Administracion',
-    redirect: '/admin/catalogo',
+    component: () => import('@/core/layouts/LayoutAdmin.vue'),
+    children: [...adminCatalogoRoutes]
   },
 
-  // 3. Layout de Acceso / Auth independiente (para vistas de login/recuperación fullscreen si aplica)
+  // 3. Layout de Acceso / Auth independiente
   {
     path: '/acceso',
     name: 'Acceso',
     component: () => import('@/core/layouts/LayoutAcceso.vue'),
-    children: [],
+    children: []
   },
-
+  
   // 4. Fallback: Cualquier ruta no reconocida redirige al inicio
   {
     path: '/:pathMatch(.*)*',
     redirect: '/',
-  },
+  }
 ];
 
 const router = createRouter({
