@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   version:
-    name: Actualizar version
+    name: Publicar version
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -26,39 +26,40 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Calcular y registrar version
+      - name: Leer version del commit
+        id: version
         run: |
           set -euo pipefail
           MSG=$(git log -1 --pretty=%B)
           if ! printf '%s' "$MSG" | grep -qE '\[v?[0-9]+\.[0-9]+\.[0-9]+\]'; then
-            echo "El ultimo commit no trae la marca [X.Y.Z]; no se toca la version."
+            echo "El ultimo commit no trae la marca [X.Y.Z]; no se publica version."
+            echo "found=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          BRACKET=$(printf '%s' "$MSG" | grep -oE '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' | head -1 | tr -d '[]v')
-          SIGNAL=$(printf '%s' "$BRACKET" | cut -d. -f1)
-          CURRENT=$(grep -m1 -E '^## \[v?[0-9]+\.[0-9]+\.[0-9]+\]' docs/CHANGELOG.md | sed -E 's/^## \[v?([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/')
-          if [ -z "$CURRENT" ]; then
-            echo "No se encontro la version actual en docs/CHANGELOG.md" >&2
-            exit 1
-          fi
-          IFS=. read -r MA MI PA <<< "$CURRENT"
-          if [ "$SIGNAL" -gt 0 ]; then
-            NEW="$((MA + 1)).0.0"
-            NIVEL="MAJOR"
-          else
-            NEW="$MA.$((MI + 1)).0"
-            NIVEL="MINOR"
-          fi
-          if grep -qE "^## \[v?$NEW\]" docs/CHANGELOG.md; then
-            echo "La version v$NEW ya esta registrada; no se duplica."
+          VERSION=$(printf '%s' "$MSG" | grep -oE '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' | head -1 | tr -d '[]v')
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version detectada: v$VERSION"
+
+      - name: Registrar en CHANGELOG
+        if: steps.version.outputs.found == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ ! -f docs/CHANGELOG.md ]; then
+            echo "No existe docs/CHANGELOG.md en esta rama; se omite el registro."
             exit 0
           fi
-          echo "Nivel: $NIVEL | Version: v$CURRENT -> v$NEW"
+          if grep -qE "^## \[v?$VERSION\]" docs/CHANGELOG.md; then
+            echo "La version v$VERSION ya esta registrada; no se duplica."
+            exit 0
+          fi
           ENTRY=$(mktemp)
           {
-            echo "## [v$NEW] - $(date +%F)"
+            echo "## [v$VERSION] - $(date +%F)"
             echo
-            echo "- **Cambio:** $(printf '%s' "$MSG" | grep -m1 -E '\[v?[0-9]+\.[0-9]+\.[0-9]+\]' | head -1)"
+            echo "- **Cambio:** $(git log -1 --pretty=%s)"
             echo
           } > "$ENTRY"
           awk -v entry="$ENTRY" 'BEGIN{done=0} /^## \[v/{if(!done){while((getline line < entry)>0) print line; close(entry); done=1}} {print}' docs/CHANGELOG.md > /tmp/changelog.new
@@ -66,5 +67,41 @@ jobs:
           git config user.name "pintuclic-version-bot"
           git config user.email "pintuclic-version-bot@users.noreply.github.com"
           git add docs/CHANGELOG.md
-          git commit -m "chore(release): [skip ci] registrar v$NEW en CHANGELOG"
+          git commit -m "chore(release): [skip ci] registrar v$VERSION en CHANGELOG"
           git push origin "HEAD:${{ github.ref_name }}"
+
+      - name: Crear tag y Release
+        if: steps.version.outputs.found == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "pintuclic-version-bot"
+          git config user.email "pintuclic-version-bot@users.noreply.github.com"
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "El tag v$VERSION ya existe."
+          else
+            git tag -a "v$VERSION" -m "Release v$VERSION"
+            git push origin "v$VERSION"
+          fi
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "El Release v$VERSION ya existe."
+            exit 0
+          fi
+          NOTES=$(mktemp)
+          {
+            echo "## v$VERSION"
+            echo
+            echo "### Cambios"
+            PREV=$(git describe --tags --abbrev=0 --exclude "v$VERSION" 2>/dev/null || true)
+            if [ -n "$PREV" ]; then
+              git log --oneline "$PREV..HEAD" | sed 's/^/- /'
+            else
+              git log --oneline -20 | sed 's/^/- /'
+            fi
+          } > "$NOTES"
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --notes-file "$NOTES" \
+            --latest

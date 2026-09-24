@@ -31,7 +31,7 @@ Se requiere tomar estos puntos para su versionamiento.
 - 0 -> Arreglos de problemas que presenta la web
 
 ### Objetivo
-Automatizar el versionado del proyecto para que ya no dependamos de que alguien actualice el número de versión a mano. La versión se calcula automáticamente a partir de lo que cada desarrollador escriba en su mensaje de commit.
+Automatizar el versionado del proyecto para que ya no dependamos de que alguien actualice el número de versión a mano. La versión se toma automáticamente de lo que cada desarrollador escriba en su mensaje de commit, se registra en el CHANGELOG y se publica como Release.
 
 ### Formato del commit
 A partir de ahora, cada commit debe seguir esta estructura:
@@ -42,29 +42,30 @@ tipo(módulo): [X.Y.Z] descripción del cambio
 
 Ejemplo:
 ```bash
-git commit -m "feat(M01): [0.1.0] agregar validación de formulario de login"
+git commit -m "feat(M01): [3.28.0] agregar validación de formulario de login"
 ```
 
 - **tipo:** qué clase de cambio es (feat, fix, refactor, etc.)
 - **módulo:** la parte del sistema afectada (ej. M01, auth, payments)
-- **[X.Y.Z]:** el indicador de versión — esto es lo que el bot va a leer para decidir cómo subir la versión del proyecto
+- **[X.Y.Z]:** la nueva versión del proyecto — el bot la lee y publica el Release con ese nombre
 - **descripción:** el detalle normal del commit, como siempre
 
-### Cómo se interpreta el número entre corchetes
-El bot no toma el número tal cual, lo usa solo como señal de qué tipo de cambio es:
+### Cómo se elige el número entre corchetes
+La marca es la **versión nueva** del proyecto. Se sube el dígito según el tipo de cambio:
 
-| Lo que escribes | Qué significa | Qué hace el bot |
+| Nivel | Qué dígito sube | Ejemplo desde `3.27.0` |
 | :--- | :--- | :--- |
-| `[0.x.x]` | Cambio normal (feature, mejora, fix) | Sube el **minor** de la versión actual del proyecto. Ej: `3.12.4 → 3.13.0` |
-| `[1.0.0]` o mayor | Cambio grande / breaking change | Sube el **major** de la versión actual. Ej: `3.13.0 → 4.0.0` |
+| **Patch** (fix puntual) | el tercero | `[3.27.1]` |
+| **Menor (minor)** (feature o mejora) | el segundo | `[3.28.0]` |
+| **Mayor (major)** (cambio grande / breaking) | el primero | `[4.0.0]` |
 
-Es decir: el `[0.1.0]` o `[1.0.0]` que escribe el desarrollador no es la versión final del proyecto, es solo una bandera para decirle al bot "esto es un cambio chico" o "esto es un cambio grande".
+Es decir: el número entre corchetes es la versión con la que queda el proyecto, y el bot la usa tal cual (no la recalcula).
 
 ### Qué pasa automáticamente
 1. El desarrollador hace push con un commit en ese formato.
 2. El bot de GitHub Actions ([.github/workflows/version-bot.yml](.github/workflows/version-bot.yml)) lee el mensaje del último commit.
-3. Detecta el número entre corchetes y calcula la nueva versión del proyecto (efecto odómetro).
-4. Actualiza el archivo de versión `docs/CHANGELOG.md` y sube ese cambio con su propio commit.
+3. Toma la versión entre corchetes y la registra en `docs/CHANGELOG.md` con su propio commit.
+4. Crea el tag y el **GitHub Release `vX.Y.Z`** con el nombre de la versión dada.
 
 El bot corre en cada push a `main` y `release`.
     
@@ -74,6 +75,6 @@ El bot corre en cada push a `main` y `release`.
 - Estandariza cómo describimos nuestros cambios, lo cual también ayuda a generar changelogs más adelante.
 
 ### Importante
-Si el commit no trae el tag `[X.Y.Z]`, el bot simplemente no toca la versión — así que si un cambio no debe afectar el versionado (como un ajuste de documentación menor), basta con omitir el corchete.
+Si el commit no trae la marca `[X.Y.Z]`, el bot no toca la versión ni publica Release — así que si un cambio no debe afectar el versionado (como un ajuste de documentación menor), basta con omitir el corchete.
 
 > El CHANGELOG lo gestiona el bot: no se edita a mano. Detalle completo: [GUIA_VERSIONADO_Y_WALKTHROUGHS.md](docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md) (Sección 5).
