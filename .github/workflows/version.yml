@@ -1,0 +1,249 @@
+name: Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Segmento a incrementar (se ignora si indicas una version exacta)"
+        required: true
+        default: build
+        type: choice
+        options:
+          - build
+          - patch
+          - minor
+          - major
+      version:
+        description: "Version exacta opcional con formato X.Y.Z.W (ej. 0.3.29.0)"
+        required: false
+        default: ""
+        type: string
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - .github/version.txt
+
+permissions:
+  contents: write
+
+concurrency:
+  group: version-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Actualizar version
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calcular nueva version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+          EXPLICIT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          FILE=".github/version.txt"
+          if [ ! -f "$FILE" ]; then
+            echo "No existe $FILE en esta rama; crealo antes de versionar." >&2
+            exit 1
+          fi
+          CURRENT=$(tr -d '[:space:]' < "$FILE")
+          if ! printf '%s' "$CURRENT" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "La version actual '$CURRENT' no cumple el formato MAJOR.MINOR.PATCH.BUILD" >&2
+            exit 1
+          fi
+          IFS='.' read -r MAJOR MINOR PATCH BUILD <<< "$CURRENT"
+          if [ -n "$EXPLICIT_VERSION" ]; then
+            NEXT="$EXPLICIT_VERSION"
+            if ! printf '%s' "$NEXT" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "La version indicada '$NEXT' no cumple el formato MAJOR.MINOR.PATCH.BUILD" >&2
+              exit 1
+            fi
+            if [ "$NEXT" = "$CURRENT" ]; then
+              echo "La version indicada '$NEXT' es igual a la actual; no hay nada que versionar." >&2
+              exit 1
+            fi
+            if [ "$(printf '%s\n%s\n' "$CURRENT" "$NEXT" | sort -V | head -1)" != "$CURRENT" ]; then
+              echo "La version indicada '$NEXT' es menor que la actual '$CURRENT'." >&2
+              exit 1
+            fi
+            ORIGIN="version exacta"
+          else
+            case "$BUMP" in
+              major) NEXT="$((MAJOR + 1)).0.0.0" ;;
+              minor) NEXT="$MAJOR.$((MINOR + 1)).0.0" ;;
+              patch) NEXT="$MAJOR.$MINOR.$((PATCH + 1)).0" ;;
+              build) NEXT="$MAJOR.$MINOR.$PATCH.$((BUILD + 1))" ;;
+              *)
+                echo "Segmento de incremento invalido: '$BUMP'" >&2
+                exit 1
+                ;;
+            esac
+            ORIGIN="incremento $BUMP"
+          fi
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Version actual: $CURRENT"
+          echo "Version nueva: $NEXT ($ORIGIN)"
+
+      - name: Actualizar .github/version.txt
+        env:
+          VERSION: ${{ steps.version.outputs.next }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' "$VERSION" > .github/version.txt
+          cat .github/version.txt
+
+      - name: Commit y push de la version
+        env:
+          VERSION: ${{ steps.version.outputs.next }}
+        run: |
+          set -euo pipefail
+          git config user.name "pintuclic-version-bot"
+          git config user.email "pintuclic-version-bot@users.noreply.github.com"
+          git add .github/version.txt
+          git commit -m "chore(release): [$VERSION] actualizar version"
+          git push origin "HEAD:${{ github.ref_name }}"
+
+  package:
+    name: Publicar release
+    needs:
+      - bump
+    if: >-
+      always() &&
+      (github.event_name == 'push' || needs.bump.result == 'success') &&
+      (github.ref_name == 'main' || github.ref_name == 'develop')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: version-package
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Leer y validar version
+        id: version
+        run: |
+          set -euo pipefail
+          FILE=".github/version.txt"
+          if [ ! -f "$FILE" ]; then
+            echo "No existe $FILE en esta rama; no hay version que publicar." >&2
+            exit 1
+          fi
+          VERSION=$(tr -d '[:space:]' < "$FILE")
+          if ! printf '%s' "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "La version '$VERSION' no cumple el formato MAJOR.MINOR.PATCH.BUILD" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version a publicar: $VERSION"
+
+      - name: Crear tag si no existe
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "El tag v$VERSION ya existe; no se sobreescribe."
+            exit 0
+          fi
+          git config user.name "pintuclic-version-bot"
+          git config user.email "pintuclic-version-bot@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Generar notas del release
+        id: notes
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          NOTES=$(mktemp)
+          {
+            echo "## v$VERSION"
+            echo
+            if [ "$BRANCH" = "develop" ]; then
+              echo "Canal: develop (pre-release)"
+            else
+              echo "Canal: main (estable)"
+            fi
+            echo
+            echo "### Cambios"
+            PREV=$(git describe --tags --abbrev=0 --exclude "v$VERSION" 2>/dev/null || true)
+            if [ -n "$PREV" ]; then
+              git log --oneline "$PREV..HEAD" | sed 's/^/- /'
+            else
+              git log --oneline -20 | sed 's/^/- /'
+            fi
+          } > "$NOTES"
+          echo "file=$NOTES" >> "$GITHUB_OUTPUT"
+
+      - name: Publicar pre-release en develop
+        if: github.ref_name == 'develop'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          NOTES: ${{ steps.notes.outputs.file }}
+        run: |
+          set -euo pipefail
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "El Release v$VERSION ya existe; no se modifica en develop."
+            exit 0
+          fi
+          gh release create "v$VERSION" \
+            --title "v$VERSION (pre-release)" \
+            --notes-file "$NOTES" \
+            --prerelease
+
+      - name: Publicar o promover release estable en main
+        if: github.ref_name == 'main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          NOTES: ${{ steps.notes.outputs.file }}
+        run: |
+          set -euo pipefail
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "El Release v$VERSION existe; se promueve a estable."
+            gh release edit "v$VERSION" \
+              --title "v$VERSION" \
+              --notes-file "$NOTES" \
+              --prerelease=false
+            gh release edit "v$VERSION" --latest
+            exit 0
+          fi
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --notes-file "$NOTES" \
+            --latest
+
+      - name: Resumen
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          CHANNEL="pre-release"
+          if [ "$BRANCH" = "main" ]; then
+            CHANNEL="estable"
+          fi
+          {
+            echo "### Release v$VERSION"
+            echo
+            echo "- Rama: $BRANCH"
+            echo "- Canal: $CHANNEL"
+            echo "- Tag: v$VERSION"
+            echo "- GitHub adjunta el zip del codigo fuente automaticamente"
+          } >> "$GITHUB_STEP_SUMMARY"

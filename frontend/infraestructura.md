@@ -14,7 +14,16 @@ frontend/
  │    ├── assets/            # Recursos estáticos (imágenes, logos SVG, iconos)
  │    ├── core/              # 🌍 ZONA GLOBAL (Transversal y compartida)
  │    │    ├── api/          # Instancia global de Axios configurada (baseURL, interceptores JWT)
- │    │    ├── components/   # UI Design System base reutilizable con Tailwind (Botones, Modales, Inputs, Badges)
+ │    │    ├── components/   # UI Design System base reutilizable con Tailwind y barril (index.ts)
+ │    │    │    ├── buttons/      # Disparadores de acción (Button.vue, IconButton.vue)
+ │    │    │    ├── forms/        # Entradas y controles (Input.vue, Select.vue, Checkbox.vue, etc.)
+ │    │    │    ├── feedback/     # Notificaciones y estados (Alert.vue, Toast.vue, Spinner.vue, etc.)
+ │    │    │    ├── overlays/     # Diálogos y superposiciones (Modal.vue, Drawer.vue, Tooltip.vue, etc.)
+ │    │    │    ├── navigation/   # Navegación y paginación (Tabs.vue, Migas.vue, Paginacion.vue, etc.)
+ │    │    │    ├── data-display/ # Visualización de datos (Card.vue, Table.vue, Badge.vue, Avatar.vue)
+ │    │    │    ├── layout/       # Piezas estructurales (FooterPrincipal.vue)
+ │    │    │    ├── dev/          # Herramientas de depuración (DevRoleSwitcher.vue)
+ │    │    │    └── index.ts      # Barril central unificado (import { Button, Modal } from '@/core/components')
  │    │    ├── dtos/         # 🛡️ DTOs Globales: Esquemas Zod y validadores transversales (seguridad, contraseñas, etc.)
  │    │    ├── theme/        # 🎨 Paleta de colores oficial, tokens y guía de diseño (colors.ts, GUIA_COLORES.md)
  │    │    ├── router/       # Enrutador principal de Vue e integración de rutas por módulo
@@ -135,7 +144,9 @@ Cualquier agente de IA o desarrollador que construya código para el frontend de
 | **Conversión** | Verde Principal | `#41BF5A` | `bg-conversion` / `text-conversion` | Botón "Agregar al Carrito", confirmaciones de compra. |
 | **Conversión (Hover)** | Verde Oscuro | `#1B6D24` | `bg-conversion-hover` / `text-conversion-hover` | Estado hover de botones de compra y conversión. |
 | **Conversión (Acento)**| Verde Acento | `#3CB148` | `bg-conversion-accent` / `text-conversion-accent` | Variantes o estados activos del flujo de compra. |
-| **Destacado** | Amarillo | `#FFC107` | `bg-highlight` / `text-highlight` | Etiquetas de "Patrocinado", ofertas, badges. |
+| **Destacado** | Amarillo | `#FFC107` | `bg-highlight` / `text-highlight` | Etiquetas de "Patrocinado", estrellas, badges. |
+| **Peligro / Crítico**| Rojo Peligro | `#E63946` | `bg-danger` / `text-danger` | Cierre de sesión, eliminación, confirmaciones destructivas. |
+| **Ofertas** | Rojo Ofertas | `#E63946` | `bg-offer` / `text-offer` | Badges de "OFERTAS", promociones y descuentos. |
 | **Neutros: Blanco** | Blanco | `#FFFFFF` | `bg-neutral-white` (o `bg-white`) / `text-white` | Fondos de tarjetas, modales, superficies principales. |
 | **Neutros: Gris Muy Claro** | Gris Fondo | `#F7F8FA` | `bg-neutral-lightest` / `text-neutral-lightest` | Fondo general de página, fondos de fotos de producto. |
 | **Neutros: Gris Claro** | Gris Bordes | `#E5E7EB` | `bg-neutral-light` / `border-neutral-light` | Bordes, divisores, separadores, sliders inactivos. |

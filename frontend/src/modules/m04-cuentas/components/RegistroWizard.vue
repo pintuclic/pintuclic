@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import Modal from '@/core/components/Modal.vue';
+import { Modal } from '@/core/components';
 import PasoDatos from './PasoDatos.vue';
 import PasoVerificacion from './PasoVerificacion.vue';
 import PasoListo from './PasoListo.vue';

@@ -43,3 +43,13 @@ Toda revisión debe contrastar el código contra las siguientes dimensiones:
 - **✅ APROBADO:** El módulo cumple con todos los estándares y criterios de aceptación.
 - **⚠️ APROBADO CON OBSERVACIONES:** El módulo es funcional pero requirió ajustes arquitectónicos menores (e.g. desacoplamiento de DTOs).
 - **🛑 RECHAZADO / REQUIERE CAMBIOS:** Se detectaron violaciones graves de seguridad, tipos `any`, dependencias cruzadas indebidas o incumplimiento de Criterios de Aceptación.
+
+---
+
+## 📌 Histórico de Revisiones y Verificaciones del Esquema de Base de Datos
+
+| Versión | Fecha | Entregable / Walkthrough de Base de Datos | Dictamen | Resumen de Cambios Estructurales |
+| :---: | :---: | :--- | :---: | :--- |
+| **v3.29.0** | 2026-09-22 | [`walkthrough_v3.29.0_DATABASE_actualizacion_esquema_diagrama_er_backend.md`](../walkthroughs/DATABASE/walkthrough_v3.29.0_DATABASE_actualizacion_esquema_diagrama_er_backend.md) | **✅ APROBADO** | Sincronización completa de DDL (`schema_pintuclic.sql`), seed (`seed_pintuclic.sql`), tipos Kysely (`types.ts`) y documentación (`DOCUMENTACION_BASE_DATOS.md`) según el diagrama ER oficial (`variante` $\rightarrow$ `base` $\rightarrow$ `color` $\rightarrow$ `tonos`, `linea_carrito.ref_viva`, `cotizacion.id_usuario/id_rol`, `orden.carrito_o_cotizacion`). |
+| **v2.4** | 2026-09-05 | [`WALKTHROUGH_DATABASE.md`](../../bd/docs/WALKTHROUGH_DATABASE.md#-versión-24-2026-09-05) | **✅ APROBADO** | Incorporación de 5 tablas relacionales para M04 Cuentas y Perfil (`direccion_cliente`, `solicitud_empresa`, `solicitud_actualizacion_nit`, `usuario_identidad_externa`, `codigo_verificacion`). |
+

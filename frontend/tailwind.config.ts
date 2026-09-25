@@ -15,10 +15,13 @@ export default {
         subaction: PINTUCLIC_COLORS.subaction,
         conversion: PINTUCLIC_COLORS.conversion,
         highlight: PINTUCLIC_COLORS.highlight,
+        danger: PINTUCLIC_COLORS.danger,
+        offer: PINTUCLIC_COLORS.offer,
         neutral: PINTUCLIC_COLORS.neutral,
       },
       fontFamily: {
         sans: [
+          'Inter',
           'system-ui',
           '-apple-system',
           'BlinkMacSystemFont',
@@ -26,6 +29,7 @@ export default {
           'Roboto',
           'sans-serif',
         ],
+        title: ['Poppins', 'sans-serif'],
       },
     },
   },
