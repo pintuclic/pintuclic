@@ -20,7 +20,15 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value);
 
-  const setAuthData = (newToken: string, newUser: UsuarioSeguro, sid?: string): void => {
+  
+    const updateUser = (newData: Partial<UsuarioSeguro>) => {
+      if (user.value) {
+        user.value = { ...user.value, ...newData };
+        localStorage.setItem('user_data', JSON.stringify(user.value));
+      }
+    };
+
+    const setAuthData = (newToken: string, newUser: UsuarioSeguro, sid?: string): void => {
     token.value = newToken;
     user.value = newUser;
     localStorage.setItem('access_token', newToken);
@@ -58,5 +66,6 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     setAuthData,
+      updateUser,
   };
 });

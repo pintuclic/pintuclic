@@ -14,15 +14,30 @@ export const routes: RouteRecordRaw[] = [
         name: 'Inicio',
         component: () => import('@/modules/m02-productos/views/VistaInicio.vue'),
       },
+      {
+        path: 'perfil',
+        name: 'Perfil',
+        component: () => import('@/modules/m04-cuentas/views/VistaPerfil.vue'),
+      },
     ],
   },
 
-  // 2. Panel Administrativo (LayoutAdmin puro, sin M01 inyectado)
+  // 2. Panel Administrativo (LayoutAdmin con M01 Catálogo y M04 Cuentas)
   {
     path: '/admin',
     name: 'Administracion',
     component: () => import('@/core/layouts/LayoutAdmin.vue'),
-    children: [...adminCatalogoRoutes]
+    children: [
+      ...adminCatalogoRoutes,
+      {
+        path: 'solicitudes',
+        name: 'AdminSolicitudesEmpresa',
+        component: () =>
+          import(
+            '@/modules/m04-cuentas/views/admin/VistaAprobacionEmpresas.vue'
+          ),
+      },
+    ],
   },
 
   // 3. Layout de Acceso / Auth independiente

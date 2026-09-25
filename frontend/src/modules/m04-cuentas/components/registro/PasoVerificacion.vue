@@ -1,6 +1,19 @@
 <template>
   <EncabezadoModal />
-  <PasosProgreso :pasos="['Datos', 'Verificación', 'Listo']" :paso-actual="2" />
+
+  <!-- BOTÓN VOLVER DEBAJO DEL ENCABEZADO -->
+  <div class="mb-2">
+    <button
+      type="button"
+      class="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-medium hover:text-corporate transition-colors cursor-pointer"
+      @click="$emit('volver')"
+    >
+      <ArrowLeftIcon class="w-4 h-4" />
+      <span>Volver</span>
+    </button>
+  </div>
+
+  <PasosProgreso v-if="!isCambioCorreo" :pasos="['Datos', 'Verificación', 'Listo']" :paso-actual="2" />
 
   <div class="text-center mb-8">
     <h2 class="text-2xl font-bold text-corporate mb-2">Verifica tu correo</h2>
@@ -30,12 +43,12 @@
 
     <!-- Franja informativa oficial con tokens de conversión -->
     <div class="w-full rounded-input bg-conversion/10 border border-conversion/30 px-4 py-3 text-sm text-neutral-dark text-center">
-      El código expira en 15 minutos. Tu cuenta se activa al confirmarlo.
+      El código expira en 15 minutos. {{ isCambioCorreo ? 'Tu nuevo correo se activará al confirmarlo.' : 'Tu cuenta se activa al confirmarlo.' }}
     </div>
 
     <div class="w-full">
       <Button type="submit" variant="corporate" size="full" :disabled="!otpCompleto || cargando">
-        {{ cargando ? 'Verificando...' : 'Verificar y crear cuenta' }}
+        {{ cargando ? 'Verificando...' : (isCambioCorreo ? 'Verificar y cambiar correo' : 'Verificar y crear cuenta') }}
       </Button>
     </div>
   </form>
@@ -46,27 +59,22 @@
       {{ tiempoRestante > 0 ? `Reenviar código en ${tiempoRestante}s` : 'Reenviar código' }}
     </button>
   </div>
-
-  <div class="mt-4 text-center">
-    <button type="button" class="text-sm text-neutral-medium hover:text-neutral-dark hover:underline cursor-pointer" @click="$emit('volver')">
-      ← Volver
-    </button>
-  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
-import EncabezadoModal from './EncabezadoModal.vue';
-import PasosProgreso from './PasosProgreso.vue';
-import { Button } from '@/core/components';
-import { useCuentas } from '../composables/useCuentas';
+import { ArrowLeft as ArrowLeftIcon } from 'lucide-vue-next';
+import EncabezadoModal from '../comunes/EncabezadoModal.vue';
+import { Button, PasosProgreso } from '@/core/components';
+import { useCuentas } from '@/modules/m04-cuentas/composables/useCuentas';
 
 const props = defineProps<{
   correo: string;
+  isCambioCorreo?: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'verificado'): void;
+  (e: 'verificado', codigo?: string): void;
   (e: 'volver'): void;
 }>();
 
@@ -109,6 +117,11 @@ async function onVerificarSubmit() {
 
   const codigoStr = otp.value.join('');
   limpiarErrores();
+
+  if (props.isCambioCorreo) {
+    emit('verificado', codigoStr);
+    return;
+  }
 
   const resultado = await verificarCodigoActivacion({
     correo: props.correo,
