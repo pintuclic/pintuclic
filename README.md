@@ -31,6 +31,15 @@ El tipo de datos para la versión es semantica y se va utilizar por:
 | `X.X.X.1` | **Patch** | Arreglos de pequeños para el funcionamiento de la web|
 
 La antigua version utilizada `3.28.0`, se va cambiar por la nueva versión `0.3.28.0`.
+Esos cambios se hacen al archivo `.github/version.txt`.
+Un ejemplo de contenido y editar:
+```bash
+0.3.28.0
+```
+Si es un parche(fix) debe ir como:
+```
+0.3.28.1
+```
 
 ### Recomendaciones
 - El dato `X` en la tabla versión no significa que es literalmente `1.X.3` eso es erroneo, la `X` solo es un ejemplo como van separadas los datos de las versiones. 
