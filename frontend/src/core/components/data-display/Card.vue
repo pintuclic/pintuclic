@@ -6,10 +6,7 @@
         <p v-if="subtitle" class="text-sm text-neutral-medium mt-1 font-sans">{{ subtitle }}</p>
       </slot>
     </div>
-<<<<<<< HEAD
     
-=======
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
     <div :class="['flex-1', noPadding ? '' : 'p-6']">
       <slot />
     </div>
