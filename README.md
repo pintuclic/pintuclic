@@ -33,7 +33,7 @@ El tipo de datos para la versión es semantica y se va utilizar por:
 La antigua version utilizada `3.28.0`, se va cambiar por la nueva versión `0.3.28.0`.
 Esos cambios se hacen al archivo `.github/version.txt`.
 Un ejemplo de contenido y editar:
-```bash
+```
 0.3.28.0
 ```
 Si es un parche(fix) debe ir como:
