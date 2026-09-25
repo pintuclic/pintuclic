@@ -31,8 +31,12 @@
           <router-link to="/" class="flex-shrink-0 cursor-pointer">
             <img src="@/assets/logo.png" alt="Pintu Clic" class="h-10 object-contain" />
           </router-link>
-
-          <button class="flex items-center gap-2 bg-action hover:bg-action/90 text-white transition-colors px-4 py-2.5 rounded-lg font-bold text-sm cursor-pointer shadow-sm">
+          
+          <button 
+            type="button"
+            class="flex items-center gap-2 bg-action hover:bg-action-hover text-white transition-colors px-4 py-2.5 rounded-lg font-bold text-sm cursor-pointer shadow-sm"
+            @click="openCategorias"
+          >
             <MenuIcon class="w-5 h-5" />
             Categorías
             <ChevronDownIcon class="w-4 h-4 ml-1" />
@@ -41,23 +45,44 @@
 
         <!-- Enlaces Principales -->
         <nav class="hidden xl:flex items-center gap-6 font-semibold text-neutral-dark text-[15px]">
-          <router-link to="/" class="relative text-action py-1 cursor-pointer group">
+          <router-link 
+            to="/" 
+            class="relative py-1 cursor-pointer group transition-colors"
+            :class="isActivo('/') ? 'text-action' : 'hover:text-action'"
+          >
             Inicio
-            <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-100 transition-transform origin-left"></span>
+            <span 
+              class="absolute bottom-0 left-0 w-full h-[2px] bg-action transition-transform origin-left"
+              :class="isActivo('/') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
+            ></span>
           </router-link>
-          <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
+          <router-link 
+            to="/catalogo" 
+            class="relative py-1 cursor-pointer group transition-colors"
+            :class="isActivo('/catalogo') ? 'text-action' : 'hover:text-action'"
+          >
             Productos
-            <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-          </a>
-          <a href="#" class="bg-offer hover:bg-offer-hover text-white px-3 py-1 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer">OFERTAS</a>
+            <span 
+              class="absolute bottom-0 left-0 w-full h-[2px] bg-action transition-transform origin-left"
+              :class="isActivo('/catalogo') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
+            ></span>
+          </router-link>
+          <a href="#" class="bg-[#D62828] hover:bg-[#B71C1C] text-white px-3 py-1 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer">OFERTAS</a>
           <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
             Servicios
             <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
           </a>
-          <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
+          <router-link 
+            to="/paleta-colores" 
+            class="relative py-1 cursor-pointer group transition-colors"
+            :class="isActivo('/paleta-colores') ? 'text-action' : 'hover:text-action'"
+          >
             Paleta de Color
-            <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-          </a>
+            <span 
+              class="absolute bottom-0 left-0 w-full h-[2px] bg-action transition-transform origin-left"
+              :class="isActivo('/paleta-colores') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
+            ></span>
+          </router-link>
           <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
             Sobre Nosotros
             <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
@@ -122,7 +147,7 @@
           <button class="relative flex items-center gap-2 text-neutral-dark hover:text-action transition-all duration-300 text-left cursor-pointer" :class="{ '-translate-y-1': cartTotalItems > 0 }">
             <div class="relative">
               <ShoppingCartIcon class="w-7 h-7" />
-              <span v-if="cartTotalItems > 0" class="absolute -top-1.5 -right-1.5 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              <span v-if="cartTotalItems > 0" class="absolute -top-1.5 -right-1.5 bg-highlight text-corporate text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                 {{ cartTotalItems }}
               </span>
             </div>
@@ -159,22 +184,14 @@
       @success="handleWizardSuccess" 
     />
 
-    <RecuperarPasswordWizard 
-      v-model="showRecover" 
-      @openLogin="openLogin" 
+    <!-- Modal Global de Categorías M01 -->
+    <MenuCategoriasPublico
+      :abierto="showCategorias"
+      :cargando="cargandoCategorias"
+      :categorias="categorias"
+      @cerrar="showCategorias = false"
+      @seleccionar="handleSelectSubcategoria"
     />
-
-    <!-- Modal Confirmación Cerrar Sesión -->
-    <Modal v-model="showLogoutConfirm" maxWidth="sm">
-      <div class="text-center py-4">
-        <h3 class="text-xl font-bold text-corporate mb-2">¿Cerrar sesión?</h3>
-        <p class="text-neutral-medium text-sm mb-6">¿Estás seguro de que deseas salir de tu cuenta?</p>
-        <div class="flex gap-3 justify-center">
-          <Button variant="neutral" class="flex-1" @click="showLogoutConfirm = false">Cancelar</Button>
-          <Button variant="danger" class="flex-1" @click="confirmLogout">Aceptar</Button>
-        </div>
-      </div>
-    </Modal>
   </div>
 </template>
 
@@ -192,28 +209,67 @@ import {
   ShoppingCart as ShoppingCartIcon
 } from 'lucide-vue-next';
 
-import FooterPrincipal from './FooterPrincipal.vue';
-import Button from '@/core/components/buttons/Button.vue';
-import Modal from '@/core/components/overlays/Modal.vue';
-import Dropdown from '@/core/components/overlays/Dropdown.vue';
-import ModalLogin from '@/modules/m04-cuentas/components/auth/ModalLogin.vue';
-import RegistroWizard from '@/modules/m04-cuentas/components/registro/RegistroWizard.vue';
-import RecuperarPasswordWizard from '@/modules/m04-cuentas/components/recuperacion/RecuperarPasswordWizard.vue';
+import { FooterPrincipal } from '@/core/components';
+import ModalLogin from '@/modules/m04-cuentas/components/ModalLogin.vue';
+import RegistroWizard from '@/modules/m04-cuentas/components/RegistroWizard.vue';
+import MenuCategoriasPublico from '@/modules/m01-dashboardcatalogo/components/publicas/MenuCategoriasPublico.vue';
+import { CatalogoPublicoService } from '@/modules/m01-dashboardcatalogo/services/catalogo-publico.service';
+import type { CategoriaPublica } from '@/modules/m01-dashboardcatalogo/interfaces/catalogo-publico.interface';
 import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import { watchEffect } from 'vue';
+
+// Categorías predefinidas de respaldo (garantiza UI funcional incluso si el backend está iniciando)
+const CATEGORIAS_FALLBACK: readonly CategoriaPublica[] = [
+  {
+    id_categoria: 1,
+    nombre: 'Pinturas',
+    subcategorias: [
+      { id_subcategoria: 1, nombre: 'Pinturas Interiores' },
+      { id_subcategoria: 2, nombre: 'Pinturas Exteriores' },
+      { id_subcategoria: 3, nombre: 'Esmaltes y Barnices' },
+      { id_subcategoria: 4, nombre: 'Pinturas en Spray' },
+    ],
+  },
+  {
+    id_categoria: 2,
+    nombre: 'Herramientas',
+    subcategorias: [
+      { id_subcategoria: 5, nombre: 'Brochas y Rodillos' },
+      { id_subcategoria: 6, nombre: 'Espátulas y Llanas' },
+      { id_subcategoria: 7, nombre: 'Cintas y Protección' },
+    ],
+  },
+  {
+    id_categoria: 3,
+    nombre: 'Preparación y Acabados',
+    subcategorias: [
+      { id_subcategoria: 8, nombre: 'Estucos y Masillas' },
+      { id_subcategoria: 9, nombre: 'Lijas y Abrasivos' },
+      { id_subcategoria: 10, nombre: 'Selladores y Primer' },
+    ],
+  },
+];
 
 // Estado global local del layout para modales
 const showLogin = ref(false);
 const showWizard = ref(false);
-const showRecover = ref(false);
-const showLogoutConfirm = ref(false);
-
+const showCategorias = ref(false);
+const cargandoCategorias = ref(false);
+const categorias = ref<readonly CategoriaPublica[]>([]);
+const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-// Bloquear acceso a la vista pǧblica para administradores
+const isActivo = (path: string): boolean => {
+  if (path === '/') {
+    return route.path === '/';
+  }
+  return route.path.startsWith(path);
+};
+
+// Bloquear acceso a la vista pública para administradores
 watchEffect(() => {
   if (authStore.isAuthenticated) {
     const rol = authStore.user?.rol_nombre?.toLowerCase() || authStore.user?.tipo?.toLowerCase();
@@ -226,7 +282,32 @@ watchEffect(() => {
 const closeAllModals = () => {
   showLogin.value = false;
   showWizard.value = false;
-  showRecover.value = false;
+  showCategorias.value = false;
+};
+
+const openCategorias = async () => {
+  closeAllModals();
+  showCategorias.value = true;
+  if (categorias.value.length === 0) {
+    cargandoCategorias.value = true;
+    try {
+      const data = await CatalogoPublicoService.listarCategorias();
+      if (Array.isArray(data) && data.length > 0) {
+        categorias.value = data;
+      } else {
+        categorias.value = CATEGORIAS_FALLBACK;
+      }
+    } catch {
+      categorias.value = CATEGORIAS_FALLBACK;
+    } finally {
+      cargandoCategorias.value = false;
+    }
+  }
+};
+
+const handleSelectSubcategoria = (idSubcategoria: number) => {
+  showCategorias.value = false;
+  void router.push({ path: '/catalogo', query: { subcategoria: idSubcategoria } });
 };
 
 const openLogin = () => {

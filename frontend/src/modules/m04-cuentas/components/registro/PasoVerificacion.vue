@@ -63,10 +63,17 @@
 
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
+<<<<<<< HEAD:frontend/src/modules/m04-cuentas/components/PasoVerificacion.vue
+import EncabezadoModal from './EncabezadoModal.vue';
+import PasosProgreso from './PasosProgreso.vue';
+import { Button } from '@/core/components';
+import { useCuentas } from '../composables/useCuentas';
+=======
 import { ArrowLeft as ArrowLeftIcon } from 'lucide-vue-next';
 import EncabezadoModal from '../comunes/EncabezadoModal.vue';
 import { Button, PasosProgreso } from '@/core/components';
 import { useCuentas } from '@/modules/m04-cuentas/composables/useCuentas';
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55:frontend/src/modules/m04-cuentas/components/registro/PasoVerificacion.vue
 
 const props = defineProps<{
   correo: string;

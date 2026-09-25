@@ -6,6 +6,7 @@
         <p v-if="subtitle" class="text-sm text-neutral-medium mt-1 font-sans">{{ subtitle }}</p>
       </slot>
     </div>
+    
     <div :class="['flex-1', noPadding ? '' : 'p-6']">
       <slot />
     </div>

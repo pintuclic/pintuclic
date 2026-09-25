@@ -229,4 +229,8 @@ Endpoints previstos (aún no implementados por el backend de M01):
 3. **`core/layouts/DisenoAdmin.vue`** compartido con M02 → mover `BarraLateralAdmin` / `BarraSuperiorAdmin`.
 4. **Sesión (M04):** nombre y permisos reales desde el store de autenticación (hoy `Carlos Álvarez` fijo).
 5. **Subida de imágenes/logos (HU-CAT-07):** endpoint propio; los componentes actuales son marcadores.
+<<<<<<< HEAD
+6. **`CHANGELOG.md` + walkthrough** de la versión (fuera del módulo; commit administrativo aparte).
+=======
 6. **Walkthrough** de la implementación (fuera del módulo; commit administrativo aparte).
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55

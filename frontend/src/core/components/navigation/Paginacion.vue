@@ -34,7 +34,7 @@
             <span class="sr-only">Anterior</span>
             <ChevronLeft class="h-5 w-5" aria-hidden="true" />
           </button>
-
+          
           <button
             v-for="page in totalPages"
             :key="page"

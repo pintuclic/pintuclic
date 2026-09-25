@@ -29,6 +29,10 @@ export interface FilaVariantePublica {
   volumen: string;
   id_color: number | null;
   color: string | null;
+  codigo_color?: string | null;
+  color_cie_l?: string | null;
+  color_cie_a?: string | null;
+  color_cie_b?: string | null;
   id_base: number | null;
   base: string | null;
   precio_vigente: string;
@@ -120,6 +124,10 @@ export class CatalogoPublicoRepository {
         'pr.volumen',
         'v.id_color',
         'co.nombre as color',
+        'co.codigo as codigo_color',
+        'co.cie_l as color_cie_l',
+        'co.cie_a as color_cie_a',
+        'co.cie_b as color_cie_b',
         'v.id_base',
         'ba.nombre as base',
         'v.precio_vigente',

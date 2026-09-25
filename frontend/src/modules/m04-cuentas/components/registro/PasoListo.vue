@@ -24,9 +24,16 @@
 
 <script setup lang="ts">
 import { Check as CheckIcon } from 'lucide-vue-next';
+<<<<<<< HEAD:frontend/src/modules/m04-cuentas/components/PasoListo.vue
+import EncabezadoModal from './EncabezadoModal.vue';
+import PasosProgreso from './PasosProgreso.vue';
+import { Button } from '@/core/components';
+import type { TipoCuentaRegistro } from '../interfaces/registro.interface';
+=======
 import EncabezadoModal from '../comunes/EncabezadoModal.vue';
 import { Button, PasosProgreso } from '@/core/components';
 import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55:frontend/src/modules/m04-cuentas/components/registro/PasoListo.vue
 
 defineProps<{
   tipoCuenta: TipoCuentaRegistro;
