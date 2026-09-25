@@ -226,12 +226,9 @@ export interface VariantePublica {
   readonly volumen: number;
   readonly id_color: number | null;
   readonly color: string | null;
-<<<<<<< HEAD
   readonly codigo_color?: string | null;
   readonly muestra_hex?: string | null;
   readonly familia_color?: string | null;
-=======
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
   readonly id_base: number | null;
   readonly base: string | null;
   readonly precio_vigente: number;

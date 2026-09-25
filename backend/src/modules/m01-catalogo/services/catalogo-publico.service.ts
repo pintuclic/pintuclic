@@ -1,9 +1,6 @@
 import { CatalogoPublicoRepository, FilaVariantePublica, FilaImagenPublica } from '../repositories/catalogo-publico.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
-<<<<<<< HEAD
 import { cielabAHex } from './colores.service';
-=======
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 import {
   CategoriaPublica,
   PaginaProductosPublicos,
@@ -134,7 +131,6 @@ export class CatalogoPublicoService {
 }
 
 function aVariantePublica(v: FilaVariantePublica): VariantePublica {
-<<<<<<< HEAD
   const tieneMuestra =
     v.id_color !== null &&
     v.color_cie_l != null &&
@@ -144,8 +140,6 @@ function aVariantePublica(v: FilaVariantePublica): VariantePublica {
   const a = tieneMuestra ? Number(v.color_cie_a) : null;
   const b = tieneMuestra ? Number(v.color_cie_b) : null;
 
-=======
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
   return {
     id_variante: v.id_variante,
     id_presentacion: v.id_presentacion,
@@ -153,12 +147,9 @@ function aVariantePublica(v: FilaVariantePublica): VariantePublica {
     volumen: Number(v.volumen),
     id_color: v.id_color,
     color: v.color,
-<<<<<<< HEAD
     codigo_color: v.codigo_color ?? null,
     muestra_hex: l !== null && a !== null && b !== null ? cielabAHex(l, a, b) : null,
     familia_color: l !== null && a !== null && b !== null ? familiaCromatica(l, a, b) : null,
-=======
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
     id_base: v.id_base,
     base: v.base,
     precio_vigente: Number(v.precio_vigente),
@@ -166,7 +157,6 @@ function aVariantePublica(v: FilaVariantePublica): VariantePublica {
   };
 }
 
-<<<<<<< HEAD
 /** Familia visual derivada del ángulo de tono CIELAB; los neutros se agrupan como grises. */
 function familiaCromatica(_l: number, a: number, b: number): string {
   if (Math.hypot(a, b) < 12) return 'grises';
@@ -179,8 +169,6 @@ function familiaCromatica(_l: number, a: number, b: number): string {
   return 'rojos';
 }
 
-=======
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 function aImagenDetalle(i: FilaImagenPublica): ImagenDetalle {
   return {
     id_imagen: i.id_imagen,

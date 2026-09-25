@@ -168,13 +168,7 @@ export interface LineaTable {
 export interface BaseTable {
   id_base: Generated<number>;
   id_marca: number;
-<<<<<<< HEAD
   nombre: string;
-=======
-  id_variante: number | null;
-  nombre: string;
-  prefijo: string | null;
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
   estado: Generated<EnumEstadoGeneral>;
 }
 
@@ -214,10 +208,6 @@ export interface ProductoBaseTable {
 export interface ColorTable {
   id_color: Generated<number>;
   id_marca: number;
-<<<<<<< HEAD
-=======
-  id_base: number | null;
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
   nombre: string;
   codigo: string | null;
   // CIELAB (RF-CAT-05-02). El driver de PostgreSQL devuelve NUMERIC como string;
