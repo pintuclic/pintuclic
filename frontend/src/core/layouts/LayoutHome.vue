@@ -31,17 +31,12 @@
           <router-link to="/" class="flex-shrink-0 cursor-pointer">
             <img src="@/assets/logo.png" alt="Pintu Clic" class="h-10 object-contain" />
           </router-link>
-<<<<<<< HEAD
           
           <button 
             type="button"
             class="flex items-center gap-2 bg-action hover:bg-action-hover text-white transition-colors px-4 py-2.5 rounded-lg font-bold text-sm cursor-pointer shadow-sm"
             @click="openCategorias"
           >
-=======
-
-          <button class="flex items-center gap-2 bg-action hover:bg-action/90 text-white transition-colors px-4 py-2.5 rounded-lg font-bold text-sm cursor-pointer shadow-sm">
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
             <MenuIcon class="w-5 h-5" />
             Categorías
             <ChevronDownIcon class="w-4 h-4 ml-1" />
@@ -67,18 +62,12 @@
             :class="isActivo('/catalogo') ? 'text-action' : 'hover:text-action'"
           >
             Productos
-<<<<<<< HEAD
             <span 
               class="absolute bottom-0 left-0 w-full h-[2px] bg-action transition-transform origin-left"
               :class="isActivo('/catalogo') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
             ></span>
           </router-link>
           <a href="#" class="bg-[#D62828] hover:bg-[#B71C1C] text-white px-3 py-1 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer">OFERTAS</a>
-=======
-            <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-          </a>
-          <a href="#" class="bg-offer hover:bg-offer-hover text-white px-3 py-1 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer">OFERTAS</a>
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
           <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
             Servicios
             <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
@@ -158,11 +147,7 @@
           <button class="relative flex items-center gap-2 text-neutral-dark hover:text-action transition-all duration-300 text-left cursor-pointer" :class="{ '-translate-y-1': cartTotalItems > 0 }">
             <div class="relative">
               <ShoppingCartIcon class="w-7 h-7" />
-<<<<<<< HEAD
               <span v-if="cartTotalItems > 0" class="absolute -top-1.5 -right-1.5 bg-highlight text-corporate text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-=======
-              <span v-if="cartTotalItems > 0" class="absolute -top-1.5 -right-1.5 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
                 {{ cartTotalItems }}
               </span>
             </div>
@@ -199,7 +184,6 @@
       @success="handleWizardSuccess" 
     />
 
-<<<<<<< HEAD
     <!-- Modal Global de Categorías M01 -->
     <MenuCategoriasPublico
       :abierto="showCategorias"
@@ -208,24 +192,6 @@
       @cerrar="showCategorias = false"
       @seleccionar="handleSelectSubcategoria"
     />
-=======
-    <RecuperarPasswordWizard 
-      v-model="showRecover" 
-      @openLogin="openLogin" 
-    />
-
-    <!-- Modal Confirmación Cerrar Sesión -->
-    <Modal v-model="showLogoutConfirm" maxWidth="sm">
-      <div class="text-center py-4">
-        <h3 class="text-xl font-bold text-corporate mb-2">¿Cerrar sesión?</h3>
-        <p class="text-neutral-medium text-sm mb-6">¿Estás seguro de que deseas salir de tu cuenta?</p>
-        <div class="flex gap-3 justify-center">
-          <Button variant="neutral" class="flex-1" @click="showLogoutConfirm = false">Cancelar</Button>
-          <Button variant="danger" class="flex-1" @click="confirmLogout">Aceptar</Button>
-        </div>
-      </div>
-    </Modal>
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
   </div>
 </template>
 
@@ -243,22 +209,12 @@ import {
   ShoppingCart as ShoppingCartIcon
 } from 'lucide-vue-next';
 
-<<<<<<< HEAD
 import { FooterPrincipal } from '@/core/components';
 import ModalLogin from '@/modules/m04-cuentas/components/ModalLogin.vue';
 import RegistroWizard from '@/modules/m04-cuentas/components/RegistroWizard.vue';
 import MenuCategoriasPublico from '@/modules/m01-dashboardcatalogo/components/publicas/MenuCategoriasPublico.vue';
 import { CatalogoPublicoService } from '@/modules/m01-dashboardcatalogo/services/catalogo-publico.service';
 import type { CategoriaPublica } from '@/modules/m01-dashboardcatalogo/interfaces/catalogo-publico.interface';
-=======
-import FooterPrincipal from './FooterPrincipal.vue';
-import Button from '@/core/components/buttons/Button.vue';
-import Modal from '@/core/components/overlays/Modal.vue';
-import Dropdown from '@/core/components/overlays/Dropdown.vue';
-import ModalLogin from '@/modules/m04-cuentas/components/auth/ModalLogin.vue';
-import RegistroWizard from '@/modules/m04-cuentas/components/registro/RegistroWizard.vue';
-import RecuperarPasswordWizard from '@/modules/m04-cuentas/components/recuperacion/RecuperarPasswordWizard.vue';
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
@@ -299,7 +255,6 @@ const CATEGORIAS_FALLBACK: readonly CategoriaPublica[] = [
 // Estado global local del layout para modales
 const showLogin = ref(false);
 const showWizard = ref(false);
-<<<<<<< HEAD
 const showCategorias = ref(false);
 const cargandoCategorias = ref(false);
 const categorias = ref<readonly CategoriaPublica[]>([]);
@@ -315,15 +270,6 @@ const isActivo = (path: string): boolean => {
 };
 
 // Bloquear acceso a la vista pública para administradores
-=======
-const showRecover = ref(false);
-const showLogoutConfirm = ref(false);
-
-const router = useRouter();
-const authStore = useAuthStore();
-
-// Bloquear acceso a la vista pǧblica para administradores
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 watchEffect(() => {
   if (authStore.isAuthenticated) {
     const rol = authStore.user?.rol_nombre?.toLowerCase() || authStore.user?.tipo?.toLowerCase();
@@ -336,7 +282,6 @@ watchEffect(() => {
 const closeAllModals = () => {
   showLogin.value = false;
   showWizard.value = false;
-<<<<<<< HEAD
   showCategorias.value = false;
 };
 
@@ -363,9 +308,6 @@ const openCategorias = async () => {
 const handleSelectSubcategoria = (idSubcategoria: number) => {
   showCategorias.value = false;
   void router.push({ path: '/catalogo', query: { subcategoria: idSubcategoria } });
-=======
-  showRecover.value = false;
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 };
 
 const openLogin = () => {

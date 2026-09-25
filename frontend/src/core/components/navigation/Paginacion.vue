@@ -34,11 +34,7 @@
             <span class="sr-only">Anterior</span>
             <ChevronLeft class="h-5 w-5" aria-hidden="true" />
           </button>
-<<<<<<< HEAD
           
-=======
-
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
           <button
             v-for="page in totalPages"
             :key="page"

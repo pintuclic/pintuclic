@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <template>
   <div>
     <!-- Campo de texto largo, para el formulario de contacto y descripciones. -->
@@ -8,26 +7,3 @@
 <script setup lang="ts">
 // TODO: Implementar l�gica de UI y props usando Tailwind CSS
 </script>
-=======
-<script setup lang="ts">
-import { computed, useAttrs, useId } from 'vue';
-defineOptions({ inheritAttrs: false });
-const props = withDefaults(defineProps<{ modelValue?: string; label?: string; name?: string; id?: string; disabled?: boolean; error?: string }>(), { modelValue: '', label: '', disabled: false, error: '' });
-const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
-const generatedId = useId();
-const controlId = computed(() => props.id || generatedId);
-const attrs = useAttrs();
-const controlAttrs = computed(() => { const forwarded = { ...attrs }; delete forwarded.class; return forwarded; });
-const value = computed({ get: () => props.modelValue, set: (next: string) => emit('update:modelValue', next) });
-</script>
-<template>
-  <div class="min-w-0 w-full flex flex-col gap-1.5 font-sans" :class="$attrs.class">
-    <label v-if="label" :for="controlId" class="text-sm font-medium text-neutral-dark">{{ label }}</label>
-    <textarea v-bind="controlAttrs" :id="controlId" :name="name" :disabled="disabled" v-model="value"
-      :aria-invalid="error ? true : undefined" :aria-describedby="error ? `${controlId}-error` : String(controlAttrs['aria-describedby'] || '') || undefined"
-      class="w-full min-w-0 rounded-lg border bg-neutral-white px-4 py-3 text-base sm:text-sm text-neutral-dark outline-none transition-colors focus:border-action focus-visible:ring-2 focus-visible:ring-action/20 disabled:bg-neutral-lightest disabled:opacity-60 disabled:cursor-not-allowed"
-      :class="error ? 'border-danger' : 'border-neutral-light'"></textarea>
-    <span v-if="error" :id="`${controlId}-error`" role="alert" class="text-sm text-danger">{{ error }}</span>
-  </div>
-</template>
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55

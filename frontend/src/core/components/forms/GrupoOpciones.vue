@@ -12,18 +12,13 @@
       ]"
       @click="$emit('update:modelValue', option.value)"
     >
-<<<<<<< HEAD
       <div 
-=======
-      <div
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
         v-if="modelValue === option.value"
         class="absolute top-3 right-3 bg-action text-white rounded-full p-1"
       >
         <Check :size="16" :stroke-width="3" />
       </div>
 
-<<<<<<< HEAD
       <component 
         :is="option.icon" 
         v-if="option.icon" 
@@ -32,16 +27,6 @@
         :stroke-width="1.5"
       />
       
-=======
-      <component
-        :is="option.icon"
-        v-if="option.icon"
-        :size="48"
-        class="mb-4 text-action"
-        :stroke-width="1.5"
-      />
-
->>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
       <span class="font-title font-semibold text-lg">{{ option.label }}</span>
       <span v-if="option.description" class="mt-2 text-sm text-neutral-medium font-sans">
         {{ option.description }}
