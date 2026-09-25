@@ -43,6 +43,12 @@ ordenesRoutes.get('/mis-pedidos/:codigo', (req, res, next) => {
   void ordenesCtrl.detalleMiPedido(req, res).catch(next);
 });
 
+// HU-ORD-05 (consulta): listado del personal filtrable por identificador, estado,
+// periodo y cliente (CA-ORD-05-04, CA-ORD-05-02 escenario 1).
+ordenesRoutes.get('/gestion', guardas.requierePermiso(PERMISO_VER_ORDENES), (req, res, next) => {
+  void ordenesCtrl.listarOrdenesGestion(req, res).catch(next);
+});
+
 // HU-ORD-05 (consulta): el personal localiza una orden por su identificador (CA-ORD-05-04).
 ordenesRoutes.get('/gestion/:codigo', guardas.requierePermiso(PERMISO_VER_ORDENES), (req, res, next) => {
   void ordenesCtrl.detallePedidoGestion(req, res).catch(next);

@@ -3,13 +3,20 @@ import { AppError } from '../../../core/middlewares/errorHandler';
 import { MotivoDenegacion } from '../../m20-seguridad/interfaces/seguridad.interfaces';
 import { OrdenesService } from '../services/ordenes.service';
 import { OrdenesRepository } from '../repositories/ordenes.repository';
-import { CodigoOrdenDto } from '../dtos/ordenes.dto';
+import { CodigoOrdenDto, ListarOrdenesGestionDto } from '../dtos/ordenes.dto';
 import {
   CabeceraOrden,
   FilaLineaOrden,
   FilaResumenOrden,
+  FilaResumenOrdenGestion,
+  FiltrosGestionOrdenes,
   RegistroAccesosDenegados,
 } from '../interfaces/m08.interfaces';
+
+/** AAAA-MM-DD con la fecha local, igual que la columna DATE de la orden. */
+function aFechaTexto(fecha: Date): string {
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+}
 
 // ==============================================================================
 // M08 - SUITE DE VALIDACIÓN DE CRITERIOS DE ACEPTACIÓN (HU-ORD-02/04/05/06/07)
@@ -42,6 +49,43 @@ class RepoFake extends OrdenesRepository {
       .filter((o) => o.id_usuario === idUsuario)
       .map((o) => ({ codigo_visible: o.codigo_visible, fecha: o.fecha, total: o.total, estado: o.estado }));
   }
+
+  public llamadasGestion: Array<{ filtros: FiltrosGestionOrdenes; limite: number; offset: number }> = [];
+
+  /** Réplica en memoria de los filtros del SQL: AND entre filtros, periodo con extremos incluidos. */
+  private filtrar(f: FiltrosGestionOrdenes): CabeceraOrden[] {
+    return this.ordenes.filter((o) => {
+      const fecha = aFechaTexto(o.fecha);
+      return (
+        (!f.codigo || o.codigo_visible.toLowerCase().includes(f.codigo.toLowerCase())) &&
+        (!f.estado || o.estado === f.estado) &&
+        (f.idCliente === undefined || o.id_usuario === f.idCliente) &&
+        (!f.desde || fecha >= f.desde) &&
+        (!f.hasta || fecha <= f.hasta)
+      );
+    });
+  }
+
+  override async listarParaPersonal(
+    filtros: FiltrosGestionOrdenes,
+    limite: number,
+    offset: number
+  ): Promise<FilaResumenOrdenGestion[]> {
+    this.llamadasGestion.push({ filtros, limite, offset });
+    return this.filtrar(filtros)
+      .slice(offset, offset + limite)
+      .map((o) => ({
+        codigo_visible: o.codigo_visible,
+        fecha: o.fecha,
+        total: o.total,
+        estado: o.estado,
+        id_usuario: o.id_usuario,
+      }));
+  }
+
+  override async contarParaPersonal(filtros: FiltrosGestionOrdenes): Promise<number> {
+    return this.filtrar(filtros).length;
+  }
 }
 
 class RegistroFake implements RegistroAccesosDenegados {
@@ -52,7 +96,12 @@ class RegistroFake implements RegistroAccesosDenegados {
   }
 }
 
-function orden(id: number, idUsuario: number, estado: EnumEstadoOrden): CabeceraOrden {
+function orden(
+  id: number,
+  idUsuario: number,
+  estado: EnumEstadoOrden,
+  fecha: Date = new Date(2026, 8, 1)
+): CabeceraOrden {
   return {
     id_orden: id,
     codigo_visible: `ORD-2026-${String(id).padStart(4, '0')}`,
@@ -64,7 +113,7 @@ function orden(id: number, idUsuario: number, estado: EnumEstadoOrden): Cabecera
     descuento: '0.00',
     total: '171800.00',
     observaciones: null,
-    fecha: new Date(2026, 8, 1),
+    fecha,
   };
 }
 
@@ -255,6 +304,131 @@ async function ejecutarPruebasM08(): Promise<void> {
       assert(CodigoOrdenDto.safeParse({ codigo: ' ORD-2026-0001 ' }).success, 'RF-ORD-06-01: un código válido se acepta recortado');
       assert(!CodigoOrdenDto.safeParse({ codigo: '   ' }).success, 'RF-ORD-06-01: un código vacío se rechaza');
       assert(!CodigoOrdenDto.safeParse({ codigo: 'X'.repeat(51) }).success, 'RF-ORD-06-01: un código de más de 50 caracteres se rechaza');
+    }
+
+    // --- HU-ORD-07: clasificación tras la definición del 23/09 ----------------
+
+    // CA-ORD-07-01 escenario 2: Despachado (hoy `enviado`) ya cuenta como finalizado.
+    {
+      const repo = new RepoFake([orden(1, 2, 'enviado')]);
+      const pedidos = await new OrdenesService(repo, new RegistroFake()).listarPedidosDeCliente(2, undefined);
+      assert(
+        pedidos.en_curso.length === 0 && pedidos.finalizados.length === 1,
+        'CA-ORD-07-01 esc. 2: un pedido despachado aparece entre los finalizados'
+      );
+    }
+
+    // --- HU-ORD-05: listado del personal con filtros ---------------------------
+
+    const ordenesGestion = [
+      orden(1, 2, 'pagado', new Date(2026, 8, 1)),
+      orden(2, 4, 'en_preparacion', new Date(2026, 8, 10)),
+      orden(3, 2, 'entregado', new Date(2026, 8, 20)),
+      orden(4, 5, 'pagado', new Date(2026, 8, 30)),
+    ];
+
+    // CA-ORD-05-04 escenario 2: filtrar por estado muestra solo ese estado.
+    {
+      const repo = new RepoFake(ordenesGestion);
+      const pagina = await new OrdenesService(repo, new RegistroFake()).listarOrdenesParaPersonal(
+        { estado: 'pagado' },
+        undefined,
+        undefined
+      );
+      assert(
+        pagina.total === 2 && pagina.items.every((o) => o.estado === 'pagado'),
+        'CA-ORD-05-04 esc. 2: el filtro por estado devuelve solo órdenes de ese estado'
+      );
+    }
+
+    // CA-ORD-05-04 escenario 3: filtrar por periodo, con ambos extremos incluidos.
+    {
+      const repo = new RepoFake(ordenesGestion);
+      const pagina = await new OrdenesService(repo, new RegistroFake()).listarOrdenesParaPersonal(
+        { desde: '2026-09-10', hasta: '2026-09-20' },
+        undefined,
+        undefined
+      );
+      const codigos = pagina.items.map((o) => o.codigo).join(',');
+      assert(
+        codigos === 'ORD-2026-0002,ORD-2026-0003',
+        'CA-ORD-05-04 esc. 3: el filtro por periodo incluye los dos extremos y excluye el resto'
+      );
+    }
+
+    // CA-ORD-05-04 escenario 4: filtrar por cliente muestra solo sus órdenes.
+    {
+      const repo = new RepoFake(ordenesGestion);
+      const pagina = await new OrdenesService(repo, new RegistroFake()).listarOrdenesParaPersonal(
+        { idCliente: 2 },
+        undefined,
+        undefined
+      );
+      assert(
+        pagina.total === 2 && pagina.items.every((o) => o.id_cliente === 2),
+        'CA-ORD-05-04 esc. 4: el filtro por cliente devuelve solo las órdenes de ese cliente'
+      );
+    }
+
+    // CA-ORD-05-04 escenario 1 (listado): el identificador localiza la orden correcta.
+    {
+      const repo = new RepoFake(ordenesGestion);
+      const pagina = await new OrdenesService(repo, new RegistroFake()).listarOrdenesParaPersonal(
+        { codigo: '0003' },
+        undefined,
+        undefined
+      );
+      assert(
+        pagina.total === 1 && pagina.items[0]?.codigo === 'ORD-2026-0003',
+        'CA-ORD-05-04 esc. 1: buscar por identificador en el listado lleva a la orden correcta'
+      );
+    }
+
+    // HU-ORD-05: paginación por defecto y límite máximo (mismo criterio que M02).
+    {
+      const repo = new RepoFake(ordenesGestion);
+      const servicio = new OrdenesService(repo, new RegistroFake());
+      const porDefecto = await servicio.listarOrdenesParaPersonal({}, undefined, undefined);
+      await servicio.listarOrdenesParaPersonal({}, 3, 999);
+      assert(
+        porDefecto.pagina === 1 && porDefecto.limite === 20 && porDefecto.total_paginas === 1,
+        'HU-ORD-05: página 1 y límite 20 por defecto'
+      );
+      assert(
+        repo.llamadasGestion[1]?.limite === 100 && repo.llamadasGestion[1]?.offset === 200,
+        'HU-ORD-05: el límite se acota a 100 y el offset se calcula con la página'
+      );
+    }
+
+    // HU-SEG-06: el listado del personal no expone clave primaria ni datos de pago.
+    {
+      const repo = new RepoFake(ordenesGestion);
+      const pagina = await new OrdenesService(repo, new RegistroFake()).listarOrdenesParaPersonal({}, undefined, undefined);
+      const claves = Object.keys(pagina.items[0] ?? {});
+      assert(
+        claves.join(',') === 'codigo,fecha,total,estado,id_cliente',
+        'HU-SEG-06: cada orden del listado solo trae código, fecha, total, estado y cliente'
+      );
+    }
+
+    // HU-ORD-05: validación de la query del listado.
+    {
+      assert(
+        ListarOrdenesGestionDto.safeParse({ cliente: '4', desde: '2026-09-01', hasta: '2026-09-01' }).success,
+        'HU-ORD-05: un periodo de un solo día y un cliente numérico se aceptan'
+      );
+      assert(
+        !ListarOrdenesGestionDto.safeParse({ desde: '2026-09-20', hasta: '2026-09-10' }).success,
+        'HU-ORD-05: un periodo con inicio posterior al final se rechaza'
+      );
+      assert(
+        !ListarOrdenesGestionDto.safeParse({ desde: '10/09/2026' }).success,
+        'HU-ORD-05: una fecha fuera del formato AAAA-MM-DD se rechaza'
+      );
+      assert(
+        !ListarOrdenesGestionDto.safeParse({ estado: 'inventado' }).success,
+        'HU-ORD-05: un estado que no existe se rechaza'
+      );
     }
 
     console.log(`\n======================================================`);

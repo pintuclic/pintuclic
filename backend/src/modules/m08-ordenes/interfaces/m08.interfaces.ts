@@ -34,6 +34,22 @@ export type FilaLineaOrden = Pick<LineaOrden, 'nombre_producto' | 'variante_copi
 /** Fila mínima para el listado de pedidos de un cliente (CA-ORD-07-01). */
 export type FilaResumenOrden = Pick<Orden, 'codigo_visible' | 'fecha' | 'total' | 'estado'>;
 
+/** Fila del listado del personal: la del cliente más el titular (CA-ORD-05-04). */
+export type FilaResumenOrdenGestion = FilaResumenOrden & Pick<Orden, 'id_usuario'>;
+
+/**
+ * Filtros del listado del personal (HU-ORD-05, CA-ORD-05-04). Cada uno es opcional y
+ * se valida por separado; si llegan varios se aplican a la vez (AND).
+ * `desde` / `hasta` son fechas AAAA-MM-DD sobre `orden.fecha`, ambos extremos incluidos.
+ */
+export interface FiltrosGestionOrdenes {
+  readonly codigo?: string;
+  readonly estado?: EnumEstadoOrden;
+  readonly desde?: string;
+  readonly hasta?: string;
+  readonly idCliente?: number;
+}
+
 /** Pedido tal como se muestra en la sección del cliente: identificador, fecha, total y estado. */
 export interface ResumenPedido {
   readonly codigo: string;
@@ -70,6 +86,20 @@ export interface DetallePedido {
 /** Detalle para personal autorizado (HU-ORD-05): añade el cliente titular como contexto. */
 export interface DetallePedidoPersonal extends DetallePedido {
   readonly id_cliente: number;
+}
+
+/** Orden en el listado del personal: el resumen del cliente más su titular (CA-ORD-05-04). */
+export interface ResumenOrdenGestion extends ResumenPedido {
+  readonly id_cliente: number;
+}
+
+/** Página del listado del personal, con los metadatos de paginación de M02 (HU-BUS-05). */
+export interface PaginaOrdenesGestion {
+  readonly items: ReadonlyArray<ResumenOrdenGestion>;
+  readonly total: number;
+  readonly pagina: number;
+  readonly limite: number;
+  readonly total_paginas: number;
 }
 
 /** Capacidad de M20 que usa este módulo para dejar constancia de accesos denegados (CA-SEG-03-05). */

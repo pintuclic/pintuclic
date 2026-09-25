@@ -1,6 +1,12 @@
-import { Kysely } from 'kysely';
+import { Kysely, sql, SqlBool } from 'kysely';
 import { Database } from '../../../core/db/types';
-import { CabeceraOrden, FilaLineaOrden, FilaResumenOrden } from '../interfaces/m08.interfaces';
+import {
+  CabeceraOrden,
+  FilaLineaOrden,
+  FilaResumenOrden,
+  FilaResumenOrdenGestion,
+  FiltrosGestionOrdenes,
+} from '../interfaces/m08.interfaces';
 
 // ==============================================================================
 // M08 - REPOSITORIO DE ÓRDENES (HU-ORD-04, HU-ORD-05, HU-ORD-07)
@@ -77,5 +83,43 @@ export class OrdenesRepository {
     }
 
     return q.orderBy('o.fecha', 'desc').orderBy('o.id_orden', 'desc').execute();
+  }
+
+  /** Página del listado del personal, más recientes primero (HU-ORD-05, CA-ORD-05-04). */
+  async listarParaPersonal(
+    filtros: FiltrosGestionOrdenes,
+    limite: number,
+    offset: number
+  ): Promise<FilaResumenOrdenGestion[]> {
+    return this.baseGestion(filtros)
+      .select(['o.codigo_visible', 'o.fecha', 'o.total', 'o.estado', 'o.id_usuario'])
+      .orderBy('o.fecha', 'desc')
+      .orderBy('o.id_orden', 'desc')
+      .limit(limite)
+      .offset(offset)
+      .execute();
+  }
+
+  async contarParaPersonal(filtros: FiltrosGestionOrdenes): Promise<number> {
+    const fila = await this.baseGestion(filtros)
+      .select(({ fn }) => fn.countAll<string>().as('total'))
+      .executeTakeFirst();
+    return Number(fila?.total ?? 0);
+  }
+
+  /**
+   * Base del listado del personal. Cada filtro presente se suma con AND. El periodo
+   * compara con la columna DATE sin conversión de zona horaria (extremos incluidos).
+   */
+  private baseGestion(f: FiltrosGestionOrdenes) {
+    let q = this.db.selectFrom('orden as o');
+
+    if (f.codigo) q = q.where('o.codigo_visible', 'ilike', patronContiene(f.codigo));
+    if (f.estado) q = q.where('o.estado', '=', f.estado);
+    if (f.idCliente !== undefined) q = q.where('o.id_usuario', '=', f.idCliente);
+    if (f.desde) q = q.where(sql<SqlBool>`o.fecha >= ${f.desde}::date`);
+    if (f.hasta) q = q.where(sql<SqlBool>`o.fecha <= ${f.hasta}::date`);
+
+    return q;
   }
 }

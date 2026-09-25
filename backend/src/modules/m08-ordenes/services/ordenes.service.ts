@@ -5,7 +5,9 @@ import {
   CabeceraOrden,
   DetallePedido,
   DetallePedidoPersonal,
+  FiltrosGestionOrdenes,
   GrupoPedido,
+  PaginaOrdenesGestion,
   PedidosCliente,
   RegistroAccesosDenegados,
   ResumenPedido,
@@ -20,18 +22,24 @@ import {
 
 /**
  * ⚠️ PROVISIONAL: la BD solo admite los estados de `enum_estado_orden`, que no coinciden
- * con la máquina de estados del diagrama (bloqueo documentado en el walkthrough v3.30.0).
- * Cuando se alinee el esquema, este mapa es el único punto a actualizar; al ser un
- * `Record` exhaustivo, TypeScript obliga a clasificar cualquier estado nuevo.
+ * con la máquina de estados definida el 23/09 en #128. Cuando se alinee el esquema, este
+ * mapa es el único punto a actualizar; al ser un `Record` exhaustivo, TypeScript obliga
+ * a clasificar cualquier estado nuevo.
+ *
+ * `enviado` se trata como Despachado: para domicilio, Despachado ya es finalizado aunque
+ * no se registre Entregado (D02, CA-ORD-07-01 escenario 2). Equivalencia por confirmar.
  */
 const GRUPO_POR_ESTADO: Record<EnumEstadoOrden, GrupoPedido> = {
   pendiente: 'en_curso',
   pagado: 'en_curso',
   en_preparacion: 'en_curso',
-  enviado: 'en_curso',
+  enviado: 'finalizados',
   entregado: 'finalizados',
   cancelado: 'finalizados',
 };
+
+const LIMITE_POR_DEFECTO = 20;
+const LIMITE_MAXIMO = 100;
 
 /** Mismo mensaje que las guardas de M20 para un recurso inalcanzable (RF-SEG-03-05). */
 function recursoNoEncontrado(): AppError {
@@ -88,6 +96,39 @@ export class OrdenesService {
       throw recursoNoEncontrado();
     }
     return this.armarDetalle(orden);
+  }
+
+  /**
+   * Listado del personal con filtros por identificador, estado, periodo y cliente
+   * (HU-ORD-05, CA-ORD-05-04). El permiso se exige en la ruta. Paginación como en M02.
+   */
+  async listarOrdenesParaPersonal(
+    filtros: FiltrosGestionOrdenes,
+    pagina: number | undefined,
+    limite: number | undefined
+  ): Promise<PaginaOrdenesGestion> {
+    const paginaFinal = pagina && pagina > 0 ? Math.floor(pagina) : 1;
+    const limiteFinal = Math.min(limite && limite > 0 ? Math.floor(limite) : LIMITE_POR_DEFECTO, LIMITE_MAXIMO);
+    const offset = (paginaFinal - 1) * limiteFinal;
+
+    const [filas, total] = await Promise.all([
+      this.repo.listarParaPersonal(filtros, limiteFinal, offset),
+      this.repo.contarParaPersonal(filtros),
+    ]);
+
+    return {
+      items: filas.map((fila) => ({
+        codigo: fila.codigo_visible,
+        fecha: fechaIso(fila.fecha),
+        total: fila.total,
+        estado: fila.estado,
+        id_cliente: fila.id_usuario,
+      })),
+      total,
+      pagina: paginaFinal,
+      limite: limiteFinal,
+      total_paginas: Math.ceil(total / limiteFinal),
+    };
   }
 
   /** Consulta de una orden por su identificador para personal autorizado (CA-ORD-05-04). */

@@ -2,8 +2,22 @@ import { Request, Response } from 'express';
 import { sendSuccess } from '../../../core/utils/apiResponse';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { obtenerIdentidadVigente } from '../../m20-seguridad/middlewares/autorizacion.middleware';
-import { CodigoOrdenDto, ListarMisPedidosDto } from '../dtos/ordenes.dto';
+import { CodigoOrdenDto, ListarMisPedidosDto, ListarOrdenesGestionDto } from '../dtos/ordenes.dto';
 import { OrdenesService } from '../services/ordenes.service';
+import { FiltrosGestionOrdenes } from '../interfaces/m08.interfaces';
+
+type FiltrosMutables = { -readonly [K in keyof FiltrosGestionOrdenes]: FiltrosGestionOrdenes[K] };
+
+/** Traduce la query validada a filtros del dominio; un filtro vacío se trata como ausente. */
+function filtrosGestionDesde(dto: ListarOrdenesGestionDto): FiltrosGestionOrdenes {
+  const filtros: FiltrosMutables = {};
+  if (dto.codigo) filtros.codigo = dto.codigo;
+  if (dto.estado) filtros.estado = dto.estado;
+  if (dto.desde) filtros.desde = dto.desde;
+  if (dto.hasta) filtros.hasta = dto.hasta;
+  if (dto.cliente !== undefined) filtros.idCliente = dto.cliente;
+  return filtros;
+}
 
 // ==============================================================================
 // M08 - CONTROLADOR DE CONSULTA DE ÓRDENES (HU-ORD-04, HU-ORD-05, HU-ORD-07)
@@ -46,6 +60,13 @@ export class OrdenesController {
       `${req.method} ${req.originalUrl}`
     );
     return sendSuccess(res, detalle, 'Detalle del pedido');
+  };
+
+  // HU-ORD-05: listado del personal con filtros (permiso exigido en la ruta).
+  listarOrdenesGestion = async (req: Request, res: Response): Promise<Response> => {
+    const dto = ListarOrdenesGestionDto.parse(req.query);
+    const pagina = await this.service.listarOrdenesParaPersonal(filtrosGestionDesde(dto), dto.pagina, dto.limite);
+    return sendSuccess(res, pagina, 'Listado de órdenes');
   };
 
   // HU-ORD-05: consulta por identificador para personal autorizado (permiso exigido en la ruta).
