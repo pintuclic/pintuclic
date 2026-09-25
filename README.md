@@ -19,6 +19,8 @@ sudo apt install docker.io docker-compose-v2
 ```
 sudo dnf install docker docker-compose
 ```
+
+### Levantar contenedor
 Ya teniendo `docker` como despliegue configurar las variables de entorno `.env`(obligatorio):
 ```bash
 cp .env.example .env
@@ -30,8 +32,8 @@ Levantar el stack (`.env` se carga automáticamente al estar junto al compose):
 docker compose -f docker-compose.yml up --build -d
 ```
 
-- Frontend: http://localhost:8080
-- Backend (API): http://localhost:3000/api
+- Frontend: http://localhost:80
+- Backend (API): http://localhost:3000
 - Logs: `docker compose -f docker-compose.yml logs -f`
 
 ### Version dev
@@ -40,5 +42,5 @@ El versión dev para probar de test debe ser con
 docker compose -f docker-compose.dev.yml up --build -d
 ```
 
-### Contribución
+## Contribución
 Leer el [CONTRIBUTING.md].

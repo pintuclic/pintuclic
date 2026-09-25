@@ -133,4 +133,4 @@ Siguiendo la [Guía de Commits y Push](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/G
 
 
 ### Version
-- Las versiones están en README.md, es un breve resumen resumen como debe que ir, tener en cuenta el archivo .github/version.txt debe mencionarle al usuario si va requerir subir de versión, el cambio no lo hace usted, se le hace mención al usuario.
+- Las versiones están en [CONTRIBUTING.md](CONTRIBUTING.md), es un breve resumen resumen como debe que ir, tener en cuenta el archivo .github/version.txt debe mencionarle al usuario si va requerir subir de versión, el cambio no lo hace usted, se le hace mención al usuario.
