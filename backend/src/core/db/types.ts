@@ -168,7 +168,13 @@ export interface LineaTable {
 export interface BaseTable {
   id_base: Generated<number>;
   id_marca: number;
+<<<<<<< HEAD
   nombre: string;
+=======
+  id_variante: number | null;
+  nombre: string;
+  prefijo: string | null;
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
   estado: Generated<EnumEstadoGeneral>;
 }
 
@@ -208,6 +214,10 @@ export interface ProductoBaseTable {
 export interface ColorTable {
   id_color: Generated<number>;
   id_marca: number;
+<<<<<<< HEAD
+=======
+  id_base: number | null;
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
   nombre: string;
   codigo: string | null;
   // CIELAB (RF-CAT-05-02). El driver de PostgreSQL devuelve NUMERIC como string;
@@ -221,6 +231,8 @@ export interface ColorTable {
 export interface TonosTable {
   id_tono: Generated<number>;
   id_color: number;
+  nombre: string | null;
+  hexagesimal: string | null;
   precio: ColumnType<string, string | number, string | number>;
 }
 
@@ -287,6 +299,7 @@ export interface LineaCarritoTable {
   id_linea_carrito: Generated<number>;
   id_carrito: number;
   id_variante: number;
+  ref_viva: Generated<number>;
   cantidad: Generated<number>;
 }
 
@@ -296,6 +309,8 @@ export interface LineaCarritoTable {
 
 export interface CotizacionTable {
   id_cotizacion: Generated<number>;
+  id_usuario: number | null;
+  id_rol: number | null;
   estado: Generated<EnumEstadoCotizacion>;
   fecha_creacion: ColumnType<Date, string | Date | undefined, string | Date>;
 }
@@ -306,6 +321,7 @@ export interface OrdenTable {
   id_usuario: number;
   origen: Generated<EnumOrigenOrden>;
   id_cotizacion: number | null;
+  carrito_o_cotizacion: string | null;
   estado: Generated<EnumEstadoOrden>;
   transaccion_pago_id: string | null;
   direccion: string;

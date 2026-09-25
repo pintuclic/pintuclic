@@ -89,6 +89,7 @@ export interface UsuarioSeguro {
   tipo: string;
   id_rol: number | null;
   rol_nombre: string | null;
+  foto_url?: string | null;
 }
 
 export interface SesionEmitida {
@@ -161,4 +162,18 @@ export interface ResultadoGoogleAuth {
     correo: string;
     googleId: string;
   };
+}
+
+export interface PerfilUsuarioResponse {
+  id_usuario: number;
+  nombre: string;
+  correo: string;
+  telefono: string | null;
+  documento_identidad?: string | null;
+  tipo: string;
+  estado: string;
+  nombre_empresa?: string | null;
+  nombre_representante?: string | null;
+  nit?: string | null;
+  [key: string]: unknown;
 }

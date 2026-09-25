@@ -135,9 +135,15 @@ INSERT INTO linea (id_linea, id_sub_subcategoria, id_marca, nombre) VALUES
 ON CONFLICT (id_linea) DO NOTHING;
 
 -- 3.6 Base
+<<<<<<< HEAD
 INSERT INTO base (id_base, id_marca, nombre) VALUES
     (1, 1, 'Base A'),
     (2, 1, 'Base B')
+=======
+INSERT INTO base (id_base, id_marca, id_variante, nombre, prefijo) VALUES
+    (1, 1, 1, 'Base A', 'BSA'),
+    (2, 1, 2, 'Base B', 'BSB')
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 ON CONFLICT (id_base) DO NOTHING;
 
 -- 3.6b Tipo de resina (catálogo administrable - RF-CAT-02-04)
@@ -148,6 +154,7 @@ ON CONFLICT (id_tipo_resina) DO NOTHING;
 
 -- 3.7 Producto (HU-CAT-02): marca obligatoria, clase de color, y línea/resina en pinturas
 -- rendimiento en m2 por galón (HU-CAT-10) solo aplica a pinturas
+<<<<<<< HEAD
 INSERT INTO producto (id_producto, id_marca, id_linea, id_tipo_resina, nombre, descripcion, clase_color, estado, publicado, rendimiento_min, rendimiento_max, id_categoria_complementaria, patrocinado) VALUES
     (1, 1, 1, 1,    'Viniltex Máxima Protección Antibacterial', 'Pintura interior y exterior de alta lavabilidad con acabado mate.', 'colores_fijos', 'activo', true, 40.00, 45.00, 2,    false),
     (2, 1, 1, NULL, 'Kit Renovación Hogar Premium',             'Kit práctico para renovar espacios interiores con acabado uniforme.', 'sin_color',     'activo', true, NULL,  NULL,  NULL, false),
@@ -166,6 +173,14 @@ SET descripcion = CASE id_producto
     publicado = true
 WHERE id_producto IN (1, 2, 3);
 
+=======
+INSERT INTO producto (id_producto, id_marca, id_linea, id_tipo_resina, nombre, clase_color, rendimiento_min, rendimiento_max, id_categoria_complementaria, patrocinado) VALUES
+    (1, 1, 1, 1,    'Viniltex Máxima Protección Antibacterial', 'colores_fijos', 40.00, 45.00, 2,    false),
+    (2, 1, 1, NULL, 'Kit Renovación Hogar Premium',             'sin_color',     NULL,  NULL,  NULL, false),
+    (3, 2, 2, 2,    'Esmalte Anticorrosivo Secado Rápido',      'colores_fijos', 15.00, 20.00, NULL, true)
+ON CONFLICT (id_producto) DO NOTHING;
+
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 -- 3.7b Producto ↔ Subcategoría (RF-CAT-02-02: al menos una subcategoría)
 INSERT INTO producto_subcategoria (id_producto, id_subcategoria) VALUES
     (1, 1),
@@ -173,6 +188,7 @@ INSERT INTO producto_subcategoria (id_producto, id_subcategoria) VALUES
     (3, 2)
 ON CONFLICT (id_producto, id_subcategoria) DO NOTHING;
 
+<<<<<<< HEAD
 -- 3.8 Colores por marca (HU-CAT-05): nombre + código opcional + valor CIELAB obligatorio
 INSERT INTO color (id_color, id_marca, nombre, codigo, cie_l, cie_a, cie_b) VALUES
     (1, 1, 'Blanco Puro',  'PIN-BLA-01', 96.000,  0.000,   0.500),
@@ -211,6 +227,19 @@ ON CONFLICT (id_color) DO NOTHING;
 INSERT INTO tonos (id_tono, id_color, precio) VALUES
     (1, 2, 15000.00),
     (2, 3, 12000.00)
+=======
+-- 3.8 Colores por marca (HU-CAT-05) y base (id_base): nombre + código opcional + valor CIELAB
+INSERT INTO color (id_color, id_marca, id_base, nombre, codigo, cie_l, cie_a, cie_b) VALUES
+    (1, 1, 1, 'Blanco Puro',  'PIN-BLA-01', 96.000,  0.000,   0.500),
+    (2, 1, 1, 'Azul Océano',  'PIN-AZU-07', 45.000, -5.000, -35.000),
+    (3, 2, 2, 'Gris Titanio', NULL,         60.000,  0.000,   0.000)
+ON CONFLICT (id_color) DO NOTHING;
+
+-- 3.9 Tonos Derivados con nombre, hexadecimal y recargo de precio
+INSERT INTO tonos (id_tono, id_color, nombre, hexagesimal, precio) VALUES
+    (1, 2, 'Cobalto',       '#0047AB', 15000.00),
+    (2, 3, 'Titanio Claro', '#A9A9A9', 12000.00)
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 ON CONFLICT (id_tono) DO NOTHING;
 
 -- 3.9b Presentaciones (HU-CAT-03, RF-CAT-03-05): entidad propia con volumen numérico
@@ -224,6 +253,7 @@ ON CONFLICT (id_presentacion) DO NOTHING;
 INSERT INTO variante (id_variante, id_producto, id_presentacion, id_color, precio_vigente, existencia_referencial, estado) VALUES
     (1, 1, 1, 1, 85900.00,  50, 'activo'),
     (2, 1, 1, 2, 95900.00,  30, 'activo'),
+<<<<<<< HEAD
     (3, 3, 1, 3, 115000.00, 20, 'activo'),
     (4, 2, 3, NULL, 129900.00, 12, 'activo'),
     (5, 1, 1, 4,  95900.00, 20, 'activo'),
@@ -253,6 +283,9 @@ INSERT INTO variante (id_variante, id_producto, id_presentacion, id_color, preci
     (29, 1, 1, 28, 95900.00, 20, 'activo'),
     (30, 1, 1, 29, 95900.00, 20, 'activo'),
     (31, 1, 1, 30, 95900.00, 20, 'activo')
+=======
+    (3, 3, 1, 3, 115000.00, 20, 'activo')
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 ON CONFLICT (id_variante) DO NOTHING;
 
 -- 3.11 Características Técnicas
@@ -285,9 +318,9 @@ INSERT INTO carrito (id_carrito, token_visitante, id_usuario, fecha_ultima_activ
 ON CONFLICT (id_carrito) DO NOTHING;
 
 -- 4.2 Líneas de Carrito
-INSERT INTO linea_carrito (id_linea_carrito, id_carrito, id_variante, cantidad) VALUES
-    (1, 1, 1, 2),
-    (2, 2, 2, 1)
+INSERT INTO linea_carrito (id_linea_carrito, id_carrito, id_variante, ref_viva, cantidad) VALUES
+    (1, 1, 1, 1, 2),
+    (2, 2, 2, 1, 1)
 ON CONFLICT (id_carrito, id_variante) DO NOTHING;
 
 -- ==============================================================================
@@ -295,17 +328,17 @@ ON CONFLICT (id_carrito, id_variante) DO NOTHING;
 -- ==============================================================================
 
 -- 5.1 Cotización
-INSERT INTO cotizacion (id_cotizacion, estado, fecha_creacion) VALUES
-    (1, 'aprobada', now() - interval '2 days'),
-    (2, 'borrador', now())
+INSERT INTO cotizacion (id_cotizacion, id_usuario, id_rol, estado, fecha_creacion) VALUES
+    (1, 4, 3, 'aprobada', now() - interval '2 days'),
+    (2, 2, 2, 'borrador', now())
 ON CONFLICT (id_cotizacion) DO NOTHING;
 
 -- 5.2 Orden
-INSERT INTO orden (id_orden, codigo_visible, id_usuario, origen, id_cotizacion, estado, transaccion_pago_id, direccion, sub_total, descuento, total, observaciones, fecha) VALUES
-    (1, 'ORD-2026-0001', 2, 'carrito', NULL, 'pagado', 'TRX-PSE-987654321',
+INSERT INTO orden (id_orden, codigo_visible, id_usuario, origen, id_cotizacion, carrito_o_cotizacion, estado, transaccion_pago_id, direccion, sub_total, descuento, total, observaciones, fecha) VALUES
+    (1, 'ORD-2026-0001', 2, 'carrito', NULL, 'carrito_directo', 'pagado', 'TRX-PSE-987654321',
         'Calle 45 # 12-34, Apt 301, Chapinero, Bogotá D.C.', 171800.00, 0.00, 171800.00,
         'Dejar en portería debidamente sellado', CURRENT_DATE),
-    (2, 'ORD-2026-0002', 4, 'cotizacion', 1, 'en_preparacion', 'TRX-TAR-112233445',
+    (2, 'ORD-2026-0002', 4, 'cotizacion', 1, 'cotizacion_aprobada', 'en_preparacion', 'TRX-TAR-112233445',
         'Avenida Las Americas # 68-90, Bodega 4, Medellín', 500000.00, 75000.00, 425000.00,
         'Despacho corporativo con factura electrónica adjunta', CURRENT_DATE)
 ON CONFLICT (codigo_visible) DO NOTHING;

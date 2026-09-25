@@ -35,6 +35,10 @@ export { default as Tabs } from './navigation/Tabs.vue';
 export { default as Migas } from './navigation/Migas.vue';
 export { default as Paginacion } from './navigation/Paginacion.vue';
 export { default as PasosProceso } from './navigation/PasosProceso.vue';
+<<<<<<< HEAD
+=======
+export { default as PasosProgreso } from './navigation/PasosProceso.vue';
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 export { default as LineaTiempo } from './navigation/LineaTiempo.vue';
 
 // 6. Visualización y presentación de datos
@@ -42,10 +46,22 @@ export { default as Card } from './data-display/Card.vue';
 export { default as Table } from './data-display/Table.vue';
 export { default as Badge } from './data-display/Badge.vue';
 export { default as Avatar } from './data-display/Avatar.vue';
+<<<<<<< HEAD
 export { default as MuestraColor } from './data-display/MuestraColor.vue';
 
 // 7. Layouts globales compartidos
+=======
+export { default as Icon } from './data-display/Icon.vue';
+export type { TableColumn } from '../types/table.type';
+
+// 7. Piezas estructurales y de layout
+export { default as PageHeader } from './layout/PageHeader.vue';
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 export { default as FooterPrincipal } from '../layouts/FooterPrincipal.vue';
 
 // 8. Herramientas de soporte y depuración interna
 export { default as DevRoleSwitcher } from './dev/DevRoleSwitcher.vue';
+<<<<<<< HEAD
+=======
+
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55

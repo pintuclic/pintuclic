@@ -15,6 +15,8 @@ export default {
         subaction: PINTUCLIC_COLORS.subaction,
         conversion: PINTUCLIC_COLORS.conversion,
         highlight: PINTUCLIC_COLORS.highlight,
+        danger: PINTUCLIC_COLORS.danger,
+        offer: PINTUCLIC_COLORS.offer,
         neutral: PINTUCLIC_COLORS.neutral,
       },
       fontFamily: {

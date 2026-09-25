@@ -317,15 +317,28 @@ COMMENT ON CONSTRAINT uq_linea_nombre_marca ON linea IS 'Impide nombres de líne
 -- Tabla: base
 CREATE TABLE IF NOT EXISTS base (
     id_base SERIAL PRIMARY KEY,
+<<<<<<< HEAD
     id_marca INT NOT NULL,
     nombre VARCHAR(100) NOT NULL,
+=======
+    id_marca INT,
+    id_variante INT,
+    nombre VARCHAR(100) NOT NULL,
+    prefijo VARCHAR(50),
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
     estado enum_estado_general NOT NULL DEFAULT 'activo',
     CONSTRAINT fk_base_marca FOREIGN KEY (id_marca)
         REFERENCES marca (id_marca) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT uq_base_nombre_marca UNIQUE (id_marca, nombre)
 );
 
+<<<<<<< HEAD
 COMMENT ON TABLE base IS 'Base sobre la que se prepara cada color de un producto entonable (HU-CAT-12). El tipo de resina que pide RF-CAT-12-01 se excluyó a petición explícita del Product Owner. La asignación de bases a productos entonables (RF-CAT-12-02/03) y la asociación color↔base (RF-CAT-12-04) quedan pendientes: dependen de que existan producto (HU-CAT-02) y color (HU-CAT-05), y esta última regla además está marcada como no definida en la especificación (RF-CAT-12-12).';
+=======
+COMMENT ON TABLE base IS 'Base sobre la que se prepara cada color de un producto entonable (HU-CAT-12). Se vincula a variante (id_variante) y almacena su prefijo.';
+COMMENT ON COLUMN base.id_variante IS 'Variante de producto a la que pertenece esta base';
+COMMENT ON COLUMN base.prefijo IS 'Prefijo identificador de la base (e.g. BSA, BSB)';
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 COMMENT ON CONSTRAINT uq_base_nombre_marca ON base IS 'Impide nombres de base duplicados dentro de la misma marca (RF-CAT-12-01)';
 
 -- Tabla: tipo_resina (catálogo administrable - RF-CAT-02-04)
@@ -404,6 +417,7 @@ COMMENT ON TABLE producto_base IS 'Bases que ofrece un producto entonable (HU-CA
 -- Tabla: color
 CREATE TABLE IF NOT EXISTS color (
     id_color SERIAL PRIMARY KEY,
+<<<<<<< HEAD
     id_marca INT NOT NULL,
     nombre VARCHAR(100) NOT NULL,
     codigo VARCHAR(60),
@@ -413,12 +427,27 @@ CREATE TABLE IF NOT EXISTS color (
     estado enum_estado_general NOT NULL DEFAULT 'activo',
     CONSTRAINT fk_color_marca FOREIGN KEY (id_marca)
         REFERENCES marca (id_marca) ON UPDATE CASCADE ON DELETE RESTRICT,
+=======
+    id_marca INT,
+    id_base INT,
+    nombre VARCHAR(100) NOT NULL,
+    codigo VARCHAR(60),
+    cie_l NUMERIC(6, 3) DEFAULT 0.000,
+    cie_a NUMERIC(6, 3) DEFAULT 0.000,
+    cie_b NUMERIC(6, 3) DEFAULT 0.000,
+    estado enum_estado_general NOT NULL DEFAULT 'activo',
+    CONSTRAINT fk_color_marca FOREIGN KEY (id_marca)
+        REFERENCES marca (id_marca) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_color_base FOREIGN KEY (id_base)
+        REFERENCES base (id_base) ON UPDATE CASCADE ON DELETE SET NULL,
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
     CONSTRAINT uq_color_nombre_marca UNIQUE (id_marca, nombre),
     CONSTRAINT chk_color_cie_l CHECK (cie_l >= 0 AND cie_l <= 100),
     CONSTRAINT chk_color_cie_a CHECK (cie_a >= -128 AND cie_a <= 128),
     CONSTRAINT chk_color_cie_b CHECK (cie_b >= -128 AND cie_b <= 128)
 );
 
+<<<<<<< HEAD
 COMMENT ON TABLE color IS 'Catálogo de colores de una marca (HU-CAT-05). Cada color pertenece a la marca que efectivamente lo ofrece (RF-CAT-05-01) y almacena su valor cromático CIELAB obligatorio (RF-CAT-05-02), del que se deriva su muestra visual sin requerir imagen. Diferidos (dependen de otras HU): familias cromáticas administrables (RF-CAT-05-03), uso del color en carta/variantes (RF-CAT-05-04/05/06 → HU-CAT-02/03) y asociación color↔base (RF-CAT-12-04 → CAT-12 flujo 3, además RF-CAT-12-12 sin definir).';
 COMMENT ON COLUMN color.id_marca IS 'Marca dueña del color (RF-CAT-05-01, CA-CAT-05-01)';
 COMMENT ON COLUMN color.codigo IS 'Código del color cuando exista; opcional (RF-CAT-05-01, CA-CAT-05-02)';
@@ -426,18 +455,36 @@ COMMENT ON COLUMN color.cie_l IS 'Componente L* (luminosidad, 0..100) del valor 
 COMMENT ON COLUMN color.cie_a IS 'Componente a* (verde↔rojo) del valor CIELAB (RF-CAT-05-02)';
 COMMENT ON COLUMN color.cie_b IS 'Componente b* (azul↔amarillo) del valor CIELAB (RF-CAT-05-02)';
 COMMENT ON CONSTRAINT uq_color_nombre_marca ON color IS 'Impide nombres de color duplicados dentro de la misma marca; admite el mismo nombre entre marcas distintas (RF-CAT-05-01, CA-CAT-05-01)';
+=======
+COMMENT ON TABLE color IS 'Catálogo de colores clasificados por base (id_base) y marca.';
+COMMENT ON COLUMN color.id_base IS 'Base a la que pertenece este color según el diagrama ER (Bases -> Color)';
+COMMENT ON COLUMN color.codigo IS 'Código del color cuando exista; opcional';
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 
 -- Tabla: tonos
 CREATE TABLE IF NOT EXISTS tonos (
     id_tono SERIAL PRIMARY KEY,
     id_color INT NOT NULL,
+    nombre VARCHAR(100),
+    hexagesimal VARCHAR(10),
     precio NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     CONSTRAINT fk_tonos_color FOREIGN KEY (id_color) 
         REFERENCES color (id_color) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT chk_tonos_precio CHECK (precio >= 0)
 );
 
-COMMENT ON TABLE tonos IS 'Tonos y matices derivados de un color con ajuste de precio';
+COMMENT ON TABLE tonos IS 'Tonos y matices derivados de un color con nombre, código hexadecimal y ajuste de precio';
+
+-- Tabla: presentacion (entidad propia - RF-CAT-03-05)
+CREATE TABLE IF NOT EXISTS presentacion (
+    id_presentacion SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    volumen NUMERIC(10, 3) NOT NULL,
+    estado enum_estado_general NOT NULL DEFAULT 'activo',
+    CONSTRAINT chk_presentacion_volumen CHECK (volumen > 0)
+);
+
+COMMENT ON TABLE presentacion IS 'Presentación comercial como entidad propia (RF-CAT-03-05): nombre y volumen numérico para permitir la comparación de precios entre productos. No se elimina físicamente si está referenciada por variantes; solo se desactiva (CA-CAT-03-10).';
 
 -- Tabla: presentacion (entidad propia - RF-CAT-03-05)
 CREATE TABLE IF NOT EXISTS presentacion (
@@ -480,6 +527,19 @@ COMMENT ON COLUMN variante.precio_vigente IS 'Precio actual de venta en catálog
 COMMENT ON COLUMN variante.existencia_referencial IS 'Existencia referencial (no negativa) sobre la variante física (RF-CAT-03-04, CA-CAT-03-11)';
 COMMENT ON COLUMN variante.codigo_proveedor IS 'Código de proveedor (SAMIT); único cuando existe (RF-CAT-03-06, CA-CAT-03-08)';
 COMMENT ON CONSTRAINT uq_variante_forma ON variante IS 'Impide dos variantes idénticas del mismo producto (RF-CAT-03-03, CA-CAT-03-02); NULLS NOT DISTINCT trata las combinaciones sin base/color como iguales.';
+<<<<<<< HEAD
+=======
+
+-- Foreign key diferida base -> variante
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_base_variante') THEN
+        ALTER TABLE base 
+            ADD CONSTRAINT fk_base_variante FOREIGN KEY (id_variante)
+            REFERENCES variante (id_variante) ON UPDATE CASCADE ON DELETE SET NULL;
+    END IF;
+END $$;
+>>>>>>> 2ef493460a3531eb1ba1a145750138bfc779fc55
 
 -- Tabla: caracteristica
 CREATE TABLE IF NOT EXISTS caracteristica (
@@ -567,6 +627,7 @@ CREATE TABLE IF NOT EXISTS linea_carrito (
     id_linea_carrito SERIAL PRIMARY KEY,
     id_carrito INT NOT NULL,
     id_variante INT NOT NULL,
+    ref_viva INT NOT NULL DEFAULT 1,
     cantidad INT NOT NULL DEFAULT 1,
     CONSTRAINT fk_lineacarrito_carrito FOREIGN KEY (id_carrito) 
         REFERENCES carrito (id_carrito) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -576,7 +637,8 @@ CREATE TABLE IF NOT EXISTS linea_carrito (
     CONSTRAINT uq_carrito_variante UNIQUE (id_carrito, id_variante)
 );
 
-COMMENT ON TABLE linea_carrito IS 'Líneas vivas de ítems en carrito vinculadas a la variante de producto';
+COMMENT ON TABLE linea_carrito IS 'Líneas vivas de ítems en carrito vinculadas a la variante de producto y referencia viva';
+COMMENT ON COLUMN linea_carrito.ref_viva IS 'Identificador de referencia viva del carrito (M21)';
 
 -- ==============================================================================
 -- 5. MÓDULO DE COTIZACIONES Y ÓRDENES (HISTÓRICO INMUTABLE)
@@ -585,11 +647,17 @@ COMMENT ON TABLE linea_carrito IS 'Líneas vivas de ítems en carrito vinculadas
 -- Tabla: cotizacion
 CREATE TABLE IF NOT EXISTS cotizacion (
     id_cotizacion SERIAL PRIMARY KEY,
+    id_usuario INT,
+    id_rol INT,
     estado enum_estado_cotizacion NOT NULL DEFAULT 'borrador',
-    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cotizacion_usuario FOREIGN KEY (id_usuario)
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_cotizacion_rol FOREIGN KEY (id_rol)
+        REFERENCES rol (id_rol) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-COMMENT ON TABLE cotizacion IS 'Cotizaciones comerciales B2B / B2C que pueden originar órdenes';
+COMMENT ON TABLE cotizacion IS 'Cotizaciones comerciales B2B / B2C vinculadas a usuario y rol que pueden originar órdenes';
 
 -- Tabla: orden
 -- Reemplazo inmutable de pedido. Posee código visible, origen y trazabilidad legal.
@@ -599,6 +667,7 @@ CREATE TABLE IF NOT EXISTS orden (
     id_usuario INT NOT NULL,
     origen enum_origen_orden NOT NULL DEFAULT 'carrito',
     id_cotizacion INT,
+    carrito_o_cotizacion VARCHAR(50),
     estado enum_estado_orden NOT NULL DEFAULT 'pendiente',
     transaccion_pago_id VARCHAR(100) UNIQUE,
     direccion TEXT NOT NULL,
@@ -619,6 +688,7 @@ CREATE TABLE IF NOT EXISTS orden (
 COMMENT ON TABLE orden IS 'Cabecera de órdenes de compra inmutables';
 COMMENT ON COLUMN orden.codigo_visible IS 'Código amigable alfanumérico para el cliente (ej. ORD-2026-0001)';
 COMMENT ON COLUMN orden.origen IS 'Flujo de procedencia: carrito de compras o cotización aprobada';
+COMMENT ON COLUMN orden.carrito_o_cotizacion IS 'Identificador descriptivo del origen de la compra';
 COMMENT ON COLUMN orden.transaccion_pago_id IS 'Identificador único de la pasarela de pago vinculada';
 
 -- Tabla: linea_orden

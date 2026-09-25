@@ -10,8 +10,8 @@ Como agente de IA responsable de implementar código, pruebas o arquitectura par
 > 3. **Protocolo de Parada e Informe de Inconsistencias:** Si para completar una HU consideras necesario modificar un archivo compartido o externo a tu módulo, **DEBES DETENER LA EJECUCIÓN INMEDIATAMENTE**, no realizar ningún cambio y presentar un reporte detallado al equipo humano explicando la inconsistencia o necesidad técnica. Solo podrás continuar tras recibir aprobación explícita.
 > 4. **Objetivo 100% Funcional:** No reconstruyas la arquitectura global del backend ni del frontend. Concéntrate en cumplir al 100% los Criterios de Aceptación (CA) y Requisitos Funcionales (RF) de cada Historia de Usuario usando el stack tecnológico aprobado.
 > 5. **Los Diagramas son Contratos de Flujo Obligatorios:** Los diagramas han sido diseñados y consensuados por todo el equipo de ingeniería. No son meras ilustraciones: **definen la máquina de estados, ramificaciones condicionales, secuencias de llamadas y manejo de errores exactos** que tu código debe respetar.
-> 6. **Versionado Obligatorio y Walkthrough en CADA Implementación:** Tras CUALQUIER cambio o implementación de código, es MANDATORIO incrementar la versión semántica ([docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md)), actualizar `docs/CHANGELOG.md` y generar el Walkthrough de Implementación correspondiente.
-> 7. **Convención de Commits y Push Controlado:** Los commits deben crearse usando el estándar Conventional Commits con tag de versión obligatorio si aplica (`tipo(modulo): [vX.X.X] descripcion`), verificando que TypeScript compile limpio y haciendo push únicamente a la rama asignada ([docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md)).
+> 6. **Walkthrough en CADA Implementación:** Tras CUALQUIER cambio o implementación de código, es MANDATORIO generar el Walkthrough de Implementación correspondiente en `docs/walkthroughs/M[XX]/` según la [guía de walkthroughs](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md).
+> 7. **Convención de Commits y Push Controlado:** Los commits deben crearse usando el estándar Conventional Commits (`tipo(modulo): descripcion`, ej: `feat(M04): implementar registro`), verificando que TypeScript compile limpio y haciendo push únicamente a la rama asignada ([docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md)).
 > 8. **Paleta de Colores Obligatoria de Diseño (Design System Pintuclic):** Queda TERMINANTEMENTE PROHIBIDO para cualquier desarrollador o Agente de IA utilizar colores arbitrarios (ej. `bg-[#002855]`, `text-purple-600`, colores hexadecimales inline o clases estándar de Tailwind no aprobadas). Todo componente visual DEBE construirse exclusivamente con los tokens de color oficiales definidos en `frontend/src/core/theme/colors.ts` y documentados en `frontend/src/core/theme/GUIA_COLORES.md` (`corporate`, `action`, `subaction`, `conversion`, `highlight`, `neutral-*`).
 > 9. **Exclusividad del Sistema de Reviews (Solo Líderes Técnicos):** Queda TERMINANTEMENTE PROHIBIDO para desarrolladores o Agentes de IA que actúen como implementadores crear, editar o alterar archivos dentro de `docs/reviews/`. La auditoría técnica, evaluación de código y emisión de dictámenes es potestad y responsabilidad EXCLUSIVA del Líder Técnico (Tech Lead). Si no estás desempeñando explícitamente el rol de Líder Técnico, **NO HAGAS REVIEWS**; tu entregable como implementador finaliza estrictamente en el Walkthrough (`docs/walkthroughs/`) y el commit/push correspondiente.
 > 10. **Origen Único de Datos y Prohibición de Auto-Siembra en Código (Seed Centralizado):** Queda TERMINANTEMENTE PROHIBIDO para cualquier desarrollador o Agente de IA hardcodear arrays de datos iniciales en TypeScript o crear funciones en Express/TypeScript que inserten datos, catálogos o mocks en la base de datos al arrancar el servidor (ej: funciones tipo `sembrarPermisos()`, `initData()`, auto-inserts al importar routers, etc.). Todo dato inicial, catálogo maestro o mock para pruebas DEBE residir exclusivamente en `bd/sql/seed_pintuclic.sql` y gestionarse mediante `npm run db:seed` de acuerdo con [`bd/docs/GUIA_MOCKS_Y_DATOS_PRUEBA.md`](./bd/docs/GUIA_MOCKS_Y_DATOS_PRUEBA.md). Los repositorios y servicios deben limitarse estrictamente a consultar y operar sobre PostgreSQL sin auto-inyectar datos en runtime. Las carpetas `interfaces/` deben contener exclusivamente tipos (`interface`, `type`), con cero runtime y cero datos.
@@ -34,8 +34,8 @@ graph TD
     G -- No --> I[6. Diseñar e Implementar Código en el Módulo Asignado]
     I --> J[7. Validar Criterios de Aceptación y Diagrama]
     J --> K[8. Checklist de Políticas Globales docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/CHECKLIST_CIERRE_MODULOS.md]
-    K --> L[9. Registrar Versión en docs/CHANGELOG.md y Generar Walkthrough Oficial]
-    L --> M[10. Commit Semántico con Versión y Push a la Rama Asignada]
+    K --> L[9. Generar Walkthrough Oficial]
+    L --> M[10. Commit Semántico y Push a la Rama Asignada]
 ```
 
 ### Paso 1: Localización y Mapeo de Dependencias
@@ -94,22 +94,21 @@ Antes de declarar el módulo finalizado, **DEBES comprobar el cumplimiento de la
 2. **Control de Acceso en Servidor (`HU-ADM-03`):** [docs/01_TRANSVERSALES/POLITICAS/politica_HU-ADM-03_control_acceso_servidor.md](./docs/01_TRANSVERSALES/POLITICAS/politica_HU-ADM-03_control_acceso_servidor.md).
 3. **No Exposición de Datos Sensibles (`HU-SEG-06`):** [docs/01_TRANSVERSALES/POLITICAS/politica_HU-SEG-06_no_exposicion_datos_sensibles.md](./docs/01_TRANSVERSALES/POLITICAS/politica_HU-SEG-06_no_exposicion_datos_sensibles.md).
 
-### Paso 9: Generación Obligatoria de Walkthrough y Actualización de Versión
+### Paso 9: Walkthrough de Implementación
 Al completar la implementación, **DEBES SI O SI**:
-1. **Calcular el Incremento SemVer:** Determinar si corresponde a `PATCH` (fix), `MINOR` (nueva HU/endpoint) o `MAJOR` (cierre de módulo/cambio estructural) según [docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md).
-2. **Actualizar `docs/CHANGELOG.md`:** Registrar la entrada de la nueva versión con fecha, módulo, HUs cubiertas y resumen de cambios.
-3. **Generar el Walkthrough de Implementación:** Crear el documento formal usando la estructura de [docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md](./docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md), guardándolo en `docs/walkthroughs/M[XX]/` con el **sufijo obligatorio de capa al final del nombre**: `walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_[backend|frontend].md`, detallando:
+1. **Generar el Walkthrough de Implementación:** Crear el documento formal usando la estructura de [docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md](./docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md), guardándolo en `docs/walkthroughs/M[XX]/` con el **sufijo obligatorio de capa al final del nombre**: `walkthrough_v[X.Y.Z.W]_[MXX]_[descripcion]_[backend|frontend].md`, detallando:
    - Módulo de origen y HUs completadas.
    - Reglas de negocio y políticas transversales validadas.
    - Criterios de Aceptación verificados.
    - **Resumen conceptual de dependencias externas** (qué necesita este código de otros módulos para operar al 100% en producción y a quién habilita).
    - Lista de archivos creados/modificados dentro del módulo asignado.
 
-### Paso 10: Creación de Commits y Push al Repositorio
-Siguiendo la [Guía de Commits y Push](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md):
-1. **Verificación Previa Obligatoria:** Comprobar que TypeScript compila sin errores (`npx tsc --noEmit`), que ESLint no arroja errores ni advertencias (`npm run lint`), que las pruebas unitarias pasan al 100% y que solo se modificaron archivos del módulo asignado.
-2. **Formato del Commit:** Crear commits atómicos utilizando el estándar Conventional Commits con tag de versión coincidente con `docs/CHANGELOG.md` (ej: `feat(M04): [v1.1.0] implementar registro con verificacion HU-CUE-01` o `fix(M04): [v1.1.1] corregir expiracion de tokens`).
-3. **Push Seguro:** Ejecutar `git push origin <rama_asignada>` únicamente sobre la rama de trabajo correspondiente. Nunca hacer push forzado (`--force`) sobre ramas compartidas.
+### Paso 10: Actualización de Versión, Commits y Push al Repositorio
+Siguiendo el esquema de [CONTRIBUTING.md](CONTRIBUTING.md) y la [Guía de Commits y Push](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md):
+1. **Actualización de Versión Obligatoria:** antes del commit de la entrega, actualizar `.github/version.txt` con la nueva versión de cuatro segmentos (`Mayor`, `Minior estable`, `Minior-feat`, `Patch`) y agregar la entrada correspondiente en [docs/CHANGELOG.md](./docs/CHANGELOG.md) con el mismo `vX.Y.Z.W`. El tag y el Release se generan automáticamente cuando el cambio llega a `main` o `develop`.
+2. **Verificación Previa Obligatoria:** Comprobar que TypeScript compila sin errores (`npx tsc --noEmit`), que ESLint no arroja errores ni advertencias (`npm run lint`), que las pruebas unitarias pasan al 100% y que solo se modificaron archivos del módulo asignado.
+3. **Formato del Commit:** Crear commits atómicos utilizando el estándar Conventional Commits (`tipo(modulo): descripcion`, ej: `feat(M04): implementar registro con verificacion HU-CUE-01` o `fix(M04): corregir expiracion de tokens`).
+4. **Push Seguro:** Ejecutar `git push origin <rama_asignada>` únicamente sobre la rama de trabajo correspondiente. Nunca hacer push forzado (`--force`) sobre ramas compartidas.
 
 ---
 
@@ -120,7 +119,7 @@ Siguiendo la [Guía de Commits y Push](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/G
 - [docs/00_SISTEMA/01_ARQUITECTURA/ARQUITECTURA_BACKEND.md](./docs/00_SISTEMA/01_ARQUITECTURA/ARQUITECTURA_BACKEND.md): Stack oficial, directivas de aislamiento y protocolo de parada.
 - [docs/00_SISTEMA/01_ARQUITECTURA/MATRIZ_TRAZABILIDAD.md](./docs/00_SISTEMA/01_ARQUITECTURA/MATRIZ_TRAZABILIDAD.md): Mapeo directo entre Historias de Usuario, Transversales y Diagramas.
 - [docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md): Convención de Conventional Commits y protocolo de push.
-- [docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md): Estándar de SemVer y protocolo de walkthroughs.
+- [docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md): Protocolo de Walkthroughs de implementación.
 - [docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/ESTANDAR_Y_GUIA_INCORPORACION.md](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/ESTANDAR_Y_GUIA_INCORPORACION.md): Normativa para incorporar o refactorizar módulos futuros.
 - [docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/CHECKLIST_CIERRE_MODULOS.md](./docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/CHECKLIST_CIERRE_MODULOS.md): Validación obligatoria de políticas globales antes de cerrar un módulo.
 - [docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md](./docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md): Plantilla oficial de entrega post-implementación (.md y .docx).
@@ -132,3 +131,9 @@ Siguiendo la [Guía de Commits y Push](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/G
 - [docs/02_MODULOS_FUNCIONALES/M04_CUENTAS_AUTH_PERFIL.md](./docs/02_MODULOS_FUNCIONALES/M04_CUENTAS_AUTH_PERFIL.md): Cuentas particulares y empresas, login, registro, perfiles y direcciones.
 - [bd/docs/GUIA_MOCKS_Y_DATOS_PRUEBA.md](./bd/docs/GUIA_MOCKS_Y_DATOS_PRUEBA.md): Protocolo de mocks y datos de prueba centralizados (31 tablas) para testing local y desarrollo de módulos.
 - `docs/assets/diagrams/`: Diagramas de arquitectura, flujo funcional y secuencia por módulo.
+
+
+### Version
+- El esquema oficial de versiones es el de [CONTRIBUTING.md](CONTRIBUTING.md), de cuatro segmentos (`Mayor`, `Minior estable`, `Minior-feat`, `Patch`).
+- En CADA entrega, el agente de IA DEBE actualizar `.github/version.txt` con la nueva versión y agregar su entrada en [docs/CHANGELOG.md](./docs/CHANGELOG.md); el paquete (tag y Release) se genera automáticamente cuando el cambio llega a `main` o `develop` mediante `.github/workflows/version.yml`.
+- La versión del proyecto vive únicamente en `.github/version.txt`; no se duplica en otros archivos de código.
