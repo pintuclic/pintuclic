@@ -85,7 +85,7 @@ import PantallaCompletarPasswordGoogle from '../auth/PantallaCompletarPasswordGo
 
 const emit = defineEmits<{
   irALogin: [];
-  datosListos: [tipo: TipoCuentaRegistro, correo: string];
+  datosListos: [tipo: TipoCuentaRegistro, correo: string, password?: string];
   registroGoogleExitoso: [correo: string];
 }>();
 
@@ -122,7 +122,7 @@ async function onRegistroNaturalSubmit(payload: RegistroNaturalPayload): Promise
   limpiarErrores();
   const res = await registrarParticular(payload);
   if (res) {
-    emit('datosListos', 'natural', payload.correo);
+    emit('datosListos', 'natural', payload.correo, payload.contrasena);
   }
 }
 

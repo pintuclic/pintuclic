@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
+import { adminCatalogoRoutes } from '@/modules/m01-catalogo/catalogo.routes';
 
 export const routes: RouteRecordRaw[] = [
   // 1. Portal Público / Tienda (LayoutHome)
@@ -21,12 +22,13 @@ export const routes: RouteRecordRaw[] = [
     ],
   },
 
-  // 2. Panel Administrativo (LayoutAdmin puro con rutas de M04)
+  // 2. Panel Administrativo (LayoutAdmin con M01 Catálogo y M04 Cuentas)
   {
     path: '/admin',
     name: 'Administracion',
     component: () => import('@/core/layouts/LayoutAdmin.vue'),
     children: [
+      ...adminCatalogoRoutes,
       {
         path: 'solicitudes',
         name: 'AdminSolicitudesEmpresa',
@@ -43,14 +45,14 @@ export const routes: RouteRecordRaw[] = [
     path: '/acceso',
     name: 'Acceso',
     component: () => import('@/core/layouts/LayoutAcceso.vue'),
-    children: [],
+    children: []
   },
-
+  
   // 4. Fallback: Cualquier ruta no reconocida redirige al inicio
   {
     path: '/:pathMatch(.*)*',
     redirect: '/',
-  },
+  }
 ];
 
 const router = createRouter({

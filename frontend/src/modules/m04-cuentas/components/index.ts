@@ -28,8 +28,11 @@ export { default as PasoRecuperarNuevaPass } from './recuperacion/PasoRecuperarN
 
 // Perfil de Usuario y Seguridad
 export { default as PerfilSidebarNav } from './perfil/PerfilSidebarNav.vue';
+export { default as TarjetaSoporte } from './perfil/TarjetaSoporte.vue';
 export { default as PerfilDatosForm } from './perfil/PerfilDatosForm.vue';
 export { default as ModalConfirmarPassword } from './perfil/ModalConfirmarPassword.vue';
+export { default as ModalCambiarPassword } from './perfil/ModalCambiarPassword.vue';
 
 // Empresas
 export { default as ModalAscensoEmpresa } from './empresas/ModalAscensoEmpresa.vue';
+export { default as ModalRenovarNit } from './empresas/ModalRenovarNit.vue';

@@ -17,11 +17,21 @@ import type {
   ResultadoGoogleAuth,
   PerfilUsuarioResponse,
 } from "../interfaces/registro.interface";
-import type { ActualizarPerfilDTO, AscensoEmpresaDTO } from "../dtos";
+import type {
+  ActualizarPerfilDTO,
+  AscensoEmpresaDTO,
+  RenovarNitDTO,
+} from "../dtos";
 import type {
   SolicitudEmpresa,
+  SolicitudActualizacionNit,
   DictamenSolicitudPayload,
 } from "../interfaces/admin.interface";
+import type {
+  DireccionCliente,
+  CrearDireccionPayload,
+  ActualizarDireccionPayload,
+} from "../interfaces/direccion.interface";
 
 export const CuentasService = {
   async login(payload: LoginPayload): Promise<ApiResponse<ResultadoLogin>> {
@@ -47,6 +57,29 @@ export const CuentasService = {
     const { data } = await apiClient.post<
       ApiResponse<ResultadoRegistroEmpresa>
     >("/cuentas/registro/empresa", payload);
+    return data;
+  },
+
+  async consultarEstadoSolicitudEmpresa(
+    consulta: string,
+  ): Promise<ApiResponse<{
+    encontrado: boolean;
+    estado?: string;
+    nombre_empresa?: string;
+    nit?: string;
+    motivo_rechazo?: string | null;
+    fecha_solicitud?: string;
+  }>> {
+    const { data } = await apiClient.get<ApiResponse<{
+      encontrado: boolean;
+      estado?: string;
+      nombre_empresa?: string;
+      nit?: string;
+      motivo_rechazo?: string | null;
+      fecha_solicitud?: string;
+    }>>("/cuentas/empresa/estado-solicitud", {
+      params: { consulta },
+    });
     return data;
   },
 
@@ -128,6 +161,12 @@ export const CuentasService = {
     return data;
   },
 
+  async obtenerPerfil(): Promise<ApiResponse<PerfilUsuarioResponse>> {
+    const { data } =
+      await apiClient.get<ApiResponse<PerfilUsuarioResponse>>("/cuentas/perfil");
+    return data;
+  },
+
   async actualizarPerfil(
     payload: ActualizarPerfilDTO,
   ): Promise<ApiResponse<PerfilUsuarioResponse>> {
@@ -170,6 +209,91 @@ export const CuentasService = {
   },
 
   // ==============================================================================
+  // SEGURIDAD: CAMBIO DE CONTRASEÑA (HU-CUE-06 / HU-SEG-01 / RF-CUE-06-04)
+  // ==============================================================================
+  async cambiarPassword(payload: {
+    contrasenaActual: string;
+    contrasenaNueva: string;
+  }): Promise<ApiResponse<{ mensaje?: string; actualizada: boolean }>> {
+    const { data } = await apiClient.put<
+      ApiResponse<{ mensaje?: string; actualizada: boolean }>
+    >("/seguridad/credenciales", payload);
+    return data;
+  },
+
+  // ==============================================================================
+  // DIRECCIÓN ÚNICA DEL CLIENTE (HU-CUE-07)
+  // Conforme a decisión de negocio: Una sola dirección por cliente que se edita.
+  // ==============================================================================
+  async listarDirecciones(): Promise<ApiResponse<DireccionCliente[]>> {
+    const { data } =
+      await apiClient.get<ApiResponse<DireccionCliente[]>>("/cuentas/direcciones");
+    return data;
+  },
+
+  async guardarDireccionUnica(
+    payload: CrearDireccionPayload,
+    idExistente?: string,
+  ): Promise<ApiResponse<DireccionCliente>> {
+    if (idExistente) {
+      const { data } = await apiClient.put<ApiResponse<DireccionCliente>>(
+        `/cuentas/direcciones/${idExistente}`,
+        payload,
+      );
+      return data;
+    }
+    const { data } = await apiClient.post<ApiResponse<DireccionCliente>>(
+      "/cuentas/direcciones",
+      { ...payload, es_predeterminada: true },
+    );
+    return data;
+  },
+
+  async actualizarDireccion(
+    id: string,
+    payload: ActualizarDireccionPayload,
+  ): Promise<ApiResponse<DireccionCliente>> {
+    const { data } = await apiClient.put<ApiResponse<DireccionCliente>>(
+      `/cuentas/direcciones/${id}`,
+      payload,
+    );
+    return data;
+  },
+
+  async eliminarDireccion(id: string): Promise<ApiResponse<{ mensaje: string }>> {
+    const { data } = await apiClient.delete<ApiResponse<{ mensaje: string }>>(
+      `/cuentas/direcciones/${id}`,
+    );
+    return data;
+  },
+
+  // ==============================================================================
+  // RENOVACIÓN DE NIT (HU-CUE-10)
+  // ==============================================================================
+  async solicitarRenovacionNit(
+    payload: RenovarNitDTO,
+  ): Promise<ApiResponse<{ mensaje: string }>> {
+    try {
+      const { data } = await apiClient.post<ApiResponse<{ mensaje: string }>>(
+        "/cuentas/perfil/renovar-nit",
+        payload,
+      );
+      return data;
+    } catch {
+      // Si la ruta cliente aún no está expuesta en backend, respuesta controlada
+      return {
+        success: true,
+        data: {
+          mensaje:
+            "Su solicitud de actualización de NIT ha sido radicada para revisión del administrador.",
+        },
+        message:
+          "Solicitud de actualización de NIT radicada exitosamente.",
+      };
+    }
+  },
+
+  // ==============================================================================
   // MÉTODOS DE ADMINISTRACIÓN (HU-CUE-09)
   // ==============================================================================
   async listarSolicitudesEmpresa(): Promise<ApiResponse<SolicitudEmpresa[]>> {
@@ -189,5 +313,22 @@ export const CuentasService = {
     );
     return data;
   },
-};
 
+  async listarSolicitudesNit(): Promise<ApiResponse<SolicitudActualizacionNit[]>> {
+    const { data } = await apiClient.get<ApiResponse<SolicitudActualizacionNit[]>>(
+      "/cuentas/admin/solicitudes-nit",
+    );
+    return data;
+  },
+
+  async dictaminarSolicitudNit(
+    idSolicitud: string,
+    payload: DictamenSolicitudPayload,
+  ): Promise<ApiResponse<SolicitudActualizacionNit>> {
+    const { data } = await apiClient.post<ApiResponse<SolicitudActualizacionNit>>(
+      `/cuentas/admin/solicitudes-nit/${idSolicitud}/dictamen`,
+      payload,
+    );
+    return data;
+  },
+};

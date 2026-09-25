@@ -229,6 +229,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v3.29.0] - 2026-09-22
+### Base de Datos: Sincronización Completa de DDL, Mocks y Tipos Kysely según Diagrama ER (Backend)
+- **Alcance General:** Incremento **MINOR (v3.29.0)** que actualiza el esquema relacional de PostgreSQL (`bd/sql/schema_pintuclic.sql`), los datos iniciales de prueba y mocks (`bd/sql/seed_pintuclic.sql`), la documentación técnica oficial (`bd/docs/DOCUMENTACION_BASE_DATOS.md`) y los tipos TypeScript en Kysely (`backend/src/core/db/types.ts`) basándose en el diagrama Entidad-Relación (Mermaid ER) actualizado.
+- **Hitos Clave:**
+  - **Bloque Fusionado (`Variante` $\rightarrow$ `Bases` $\rightarrow$ `Color` $\rightarrow$ `tonos`):** Vinculación de `base` a `variante` (`id_variante`) con `prefijo`; clasificación de `color` por `id_base`; atributo `nombre` y `hexagesimal` en `tonos`.
+  - **Ventas y Carrito:** Soporte de `ref_viva` en `linea_carrito`, asociación de `cotizacion` a `id_usuario` e `id_rol`, y atributo `carrito_o_cotizacion` en `orden`.
+  - **Calidad y Verificación:** `npx tsc --noEmit` y `npm run lint` ejecutados con 0 errores y 0 advertencias.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/DATABASE/walkthrough_v3.29.0_DATABASE_actualizacion_esquema_diagrama_er_backend.md](./walkthroughs/DATABASE/walkthrough_v3.29.0_DATABASE_actualizacion_esquema_diagrama_er_backend.md)
+
+---
+
 ## [v3.28.0] - 2026-09-13
 ### Core: Layouts Globales, Enrutador Central y Sincronización con M01 Catálogo (Frontend)
 - **Alcance General:** Incremento **MINOR (v3.28.0)** que formaliza la arquitectura visual y estructural de layouts del frontend para Pintu Clic. Unifica los layouts globales (`LayoutHome`, `LayoutAdmin`, `LayoutAcceso`, `FooterPrincipal`), sincroniza el enrutamiento central con el módulo completo de catálogo `M01` recién integrado en `develop` y resuelve conflictos de merge en el contenedor raíz.
@@ -570,6 +581,27 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md](./walkthroughs/M01/walkthrough_v3.0.0_M01_categorias_subcategorias_backend.md)
 
 ---
+## [v2.4.0] - 2026-09-15
+### Módulo: Core Frontend (Layouts)
+- **Alcance General:** Salto a versión **MINOR (v2.4.0)**. Se importaron los componentes globales de `feature/m04-cuentas-auth-perfil` hacia `feature/core-frontend-layouts`.
+- **Hitos Clave Frontend:**
+  - **Botones y Tablas:** Corrección en renderizado del `:key` en `Table.vue` y estilos del botón outline en `Button.vue`.
+  - **Layouts y Modales:** Inyección de modales de autenticación y confirmación de "Cerrar sesión" en `LayoutHome.vue` y `LayoutAdmin.vue`.
+  - **Enrutador Central:** Refactorización de `routes/index.ts` usando el patrón de Layouts globales, en lugar de importar explícitamente M01.
+- **Estado:** ✅ Validado. Cambios sincronizados.
+
+## [v2.3.0] - 2026-09-15
+### Módulo: Core Frontend (Design System Components)
+- **Alcance General:** Salto a versión **MINOR (v2.3.0)** con la estabilización, implementación y centralización de los componentes visuales core del frontend en la rama `feature/core-frontend-layouts`, unificando el diseño de botones, tarjetas, inputs, tablas y modales para que todos los módulos utilicen la misma fuente y se erradique la duplicidad de componentes.
+- **Hitos Clave Frontend:**
+  - **Tipografías y Tailwind:** Inyección de `Inter` (sans) y `Poppins` (title) en `tailwind.config.ts`.
+  - **Componentes Base (Botones):** Refactorización completa de `Button.vue` e `IconButton.vue` para soportar las variantes oficiales (`action`, `corporate`, `outline`, etc.) y consumir la librería `lucide-vue-next` dinámicamente mediante la prop `icon`, protegiendo el `index.ts` y evitando crear archivos innecesarios.
+  - **Formularios y Tarjetas (`GrupoOpciones.vue` y `Card.vue`):** Implementación del diseño interactivo de tarjeta seleccionable (check y borde activo) en `GrupoOpciones.vue` e implementación de un contenedor de tarjetas limpio en `Card.vue`.
+  - **Tablas y Paginación (M17/M01):** Consolidación de `Table.vue` con soporte para diseño adaptativo (mobile-cards) y `Paginacion.vue` estándar, reemplazando las tablas dispares de los módulos.
+  - **Modales y Drawers:** Verificación de `Modal.vue` con la franja de gradiente corporativa e implementación de un `Drawer.vue` lateral con transiciones.
+  - **Corrección Arquitectónica:** Migración y corrección de `FooterPrincipal.vue` (removido erróneamente de `components/layout/` hacia la carpeta correcta `src/core/layouts/`).
+  - 🔗 **Walkthrough Técnico Frontend Core:** [walkthrough_v2.3.0_core_design_system_frontend.md](./walkthroughs/core/walkthrough_v2.3.0_core_design_system_frontend.md)
+- **Estado:** ✅ Validado. Componentes implementados estrictamente sobre `src/core/components/` sin afectar otras ramas.
 
 ## [v2.4.0] - 2026-09-15
 ### Módulo: Core Frontend (Layouts)

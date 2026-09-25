@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:m17": "node --experimental-strip-types --test src/modules/m17-permisos/tests/*.test.mjs",
     "test:core": "node --test src/core/components/forms/tests/*.test.mjs"
   },
@@ -28,13 +30,16 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.13.3",
     "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/test-utils": "^2.5.0",
     "@vue/tsconfig": "^0.9.1",
     "eslint": "^10.9.1",
     "eslint-plugin-vue": "^10.10.0",
+    "jsdom": "^30.0.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.69.0",
     "vite": "^8.2.2",
+    "vitest": "^5.0.1",
     "vue-eslint-parser": "^10.4.1",
     "vue-tsc": "^3.3.11"
   }

@@ -259,7 +259,14 @@ async function ejecutarPruebasM01(): Promise<void> {
 
   const mockBasesRepo = {
     crear: async (data: NewBase): Promise<Base> => {
-      const base: Base = { id_base: seqBase++, id_marca: data.id_marca, nombre: data.nombre, estado: 'activo' };
+      const base: Base = {
+        id_base: seqBase++,
+        id_marca: data.id_marca,
+        id_variante: data.id_variante ?? null,
+        nombre: data.nombre,
+        prefijo: data.prefijo ?? null,
+        estado: 'activo',
+      };
       bases.set(base.id_base, base);
       return base;
     },
@@ -298,6 +305,7 @@ async function ejecutarPruebasM01(): Promise<void> {
       const color: Color = {
         id_color: seqColor++,
         id_marca: data.id_marca,
+        id_base: data.id_base ?? null,
         nombre: data.nombre,
         codigo: data.codigo ?? null,
         cie_l: String(data.cie_l),

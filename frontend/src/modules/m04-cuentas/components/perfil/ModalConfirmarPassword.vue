@@ -35,7 +35,7 @@
         <div class="flex gap-3 justify-end pt-2">
           <Button
             type="button"
-            variant="outline"
+            variant="neutral"
             size="md"
             @click="onCancelar"
           >

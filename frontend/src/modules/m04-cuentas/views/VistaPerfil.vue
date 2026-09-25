@@ -8,7 +8,7 @@
       <div class="relative h-full flex flex-col justify-center px-8 md:px-12 z-10 w-full md:w-1/2">
         <h1 class="text-2xl md:text-3xl font-title font-bold text-corporate mb-1.5">Mi Perfil</h1>
         <p class="text-neutral-medium text-sm font-sans font-normal max-w-md">
-          Administra tu información personal y consulta el estado de tus pedidos.
+          Administre su información personal, credenciales de acceso y dirección de despacho.
         </p>
       </div>
       <div class="absolute inset-0 md:relative md:inset-auto md:w-1/2 h-full flex justify-end pointer-events-none">
@@ -22,33 +22,48 @@
 
     <!-- Contenido Principal con CSS Grid Responsivo -->
     <div class="container mx-auto px-4 md:px-8 mt-6 grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-6 items-start">
-      <!-- 1 y 2. NAVEGACIÓN Y SOPORTE LATERAL (SRP) -->
-      <aside class="order-1 lg:col-start-1">
+      <!-- 1. NAVEGACIÓN LATERAL -->
+      <aside class="order-1 lg:col-start-1 flex flex-col gap-6">
         <PerfilSidebarNav />
+        <!-- En desktop (lg+), la tarjeta de ayuda se muestra en el panel lateral -->
+        <div class="hidden lg:block">
+          <TarjetaSoporte />
+        </div>
       </aside>
 
-      <!-- 3. CONTENIDO Y FORMULARIO DE PERFIL (SRP + DIP) -->
-      <main class="order-2 lg:col-start-2 min-w-0">
+      <!-- 2. FORMULARIO DE PERFIL Y DIRECCIÓN -->
+      <main class="order-2 lg:col-start-2 min-w-0 flex flex-col gap-6">
         <!-- Alertas globales de estado -->
-        <div v-if="errorMensaje" class="mb-6 p-3 bg-danger-subtle border border-danger/30 rounded-xl text-danger text-sm font-medium">
+        <div v-if="errorMensaje" class="p-3 bg-danger-subtle border border-danger/30 rounded-xl text-danger text-sm font-medium">
           {{ errorMensaje }}
         </div>
-        <div v-if="exitoMensaje" class="mb-6 p-3 bg-conversion/10 border border-conversion/30 rounded-xl text-conversion font-semibold text-sm">
+        <div v-if="exitoMensaje" class="p-3 bg-conversion/10 border border-conversion/30 rounded-xl text-conversion font-semibold text-sm">
           {{ exitoMensaje }}
         </div>
 
         <PerfilDatosForm
-          ref="datosFormRef"
+          ref="perfilFormRef"
           :user="userPerfil"
+          :perfil-detallado="perfilDetallado"
+          :direccion-registrada="direccionRegistrada"
+          :solicitud-empresa="solicitudEmpresa"
+          :solicitud-nit="solicitudNit"
           :is-empresa="isEmpresa"
           :guardando="guardando"
           @guardar="onGuardarDatos"
           @solicitar-ascenso="showAscensoModal = true"
+          @solicitar-renovar-nit="showRenovarNitModal = true"
+          @cambiar-password="showCambiarPasswordModal = true"
         />
+
+        <!-- En pantallas móviles y teléfonos (< lg), la sección de ayuda va DEBAJO de Información Personal -->
+        <div class="block lg:hidden">
+          <TarjetaSoporte />
+        </div>
       </main>
     </div>
 
-    <!-- MODAL DE CONFIRMACIÓN DE CONTRASEÑA (HU-SEG-01 / RF-CUE-06-03) -->
+    <!-- MODAL DE CONFIRMACIÓN DE CONTRASEÑA PARA CAMBIO DE CORREO (HU-SEG-01 / RF-CUE-06-03) -->
     <ModalConfirmarPassword
       v-model="showConfirmPasswordModal"
       :nuevo-correo="correoPendiente"
@@ -68,39 +83,48 @@
       />
     </Modal>
 
-    <!-- MODAL DE ASCENSO A EMPRESA (HU-CUE-07) -->
+    <!-- MODAL DE CAMBIO DE CONTRASEÑA EN PERFIL (HU-CUE-06 / RF-CUE-06-04) -->
+    <ModalCambiarPassword
+      v-model="showCambiarPasswordModal"
+      @success="onPasswordCambiadoExitosamente"
+    />
+
+    <!-- MODAL DE ASCENSO A EMPRESA (HU-CUE-06 / RF-CUE-06-07) -->
     <ModalAscensoEmpresa
       v-model="showAscensoModal"
-      :initial-name="userPerfil?.nombre"
-      :initial-phone="userPerfil?.telefono || ''"
+      :initial-name="perfilDetallado?.nombre || userPerfil?.nombre"
+      :initial-phone="perfilDetallado?.telefono || userPerfil?.telefono || ''"
       @success="onAscensoSuccess"
+    />
+
+    <!-- MODAL DE RENOVACIÓN DE NIT (HU-CUE-10) -->
+    <ModalRenovarNit
+      v-model="showRenovarNitModal"
+      @success="onRenovarNitSuccess"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import { usePerfil } from '@/modules/m04-cuentas/composables/usePerfil';
 import { Modal } from '@/core/components';
 import PerfilSidebarNav from '@/modules/m04-cuentas/components/perfil/PerfilSidebarNav.vue';
-import PerfilDatosForm from '@/modules/m04-cuentas/components/perfil/PerfilDatosForm.vue';
+import TarjetaSoporte from '@/modules/m04-cuentas/components/perfil/TarjetaSoporte.vue';
+import PerfilDatosForm, { type GuardarPerfilPayload } from '@/modules/m04-cuentas/components/perfil/PerfilDatosForm.vue';
 import ModalConfirmarPassword from '@/modules/m04-cuentas/components/perfil/ModalConfirmarPassword.vue';
+import ModalCambiarPassword from '@/modules/m04-cuentas/components/perfil/ModalCambiarPassword.vue';
 import PasoVerificacion from '@/modules/m04-cuentas/components/registro/PasoVerificacion.vue';
 import ModalAscensoEmpresa from '@/modules/m04-cuentas/components/empresas/ModalAscensoEmpresa.vue';
-
-interface DatosFormulario {
-  nombre: string;
-  telefono: string;
-  documento_identidad: string;
-  correo: string;
-  ciudad: string;
-  direccion: string;
-}
+import ModalRenovarNit from '@/modules/m04-cuentas/components/empresas/ModalRenovarNit.vue';
 
 const authStore = useAuthStore();
 const userPerfil = computed(() => authStore.user);
-const isEmpresa = computed(() => userPerfil.value?.tipo?.toLowerCase() === 'empresa');
+const isEmpresa = computed(() => {
+  const tipo = perfilDetallado.value?.tipo || userPerfil.value?.tipo;
+  return tipo?.toLowerCase() === 'empresa';
+});
 
 const {
   guardando,
@@ -108,20 +132,30 @@ const {
   errorMensaje,
   exitoMensaje,
   errorPasswordModal,
+  perfilDetallado,
+  direccionRegistrada,
+  solicitudEmpresa,
+  solicitudNit,
   limpiarAlertas,
-  actualizarPerfil,
+  cargarDatos,
+  actualizarPerfilYDireccion,
   solicitarCambioCorreo,
   confirmarCambioCorreo,
 } = usePerfil();
 
-const datosFormRef = ref<InstanceType<typeof PerfilDatosForm> | null>(null);
+onMounted(async () => {
+  await cargarDatos();
+});
 const showConfirmPasswordModal = ref(false);
 const showVerificacionCorreo = ref(false);
 const showAscensoModal = ref(false);
+const showRenovarNitModal = ref(false);
+const showCambiarPasswordModal = ref(false);
+const perfilFormRef = ref<InstanceType<typeof PerfilDatosForm> | null>(null);
 const correoPendiente = ref('');
-const datosPendientesGuardado = ref<DatosFormulario | null>(null);
+const datosPendientesGuardado = ref<GuardarPerfilPayload | null>(null);
 
-async function onGuardarDatos(datos: DatosFormulario): Promise<void> {
+async function onGuardarDatos(datos: GuardarPerfilPayload): Promise<void> {
   limpiarAlertas();
   datosPendientesGuardado.value = datos;
 
@@ -154,24 +188,39 @@ async function onVerificacionCorreoExitosa(codigo?: string): Promise<void> {
   }
 }
 
-async function persistirDatos(datos: DatosFormulario): Promise<void> {
-  const ok = await actualizarPerfil({
-    nombre: datos.nombre,
-    telefono: datos.telefono,
-    documento_identidad: datos.documento_identidad,
-    correo: datos.correo,
-    ciudad: datos.ciudad,
-    direccion: datos.direccion,
-  });
-
-  if (ok && datosFormRef.value) {
-    datosFormRef.value.finalizarEdicion();
-    datosFormRef.value.sincronizarFallbacks(datos.ciudad, datos.direccion);
+async function persistirDatos(datos: GuardarPerfilPayload): Promise<void> {
+  const exitoso = await actualizarPerfilYDireccion(
+    {
+      nombre: datos.nombre,
+      telefono: datos.telefono,
+      correo: datos.correo,
+      documento_identidad: datos.documento_identidad,
+    },
+    {
+      direccion: datos.direccion,
+      barrio: datos.barrio,
+      nombre_apellido: datos.nombre,
+      telefono: datos.telefono,
+      latitud: datos.latitud,
+      longitud: datos.longitud,
+    }
+  );
+  if (exitoso) {
+    perfilFormRef.value?.finalizarEdicion();
   }
 }
 
 function onAscensoSuccess(): void {
   limpiarAlertas();
-  exitoMensaje.value = 'Solicitud de ascenso a cuenta empresa enviada con éxito.';
+  void cargarDatos();
+}
+
+function onRenovarNitSuccess(): void {
+  limpiarAlertas();
+  void cargarDatos();
+}
+
+function onPasswordCambiadoExitosamente(): void {
+  limpiarAlertas();
 }
 </script>

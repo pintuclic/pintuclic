@@ -1,5 +1,18 @@
 <template>
   <EncabezadoModal />
+
+  <!-- BOTÓN VOLVER DEBAJO DEL ENCABEZADO -->
+  <div class="mb-2">
+    <button
+      type="button"
+      class="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-medium hover:text-corporate transition-colors cursor-pointer"
+      @click="$emit('volver')"
+    >
+      <ArrowLeftIcon class="w-4 h-4" />
+      <span>Volver</span>
+    </button>
+  </div>
+
   <PasosProgreso v-if="!isCambioCorreo" :pasos="['Datos', 'Verificación', 'Listo']" :paso-actual="2" />
 
   <div class="text-center mb-8">
@@ -46,16 +59,11 @@
       {{ tiempoRestante > 0 ? `Reenviar código en ${tiempoRestante}s` : 'Reenviar código' }}
     </button>
   </div>
-
-  <div class="mt-4 text-center">
-    <button type="button" class="text-sm text-neutral-medium hover:text-neutral-dark hover:underline cursor-pointer" @click="$emit('volver')">
-      ← Volver
-    </button>
-  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
+import { ArrowLeft as ArrowLeftIcon } from 'lucide-vue-next';
 import EncabezadoModal from '../comunes/EncabezadoModal.vue';
 import { Button, PasosProgreso } from '@/core/components';
 import { useCuentas } from '@/modules/m04-cuentas/composables/useCuentas';

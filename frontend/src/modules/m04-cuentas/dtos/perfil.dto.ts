@@ -17,8 +17,9 @@ export const actualizarPerfilSchema = z.object({
   documento_identidad: z
     .string()
     .trim()
-    .max(30, 'El documento no puede exceder 30 caracteres')
-    .optional(),
+    .regex(/^\d{6,10}$/, 'El documento de identidad debe tener entre 6 y 10 dígitos numéricos')
+    .optional()
+    .or(z.literal('')),
   nombre_representante: z
     .string()
     .trim()
@@ -35,6 +36,10 @@ export const actualizarPerfilSchema = z.object({
     .trim()
     .optional(),
   direccion: z
+    .string()
+    .trim()
+    .optional(),
+  barrio: z
     .string()
     .trim()
     .optional(),

@@ -10,12 +10,17 @@
       <span class="text-xs text-neutral-medium">Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.</span>
     </div>
 
-    <Checkbox id="termsEmpresa" required class="mt-1">
-      <span class="text-xs text-neutral-medium">
-        Acepto los <a href="#" class="text-action hover:underline">Términos y Condiciones</a> y la
-        <a href="#" class="text-action hover:underline">Política de Tratamiento de Datos</a>.
+    <div>
+      <Checkbox v-model="aceptaTerminos" id="termsEmpresa" required class="mt-1 cursor-pointer">
+        <span class="text-xs text-neutral-medium">
+          Acepto los <a href="#" @click.prevent.stop class="text-action hover:underline">Términos y Condiciones</a> y la
+          <a href="#" @click.prevent.stop class="text-action hover:underline">Política de Tratamiento de Datos</a>.
+        </span>
+      </Checkbox>
+      <span v-if="errorTerminos" class="text-xs text-danger font-medium mt-1 block">
+        {{ errorTerminos }}
       </span>
-    </Checkbox>
+    </div>
 
     <div v-if="errorMensaje" class="text-sm text-center font-medium text-corporate bg-subaction border border-action/30 p-2.5 rounded-md">
       {{ errorMensaje }}
@@ -28,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { Mail as MailIcon, Lock as LockIcon, Phone as PhoneIcon } from 'lucide-vue-next';
@@ -44,10 +50,24 @@ const emit = defineEmits<{
   (e: 'submit', payload: RegistroEmpresaPayload): void;
 }>();
 
+const aceptaTerminos = ref(false);
+const errorTerminos = ref('');
+
+watch(aceptaTerminos, (val) => {
+  if (val) {
+    errorTerminos.value = '';
+  }
+});
+
 const schema = toTypedSchema(registroEmpresaSchema);
 const { handleSubmit } = useForm({ validationSchema: schema });
 
 const onSubmit = handleSubmit((values) => {
+  if (!aceptaTerminos.value) {
+    errorTerminos.value = 'Debes aceptar los Términos y Condiciones para continuar.';
+    return;
+  }
+  errorTerminos.value = '';
   emit('submit', {
     nombre_empresa: values.nombre_empresa,
     nombre_representante: values.nombre_representante,

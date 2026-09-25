@@ -25,7 +25,7 @@
       <Button variant="corporate" size="full" :disabled="cargando" @click="$emit('confirmar')">
         {{ cargando ? 'Vinculando...' : 'Sí, vincular cuenta' }}
       </Button>
-      <Button variant="outline" size="full" :disabled="cargando" @click="$emit('cancelar')">
+      <Button variant="neutral" size="full" :disabled="cargando" @click="$emit('cancelar')">
         Cancelar
       </Button>
     </div>

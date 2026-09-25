@@ -172,5 +172,8 @@ export interface PerfilUsuarioResponse {
   documento_identidad?: string | null;
   tipo: string;
   estado: string;
+  nombre_empresa?: string | null;
+  nombre_representante?: string | null;
+  nit?: string | null;
   [key: string]: unknown;
 }

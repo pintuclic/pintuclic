@@ -4,3 +4,6 @@ export * from './registro.dto';
 export * from './recuperar-password.dto';
 export * from './ascenso-empresa.dto';
 export * from './perfil.dto';
+export * from './direccion.dto';
+export * from './cambiar-password.dto';
+export * from './renovar-nit.dto';
