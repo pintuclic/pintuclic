@@ -43,4 +43,4 @@ docker compose -f docker-compose.dev.yml up --build -d
 ```
 
 ## Contribución
-Leer el [CONTRIBUTING.md].
+Leer el [CONTRIBUTING.md](CONTRIBUTING.md).
