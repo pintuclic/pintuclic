@@ -2,14 +2,14 @@
 
 > 🏷️ **CONVENCIÓN OBLIGATORIA DE NOMENCLATURA DEL ARCHIVO:**  
 > Guardar obligatoriamente en `docs/walkthroughs/M[XX]/` con el sufijo de capa técnica **al final del nombre**:  
-> - **Backend:** `walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_backend.md`  
-> - **Frontend:** `walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_frontend.md`
+> - **Backend:** `walkthrough_v[X.Y.Z.W]_[MXX]_[descripcion]_backend.md`  
+> - **Frontend:** `walkthrough_v[X.Y.Z.W]_[MXX]_[descripcion]_frontend.md`
 
 ---
 
 ## 1. METADATOS DE LA IMPLEMENTACIÓN
 
-* **Versión Generada:** `v[X.X.X]` *(Ej: v1.1.0)*
+* **Versión Generada:** `v[X.Y.Z.W]` *(Ej: v0.3.29.1)*
 * **Módulo de Origen:** `[MXX - Nombre del Módulo, ej: M04 Cuentas, Autenticación y Perfil]`
 * **Fecha de Entrega:** `[DD/MM/AAAA]`
 * **Autor / Responsable:** `[Desarrollador / Agente de IA]`

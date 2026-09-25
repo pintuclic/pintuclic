@@ -2,7 +2,23 @@
 
 Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyecto deben registrarse en este archivo siguiendo el estándar [SemVer](https://semver.org/lang/es/) y la [Guía de Versionado y Walkthroughs](./00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_VERSIONADO_Y_WALKTHROUGHS.md).
 
-> Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
+> Formato de Versiones: `[vMAJOR.MINOR.PATCH.BUILD] - AAAA-MM-DD`
+
+> **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
+
+---
+
+## [v0.3.29.1] - 2026-09-25
+### Sistema: Migración al Versionamiento de Cuatro Segmentos y Bump Obligatorio (Documentación)
+- **Alcance General:** Incremento **PATCH (v0.3.29.1)** que adopta el esquema oficial de cuatro segmentos de [CONTRIBUTING.md](../CONTRIBUTING.md) en todo el proyecto y establece la actualización obligatoria de `.github/version.txt` y su registro en este CHANGELOG por cada entrega. Alcance estrictamente documental: no se modifica ningún archivo de `backend/`.
+- **Hitos Clave:**
+  - **Fuente única de versión (`.github/version.txt`):** renumerado el esquema antiguo `3.29.0` → `0.3.29.0` y aplicado el parche de esta entrega `v0.3.29.1`. El workflow `.github/workflows/version.yml` genera el tag y el Release al llegar el cambio a `main` o `develop`.
+  - **Prompt de agentes (`AGENTS.md`):** la IA ahora DEBE actualizar `.github/version.txt` y registrar la entrada del CHANGELOG en cada entrega (antes solo lo notificaba al usuario); Paso 9 corregido a `walkthrough_v[X.Y.Z.W]`.
+  - **Guía oficial (`GUIA_VERSIONADO_Y_WALKTHROUGHS.md`):** segmentos alineados a CONTRIBUTING.md (`Mayor`, `Minior estable`, `Minior-feat`, `Patch`) conservando el mapeo a los inputs del workflow (`major`/`minor`/`patch`/`build`), regla de CHANGELOG obligatorio por bump y excepción documentada para `backend/`.
+  - **Plantilla de walkthrough:** nomenclatura actualizada a cuatro segmentos (`walkthrough_v[X.Y.Z.W]`).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.29.1_core_versionamiento_4_segmentos.md](./walkthroughs/core/walkthrough_v0.3.29.1_core_versionamiento_4_segmentos.md)
+
+---
 
 ## [v3.36.1] - 2026-09-20
 
