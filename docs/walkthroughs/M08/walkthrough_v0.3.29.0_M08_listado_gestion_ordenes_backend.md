@@ -17,8 +17,13 @@ Criterios tomados de los Issues de la épica **#28**, en su versión actualizada
 | :--- | :--- | :--- | :--- |
 | **HU-ORD-05** (#155) | Gestión de órdenes por personal autorizado | **Nuevo:** listado del personal con filtros | `GET /api/ordenes/gestion?codigo=&estado=&desde=&hasta=&cliente=&pagina=&limite=` |
 | **HU-ORD-07** (#182) | Sección de pedidos del cliente | **Ajuste:** `enviado` pasa a finalizados (Despachado cierra el pedido, D02) | `GET /api/ordenes/mis-pedidos` |
+| **HU-ORD-06** (#179) | Identificación de la orden | **Nuevo:** generador del código `PC-AAAA-NNNNN` (D04), a la espera del consecutivo | `CodigoPedidoService` (uso interno) |
 
 Siguen disponibles, sin cambios: `GET /api/ordenes/mis-pedidos/:codigo` (HU-ORD-04) y `GET /api/ordenes/gestion/:codigo` (HU-ORD-05).
+
+Además, esta versión incluye:
+- **Pruebas de integración** (`m08.integracion.test.ts`), que ejecutan las consultas del módulo contra PostgreSQL en modo de solo lectura.
+- **La propuesta de modelo de datos** (`PROPUESTA_MODELO_DATOS_M08.md`) para el líder técnico.
 
 ### Descripción del Alcance de la Versión
 
@@ -36,6 +41,10 @@ El personal con «Revisar órdenes» (`ventas.ver`) ya puede consultar el listad
   - `cliente`: `id_usuario` del titular. El identificador lo aporta la búsqueda de clientes de M17 (HU-ADM-04).
 - **Paginación:** página 1 y 20 órdenes por defecto, máximo 100, con `total` y `total_paginas` (mismo criterio que M02).
 - **Orden:** más recientes primero, con desempate estable por id interno.
+- **Código del pedido (D04, #180):** `CodigoPedidoService.formatear(consecutivo, fecha)` produce `PC-AAAA-NNNNN`.
+  - El año se calcula con la fecha de **Colombia** (`America/Bogota`), no con la UTC ni con la zona del servidor.
+  - Rellena con ceros hasta 5 cifras y, por encima de 99 999, conserva todas las cifras en lugar de truncar (#179 deja abierta esa regla de presentación).
+  - No genera el número: el consecutivo lo aporta la fuente que defina el líder técnico, por lo que el servicio no puede reiniciarlo ni reutilizarlo.
 - **Clasificación de Mis pedidos:** `enviado` se trata como Despachado y pasa a finalizados (CA-ORD-07-01, escenario 2). ⚠️ La equivalencia `enviado` = Despachado queda por confirmar hasta que se alinee el enum.
 
 ### B. Decisión de Diseño
@@ -51,7 +60,7 @@ El personal con «Revisar órdenes» (`ventas.ver`) ya puede consultar el listad
 
 ## 4. MATRIZ DE CRITERIOS DE ACEPTACIÓN (definiciones del 23/09/2026)
 
-Resumen: **7 cumplidos · 7 parciales · 16 bloqueados.** Frente a la versión anterior (8 · 6 · 16) se añadió el listado del personal, pero varios criterios ahora exigen más. Por ejemplo, CA-ORD-06-01 pide el formato `PC-AAAA-NNNNN` y CA-ORD-07-01 distingue la recogida. Las consultas SQL **no se han validado aún contra PostgreSQL real**.
+Resumen: **7 cumplidos · 7 parciales · 16 bloqueados.** Frente a la versión anterior (8 · 6 · 16) se añadió el listado del personal, pero varios criterios ahora exigen más. Por ejemplo, CA-ORD-06-01 pide el formato `PC-AAAA-NNNNN` y CA-ORD-07-01 distingue la recogida. Las consultas SQL se validaron contra **PostgreSQL 15 local** con los datos del seed del repositorio (`m08.integracion.test.ts`, 13/13) y con peticiones HTTP reales a la API. La validación oficial en el entorno de integración corresponde al equipo de testing.
 
 | CA | Resumen del criterio | Resultado | Motivo o método |
 | :--- | :--- | :---: | :--- |
@@ -78,8 +87,8 @@ Resumen: **7 cumplidos · 7 parciales · 16 bloqueados.** Frente a la versión a
 | **CA-ORD-05-01** #176 | Gestión de pedidos opera transiciones válidas | ⛔ | Bloqueo 1 |
 | **CA-ORD-05-02** #177 | Revisar órdenes consulta pero no opera | ⚠️ | Escenario 1 cumplido (listado y detalle con `ventas.ver`); el 2 se verifica cuando exista la operación |
 | **CA-ORD-05-03** #178 | Sin permisos no consulta | ✅ | Guarda `requierePermiso('ventas.ver')` de M20 en las dos rutas |
-| **CA-ORD-05-04** #425 | Identificador, estado, periodo y cliente | ✅ | Los 4 escenarios en `m08.test.ts`; falta validación en PostgreSQL |
-| **CA-ORD-06-01** #180 | `PC-AAAA-NNNNN`, estable y relacionado con SOL | ⛔ | Bloqueos 3 y 4; el `UNIQUE` ya garantiza que no se repita |
+| **CA-ORD-05-04** #425 | Identificador, estado, periodo y cliente | ✅ | Los 4 escenarios en `m08.test.ts` y contra PostgreSQL local (`m08.integracion.test.ts`) |
+| **CA-ORD-06-01** #180 | `PC-AAAA-NNNNN`, estable y relacionado con SOL | ⛔ | Formato listo (`CodigoPedidoService`, año de Colombia); faltan el consecutivo y la creación (bloqueos 3 y 4) |
 | **CA-ORD-06-02** #181 | Identificador inequívoco | ✅ | `UNIQUE` + búsqueda exacta (`m08.test.ts`) |
 | **CA-ORD-06-03** #426 | No reutilizar el de una cancelada | ⛔ | Bloqueo 4 |
 | **CA-ORD-07-01** #183 | En curso / finalizadas por modalidad y acceso al detalle | ⚠️ | Escenarios 1, 2 y 4 cumplidos; el 3 (recogida) necesita el modo de entrega |
@@ -111,10 +120,15 @@ Lo desbloqueado el 23/09 es la **definición funcional**. La épica #28 deja al 
 7. **Referencia a la variante en `linea_orden`** (sin clave foránea, por ADR-05): necesaria para la nota de producto retirado (#424).
 8. **Columna `carrito_o_cotizacion`** (añadida el 23/09): se solapa con `origen`, y el seed usa `carrito_directo` y `cotizacion_aprobada`. Hay que aclarar su propósito antes de usarla.
 
+9. **Seed roto en bases nuevas** (PR #428): `base` referencia las variantes 1 y 2 antes de insertarlas (ciclo `base → variante → color → base`), y `npm run db:seed` falla con `fk_base_variante`. Afecta a todo el equipo. Para la validación local se retiró temporalmente esa llave, se sembró y se volvió a crear con `npm run db`, sin modificar ningún archivo del repositorio.
+10. **Permisos del seed:** el rol 3 (`empresa_vip`, cliente empresa) tiene `ordenes.ver` y `ventas.ver`. Si se confirma, un cliente empresa podría consultar `GET /api/ordenes/gestion` con órdenes de todos los clientes (HU-SEG-06).
+
+**Propuesta concreta para los puntos 1–10:** `docs/walkthroughs/M08/PROPUESTA_MODELO_DATOS_M08.md`, con el SQL de cada cambio, los criterios que desbloquea y las decisiones abiertas.
+
 **Pendientes del analista (#28):** P1 (En preparación → Preparada), P2 (corrección desde Preparada), P3 (pago tardío tras descartar la solicitud), P4 (solicitudes SOL en Mis pedidos) y P5 (etiqueta visible de Devuelto), además de la política de cancelación/devolución de M11.
 
 ### ⚠️ Limitaciones Conocidas
-1. **Sin validar contra PostgreSQL real:** las consultas del listado se verificaron generando su SQL sin base de datos; falta ejecutarlas contra datos.
+1. **Validación local, no oficial:** las consultas se probaron contra PostgreSQL 15 local con el seed del repositorio. `m08.integracion.test.ts` depende de las órdenes `ORD-2026-0001` y `ORD-2026-0002` del seed y habrá que ajustarlo cuando esos códigos pasen al formato PC.
 2. **El filtro de estado usa los estados provisionales.** Cambiará cuando se actualice el enum; la lista del DTO obliga a hacerlo.
 
 ---
@@ -129,7 +143,10 @@ Lo desbloqueado el 23/09 es la **definición funcional**. La épica #28 deja al 
 | **[MODIFICADO]** | `backend/src/modules/m08-ordenes/services/ordenes.service.ts` | `listarOrdenesParaPersonal` con paginación; `enviado` pasa a finalizados. |
 | **[MODIFICADO]** | `backend/src/modules/m08-ordenes/controllers/ordenes.controller.ts` | Handler `listarOrdenesGestion` y traducción de filtros. |
 | **[MODIFICADO]** | `backend/src/modules/m08-ordenes/m08.routes.ts` | Ruta `GET /gestion` con `ventas.ver`. |
-| **[MODIFICADO]** | `backend/src/modules/m08-ordenes/__tests__/m08.test.ts` | +12 pruebas (30/30 en total). |
+| **[MODIFICADO]** | `backend/src/modules/m08-ordenes/__tests__/m08.test.ts` | +17 pruebas: listado, filtros y código PC (35/35 en total). |
+| **[NUEVO]** | `backend/src/modules/m08-ordenes/services/codigo-pedido.service.ts` | Formato `PC-AAAA-NNNNN` con año de Colombia (D04). |
+| **[NUEVO]** | `backend/src/modules/m08-ordenes/__tests__/m08.integracion.test.ts` | 13 pruebas de solo lectura contra PostgreSQL. |
+| **[NUEVO]** | `docs/walkthroughs/M08/PROPUESTA_MODELO_DATOS_M08.md` | Propuesta de modelo de datos para el líder técnico. |
 | **[NUEVO]** | `docs/walkthroughs/M08/walkthrough_v0.3.29.0_M08_listado_gestion_ordenes_backend.md` | Este documento. |
 
 Todos los archivos de código pertenecen al módulo M08. Sin cambios en archivos compartidos. Según la regla actual de AGENTS.md, esta entrega no añade entrada en `docs/CHANGELOG.md`.
@@ -138,7 +155,7 @@ Todos los archivos de código pertenecen al módulo M08. Sin cambios en archivos
 
 ## 7. DICTAMEN FINAL
 
-* **Pruebas de Calidad Superadas (QA Gate):** `✅ SÍ` (`tsc --noEmit` limpio, `npm run lint` limpio, 30/30 pruebas en memoria con `npx tsx src/modules/m08-ordenes/__tests__/m08.test.ts`)
+* **Pruebas de Calidad Superadas (QA Gate):** `✅ SÍ` (`tsc --noEmit` limpio, `npm run lint` limpio, 35/35 pruebas en memoria con `npx tsx src/modules/m08-ordenes/__tests__/m08.test.ts`)
 * **SQL generado revisado:** `✅ SÍ` (consultas parametrizadas, filtros con AND y periodo con extremos incluidos)
-* **Validación contra PostgreSQL real:** `❌ PENDIENTE`
+* **Validación contra PostgreSQL:** `✅ LOCAL` (PostgreSQL 15.19 con el seed del repositorio: 13/13 en `m08.integracion.test.ts` y peticiones HTTP reales a las 4 rutas). La validación oficial en el entorno de integración corresponde al equipo de testing.
 * **Versión:** `⚠️ Pendiente de que el usuario suba .github/version.txt a 0.3.29.0`

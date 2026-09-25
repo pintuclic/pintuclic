@@ -2,6 +2,7 @@ import { EnumEstadoOrden } from '../../../core/db/types';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { MotivoDenegacion } from '../../m20-seguridad/interfaces/seguridad.interfaces';
 import { OrdenesService } from '../services/ordenes.service';
+import { CodigoPedidoService } from '../services/codigo-pedido.service';
 import { OrdenesRepository } from '../repositories/ordenes.repository';
 import { CodigoOrdenDto, ListarOrdenesGestionDto } from '../dtos/ordenes.dto';
 import {
@@ -429,6 +430,42 @@ async function ejecutarPruebasM08(): Promise<void> {
         !ListarOrdenesGestionDto.safeParse({ estado: 'inventado' }).success,
         'HU-ORD-05: un estado que no existe se rechaza'
       );
+    }
+
+    // --- HU-ORD-06: formato del código PC-AAAA-NNNNN (D04) -----------------------
+
+    {
+      const codigos = new CodigoPedidoService();
+      const junio2026 = new Date('2026-06-15T12:00:00Z');
+
+      assert(codigos.formatear(123, junio2026) === 'PC-2026-00123', 'CA-ORD-06-01: el código tiene la forma PC-AAAA-NNNNN');
+
+      // 31/12/2026 23:30 en Bogotá ya es 01/01/2027 04:30 en UTC: manda la fecha de Colombia.
+      const finDeAnioBogota = new Date('2027-01-01T04:30:00Z');
+      const inicioDeAnioBogota = new Date('2027-01-01T05:00:00Z');
+      assert(
+        codigos.anioColombia(finDeAnioBogota) === 2026 && codigos.anioColombia(inicioDeAnioBogota) === 2027,
+        'CA-ORD-06-01 esc. 1: el año corresponde a la fecha de Colombia, no a la UTC'
+      );
+      assert(
+        codigos.formatear(124, inicioDeAnioBogota) === 'PC-2027-00124',
+        'CA-ORD-06-01 esc. 2: al cambiar de año el consecutivo continúa, no se reinicia'
+      );
+      assert(
+        codigos.formatear(100000, junio2026) === 'PC-2026-100000',
+        'HU-ORD-06: por encima de 99999 conserva todas las cifras en lugar de truncar'
+      );
+
+      let rechazaInvalidos = true;
+      for (const invalido of [0, -1, 1.5, Number.NaN]) {
+        try {
+          codigos.formatear(invalido, junio2026);
+          rechazaInvalidos = false;
+        } catch (error) {
+          if (!(error instanceof RangeError)) rechazaInvalidos = false;
+        }
+      }
+      assert(rechazaInvalidos, 'HU-ORD-06: un consecutivo que no es entero positivo se rechaza');
     }
 
     console.log(`\n======================================================`);
