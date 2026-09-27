@@ -1,17 +1,12 @@
 <template>
   <Teleport to="body">
-    <dialog
-      ref="dialog"
-      :aria-labelledby="title ? titleId : undefined"
-      class="fixed inset-0 m-auto max-h-none border-0 bg-transparent p-4 backdrop:bg-neutral-black/50 backdrop:backdrop-blur-sm"
-      :class="[maxWidthClass, modelValue ? 'w-full' : 'hidden']"
-      @cancel.prevent="close"
-      @click="$event.target === $event.currentTarget && close()"
-    >
-      <!-- Modal Content -->
-      <div
-        v-if="modelValue"
-        class="relative bg-white rounded-modal shadow-xl w-full max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden"
+    <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <!-- Overlay -->
+      <div class="absolute inset-0 bg-neutral-black/50 backdrop-blur-sm" @click="close"></div>
+      
+      <div 
+        class="relative bg-white rounded-xl shadow-xl w-full max-h-[90vh] flex flex-col overflow-hidden"
+        :class="maxWidthClass"
       >
         <!--
           Franja decorativa de marca (Guía UI 4.2): degradado arcoíris tomado
@@ -23,52 +18,33 @@
         <div
           v-if="accent"
           class="h-2 w-full shrink-0"
-          style="background: linear-gradient(90deg, #2E7D32 0%, #8BC34A 20%, #FFC107 40%, #E63946 60%, #7B2FF7 80%, #0877E8 100%);"
+          style="background: linear-gradient(90deg, #FF4D4D 0%, #FFB703 20%, #4CAF50 40%, #00B4D8 65%, #0877E8 80%, #7B2FF7 100%);"
         />
 
         <!-- Close Button -->
-        <button
-          type="button"
-          aria-label="Cerrar ventana"
+        <button 
           @click="close"
-          class="absolute right-4 flex h-8 w-8 items-center justify-center rounded-full text-neutral-medium hover:bg-neutral-light hover:text-corporate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action transition-all z-10 cursor-pointer"
-          :class="accent ? 'top-5' : 'top-4'"
+          class="absolute top-4 right-4 p-1 rounded-full text-neutral-medium hover:bg-neutral-lightest hover:text-neutral-dark transition-colors z-10 cursor-pointer"
         >
-          <XIcon class="w-4 h-4" />
+          <XIcon class="w-5 h-5" />
         </button>
-
-        <div class="p-4 sm:p-6 md:p-8 min-h-0 flex-1 overflow-y-auto custom-scrollbar">
-          <!-- Encabezado de marca institucional (opcional vía prop :brand-header="true") -->
-          <div v-if="brandHeader" class="flex items-center gap-3 mb-6">
-            <img :src="logoSrc" alt="PintuClic" class="w-9 h-9 rounded-lg object-contain" />
-            <span class="text-lg font-heading font-bold text-corporate">PintuClic</span>
-          </div>
-          <h2 v-if="title" :id="titleId" class="mb-5 pr-8 font-title text-xl font-bold text-corporate">{{ title }}</h2>
+        
+        <div class="p-6 md:p-8 flex-1 overflow-y-auto custom-scrollbar">
           <slot></slot>
         </div>
       </div>
-    </dialog>
+    </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onBeforeUnmount, nextTick, ref, useId } from 'vue';
+import { computed, watch, onMounted, onUnmounted } from 'vue';
 import { X as XIcon } from 'lucide-vue-next';
-import logoSrc from '@/assets/logo.png';
 
-const titleId = useId();
 const props = defineProps({
   modelValue: {
     type: Boolean,
-    default: true
-  },
-  title: {
-    type: String,
-    default: ''
-  },
-  wide: {
-    type: Boolean,
-    default: false
+    required: true
   },
   maxWidth: {
     type: String,
@@ -78,25 +54,20 @@ const props = defineProps({
   accent: {
     type: Boolean,
     default: false
-  },
-  brandHeader: {
-    type: Boolean,
-    default: false
   }
 });
 
 const emit = defineEmits(['update:modelValue', 'close']);
 
 const maxWidthClass = computed(() => {
-  if (props.wide) return 'max-w-3xl';
   const map: Record<string, string> = {
     sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
+    md: 'max-w-md', // ~448px, perfect for login
+    lg: 'max-w-lg', // ~512px
     xl: 'max-w-xl',
-    '2xl': 'max-w-2xl'
+    '2xl': 'max-w-2xl' // good for register if needed
   };
-  return map[props.maxWidth] || 'max-w-md';
+  return map[props.maxWidth];
 });
 
 const close = () => {
@@ -104,37 +75,22 @@ const close = () => {
   emit('close');
 };
 
-const dialog = ref<HTMLDialogElement>();
-let previousOverflow = '';
-let locked = false;
-let disposed = false;
-
-function unlock() {
-  if (locked) document.body.style.overflow = previousOverflow;
-  locked = false;
-}
-
-watch(() => props.modelValue, async (isOpen) => {
-  await nextTick();
-  if (disposed || props.modelValue !== isOpen) return;
-  if (isOpen) {
-    if (!locked) {
-      previousOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      locked = true;
-    }
-    if (!dialog.value?.open) dialog.value?.showModal();
-  } else {
-    dialog.value?.close();
-    unlock();
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && props.modelValue) {
+    close();
   }
-}, { immediate: true, flush: 'post' });
+};
 
-onBeforeUnmount(() => {
-  disposed = true;
-  dialog.value?.close();
-  unlock();
+watch(() => props.modelValue, (isOpen) => {
+  if (isOpen) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
 });
+
+onMounted(() => document.addEventListener('keydown', handleKeydown));
+onUnmounted(() => document.removeEventListener('keydown', handleKeydown));
 </script>
 
 <style>

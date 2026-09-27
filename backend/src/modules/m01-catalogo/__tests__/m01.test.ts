@@ -259,14 +259,7 @@ async function ejecutarPruebasM01(): Promise<void> {
 
   const mockBasesRepo = {
     crear: async (data: NewBase): Promise<Base> => {
-      const base: Base = {
-        id_base: seqBase++,
-        id_marca: data.id_marca,
-        id_variante: data.id_variante ?? null,
-        nombre: data.nombre,
-        prefijo: data.prefijo ?? null,
-        estado: 'activo',
-      };
+      const base: Base = { id_base: seqBase++, id_marca: data.id_marca, nombre: data.nombre, estado: 'activo' };
       bases.set(base.id_base, base);
       return base;
     },
@@ -305,7 +298,6 @@ async function ejecutarPruebasM01(): Promise<void> {
       const color: Color = {
         id_color: seqColor++,
         id_marca: data.id_marca,
-        id_base: data.id_base ?? null,
         nombre: data.nombre,
         codigo: data.codigo ?? null,
         cie_l: String(data.cie_l),
@@ -682,18 +674,25 @@ async function ejecutarPruebasM01(): Promise<void> {
     listarVariantesPublicas: async (idProducto: number) =>
       Array.from(variantes.values())
         .filter((v) => v.id_producto === idProducto && v.estado === 'activo')
-        .map((v) => ({
-          id_variante: v.id_variante,
-          id_presentacion: v.id_presentacion,
-          presentacion: presentaciones.get(v.id_presentacion)?.nombre ?? '',
-          volumen: presentaciones.get(v.id_presentacion)?.volumen ?? '0',
-          id_color: v.id_color,
-          color: v.id_color !== null ? colores.get(v.id_color)?.nombre ?? null : null,
-          id_base: v.id_base,
-          base: v.id_base !== null ? bases.get(v.id_base)?.nombre ?? null : null,
-          precio_vigente: v.precio_vigente,
-          existencia_referencial: v.existencia_referencial,
-        })),
+        .map((v) => {
+          const color = v.id_color !== null ? colores.get(v.id_color) : undefined;
+          return {
+            id_variante: v.id_variante,
+            id_presentacion: v.id_presentacion,
+            presentacion: presentaciones.get(v.id_presentacion)?.nombre ?? '',
+            volumen: presentaciones.get(v.id_presentacion)?.volumen ?? '0',
+            id_color: v.id_color,
+            color: color?.nombre ?? null,
+            codigo_color: color?.codigo ?? null,
+            color_cie_l: color?.cie_l ?? null,
+            color_cie_a: color?.cie_a ?? null,
+            color_cie_b: color?.cie_b ?? null,
+            id_base: v.id_base,
+            base: v.id_base !== null ? bases.get(v.id_base)?.nombre ?? null : null,
+            precio_vigente: v.precio_vigente,
+            existencia_referencial: v.existencia_referencial,
+          };
+        }),
     listarImagenesPublicas: async (idProducto: number) =>
       Array.from(imagenes.values())
         .filter((i) => i.id_producto === idProducto)
@@ -1544,9 +1543,16 @@ async function ejecutarPruebasM01(): Promise<void> {
     const ficha = await catalogoPublicoService.obtenerFicha(prodFijo.id_producto);
     assert(
       ficha.id_producto === prodFijo.id_producto &&
-        ficha.variantes.some((v) => v.id_variante === varFijo.id_variante && v.presentacion === 'Galón' && typeof v.precio_vigente === 'number') &&
+        ficha.variantes.some((v) =>
+          v.id_variante === varFijo.id_variante &&
+          v.presentacion === 'Galón' &&
+          typeof v.precio_vigente === 'number' &&
+          v.codigo_color === blanco.codigo &&
+          v.muestra_hex === '#FFFFFF' &&
+          v.familia_color === 'grises'
+        ) &&
         ficha.imagenes.length > 0,
-      'CA-CAT-06-02: la ficha pública trae variantes (con presentación y precio) e imágenes'
+      'CA-CAT-06-02: la ficha pública trae variante, color navegable e imágenes'
     );
 
     // --------------------------------------------------------------------------

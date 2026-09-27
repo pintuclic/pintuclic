@@ -12,21 +12,21 @@
       ]"
       @click="$emit('update:modelValue', option.value)"
     >
-      <div
+      <div 
         v-if="modelValue === option.value"
         class="absolute top-3 right-3 bg-action text-white rounded-full p-1"
       >
         <Check :size="16" :stroke-width="3" />
       </div>
 
-      <component
-        :is="option.icon"
-        v-if="option.icon"
-        :size="48"
-        class="mb-4 text-action"
+      <component 
+        :is="option.icon" 
+        v-if="option.icon" 
+        :size="48" 
+        class="mb-4 text-action" 
         :stroke-width="1.5"
       />
-
+      
       <span class="font-title font-semibold text-lg">{{ option.label }}</span>
       <span v-if="option.description" class="mt-2 text-sm text-neutral-medium font-sans">
         {{ option.description }}
