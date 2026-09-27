@@ -8,6 +8,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.30.1] - 2026-09-27
+### Core / M01 / M04: Resolución de Conflictos, Corrección de Linter y Restauración de Rutas (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.3.30.1)** que resuelve los conflictos de merge en componentes de registro, restaura las rutas del perfil y administración en el router central, elimina la advertencia de ESLint en tarjetas de catálogo y corrige la etiqueta duplicada en `App.vue`.
+- **Hitos Clave:**
+  - **Saneamiento de Merge y Componentes M04:** Limpieza de marcadores de conflicto Git en `PasoListo.vue` y `PasoVerificacion.vue`, restauración de modales en `LayoutHome.vue` y purga de componentes obsoletos duplicados.
+  - **Restauración de Rutas Centrales (`routes/index.ts`):** Reincorporadas las rutas `/perfil` (`VistaPerfil.vue`) y `/admin/solicitudes` (`VistaAprobacionEmpresas.vue`) bajo el layout unificado.
+  - **Calidad y Estabilidad Frontend:** Corrección de advertencia de `defineProps` en `TarjetaCombinacionColoresPublica.vue` (M01), eliminación de `<script setup>` duplicado en `App.vue`. Frontend con 0 errores y 0 advertencias de ESLint / TypeScript y build 100% exitoso.
+- 🔗 **Versión:** `v0.3.30.1` registrada en `.github/version.txt`.
+
+---
+
 ## [v0.3.29.1] - 2026-09-25
 ### Sistema: Migración al Versionamiento de Cuatro Segmentos y Bump Obligatorio (Documentación)
 - **Alcance General:** Incremento **PATCH (v0.3.29.1)** que adopta el esquema oficial de cuatro segmentos de [CONTRIBUTING.md](../CONTRIBUTING.md) en todo el proyecto y establece la actualización obligatoria de `.github/version.txt` y su registro en este CHANGELOG por cada entrega. Alcance estrictamente documental: no se modifica ningún archivo de `backend/`.
