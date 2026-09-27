@@ -33,7 +33,7 @@
 import { Circle, Flag, Layers3, Triangle } from 'lucide-vue-next';
 import type { EsquemaColorPublico } from '../../interfaces/publicas/catalogo-publico.interface';
 
-const props = defineProps<{ esquema: EsquemaColorPublico; colorSeleccionadoId: number | null }>();
+defineProps<{ esquema: EsquemaColorPublico; colorSeleccionadoId: number | null }>();
 const emit = defineEmits<{ seleccionar: [idColor: number] }>();
 
 const iconosEsquema = {

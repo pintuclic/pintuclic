@@ -184,6 +184,23 @@
       @success="handleWizardSuccess" 
     />
 
+    <RecuperarPasswordWizard 
+      v-model="showRecover" 
+      @openLogin="openLogin" 
+    />
+
+    <!-- Modal Confirmación Cerrar Sesión -->
+    <Modal v-model="showLogoutConfirm" maxWidth="sm">
+      <div class="text-center py-4">
+        <h3 class="text-xl font-bold text-corporate mb-2">¿Cerrar sesión?</h3>
+        <p class="text-neutral-medium text-sm mb-6">¿Estás seguro de que deseas salir de tu cuenta?</p>
+        <div class="flex gap-3 justify-center">
+          <Button variant="neutral" class="flex-1" @click="showLogoutConfirm = false">Cancelar</Button>
+          <Button variant="danger" class="flex-1" @click="confirmLogout">Aceptar</Button>
+        </div>
+      </div>
+    </Modal>
+
     <!-- Modal Global de Categorías M01 -->
     <MenuCategoriasPublico
       :abierto="showCategorias"
@@ -209,9 +226,10 @@ import {
   ShoppingCart as ShoppingCartIcon
 } from 'lucide-vue-next';
 
-import { FooterPrincipal } from '@/core/components';
-import ModalLogin from '@/modules/m04-cuentas/components/ModalLogin.vue';
-import RegistroWizard from '@/modules/m04-cuentas/components/RegistroWizard.vue';
+import { Button, Dropdown, FooterPrincipal, Modal } from '@/core/components';
+import ModalLogin from '@/modules/m04-cuentas/components/auth/ModalLogin.vue';
+import RegistroWizard from '@/modules/m04-cuentas/components/registro/RegistroWizard.vue';
+import RecuperarPasswordWizard from '@/modules/m04-cuentas/components/recuperacion/RecuperarPasswordWizard.vue';
 import MenuCategoriasPublico from '@/modules/m01-dashboardcatalogo/components/publicas/MenuCategoriasPublico.vue';
 import { CatalogoPublicoService } from '@/modules/m01-dashboardcatalogo/services/catalogo-publico.service';
 import type { CategoriaPublica } from '@/modules/m01-dashboardcatalogo/interfaces/catalogo-publico.interface';
@@ -255,6 +273,8 @@ const CATEGORIAS_FALLBACK: readonly CategoriaPublica[] = [
 // Estado global local del layout para modales
 const showLogin = ref(false);
 const showWizard = ref(false);
+const showRecover = ref(false);
+const showLogoutConfirm = ref(false);
 const showCategorias = ref(false);
 const cargandoCategorias = ref(false);
 const categorias = ref<readonly CategoriaPublica[]>([]);
@@ -282,6 +302,7 @@ watchEffect(() => {
 const closeAllModals = () => {
   showLogin.value = false;
   showWizard.value = false;
+  showRecover.value = false;
   showCategorias.value = false;
 };
 
