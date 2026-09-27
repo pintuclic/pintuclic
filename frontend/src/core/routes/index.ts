@@ -11,6 +11,11 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/core/layouts/LayoutHome.vue'),
     children: [
       ...publicStorefrontRoutes,
+      {
+        path: 'perfil',
+        name: 'Perfil',
+        component: () => import('@/modules/m04-cuentas/views/VistaPerfil.vue'),
+      },
     ],
   },
 
@@ -22,6 +27,14 @@ export const routes: RouteRecordRaw[] = [
     children: [
       { path: '', redirect: '/admin/catalogo' },
       ...adminCatalogoRoutes,
+      {
+        path: 'solicitudes',
+        name: 'AdminSolicitudesEmpresa',
+        component: () =>
+          import(
+            '@/modules/m04-cuentas/views/admin/VistaAprobacionEmpresas.vue'
+          ),
+      },
     ],
   },
 
