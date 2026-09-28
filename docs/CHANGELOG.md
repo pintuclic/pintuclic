@@ -8,6 +8,28 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.32.1] - 2026-09-28
+### Core / Infraestructura: Recorte del `.env` de despliegue al catálogo de `.env.example`
+- **Alcance General:** Incremento **PATCH (v0.3.32.1)** que limita la generación del `.env` en el job `Deploy` a las **17 variables exactas** de `.env.example`, eliminando claves de configuración que no forman parte de la plantilla oficial.
+- **Hitos Clave:**
+  - **Variables removidas del workflow:** `NODE_ENV`, `EXPONER_DETALLE_ERRORES`, `ROLES_ADMINISTRATIVOS`, `ALLOWED_ORIGINS`, `SMTP_MAX_REINTENTOS` y `SMTP_DELAY_REINTENTO_MS`; pasan a usar los valores por defecto del código.
+  - **Matriz final:** *Secrets* = `POSTGRES_PASSWORD`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `SMTP_PASS`; *Variables* = `POSTGRES_USER`, `POSTGRES_DB`, `BACKEND_PORT`, `FRONTEND_PORT`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_FROM`, `SMTP_REPLY_TO`, `SMTP_SIMULACION`, `GOOGLE_CLIENT_ID`, `VITE_GOOGLE_CLIENT_ID`.
+  - **Nota:** `NODE_ENV=production` ya lo fija `backend/Dockerfile`; el frontend proxya `/api` vía Nginx (mismo origen), por lo que `ALLOWED_ORIGINS` no es necesario para las vistas servidas por Nginx.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.32.0_core_generacion_env_desde_secrets_deploy.md](./walkthroughs/core/walkthrough_v0.3.32.0_core_generacion_env_desde_secrets_deploy.md)
+
+---
+
+## [v0.3.32.0] - 2026-09-28
+### Core / Infraestructura: Generación de `.env` desde GitHub Secrets en el Despliegue (CI/CD)
+- **Alcance General:** Incremento **Minior-feat (v0.3.32.0)** que elimina la dependencia de un `.env` creado a mano en el VPS. El job `Deploy` ahora construye el archivo `.env` en tiempo de ejecución a partir de los **Secrets** y **Variables** del repositorio, sin exponer credenciales en el código ni en el historial de Git.
+- **Hitos Clave:**
+  - **Nuevo paso `Generar .env desde GitHub Secrets y Variables`:** mapea los valores por `env:`, valida que los secretos críticos (`POSTGRES_PASSWORD`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `SMTP_PASS`) estén presentes y escribe el `.env` con `umask 077` y `chmod 600`, sin imprimir valores en los logs.
+  - **Separación config/credenciales:** credenciales en *Repository secrets*; configuración no sensible (`POSTGRES_USER`, puertos, `SMTP_HOST`, `ALLOWED_ORIGINS`, `GOOGLE_CLIENT_ID`, etc.) en *Repository variables*.
+  - **Disparadores conservados:** automático en push a `develop` y manual vía `workflow_dispatch`.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.32.0_core_generacion_env_desde_secrets_deploy.md](./walkthroughs/core/walkthrough_v0.3.32.0_core_generacion_env_desde_secrets_deploy.md)
+
+---
+
 ## [v0.3.31.0] - 2026-09-28
 ### Módulo: M08 Orden de Venta — Bandeja, Búsqueda e Historial del Personal (Backend)
 - **Alcance General:** Incremento **Minior-feat (v0.3.31.0)** que da al personal con «Revisar órdenes» (`ventas.ver`) una bandeja para atender pedidos (HU-ORD-05), un buscador por número, correo o teléfono del cliente (HU-ORD-08), el contacto del cliente en el detalle (HU-ORD-09) y el historial de compras del cliente (HU-ORD-11), según la épica #28 actualizada el 27/09. Sin cambios de esquema.
