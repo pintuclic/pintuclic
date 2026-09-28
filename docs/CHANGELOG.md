@@ -8,6 +8,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.31.0] - 2026-09-28
+### Módulo: M08 Orden de Venta — Bandeja, Búsqueda e Historial del Personal (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.31.0)** que da al personal con «Revisar órdenes» (`ventas.ver`) una bandeja para atender pedidos (HU-ORD-05), un buscador por número, correo o teléfono del cliente (HU-ORD-08), el contacto del cliente en el detalle (HU-ORD-09) y el historial de compras del cliente (HU-ORD-11), según la épica #28 actualizada el 27/09. Sin cambios de esquema.
+- **Hitos Clave:**
+  - **Rutas nuevas:** `GET /api/ordenes/gestion` con filtros combinables, paginación y `orden=antiguedad`; `GET /api/ordenes/gestion/resumen` con contadores por estado; `GET /api/ordenes/gestion/:codigo/historial-cliente`.
+  - **Generador del código `PC-AAAA-NNNNN`** con año de Colombia (D04), a la espera del consecutivo. Mis pedidos trata `enviado` como finalizado (D02).
+  - **Propuesta de modelo de datos** para el líder técnico (`docs/walkthroughs/M08/PROPUESTA_MODELO_DATOS_M08.md`). Criterios: 13 cumplidos, 10 parciales y 26 bloqueados de 49.
+  - **Calidad y Verificación:** `npx tsc --noEmit` y `npm run lint` sin errores ni advertencias; 51/51 pruebas en memoria, 20/20 de integración contra PostgreSQL y 12 peticiones HTTP reales correctas.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.31.0_M08_bandeja_busqueda_historial_backend.md](./walkthroughs/M08/walkthrough_v0.3.31.0_M08_bandeja_busqueda_historial_backend.md)
+
+---
+
 ## [v0.3.30.1] - 2026-09-27
 ### Core / M01 / M04: Resolución de Conflictos, Corrección de Linter y Restauración de Rutas (Frontend)
 - **Alcance General:** Incremento **PATCH (v0.3.30.1)** que resuelve los conflictos de merge en componentes de registro, restaura las rutas del perfil y administración en el router central, elimina la advertencia de ESLint en tarjetas de catálogo y corrige la etiqueta duplicada en `App.vue`.
@@ -253,6 +265,24 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Servicios y Tipado Centralizado (`cuentas.service.ts`, `admin.interface.ts`):** Nuevos métodos cliente `solicitarCambioCorreo`, `confirmarCambioCorreo`, `listarSolicitudesEmpresa` y `dictaminarSolicitudEmpresa`. Contratos de interfaz tipados sin `any`.
   - **Enrutamiento Administrativo Central (`src/core/routes/index.ts`):** Montaje formal de la ruta `/admin/empresas` bajo `LayoutAdmin`.
   - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M04/walkthrough_v3.29.0_M04_aprobacion_empresas_perfil_cambio_correo_frontend.md](./walkthroughs/M04/walkthrough_v3.29.0_M04_aprobacion_empresas_perfil_cambio_correo_frontend.md)
+
+---
+
+## [v3.30.1] - 2026-09-22
+### Módulo: M08 Orden de Venta (Backend)
+- **Alcance:** Montaje del router de M08 en el enrutador central. Las tres consultas entregadas en `v3.30.0` ya responden bajo `/api/ordenes`; antes devolvían 404 porque el módulo no estaba registrado. Sin cambios de lógica.
+- **Hitos Clave:** `backend/src/app.routes.ts` registra `appRouter.use('/ordenes', ordenesRoutes)`, siguiendo el mismo patrón que el resto de módulos. Habilita las pruebas de API del equipo de testing.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m08.test.ts`: 18/18.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v3.30.1_M08_montaje_rutas_backend.md](./walkthroughs/M08/walkthrough_v3.30.1_M08_montaje_rutas_backend.md)
+
+---
+
+## [v3.30.0] - 2026-09-15
+### Módulo: M08 Orden de Venta (Backend)
+- **Alcance:** Primera entrega del backend de M08. El cliente consulta su sección de pedidos (en curso / finalizados, con buscador) y el detalle de un pedido propio; el personal autorizado localiza órdenes por código visible. La creación de órdenes y el ciclo de estados quedan bloqueados por el esquema de BD (ver walkthrough).
+- **Hitos Clave:** `GET /api/ordenes/mis-pedidos`, `GET /api/ordenes/mis-pedidos/:codigo` y `GET /api/ordenes/gestion/:codigo` (permiso `ventas.ver`). Una orden ajena responde igual que una inexistente y el intento queda registrado (M20). Router pendiente de montar en `app.routes.ts`. CA: 8 cumplidos, 6 parciales y 16 bloqueados.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m08.test.ts`: 18/18. ⚠️ Pendiente validar contra PostgreSQL real.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v3.30.0_M08_consulta_ordenes_backend.md](./walkthroughs/M08/walkthrough_v3.30.0_M08_consulta_ordenes_backend.md)
 
 ---
 
