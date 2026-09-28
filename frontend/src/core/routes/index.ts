@@ -1,31 +1,44 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
+import { publicStorefrontRoutes } from '@/modules/m01-catalogo/publico.routes';
 import { adminCatalogoRoutes } from '@/modules/m01-catalogo/catalogo.routes';
 
 export const routes: RouteRecordRaw[] = [
-  // 1. Portal Público / Tienda (LayoutHome)
+  // 1. Tienda Pública / Storefront (LayoutHome maestro permanente)
   {
     path: '/',
     name: 'Tienda',
     component: () => import('@/core/layouts/LayoutHome.vue'),
     children: [
+      ...publicStorefrontRoutes,
       {
-        path: '',
-        name: 'Inicio',
-        component: () => import('@/modules/m02-productos/views/VistaInicio.vue'),
+        path: 'perfil',
+        name: 'Perfil',
+        component: () => import('@/modules/m04-cuentas/views/VistaPerfil.vue'),
       },
     ],
   },
 
-  // 2. Panel Administrativo (LayoutAdmin puro, sin M01 inyectado)
+  // 2. Panel Administrativo (LayoutAdmin maestro permanente con sidebar + acordeón)
   {
     path: '/admin',
     name: 'Administracion',
     component: () => import('@/core/layouts/LayoutAdmin.vue'),
-    children: [...adminCatalogoRoutes]
+    children: [
+      { path: '', redirect: '/admin/catalogo' },
+      ...adminCatalogoRoutes,
+      {
+        path: 'solicitudes',
+        name: 'AdminSolicitudesEmpresa',
+        component: () =>
+          import(
+            '@/modules/m04-cuentas/views/admin/VistaAprobacionEmpresas.vue'
+          ),
+      },
+    ],
   },
 
-  // 3. Layout de Acceso / Auth independiente
+  // 3. Layout de Acceso / Auth independiente (fullscreen si aplica)
   {
     path: '/acceso',
     name: 'Acceso',

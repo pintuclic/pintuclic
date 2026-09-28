@@ -1,5 +1,6 @@
 import { CatalogoPublicoRepository, FilaVariantePublica, FilaImagenPublica } from '../repositories/catalogo-publico.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
+import { cielabAHex } from './colores.service';
 import {
   CategoriaPublica,
   PaginaProductosPublicos,
@@ -130,6 +131,15 @@ export class CatalogoPublicoService {
 }
 
 function aVariantePublica(v: FilaVariantePublica): VariantePublica {
+  const tieneMuestra =
+    v.id_color !== null &&
+    v.color_cie_l != null &&
+    v.color_cie_a != null &&
+    v.color_cie_b != null;
+  const l = tieneMuestra ? Number(v.color_cie_l) : null;
+  const a = tieneMuestra ? Number(v.color_cie_a) : null;
+  const b = tieneMuestra ? Number(v.color_cie_b) : null;
+
   return {
     id_variante: v.id_variante,
     id_presentacion: v.id_presentacion,
@@ -137,11 +147,26 @@ function aVariantePublica(v: FilaVariantePublica): VariantePublica {
     volumen: Number(v.volumen),
     id_color: v.id_color,
     color: v.color,
+    codigo_color: v.codigo_color ?? null,
+    muestra_hex: l !== null && a !== null && b !== null ? cielabAHex(l, a, b) : null,
+    familia_color: l !== null && a !== null && b !== null ? familiaCromatica(l, a, b) : null,
     id_base: v.id_base,
     base: v.base,
     precio_vigente: Number(v.precio_vigente),
     existencia_referencial: v.existencia_referencial,
   };
+}
+
+/** Familia visual derivada del ángulo de tono CIELAB; los neutros se agrupan como grises. */
+function familiaCromatica(_l: number, a: number, b: number): string {
+  if (Math.hypot(a, b) < 12) return 'grises';
+  const angulo = (Math.atan2(b, a) * 180) / Math.PI;
+  const tono = angulo < 0 ? angulo + 360 : angulo;
+  if (tono < 45 || tono >= 315) return 'rojos';
+  if (tono < 125) return 'amarillos';
+  if (tono < 210) return 'verdes';
+  if (tono < 300) return 'azules';
+  return 'rojos';
 }
 
 function aImagenDetalle(i: FilaImagenPublica): ImagenDetalle {
