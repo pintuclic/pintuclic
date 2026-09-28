@@ -38,20 +38,42 @@ const _listaExhaustiva: [_EstadosSinListar] extends [never] ? true : never = tru
 
 const fechaIso = z.iso.date('La fecha debe tener el formato AAAA-MM-DD');
 
-// HU-ORD-05 (CA-ORD-05-04): listado del personal. Cada filtro es opcional y se prueba
-// por separado; el periodo usa `orden.fecha` con ambos extremos incluidos.
+// Paginación con el mismo criterio que M02: `limite` como máximo 100.
+const pagina = z.coerce.number().int().positive().optional();
+const limite = z.coerce.number().int().positive().max(100).optional();
+
+// Teléfono tal como lo dicta el cliente: dígitos con espacios opcionales y prefijo +.
+// Se quitan los espacios para compararlo con `usuario.telefono` (VARCHAR 20).
+const telefono = z
+  .string()
+  .trim()
+  .regex(/^\+?[0-9 ]{7,25}$/, 'El teléfono solo admite dígitos, espacios y el prefijo +')
+  .transform((valor) => valor.replace(/\s+/g, ''))
+  .refine((valor) => valor.length <= 20, 'El teléfono es demasiado largo');
+
+// Listado del personal (HU-ORD-05, HU-ORD-08). Cada filtro es opcional y se prueba por
+// separado; el periodo usa `orden.fecha` con ambos extremos incluidos.
 export const ListarOrdenesGestionDto = z
   .object({
     codigo: z.string().trim().max(50).optional(),
-    estado: z.enum(ESTADOS_ORDEN).optional(),
+    estado: z.enum(ESTADOS_ORDEN, { error: `El estado debe ser uno de: ${ESTADOS_ORDEN.join(', ')}` }).optional(),
     desde: fechaIso.optional(),
     hasta: fechaIso.optional(),
     cliente: z.coerce.number().int().positive().optional(),
-    pagina: z.coerce.number().int().positive().optional(),
-    limite: z.coerce.number().int().positive().max(100).optional(),
+    // CA-ORD-08-02: el dato que da el cliente cuando no recuerda su número de pedido.
+    correo: z.string().trim().max(150).email('Debe indicar un correo válido').optional(),
+    telefono: telefono.optional(),
+    // CA-ORD-05-07: la bandeja pide ver primero lo que lleva más tiempo esperando.
+    orden: z.enum(['recientes', 'antiguedad'], { error: 'El orden debe ser «recientes» o «antiguedad»' }).optional(),
+    pagina,
+    limite,
   })
   .refine((d) => d.desde === undefined || d.hasta === undefined || d.desde <= d.hasta, {
     message: 'La fecha inicial no puede ser posterior a la final',
     path: ['desde'],
   });
 export type ListarOrdenesGestionDto = z.infer<typeof ListarOrdenesGestionDto>;
+
+// Historial de compras del cliente desde una orden (HU-ORD-11): solo paginación.
+export const PaginacionDto = z.object({ pagina, limite });
+export type PaginacionDto = z.infer<typeof PaginacionDto>;

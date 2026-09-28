@@ -8,6 +8,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.31.0] - 2026-09-28
+### Módulo: M08 Orden de Venta — Bandeja, Búsqueda e Historial del Personal (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.31.0)** que da al personal con «Revisar órdenes» (`ventas.ver`) una bandeja para atender pedidos (HU-ORD-05), un buscador por número, correo o teléfono del cliente (HU-ORD-08), el contacto del cliente en el detalle (HU-ORD-09) y el historial de compras del cliente (HU-ORD-11), según la épica #28 actualizada el 27/09. Sin cambios de esquema.
+- **Hitos Clave:**
+  - **Rutas nuevas:** `GET /api/ordenes/gestion` con filtros combinables, paginación y `orden=antiguedad`; `GET /api/ordenes/gestion/resumen` con contadores por estado; `GET /api/ordenes/gestion/:codigo/historial-cliente`.
+  - **Generador del código `PC-AAAA-NNNNN`** con año de Colombia (D04), a la espera del consecutivo. Mis pedidos trata `enviado` como finalizado (D02).
+  - **Propuesta de modelo de datos** para el líder técnico (`docs/walkthroughs/M08/PROPUESTA_MODELO_DATOS_M08.md`). Criterios: 13 cumplidos, 10 parciales y 26 bloqueados de 49.
+  - **Calidad y Verificación:** `npx tsc --noEmit` y `npm run lint` sin errores ni advertencias; 51/51 pruebas en memoria, 20/20 de integración contra PostgreSQL y 12 peticiones HTTP reales correctas.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.31.0_M08_bandeja_busqueda_historial_backend.md](./walkthroughs/M08/walkthrough_v0.3.31.0_M08_bandeja_busqueda_historial_backend.md)
+
+---
+
 ## [v0.3.30.1] - 2026-09-27
 ### Core / M01 / M04: Resolución de Conflictos, Corrección de Linter y Restauración de Rutas (Frontend)
 - **Alcance General:** Incremento **PATCH (v0.3.30.1)** que resuelve los conflictos de merge en componentes de registro, restaura las rutas del perfil y administración en el router central, elimina la advertencia de ESLint en tarjetas de catálogo y corrige la etiqueta duplicada en `App.vue`.

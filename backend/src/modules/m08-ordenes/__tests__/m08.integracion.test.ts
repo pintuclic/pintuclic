@@ -95,13 +95,13 @@ async function ejecutarPruebasIntegracionM08(): Promise<void> {
     const deCliente4 = await repo.listarParaPersonal({ idCliente: 4 }, 100, 0);
     assert(
       deCliente4.length > 0 && deCliente4.every((o) => o.id_usuario === 4),
-      'CA-ORD-05-04 esc. 4: el filtro por cliente devuelve solo sus órdenes'
+      'HU-ORD-05 / HU-ORD-11: el filtro por cliente devuelve solo sus órdenes'
     );
 
     const porEstado = await repo.listarParaPersonal({ estado: orden2.estado }, 100, 0);
     assert(
       porEstado.length > 0 && porEstado.every((o) => o.estado === orden2.estado),
-      'CA-ORD-05-04 esc. 2: el filtro por estado devuelve solo órdenes de ese estado'
+      'HU-ORD-05 (bandeja): el filtro por estado devuelve solo órdenes de ese estado'
     );
 
     const dia = aFechaTexto(orden2.fecha);
@@ -110,13 +110,13 @@ async function ejecutarPruebasIntegracionM08(): Promise<void> {
     const desdeManana = (await repo.listarParaPersonal({ desde: diaSiguiente }, 100, 0)).map((o) => o.codigo_visible);
     assert(
       mismoDia.includes(ORDEN_CLIENTE_2) && !desdeManana.includes(ORDEN_CLIENTE_2),
-      'CA-ORD-05-04 esc. 3: el periodo incluye sus extremos y excluye lo que queda fuera'
+      'HU-ORD-05 (bandeja): el periodo incluye sus extremos y excluye lo que queda fuera'
     );
 
     const porCodigo = await repo.listarParaPersonal({ codigo: ORDEN_CLIENTE_2.slice(-4) }, 100, 0);
     assert(
       porCodigo.some((o) => o.codigo_visible === ORDEN_CLIENTE_2),
-      'CA-ORD-05-04 esc. 1: el filtro por identificador encuentra la orden'
+      'CA-ORD-08-01: el filtro por identificador encuentra la orden'
     );
 
     const filtrosConteo = { idCliente: 2 };
@@ -137,6 +137,50 @@ async function ejecutarPruebasIntegracionM08(): Promise<void> {
       ajenaRechazada = error instanceof AppError && error.statusCode === 404;
     }
     assert(ajenaRechazada, 'CA-ORD-04-03: la orden de otro cliente responde 404 con datos reales');
+
+    // --- Definiciones del 27/09: búsqueda, bandeja, historial y contacto -------------
+
+    const porCorreo = await repo.listarParaPersonal({ correoCliente: 'CLIENTE@PINTUCLIC.CO' }, 100, 0);
+    assert(
+      porCorreo.length > 0 && porCorreo.every((o) => o.id_usuario === 2),
+      'CA-ORD-08-02: el correo del cliente, escrito en mayúsculas, encuentra sus pedidos'
+    );
+    assert(
+      (await repo.listarParaPersonal({ correoCliente: 'nadie@ejemplo.co' }, 100, 0)).length === 0,
+      'CA-ORD-08-02: un correo sin cuenta no devuelve pedidos'
+    );
+
+    const contacto2 = await repo.buscarContactoCliente(2);
+    const telefono2 = (contacto2?.telefono ?? '').replace(/\s+/g, '');
+    const porTelefono = telefono2 ? await repo.listarParaPersonal({ telefonoCliente: telefono2 }, 100, 0) : [];
+    assert(
+      contacto2?.correo === 'cliente@pintuclic.co' && porTelefono.length > 0 && porTelefono.every((o) => o.id_usuario === 2),
+      'HU-ORD-08: el teléfono del cliente encuentra sus pedidos'
+    );
+
+    const recientes = (await repo.listarParaPersonal({}, 100, 0, 'recientes')).map((o) => o.codigo_visible);
+    const antiguas = (await repo.listarParaPersonal({}, 100, 0, 'antiguedad')).map((o) => o.codigo_visible);
+    assert(
+      recientes.length > 1 && antiguas.join(',') === [...recientes].reverse().join(','),
+      'CA-ORD-05-07: el orden por antigüedad es exactamente el inverso del de recientes'
+    );
+
+    const conteo = await repo.contarPorEstado();
+    assert(
+      conteo.reduce((suma, fila) => suma + fila.total, 0) === (await repo.contarParaPersonal({})),
+      'CA-ORD-05-05: los contadores por estado suman el total de órdenes'
+    );
+
+    const sinActual = (await repo.listarParaPersonal({ idCliente: 2, excluirIdOrden: orden2.id_orden }, 100, 0)).map(
+      (o) => o.codigo_visible
+    );
+    assert(!sinActual.includes(ORDEN_CLIENTE_2), 'CA-ORD-11-01: el historial abierto desde una orden no la repite');
+
+    const detallePersonal = await servicio.detallePedidoParaPersonal(ORDEN_CLIENTE_4);
+    assert(
+      detallePersonal.id_cliente === 4 && detallePersonal.cliente?.correo === 'contacto@pinturasvalle.co',
+      'CA-ORD-09-01: el detalle del personal trae el contacto real del cliente'
+    );
 
     console.log(`\n======================================================`);
     console.log(`🎯 RESULTADOS: Superadas: ${superadas} | Fallidas: ${fallidas}`);

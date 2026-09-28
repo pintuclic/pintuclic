@@ -1,6 +1,6 @@
 # Propuesta de modelo de datos — M08 Orden de venta
 
-* **Para:** Ibsen (líder técnico) · **De:** Manuel (backend M08) · **Fecha:** 24/09/2026
+* **Para:** Ibsen (líder técnico) · **De:** Manuel (backend M08) · **Fecha:** 24/09/2026, ampliada el 28/09/2026 con las historias HU-ORD-08 a 11 y los criterios nuevos de HU-ORD-03 (sección 8)
 * **Base:** definiciones D01–D08 de la épica **#28** (actualización del 23/09/2026) y esquema `bd/sql/schema_pintuclic.sql` v3.7 en `develop`.
 * **Estado:** propuesta para revisión. No modifica ningún archivo compartido; los cambios de `schema_pintuclic.sql`, `seed_pintuclic.sql` y `core/db/types.ts` los decide y aplica el líder técnico.
 
@@ -19,6 +19,10 @@ La épica #28 deja pendiente de líder técnico: *«Modelo y enum reconciliados 
 | 5 | Copia histórica: color, precio inicial, descuentos, IVA y entrega | #124, #125, #420, #150, #152, #424, #136, #183 (esc. 3) | Qué pasa con `sub_total` y `descuento` actuales |
 | 6 | Verificación de disponibilidad por línea | #134, #131 (esc. 3) | Reparto con M09 |
 | 7 | Permisos y aclaraciones | Seguridad de HU-ORD-05; #115 | Ver sección 7 |
+| 8 | Notas internas (`nota_orden`) | HU-ORD-10: #904, #905, #906 | Si se protege con un disparador de solo inserción |
+| 9 | Registro de contactos (`contacto_orden`) | #903 | Qué medios de contacto se admiten |
+| 10 | Dinero por devolver (`devolucion_dinero_orden`) | #422, #891, #892 | Política de M11 |
+| 11 | Línea entonada: `es_entonado` y `base_consumida` | #893, #901 | — |
 
 ---
 
@@ -181,13 +185,83 @@ CREATE TABLE IF NOT EXISTS verificacion_disponibilidad (
 3. **Posible exposición de datos:** según el seed, el rol 3 (`empresa_vip`, **cliente** empresa) tiene `ordenes.ver` y `ventas.ver` en `asignacion_permiso`. Si se confirma, un cliente empresa vería el listado de órdenes de **todos** los clientes en `GET /api/ordenes/gestion` (HU-SEG-06). Propuesta: retirar `(3, 4)` y `(3, 10)` del seed.
 4. **`orden.carrito_o_cotizacion`** (añadida en #428): se solapa con `origen`, y el seed usa `carrito_directo` y `cotizacion_aprobada`. ¿Qué información aporta que `origen` no tenga? Si ninguna, se propone retirarla antes de que alguien la use.
 5. **`linea_orden` con `ON DELETE CASCADE`:** contradice la retención de la orden (nunca se elimina). Propuesta: `ON DELETE RESTRICT`.
-6. **Seed roto en bases nuevas** (#428): `base` referencia las variantes 1 y 2 antes de insertarlas (ciclo `base → variante → color → base`), y `npm run db:seed` falla con `fk_base_variante`. Afecta a todo el equipo, incluido testing.
+6. ~~**Seed roto en bases nuevas** (#428)~~ **Resuelto** en `develop` el 25/09 (PR #445, que revirtió el ciclo `base → variante → color → base`). Se comprobó el 28/09 sembrando una base recién creada.
+
+## 8. Necesidades añadidas el 27/09 (HU-ORD-03, 09 y 10)
+
+La épica #28 pasó de 7 a 11 historias y de 30 a 49 criterios. Estas cuatro piezas no estaban en la primera versión de la propuesta.
+
+**Notas internas del personal** (HU-ORD-10: no visibles para el cliente, con autor y momento, y sin poder borrarse):
+
+```sql
+CREATE TABLE IF NOT EXISTS nota_orden (
+    id_nota SERIAL PRIMARY KEY,
+    id_orden INT NOT NULL,
+    id_usuario_autor INT NOT NULL,
+    texto TEXT NOT NULL,
+    fecha TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_nota_orden FOREIGN KEY (id_orden)
+        REFERENCES orden (id_orden) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_nota_autor FOREIGN KEY (id_usuario_autor)
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT chk_nota_texto CHECK (length(trim(texto)) > 0)
+);
+COMMENT ON TABLE nota_orden IS 'Notas internas del personal sobre una orden (HU-ORD-10). Solo inserción; nunca visibles al cliente.';
+```
+
+**Registro de contactos con el cliente** (CA-ORD-09-03: al iniciar un contacto desde la orden queda constancia de quién y cuándo):
+
+```sql
+CREATE TABLE IF NOT EXISTS contacto_orden (
+    id_contacto SERIAL PRIMARY KEY,
+    id_orden INT NOT NULL,
+    id_usuario_autor INT NOT NULL,
+    medio VARCHAR(30) NOT NULL,            -- p. ej. correo, whatsapp, telefono (por definir con el análisis)
+    detalle TEXT,
+    fecha TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_contacto_orden FOREIGN KEY (id_orden)
+        REFERENCES orden (id_orden) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_contacto_autor FOREIGN KEY (id_usuario_autor)
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+```
+
+**Dinero por devolver** (CA-ORD-03-05: al cancelar se registra el importe y el motivo, sin mover el dinero; D03):
+
+```sql
+CREATE TABLE IF NOT EXISTS devolucion_dinero_orden (
+    id_devolucion SERIAL PRIMARY KEY,
+    id_orden INT NOT NULL,
+    importe NUMERIC(12, 2) NOT NULL,
+    motivo TEXT NOT NULL,
+    referencia_externa VARCHAR(150),       -- resultado de la resolución fuera de Pintu Clic
+    id_usuario_autor INT NOT NULL,
+    fecha TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_devolucion_orden FOREIGN KEY (id_orden)
+        REFERENCES orden (id_orden) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_devolucion_autor FOREIGN KEY (id_usuario_autor)
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT chk_devolucion_importe CHECK (importe >= 0)
+);
+```
+
+- **Aclaración pendiente del análisis:** CA-ORD-03-08 y 03-09 dicen «se genera el reembolso», mientras CA-ORD-03-05 y D03 dicen que solo se registra. Esta tabla cubre la segunda lectura; si se confirma la primera, también cambia M07.
+
+**Líneas entonadas** (CA-ORD-03-10: lo entonado a medida no se devuelve; CA-ORD-09-01: base que consume cada línea entonada):
+
+```sql
+ALTER TABLE linea_orden
+    ADD COLUMN IF NOT EXISTS es_entonado BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS base_consumida VARCHAR(100);   -- copia del nombre de la base, sin FK (ADR-05)
+```
+
+**Además:** la antigüedad real de CA-ORD-05-07 («cuánto lleva esperando») sale del último registro de `historial_estado_orden` (sección 2). Hasta entonces, M08 la calcula desde la fecha de la orden.
 
 ---
 
 ## Orden de aplicación sugerido
 
-1. **Estados (1) e historial (2):** desbloquean HU-ORD-03 y el avance de HU-ORD-05, que no dependen de M07.
+1. **Estados (1) e historial (2):** desbloquean HU-ORD-03 y el avance de HU-ORD-05, que no dependen de M07. Añadir en el mismo paso las **notas internas** y el **registro de contactos** (sección 8): son tablas independientes y completan HU-ORD-10 y HU-ORD-09.
 2. **Copia histórica (5):** M08 puede leer y mostrar los datos aunque la creación llegue después.
 3. **Consecutivo PC (4) y relación SOL (3):** junto con M07, para HU-ORD-01.
 4. **Disponibilidad (6):** junto con M09.
