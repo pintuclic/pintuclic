@@ -96,18 +96,19 @@ Antes de declarar el módulo finalizado, **DEBES comprobar el cumplimiento de la
 
 ### Paso 9: Walkthrough de Implementación
 Al completar la implementación, **DEBES SI O SI**:
-1. **Generar el Walkthrough de Implementación:** Crear el documento formal usando la estructura de [docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md](./docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md), guardándolo en `docs/walkthroughs/M[XX]/` con el **sufijo obligatorio de capa al final del nombre**: `walkthrough_v[X.Y.Z]_[MXX]_[descripcion]_[backend|frontend].md`, detallando:
+1. **Generar el Walkthrough de Implementación:** Crear el documento formal usando la estructura de [docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md](./docs/00_SISTEMA/03_PLANTILLAS_Y_CHECKLISTS/PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md), guardándolo en `docs/walkthroughs/M[XX]/` con el **sufijo obligatorio de capa al final del nombre**: `walkthrough_v[X.Y.Z.W]_[MXX]_[descripcion]_[backend|frontend].md`, detallando:
    - Módulo de origen y HUs completadas.
    - Reglas de negocio y políticas transversales validadas.
    - Criterios de Aceptación verificados.
    - **Resumen conceptual de dependencias externas** (qué necesita este código de otros módulos para operar al 100% en producción y a quién habilita).
    - Lista de archivos creados/modificados dentro del módulo asignado.
 
-### Paso 10: Creación de Commits y Push al Repositorio
-Siguiendo la [Guía de Commits y Push](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md):
-1. **Verificación Previa Obligatoria:** Comprobar que TypeScript compila sin errores (`npx tsc --noEmit`), que ESLint no arroja errores ni advertencias (`npm run lint`), que las pruebas unitarias pasan al 100% y que solo se modificaron archivos del módulo asignado.
-2. **Formato del Commit:** Crear commits atómicos utilizando el estándar Conventional Commits (`tipo(modulo): descripcion`, ej: `feat(M04): implementar registro con verificacion HU-CUE-01` o `fix(M04): corregir expiracion de tokens`).
-3. **Push Seguro:** Ejecutar `git push origin <rama_asignada>` únicamente sobre la rama de trabajo correspondiente. Nunca hacer push forzado (`--force`) sobre ramas compartidas.
+### Paso 10: Actualización de Versión, Commits y Push al Repositorio
+Siguiendo el esquema de [CONTRIBUTING.md](CONTRIBUTING.md) y la [Guía de Commits y Push](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md):
+1. **Actualización de Versión Obligatoria:** antes del commit de la entrega, actualizar `.github/version.txt` con la nueva versión de cuatro segmentos (`Mayor`, `Minior estable`, `Minior-feat`, `Patch`) y agregar la entrada correspondiente en [docs/CHANGELOG.md](./docs/CHANGELOG.md) con el mismo `vX.Y.Z.W`. El tag y el Release se generan automáticamente cuando el cambio llega a `main` o `develop`.
+2. **Verificación Previa Obligatoria:** Comprobar que TypeScript compila sin errores (`npx tsc --noEmit`), que ESLint no arroja errores ni advertencias (`npm run lint`), que las pruebas unitarias pasan al 100% y que solo se modificaron archivos del módulo asignado.
+3. **Formato del Commit:** Crear commits atómicos utilizando el estándar Conventional Commits (`tipo(modulo): descripcion`, ej: `feat(M04): implementar registro con verificacion HU-CUE-01` o `fix(M04): corregir expiracion de tokens`).
+4. **Push Seguro:** Ejecutar `git push origin <rama_asignada>` únicamente sobre la rama de trabajo correspondiente. Nunca hacer push forzado (`--force`) sobre ramas compartidas.
 
 ---
 
@@ -133,4 +134,6 @@ Siguiendo la [Guía de Commits y Push](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/G
 
 
 ### Version
-- Las versiones están en README.md, es un breve resumen resumen como debe que ir, tener en cuenta el archivo .github/version.txt debe mencionarle al usuario si va requerir subir de versión, el cambio no lo hace usted, se le hace mención al usuario.
+- El esquema oficial de versiones es el de [CONTRIBUTING.md](CONTRIBUTING.md), de cuatro segmentos (`Mayor`, `Minior estable`, `Minior-feat`, `Patch`).
+- En CADA entrega, el agente de IA DEBE actualizar `.github/version.txt` con la nueva versión y agregar su entrada en [docs/CHANGELOG.md](./docs/CHANGELOG.md); el paquete (tag y Release) se genera automáticamente cuando el cambio llega a `main` o `develop` mediante `.github/workflows/version.yml`.
+- La versión del proyecto vive únicamente en `.github/version.txt`; no se duplica en otros archivos de código.

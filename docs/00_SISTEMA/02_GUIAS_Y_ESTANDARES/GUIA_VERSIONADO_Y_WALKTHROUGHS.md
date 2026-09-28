@@ -8,21 +8,22 @@ Aplica de forma estricta tanto a **desarrolladores humanos** como a **Agentes de
 
 ## 1. Versionado Semántico del Proyecto
 
-El tipo de versión que se utiliza es semántica y está conformado por cuatro segmentos:
+El tipo de versión que se utiliza es semántica y está conformado por cuatro segmentos, según [CONTRIBUTING.md](../../../CONTRIBUTING.md):
 
 | Versión | Nombre | Descripción |
 | :--- | :--- | :--- |
 | `1.X.X.X` | **Mayor** | Versión estable, todo funcional |
-| `X.1.X.X` | **Versión minor estable** | Versión estable de minor; agrupa los cambios grandes que se enviarán después a la rama main (estable) |
-| `X.X.1.X` | **Minor** | Cambios pequeños que aportan a la web |
+| `X.1.X.X` | **Minior estable** | Versión estable de minior-feat; agrupa los cambios grandes que se enviarán después a la rama main (estable) |
+| `X.X.1.X` | **Minior-feat** | Cambios que aportan a la web |
 | `X.X.X.1` | **Patch** | Arreglos pequeños para el funcionamiento de la web |
 
-> **Transición de esquema:** la versión antigua de tres segmentos (ej: `3.28.0`) se reemplaza por la nueva de cuatro segmentos (ej: `0.3.28.0`).
+> **Transición de esquema:** la versión antigua de tres segmentos (ej: `3.28.0`) se reemplaza por la nueva de cuatro segmentos (ej: `0.3.28.0`); el último registro antiguo `3.29.0` equivale a `0.3.29.0`. La línea nueva arranca en `0.3.29.1`.
 
 ### 1.1 Fuente Única de Verdad
 
 - La versión del proyecto reside exclusivamente en `.github/version.txt`, en una sola línea con formato `X.Y.Z.W` (cuatro números separados por punto, sin prefijo `v`).
-- Ningún otro archivo, documento o commit define la versión del proyecto.
+- Ningún otro archivo, documento o commit define la versión del proyecto. La metadata `version` de cada `package.json` es de npm y no representa la versión del release.
+- **Excepción vigente (`backend/`):** el backend no se modifica en esta migración; el campo informativo `version` de su respuesta raíz (`backend/src/index.ts`) no representa la versión del release y se conserva tal cual.
 
 ### 1.2 Empaquetado Automático con GitHub Actions
 
@@ -36,22 +37,23 @@ Para crear un Release y separar las versiones por paquetes, GitHub Actions requi
   - `develop`: publica el Release como **pre-release**.
   - `main`: publica el Release **estable** (`latest`) o promueve a estable el pre-release existente del mismo tag.
 - **Idempotencia:** los reruns no duplican tag ni Release; se omiten o se promueven.
-- En ramas distintas de `main`/`develop`, el bump solo actualiza `version.txt` (commit y push), sin tag ni Release.
+- En ramas distintas de `main`/`develop`, el bump solo actualiza `version.txt`, sin tag ni Release.
 
 #### Equivalencia entre el nombre del segmento y el input del workflow
 
 | Posición | Nombre del segmento | Input `bump` |
 | :--- | :--- | :--- |
 | 1º | Mayor | `major` |
-| 2º | Versión minor estable | `minor` |
-| 3º | Minor | `patch` |
+| 2º | Minior estable | `minor` |
+| 3º | Minior-feat | `patch` |
 | 4º | Patch | `build` |
 
 ### 1.3 Reglas Obligatorias
 
-- **Fuente única:** toda versión se deriva de `.github/version.txt`; queda prohibido declarar versiones en otros archivos de código o documentación.
-- **Agentes IA:** no modifican el valor de la versión; cuando una entrega lo requiera, deben informar al usuario que corresponde subir de versión (el cambio lo realiza el usuario).
-- **Commit del bump:** `chore(release): [X.Y.Z.W] actualizar version`.
+- **Fuente única:** toda versión se deriva de `.github/version.txt`; queda prohibido declarar la versión del proyecto en otros archivos de código o documentación.
+- **Actualización obligatoria:** cada entrega DEBE actualizar `.github/version.txt` con la nueva versión de cuatro segmentos y registrar la entrada correspondiente en [docs/CHANGELOG.md](../../CHANGELOG.md) con el mismo `vX.Y.Z.W`; los registros históricos no se reescriben.
+- **Agentes IA:** los agentes de IA SÍ actualizan `.github/version.txt` y el CHANGELOG en cada entrega, aplicando el esquema de [CONTRIBUTING.md](../../../CONTRIBUTING.md) (antes solo lo notificaban al usuario).
+- **Publicación:** el tag y el Release con el zip se generan automáticamente con `.github/workflows/version.yml` cuando el cambio de `.github/version.txt` llega a `main` o `develop`; la versión no se duplica en otros archivos ni se crean commits manuales de versión.
 
 ---
 

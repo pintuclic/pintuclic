@@ -3,15 +3,16 @@
     <dialog
       ref="dialog"
       :aria-labelledby="title ? titleId : undefined"
-      class="fixed inset-0 m-auto max-h-none border-0 bg-transparent p-4 backdrop:bg-neutral-black/50 backdrop:backdrop-blur-sm"
+      class="fixed inset-0 m-auto max-h-none border-0 bg-transparent p-0 md:p-4 backdrop:bg-neutral-black/50 backdrop:backdrop-blur-sm max-md:top-auto max-md:bottom-0 max-md:inset-x-0"
       :class="[maxWidthClass, modelValue ? 'w-full' : 'hidden']"
       @cancel.prevent="close"
       @click="$event.target === $event.currentTarget && close()"
     >
-      <!-- Modal Content -->
+      <!-- Modal Content / Mobile Bottom Sheet -->
       <div
         v-if="modelValue"
-        class="relative bg-white rounded-modal shadow-xl w-full max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden"
+        class="relative bg-white shadow-xl w-full flex flex-col overflow-hidden max-md:rounded-t-[28px] max-md:rounded-b-none max-md:max-h-[92dvh] md:rounded-modal md:max-h-[calc(100dvh-2rem)] transition-transform duration-200"
+        :style="sheetTransformStyle"
       >
         <!--
           Franja decorativa de marca (Guía UI 4.2): degradado arcoíris tomado
@@ -26,18 +27,30 @@
           style="background: linear-gradient(90deg, #2E7D32 0%, #8BC34A 20%, #FFC107 40%, #E63946 60%, #7B2FF7 80%, #0877E8 100%);"
         />
 
+        <!-- Mobile Drag Handle Bar (Arrastre hacia abajo para cerrar en celular) -->
+        <div
+          class="md:hidden flex justify-center items-center py-2.5 cursor-grab active:cursor-grabbing touch-none select-none"
+          @touchstart="handleTouchStart"
+          @touchmove="handleTouchMove"
+          @touchend="handleTouchEnd"
+        >
+          <div class="w-12 h-1.5 bg-neutral-medium/30 rounded-full hover:bg-neutral-medium/50 transition-colors" />
+        </div>
+
         <!-- Close Button -->
         <button
           type="button"
           aria-label="Cerrar ventana"
           @click="close"
           class="absolute right-4 flex h-8 w-8 items-center justify-center rounded-full text-neutral-medium hover:bg-neutral-light hover:text-corporate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action transition-all z-10 cursor-pointer"
-          :class="accent ? 'top-5' : 'top-4'"
+          :class="accent ? 'top-5 md:top-5 max-md:top-7' : 'top-4 md:top-4 max-md:top-6'"
         >
           <XIcon class="w-4 h-4" />
         </button>
 
-        <div class="p-4 sm:p-6 md:p-8 min-h-0 flex-1 overflow-y-auto custom-scrollbar">
+        <div
+          class="p-4 sm:p-6 md:p-8 min-h-0 flex-1 overflow-y-auto custom-scrollbar"
+        >
           <!-- Encabezado de marca institucional (opcional vía prop :brand-header="true") -->
           <div v-if="brandHeader" class="flex items-center gap-3 mb-6">
             <img :src="logoSrc" alt="PintuClic" class="w-9 h-9 rounded-lg object-contain" />
@@ -100,8 +113,56 @@ const maxWidthClass = computed(() => {
 });
 
 const close = () => {
+  dragOffset.value = 0;
+  isDragging.value = false;
   emit('update:modelValue', false);
   emit('close');
+};
+
+// --- Manejo de Gesto Táctil (Mobile Bottom Sheet Drag to Dismiss) ---
+const touchStartY = ref(0);
+const isDragging = ref(false);
+const dragOffset = ref(0);
+
+const sheetTransformStyle = computed(() => {
+  if (dragOffset.value > 0) {
+    return {
+      transform: `translateY(${dragOffset.value}px)`,
+      transition: isDragging.value ? 'none' : 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)',
+    };
+  }
+  return {};
+});
+
+const handleTouchStart = (e: TouchEvent) => {
+  touchStartY.value = e.touches[0]?.clientY ?? 0;
+  isDragging.value = true;
+};
+
+const handleTouchMove = (e: TouchEvent) => {
+  if (!isDragging.value) return;
+  const currentY = e.touches[0]?.clientY ?? 0;
+  const delta = currentY - touchStartY.value;
+  if (delta > 0) {
+    dragOffset.value = delta;
+    if (e.cancelable) e.preventDefault();
+  } else {
+    dragOffset.value = 0;
+  }
+};
+
+const handleTouchEnd = () => {
+  if (!isDragging.value) return;
+  isDragging.value = false;
+  if (dragOffset.value > 80) {
+    dragOffset.value = 500;
+    setTimeout(() => {
+      close();
+      dragOffset.value = 0;
+    }, 200);
+  } else {
+    dragOffset.value = 0;
+  }
 };
 
 const dialog = ref<HTMLDialogElement>();
@@ -125,6 +186,8 @@ watch(() => props.modelValue, async (isOpen) => {
     }
     if (!dialog.value?.open) dialog.value?.showModal();
   } else {
+    dragOffset.value = 0;
+    isDragging.value = false;
     dialog.value?.close();
     unlock();
   }
