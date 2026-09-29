@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import { publicStorefrontRoutes } from '@/modules/m01-catalogo/publico.routes';
 import { adminCatalogoRoutes } from '@/modules/m01-catalogo/catalogo.routes';
+import { m17Routes } from '@/modules/m17-permisos/m17.routes';
 
 export const routes: RouteRecordRaw[] = [
   // 1. Tienda Pública / Storefront (LayoutHome maestro permanente)
@@ -27,6 +28,7 @@ export const routes: RouteRecordRaw[] = [
     children: [
       { path: '', redirect: '/admin/catalogo' },
       ...adminCatalogoRoutes,
+      ...m17Routes,
       {
         path: 'solicitudes',
         name: 'AdminSolicitudesEmpresa',
