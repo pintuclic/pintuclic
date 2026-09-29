@@ -206,6 +206,7 @@ class RepoFake extends OrdenesRepository {
           total: o.total,
           estado: o.estado,
           id_usuario: o.id_usuario,
+          nombre_cliente: this.usuarios.find((u) => u.id_usuario === o.id_usuario)?.nombre ?? null,
           ultimo_cambio: ultimo,
         };
       });
@@ -567,7 +568,7 @@ async function ejecutarPruebasM08(): Promise<void> {
       const pagina = await new OrdenesService(repo, new RegistroFake()).listarOrdenesParaPersonal({}, undefined, undefined);
       const claves = Object.keys(pagina.items[0] ?? {});
       assert(
-        claves.join(',') === 'codigo,fecha,total,estado,id_cliente,dias_esperando',
+        claves.join(',') === 'codigo,fecha,total,estado,id_cliente,cliente,dias_esperando',
         'HU-SEG-06: cada orden del listado solo trae código, fecha, total, estado, cliente y días esperando'
       );
     }
@@ -995,8 +996,41 @@ async function ejecutarPruebasM08(): Promise<void> {
       const vistaCliente = await new OrdenesService(repo, new RegistroFake()).detallePedidoDeCliente(4, 'ORD-2026-0002', 'GET /test');
       const texto = JSON.stringify(vistaCliente);
       assert(
-        !('notas' in vistaCliente) && !('historial' in vistaCliente) && !('contactos' in vistaCliente) && !texto.includes('NIT'),
-        'CA-ORD-10-01: la vista del cliente no incluye notas internas, historial interno ni contactos'
+        !('notas' in vistaCliente) && !('contactos' in vistaCliente) && !texto.includes('NIT'),
+        'CA-ORD-10-01: la vista del cliente no incluye notas internas ni contactos'
+      );
+    }
+
+    // RF-ORD-04-01: el cliente ve la historia de estados de su pedido, sin autor ni motivo (RF-ORD-09-01).
+    {
+      const repo = new RepoFake([orden(1, 2, 'orden_confirmada')], {}, personal);
+      const gestion = new GestionOrdenesService(repo, new NotificadorFake());
+      await gestion.cambiarEstado('ORD-2026-0001', 'revision_disponibilidad', ADMIN, undefined);
+      await gestion.cambiarEstado('ORD-2026-0001', 'en_preparacion', OPERARIA, undefined);
+      await gestion.cambiarEstado('ORD-2026-0001', 'preparada', OPERARIA, undefined);
+      await gestion.cambiarEstado('ORD-2026-0001', 'en_preparacion', OPERARIA, 'Falta una lata del color');
+      const vista = await new OrdenesService(repo, new RegistroFake()).detallePedidoDeCliente(2, 'ORD-2026-0001', 'GET /test');
+      const texto = JSON.stringify(vista.historial);
+      assert(
+        vista.historial.map((h) => h.estado).join(',') === 'revision_disponibilidad,en_preparacion,preparada,en_preparacion' &&
+          vista.historial.every((h) => Object.keys(h).join(',') === 'estado,fecha') &&
+          vista.historial[0]?.fecha === '2026-09-28T17:00:00.000Z',
+        'RF-ORD-04-01: el cliente ve cada estado de su pedido con su fecha'
+      );
+      assert(
+        !texto.includes('Operaria') && !texto.includes('Admin') && !texto.includes('lata'),
+        'RF-ORD-09-01: al cliente no le llegan el autor ni el motivo de los cambios'
+      );
+    }
+
+    // RF-ORD-05-05: cada fila de la bandeja muestra el nombre del cliente; null si la cuenta ya no existe.
+    {
+      const repo = new RepoFake([orden(1, 2, 'orden_confirmada'), orden(2, 99, 'orden_confirmada')], {}, personal);
+      const pagina = await new OrdenesService(repo, new RegistroFake(), reloj).listarOrdenesParaPersonal({}, undefined, undefined);
+      const porCodigo = new Map(pagina.items.map((o) => [o.codigo, o.cliente]));
+      assert(
+        porCodigo.get('ORD-2026-0001') === 'Cliente Activo' && porCodigo.get('ORD-2026-0002') === null,
+        'RF-ORD-05-05: la bandeja muestra el nombre del cliente de cada orden'
       );
     }
 
@@ -1024,7 +1058,7 @@ async function ejecutarPruebasM08(): Promise<void> {
       const contacto = await new GestionOrdenesService(repo, new NotificadorFake()).registrarContacto(
         'ORD-2026-0001',
         ADMIN,
-        'whatsapp',
+        'correo',
         '  Se avisó de la demora en el color  '
       );
       const sinDetalle = await new GestionOrdenesService(repo, new NotificadorFake()).registrarContacto(
@@ -1036,7 +1070,7 @@ async function ejecutarPruebasM08(): Promise<void> {
       const detalle = await new OrdenesService(repo, new RegistroFake()).detallePedidoParaPersonal('ORD-2026-0001');
       assert(
         contacto.autor === 'Admin Pruebas' &&
-          contacto.medio === 'whatsapp' &&
+          contacto.medio === 'correo' &&
           contacto.detalle === 'Se avisó de la demora en el color' &&
           sinDetalle.detalle === null &&
           detalle.contactos.length === 2,
@@ -1086,8 +1120,11 @@ async function ejecutarPruebasM08(): Promise<void> {
         'HU-ORD-10: una nota sin texto se rechaza con un mensaje en español'
       );
       assert(
-        !RegistrarContactoDto.safeParse({ medio: 'fax' }).success && RegistrarContactoDto.safeParse({ medio: 'correo' }).success,
-        'CA-ORD-09-03: solo se aceptan los medios de contacto previstos'
+        !RegistrarContactoDto.safeParse({ medio: 'fax' }).success &&
+          !RegistrarContactoDto.safeParse({ medio: 'whatsapp' }).success &&
+          RegistrarContactoDto.safeParse({ medio: 'correo' }).success &&
+          RegistrarContactoDto.safeParse({ medio: 'telefono' }).success,
+        'RF-ORD-09-02: solo se aceptan los medios que la orden conserva, correo y teléfono'
       );
     }
 

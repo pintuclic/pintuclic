@@ -99,8 +99,10 @@ export const CrearNotaDto = z.object({
 });
 export type CrearNotaDto = z.infer<typeof CrearNotaDto>;
 
-/** ⚠️ PROVISIONAL: la lista cerrada de medios está pendiente del análisis (CA-ORD-09-03). */
-const MEDIOS_CONTACTO = ['telefono', 'correo', 'whatsapp', 'otro'] as const satisfies readonly MedioContacto[];
+/** Los medios que la orden conserva: correo y teléfono (RF-ORD-09-02, Tanda 3C). */
+const MEDIOS_CONTACTO = ['correo', 'telefono'] as const satisfies readonly MedioContacto[];
+type _MediosSinListar = Exclude<MedioContacto, (typeof MEDIOS_CONTACTO)[number]>;
+const _mediosExhaustivos: [_MediosSinListar] extends [never] ? true : never = true;
 
 // Contacto con el cliente iniciado desde la orden (CA-ORD-09-03).
 export const RegistrarContactoDto = z.object({

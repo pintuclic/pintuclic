@@ -6,6 +6,7 @@ import {
   CambioEstado,
   ContactoRegistrado,
   DetallePedido,
+  DetallePedidoBase,
   DetallePedidoPersonal,
   FilaContactoOrden,
   FilaHistorialEstado,
@@ -137,7 +138,9 @@ export class OrdenesService {
   }
 
   /**
-   * Detalle de un pedido propio (HU-ORD-04). `operacion` identifica la petición en el
+   * Detalle de un pedido propio (HU-ORD-04), con su historia de estados (RF-ORD-04-01).
+   * Del historial el cliente solo recibe cada estado y su momento: el autor y el motivo
+   * son datos del personal (RF-ORD-09-01). `operacion` identifica la petición en el
    * registro de accesos denegados, con la misma forma que usan las guardas de M20.
    */
   async detallePedidoDeCliente(idUsuario: number, codigo: string, operacion: string): Promise<DetallePedido> {
@@ -149,7 +152,14 @@ export class OrdenesService {
       this.registro.registrarAccesoDenegado(idUsuario, operacion, 'TITULARIDAD_AJENA');
       throw recursoNoEncontrado();
     }
-    return this.armarDetalle(orden);
+    const [detalle, historial] = await Promise.all([
+      this.armarDetalle(orden),
+      this.repo.listarHistorial(orden.id_orden),
+    ]);
+    return {
+      ...detalle,
+      historial: historial.map((cambio) => ({ estado: cambio.estado_nuevo, fecha: cambio.fecha.toISOString() })),
+    };
   }
 
   /**
@@ -183,6 +193,7 @@ export class OrdenesService {
           total: fila.total,
           estado: fila.estado,
           id_cliente: fila.id_usuario,
+          cliente: fila.nombre_cliente,
           dias_esperando: diasEntre(esperaDesde, hoy),
         };
       }),
@@ -257,7 +268,7 @@ export class OrdenesService {
   }
 
   /** Solo expone lo necesario para la vista (HU-SEG-06): ni clave primaria ni datos de pago. */
-  private async armarDetalle(orden: CabeceraOrden): Promise<DetallePedido> {
+  private async armarDetalle(orden: CabeceraOrden): Promise<DetallePedidoBase> {
     const lineas = await this.repo.listarLineas(orden.id_orden);
     return {
       codigo: orden.codigo_visible,

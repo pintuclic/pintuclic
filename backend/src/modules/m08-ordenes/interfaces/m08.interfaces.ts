@@ -43,11 +43,11 @@ export type FilaLineaOrden = Pick<LineaOrden, 'nombre_producto' | 'variante_copi
 export type FilaResumenOrden = Pick<Orden, 'codigo_visible' | 'fecha' | 'total' | 'estado'>;
 
 /**
- * Fila del listado del personal: la del cliente más el titular y el momento del último
- * cambio de estado (`null` si la orden aún no tiene historial).
+ * Fila del listado del personal: la del cliente más el titular, su nombre (`null` si la
+ * cuenta ya no existe) y el momento del último cambio de estado (`null` sin historial).
  */
 export type FilaResumenOrdenGestion = FilaResumenOrden &
-  Pick<Orden, 'id_usuario'> & { readonly ultimo_cambio: Date | null };
+  Pick<Orden, 'id_usuario'> & { readonly nombre_cliente: string | null; readonly ultimo_cambio: Date | null };
 
 /** Cambio de estado tal como se lee de `historial_estado_orden`; `autor` null = sistema (D01). */
 export interface FilaHistorialEstado {
@@ -83,10 +83,10 @@ export interface SolicitudCambioEstado {
 }
 
 /**
- * Medios con los que el personal registra un contacto con el cliente (CA-ORD-09-03).
- * ⚠️ PROVISIONAL: la lista cerrada está pendiente del análisis.
+ * Medios con los que el personal contacta al cliente desde la orden: los que la orden
+ * conserva, correo y teléfono (RF-ORD-09-02, Tanda 3C; CA-ORD-09-03).
  */
-export type MedioContacto = 'telefono' | 'correo' | 'whatsapp' | 'otro';
+export type MedioContacto = 'correo' | 'telefono';
 
 /** Datos de contacto del cliente que ve el personal en el detalle (CA-ORD-09-01). */
 export type ContactoCliente = Pick<Usuario, 'nombre' | 'correo' | 'telefono'>;
@@ -134,8 +134,8 @@ export interface LineaPedido {
   readonly cantidad: number;
 }
 
-/** Detalle de un pedido para su cliente titular (HU-ORD-04, CA-ORD-04-01). */
-export interface DetallePedido {
+/** Datos del pedido comunes a la vista del cliente y a la del personal. */
+export interface DetallePedidoBase {
   readonly codigo: string;
   readonly fecha: string;
   readonly estado: EnumEstadoOrden;
@@ -146,6 +146,20 @@ export interface DetallePedido {
   readonly total: string;
   readonly observaciones: string | null;
   readonly lineas: ReadonlyArray<LineaPedido>;
+}
+
+/**
+ * Estado por el que pasó el pedido, tal como lo ve el cliente (RF-ORD-04-01): solo el
+ * estado y el momento. Quién lo cambió y el motivo son datos del personal (RF-ORD-09-01).
+ */
+export interface HitoEstado {
+  readonly estado: EnumEstadoOrden;
+  readonly fecha: string;
+}
+
+/** Detalle de un pedido para su cliente titular, con su historia de estados (HU-ORD-04, RF-ORD-04-01). */
+export interface DetallePedido extends DetallePedidoBase {
+  readonly historial: ReadonlyArray<HitoEstado>;
 }
 
 /** Cambio de estado en el detalle del personal (CA-ORD-09-02). `autor` null = sistema. */
@@ -178,7 +192,7 @@ export interface ContactoRegistrado {
  * (CA-ORD-10-02), los contactos registrados (CA-ORD-09-03) y los estados a los que se puede
  * pasar. `cliente` es null solo si la cuenta ya no existe.
  */
-export interface DetallePedidoPersonal extends DetallePedido {
+export interface DetallePedidoPersonal extends DetallePedidoBase {
   readonly id_cliente: number;
   readonly cliente: ContactoCliente | null;
   readonly transiciones_permitidas: ReadonlyArray<EnumEstadoOrden>;
@@ -197,11 +211,14 @@ export interface ResultadoCambioEstado {
 }
 
 /**
- * Orden en el listado del personal. `dias_esperando` cuenta los días desde el último
- * cambio de estado o, si la orden aún no tiene historial, desde su fecha (CA-ORD-05-07).
+ * Orden en el listado del personal, con el cliente y cuánto lleva en su estado
+ * (RF-ORD-05-05). `cliente` es el nombre del titular (`null` si la cuenta ya no existe).
+ * `dias_esperando` cuenta los días desde el último cambio de estado o, si la orden aún no
+ * tiene historial, desde su fecha (CA-ORD-05-07).
  */
 export interface ResumenOrdenGestion extends ResumenPedido {
   readonly id_cliente: number;
+  readonly cliente: string | null;
   readonly dias_esperando: number;
 }
 

@@ -107,6 +107,7 @@ export class OrdenesRepository {
   /**
    * Página del listado del personal (HU-ORD-05, HU-ORD-08, HU-ORD-11). `recientes`
    * ordena de la más nueva a la más antigua; `antiguedad`, al revés (CA-ORD-05-07).
+   * Cada fila trae el nombre del titular (RF-ORD-05-05) y su último cambio de estado.
    */
   async listarParaPersonal(
     filtros: FiltrosGestionOrdenes,
@@ -117,6 +118,13 @@ export class OrdenesRepository {
     const direccion = orden === 'antiguedad' ? 'asc' : 'desc';
     return this.baseGestion(filtros)
       .select(['o.codigo_visible', 'o.fecha', 'o.total', 'o.estado', 'o.id_usuario'])
+      .select((eb) =>
+        eb
+          .selectFrom('usuario as titular')
+          .whereRef('titular.id_usuario', '=', 'o.id_usuario')
+          .select('titular.nombre')
+          .as('nombre_cliente')
+      )
       .select((eb) =>
         eb
           .selectFrom('historial_estado_orden as h')

@@ -224,8 +224,20 @@ async function ejecutarPruebasIntegracionM08(): Promise<void> {
 
     const vistaCliente4 = await servicio.detallePedidoDeCliente(4, ORDEN_CLIENTE_4, 'GET /integracion');
     assert(
-      !('notas' in vistaCliente4) && !('historial' in vistaCliente4) && !('contactos' in vistaCliente4),
-      'CA-ORD-10-01: la vista del cliente no incluye notas, historial interno ni contactos'
+      !('notas' in vistaCliente4) && !('contactos' in vistaCliente4),
+      'CA-ORD-10-01: la vista del cliente no incluye notas ni contactos'
+    );
+    assert(
+      vistaCliente4.historial.length === historial4.length &&
+        vistaCliente4.historial.every((h) => Object.keys(h).join(',') === 'estado,fecha') &&
+        !JSON.stringify(vistaCliente4.historial).includes('Admin'),
+      'RF-ORD-04-01: el cliente ve la historia de estados con su fecha, sin el autor'
+    );
+
+    const filaConNombre = (await repo.listarParaPersonal({ idCliente: 4 }, 100, 0))[0];
+    assert(
+      filaConNombre?.nombre_cliente === 'Pinturas del Valle S.A.S.',
+      'RF-ORD-05-05: la bandeja trae el nombre real del cliente'
     );
 
     console.log(`\n======================================================`);
