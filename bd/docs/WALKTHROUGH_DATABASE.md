@@ -5,12 +5,43 @@ Este documento registra la evolución histórica del modelo de base de datos de 
 ---
 
 ## 📑 Índice de Versiones
+- [Versión 2.5 / v3.29.0 (Sincronización de Modelo ER de Base de Datos - 2026-09-22)](#-versión-25--v3290-2026-09-22)
 - [Versión 2.4 (Módulo de Cuentas, Autenticación y Perfil - M04)](#-versión-24-2026-09-05)
 - [Versión 2.3 (Módulo de Privacidad, Consentimiento y Habeas Data - HU-SEG-05)](#-versión-23-2026-09-05)
 - [Versión 2.2 (Sesiones de Usuario con Control de Inactividad e Invalidación)](#-versión-22-2026-09-05)
 - [Versión 2.1 (E-Commerce Inmutable, Cotizaciones y Carrito con Variantes)](#-versión-21-2026-09-04)
 - [Versión 2.0 (Página FINAL del ER) - Reestructuración de Catálogo, Variantes y Combos](#-versión-20-2026-09-03)
 - [Versión 1.0 (Esquema Inicial Pre-Final) - Base de 21 Tablas](#-versión-10-2026-09-02)
+
+---
+
+## 📦 Versión 2.5 / v3.29.0 (2026-09-22)
+
+### 🎯 Resumen Ejecutivo
+Actualización y sincronización integral del esquema de base de datos relacional de **Pintuclic** de acuerdo con el diagrama Entidad-Relación (Mermaid ER) actualizado:
+- **Total Tablas:** Se consolidan las 36+ tablas relacionales con 0 desajustes en el DDL.
+- **Foco de la versión:**
+  - Sincronización del bloque fusionado de productos y variantes: `variante` $\rightarrow$ `base` (añadiendo `id_variante` FK y `prefijo`) $\rightarrow$ `color` (vinculado mediante `id_base` FK) $\rightarrow$ `tonos` (incorporando `nombre` y código `hexagesimal`).
+  - Sincronización de ventas y carrito: inclusión de `ref_viva` en `linea_carrito`, vinculación de `cotizacion` a `id_usuario` e `id_rol`, y atributo `carrito_o_cotizacion` en `orden`.
+- **Integración Backend:** Tipado estricto en Kysely (`backend/src/core/db/types.ts`), script DDL de esquema (`bd/sql/schema_pintuclic.sql`), datos semilla idempotentes (`bd/sql/seed_pintuclic.sql`) y documentación técnica oficial (`bd/docs/DOCUMENTACION_BASE_DATOS.md`).
+
+---
+
+### 🛑 1. Tablas Deprecadas / Eliminadas
+Ninguna en esta versión. Todos los cambios de estructura ajustan relaciones y añaden columnas de integridad.
+
+---
+
+### ✨ 2. Estructuras Modificadas y Nuevas Columnas (Versión 2.5)
+
+| Tabla Afectada | Tipo de Cambio | Nuevas Columnas / FKs | Propósito Funcional |
+| :--- | :--- | :--- | :--- |
+| **`base`** | Modificación | `id_variante INT FK`<br>`prefijo VARCHAR(50)` | Vinculación directa con la variante vendible (`id_variante`) y registro de prefijo identificador de base (e.g. BSA, BSB). |
+| **`color`** | Modificación | `id_base INT FK` | Clasificación del catálogo de colores por su base correspondiente (`id_base`). |
+| **`tonos`** | Modificación | `nombre VARCHAR(100)`<br>`hexagesimal VARCHAR(10)` | Identificación descriptiva del matiz de tono y su código hexadecimal cromático. |
+| **`cotizacion`** | Modificación | `id_usuario INT FK`<br>`id_rol INT FK` | Trazabilidad del usuario y rol comercial que originan o solicitan la cotización. |
+| **`linea_carrito`** | Modificación | `ref_viva INT` | Identificador de referencia viva en carrito de compras. |
+| **`orden`** | Modificación | `carrito_o_cotizacion VARCHAR(50)` | Identificación explícita del canal o flujo de origen del pedido en checkout. |
 
 ---
 

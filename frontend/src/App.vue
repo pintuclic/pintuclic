@@ -1,5 +1,5 @@
-﻿<script setup lang="ts">
-// App.vue ahora es puramente un contenedor de enrutamiento
+<script setup lang="ts">
+// Contenedor raíz de enrutamiento.
 </script>
 
 <template>

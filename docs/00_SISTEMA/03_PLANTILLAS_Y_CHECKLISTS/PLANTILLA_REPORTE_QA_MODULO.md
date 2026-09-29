@@ -2,7 +2,7 @@
 
 **Proyecto:** PINTU CLIC — Plataforma de Comercio Electrónico  
 **Módulo Evaluado:** [MXX - Nombre del Módulo, ej: M04 Cuentas, Autenticación y Perfil]  
-**Sprint / Versión:** [Sprint X / Release vX.X]  
+**Sprint:** [Sprint X]  
 **Responsables QA:** [Nombre del Redactor / Analista QA Tester]  
 **Fecha de Ejecución:** [DD/MM/AAAA]  
 **Ambiente de Pruebas:** [Local / Staging / Dev] — Base de Datos: [PostgreSQL / SQLite]  

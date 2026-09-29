@@ -32,12 +32,14 @@
       >
         <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-light bg-neutral-lightest/30">
           <h2 :id="titleId" class="text-lg font-semibold font-title text-corporate">{{ title }}</h2>
-          <IconButton
-            :icon="X"
-            label="Cerrar panel"
-            tone="neutral"
+          <button
+            type="button"
+            aria-label="Cerrar panel"
             @click="close"
-          />
+            class="flex h-8 w-8 items-center justify-center rounded-full text-neutral-medium hover:bg-neutral-light hover:text-corporate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action transition-all cursor-pointer"
+          >
+            <X class="w-4 h-4" />
+          </button>
         </div>
 
         <div class="relative flex-1 overflow-y-auto p-6">
@@ -55,7 +57,6 @@
 <script setup lang="ts">
 import { watch, ref, useId, nextTick, onBeforeUnmount } from 'vue';
 import { X } from 'lucide-vue-next';
-import IconButton from '../buttons/IconButton.vue';
 
 const props = defineProps<{
   modelValue: boolean;

@@ -1,37 +1,37 @@
 <template>
   <Modal :modelValue="modelValue" @update:modelValue="handleCerrar" maxWidth="md" accent>
     <div class="flex flex-col h-full relative">
-      <!-- El componente ModalBase ya nos da un padding y estructura,
+      <!-- El componente ModalBase ya nos da un padding y estructura, 
            así que renderizamos directamente el contenido del paso aquí -->
-      <EncabezadoModal
+      <EncabezadoModal 
         :titulo="titulosPasos[pasoActual]"
         :mostrar-atras="pasoActual > 0 && pasoActual < 3"
         @cerrar="handleCerrar"
         @atras="handleAtras"
       />
-
+      
       <!-- Stepper Header -->
       <div class="pt-2 pb-6">
         <PasosProgreso v-if="pasoActual > 0 && pasoActual < 3" :paso-actual="pasoActual" :total-pasos="3" :pasos="['', 'Verificación', 'Nueva Pass']" />
       </div>
 
       <div class="flex-1">
-        <PasoRecuperarCorreo
-          v-if="pasoActual === 0"
-          @solicitado="handleCorreoSolicitado"
+        <PasoRecuperarCorreo 
+          v-if="pasoActual === 0" 
+          @solicitado="handleCorreoSolicitado" 
         />
-        <PasoRecuperarOTP
-          v-else-if="pasoActual === 1"
+        <PasoRecuperarOTP 
+          v-else-if="pasoActual === 1" 
           :correo="correoGuardado"
-          @verificado="handleCodigoVerificado"
+          @verificado="handleCodigoVerificado" 
         />
-        <PasoRecuperarNuevaPass
-          v-else-if="pasoActual === 2"
+        <PasoRecuperarNuevaPass 
+          v-else-if="pasoActual === 2" 
           :correo="correoGuardado"
           :codigo="codigoGuardado"
-          @completado="handleCompletado"
+          @completado="handleCompletado" 
         />
-
+        
         <div v-if="pasoActual === 3" class="text-center py-2">
           <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckIcon class="w-8 h-8 text-green-600" />

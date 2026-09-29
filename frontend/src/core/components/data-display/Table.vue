@@ -31,7 +31,7 @@
           <tbody class="divide-y divide-neutral-light">
             <tr
               v-for="(row, idx) in rows"
-              :key="String(rowKey ? row[rowKey as keyof T] ?? idx : idx)"
+              :key="String(rowKey ? (row as any)[rowKey] ?? idx : idx)"
               class="hover:bg-neutral-lightest/50 transition-colors"
             >
               <td
@@ -41,7 +41,7 @@
                 :class="col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'"
               >
                 <slot :name="`cell-${col.key}`" :row="row">
-                  {{ row[col.key as keyof T] }}
+                  {{ (row as any)[col.key] }}
                 </slot>
               </td>
             </tr>
@@ -53,14 +53,14 @@
       <div v-if="mobileCards" class="sm:hidden flex flex-col gap-4 p-4">
         <div
           v-for="(row, idx) in rows"
-          :key="String(rowKey ? row[rowKey as keyof T] ?? idx : idx)"
+          :key="String(rowKey ? (row as any)[rowKey] ?? idx : idx)"
           class="min-w-0 break-words [overflow-wrap:anywhere] bg-neutral-white border border-neutral-light rounded-xl p-4 flex flex-col gap-3 shadow-sm"
         >
           <div v-for="col in columns" :key="col.key" class="flex flex-col">
             <span class="text-xs font-semibold text-corporate uppercase mb-1">{{ col.label }}</span>
             <div class="text-sm text-neutral-dark" :class="col.align === 'right' ? 'text-right' : ''">
               <slot :name="`cell-${col.key}`" :row="row">
-                {{ row[col.key as keyof T] }}
+                {{ (row as any)[col.key] }}
               </slot>
             </div>
           </div>
@@ -86,7 +86,7 @@
           <tbody class="divide-y divide-neutral-light">
             <tr
               v-for="(row, idx) in rows"
-              :key="String(rowKey ? row[rowKey as keyof T] ?? idx : idx)"
+              :key="String(rowKey ? (row as any)[rowKey] ?? idx : idx)"
               class="hover:bg-neutral-lightest/50 transition-colors"
             >
               <td
@@ -96,7 +96,7 @@
                 :class="col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'"
               >
                 <slot :name="`cell-${col.key}`" :row="row">
-                  {{ row[col.key as keyof T] }}
+                  {{ (row as any)[col.key] }}
                 </slot>
               </td>
             </tr>
