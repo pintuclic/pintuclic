@@ -31,7 +31,6 @@
           <router-link to="/" class="flex-shrink-0 cursor-pointer">
             <img src="@/assets/logo.png" alt="Pintu Clic" class="h-10 object-contain" />
           </router-link>
-          
           <button 
             type="button"
             class="flex items-center gap-2 bg-action hover:bg-action-hover text-white transition-colors px-4 py-2.5 rounded-lg font-bold text-sm cursor-pointer shadow-sm"
@@ -67,7 +66,7 @@
               :class="isActivo('/catalogo') ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
             ></span>
           </router-link>
-          <a href="#" class="bg-[#D62828] hover:bg-[#B71C1C] text-white px-3 py-1 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer">OFERTAS</a>
+          <a href="#" class="bg-offer hover:bg-offer-hover text-white px-3 py-1 rounded-full text-xs font-bold tracking-wider transition-colors cursor-pointer">OFERTAS</a>
           <a href="#" class="relative hover:text-action transition-colors py-1 cursor-pointer group">
             Servicios
             <span class="absolute bottom-0 left-0 w-full h-[2px] bg-action scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
@@ -147,7 +146,7 @@
           <button class="relative flex items-center gap-2 text-neutral-dark hover:text-action transition-all duration-300 text-left cursor-pointer" :class="{ '-translate-y-1': cartTotalItems > 0 }">
             <div class="relative">
               <ShoppingCartIcon class="w-7 h-7" />
-              <span v-if="cartTotalItems > 0" class="absolute -top-1.5 -right-1.5 bg-highlight text-corporate text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              <span v-if="cartTotalItems > 0" class="absolute -top-1.5 -right-1.5 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                 {{ cartTotalItems }}
               </span>
             </div>
@@ -230,9 +229,9 @@ import { Button, Dropdown, FooterPrincipal, Modal } from '@/core/components';
 import ModalLogin from '@/modules/m04-cuentas/components/auth/ModalLogin.vue';
 import RegistroWizard from '@/modules/m04-cuentas/components/registro/RegistroWizard.vue';
 import RecuperarPasswordWizard from '@/modules/m04-cuentas/components/recuperacion/RecuperarPasswordWizard.vue';
-import MenuCategoriasPublico from '@/modules/m01-dashboardcatalogo/components/publicas/MenuCategoriasPublico.vue';
-import { CatalogoPublicoService } from '@/modules/m01-dashboardcatalogo/services/catalogo-publico.service';
-import type { CategoriaPublica } from '@/modules/m01-dashboardcatalogo/interfaces/catalogo-publico.interface';
+import MenuCategoriasPublico from '@/modules/m01-catalogo/components/publicas/MenuCategoriasPublico.vue';
+import { CatalogoPublicoService } from '@/modules/m01-catalogo/services/publicas/catalogo-publico.service';
+import type { CategoriaPublica } from '@/modules/m01-catalogo/interfaces/publicas/catalogo-publico.interface';
 import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';

@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import { publicStorefrontRoutes } from '@/modules/m01-catalogo/publico.routes';
-import { adminCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboard-catalogo.routes';
+import { adminCatalogoRoutes } from '@/modules/m01-catalogo/catalogo.routes';
 
 export const routes: RouteRecordRaw[] = [
   // 1. Tienda Pública / Storefront (LayoutHome maestro permanente)
@@ -38,25 +38,19 @@ export const routes: RouteRecordRaw[] = [
     ],
   },
 
-  // Redirección directa para búsquedas del catálogo administrativo
-  {
-    path: '/admin/catalogo/busquedas',
-    redirect: '/admin/catalogo/busquedas-sin-resultado',
-  },
-
   // 3. Layout de Acceso / Auth independiente (fullscreen si aplica)
   {
     path: '/acceso',
     name: 'Acceso',
     component: () => import('@/core/layouts/LayoutAcceso.vue'),
-    children: [],
+    children: []
   },
-
+  
   // 4. Fallback: Cualquier ruta no reconocida redirige al inicio
   {
     path: '/:pathMatch(.*)*',
     redirect: '/',
-  },
+  }
 ];
 
 const router = createRouter({
