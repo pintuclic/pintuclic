@@ -1,0 +1,58 @@
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import pluginVue from 'eslint-plugin-vue';
+import vueParser from 'vue-eslint-parser';
+
+export default tseslint.config(
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  ...pluginVue.configs['flat/essential'],
+  {
+    files: ['**/*.vue', '**/*.ts', '**/*.js'],
+    languageOptions: {
+      parser: vueParser,
+      parserOptions: {
+        parser: tseslint.parser,
+        sourceType: 'module',
+        extraFileExtensions: ['.vue'],
+      },
+      globals: {
+        document: 'readonly',
+        window: 'readonly',
+        console: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        Event: 'readonly',
+        KeyboardEvent: 'readonly',
+        TouchEvent: 'readonly',
+        HTMLInputElement: 'readonly',
+        HTMLSelectElement: 'readonly',
+        HTMLDialogElement: 'readonly',
+        structuredClone: 'readonly',
+        URL: 'readonly',
+        Blob: 'readonly',
+        HTMLElement: 'readonly',
+        Element: 'readonly',
+        FileReader: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        requestAnimationFrame: 'readonly',
+        fetch: 'readonly',
+      },
+    },
+    rules: {
+      // 🔒 PROHIBICIÓN ESTRICTA DE TIPOS ANY EN FRONTEND (TS y VUE)
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+      'vue/multi-word-component-names': 'off',
+    },
+  },
+  {
+    ignores: ['dist/**', 'node_modules/**', 'public/**'],
+  }
+);

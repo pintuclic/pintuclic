@@ -1,0 +1,32 @@
+/// <reference types="vitest/config" />
+import tailwindcss from '@tailwindcss/vite'
+import vue from '@vitejs/plugin-vue'
+import { defineConfig } from 'vite'
+import { configDefaults } from 'vitest/config'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [
+    vue(),
+    tailwindcss(),
+  ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    exclude: [
+      ...configDefaults.exclude,
+      'src/core/components/forms/tests/**',
+      'src/modules/m17-permisos/tests/**',
+    ],
+  },
+})
+
