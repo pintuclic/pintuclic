@@ -8,6 +8,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.36.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Ajustes según la documentación del Drive (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.36.0)** que alinea M08 con la Tanda 3C del Drive tras revisar la documentación vigente. Sin cambios de esquema ni de archivos compartidos.
+- **Hitos Clave:**
+  - **Historia de estados para el cliente (`RF-ORD-04-01`):** `GET /api/ordenes/mis-pedidos/:codigo` añade `historial` con cada estado y su fecha, sin autor ni motivo, que siguen siendo solo del personal (`RF-ORD-09-01`).
+  - **Nombre del cliente en la bandeja (`RF-ORD-05-05`):** cada fila de `GET /api/ordenes/gestion` y del historial del cliente añade `cliente` (nombre del titular).
+  - **Medios de contacto (`RF-ORD-09-02`):** `POST /api/ordenes/gestion/:codigo/contactos` acepta solo `correo` y `telefono`, los medios que la orden conserva; se retiran `whatsapp` y `otro`, que eran provisionales.
+  - **Verificación:** pruebas en memoria 82/82, integración de lectura 29/29, integración de escritura con ROLLBACK 11/11 y comprobación HTTP de los tres cambios.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.36.0_M08_ajustes_documentacion_drive_backend.md](./walkthroughs/M08/walkthrough_v0.3.36.0_M08_ajustes_documentacion_drive_backend.md)
+
+---
+
 ## [v0.3.35.0] - 2026-09-29
 ### Módulo: M08 Orden de Venta — Gestión de Órdenes: Cambio de Estado, Historial, Notas y Contactos (Backend)
 - **Alcance General:** Incremento **Minior-feat (v0.3.35.0)** que implementa sobre el modelo de datos de la v0.3.34.0 las operaciones del personal. Sin cambios de esquema ni de archivos compartidos: todo el código vive en `backend/src/modules/m08-ordenes/`.
