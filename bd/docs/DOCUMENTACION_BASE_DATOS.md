@@ -1,8 +1,8 @@
 # 📘 Arquitectura y Documentación del Esquema de Base de Datos - PINTUCLIC
 
-> **Versión Actual:** 2.5 / v3.29.0 (Sincronización Completa del Modelo ER de Base de Datos)  
+> **Versión Actual:** 2.6 / v0.3.34.0 — esquema 3.8 (M08: estados, historial, notas internas y contactos de la orden)  
 > **Motor de Base de Datos:** PostgreSQL 13+ (`gen_random_uuid()` nativo; compatible con PostgreSQL 18)  
-> **Total de Tablas:** 44  
+> **Total de Tablas:** 47  
 > **Script DDL Oficial:** [`../sql/schema_pintuclic.sql`](../sql/schema_pintuclic.sql)  
 > **Script de Mocks / Seed Oficial:** [`../sql/seed_pintuclic.sql`](../sql/seed_pintuclic.sql)  
 > **Guía Oficial de Mocks y Datos de Prueba:** [`./GUIA_MOCKS_Y_DATOS_PRUEBA.md`](./GUIA_MOCKS_Y_DATOS_PRUEBA.md)  
@@ -14,6 +14,7 @@
 
 | Versión | Fecha | Tablas Nuevas | Tablas Deprecadas | Cambios Destacados | Detalle Completo |
 | :---: | :---: | :--- | :--- | :--- | :--- |
+| **v2.6 / v0.3.34.0** (esquema 3.8) | 2026-09-29 | `historial_estado_orden`, `nota_orden`, `contacto_orden` (3) | Ninguna | M08 Orden de venta: `enum_estado_orden` pasa al ciclo de HU-ORD-03 (`orden_confirmada` … `devuelto`) con migración idempotente para bases existentes (`pagado` → `orden_confirmada`, `enviado` → `despachado`); `orden.estado` nace en `orden_confirmada`; historial de transiciones con autor, notas internas y registro de contactos. Total 47 tablas. | [Ver v2.6](./WALKTHROUGH_DATABASE.md#-versión-26--v03340-2026-09-29) |
 | **v2.5 / v3.29.0** | 2026-09-22 | Ninguna (Ajuste estructural de 6 tablas) | Ninguna | Sincronización del modelo ER: bloque fusionado `variante` $\rightarrow$ `base` (`id_variante`, `prefijo`) $\rightarrow$ `color` (`id_base`) $\rightarrow$ `tonos` (`nombre`, `hexagesimal`), `linea_carrito.ref_viva`, `cotizacion.id_usuario/id_rol` y `orden.carrito_o_cotizacion`. Total 44 tablas. | [Ver v2.5](./WALKTHROUGH_DATABASE.md#-versión-25--v3290-2026-09-22) |
 | **v2.4** | 2026-09-05 | `direccion_cliente`, `solicitud_empresa`, `solicitud_actualizacion_nit`, `usuario_identidad_externa`, `codigo_verificacion` (5) | Ninguna | Módulo Cuentas y Perfil (M04). Múltiples direcciones (`HU-CUE-07`), flujo B2B corporativo con aprobación admin (`HU-CUE-03/09`), federación Google Identity (`HU-CUE-02`) y almacén OTP efímero con TTL (`HU-CUE-01/05`). Total 36 tablas. | [Ver v2.4](./WALKTHROUGH_DATABASE.md#-versión-24-2026-09-05) |
 | **v2.3** | 2026-09-05 | `aviso_privacidad`, `consentimiento_usuario`, `solicitud_supresion` (3) | Ninguna | Protección de datos personales, términos legales y Habeas Data (M20 HU-SEG-05). Trazabilidad de consentimiento inmutable y radicación de supresión de datos. Preserva `sesion` (v2.2). | [Ver v2.3](./WALKTHROUGH_DATABASE.md#-versión-23-2026-09-05) |
@@ -226,16 +227,48 @@ erDiagram
         string origen
         int cotizacion_id FK "nullable"
         string carrito_o_cotizacion
-        string estado
+        enum estado "M08 v3.8: orden_confirmada, revision_disponibilidad, en_preparacion, preparada, despachado, entregado, cancelado, devuelto"
         int transaccion_pago_id "unico"
+        string direccion
+        decimal sub_total
+        decimal descuento
+        decimal total
+        string observaciones "nullable"
+        date fecha
     }
     LineaOrden {
         int id PK
         int orden_id FK
         string nombre_producto "copia"
         string variante_copia "copia"
-        float precio_aplicado "copia"
+        decimal precio_aplicado "copia"
         int cantidad
+    }
+    %% ==== M08 v3.8: historial de estados, notas internas y contactos ====
+    historial_estado_orden {
+        int id_historial_estado_orden PK
+        int id_orden FK
+        enum estado_anterior "nullable al nacer la orden"
+        enum estado_nuevo
+        int id_usuario_autor FK "nullable = sistema"
+        string motivo "nullable"
+        string referencia_externa "nullable"
+        timestamp fecha
+    }
+    nota_orden {
+        int id_nota_orden PK
+        int id_orden FK
+        int id_usuario_autor FK
+        string texto "solo insercion, no visible al cliente"
+        timestamp fecha
+    }
+    contacto_orden {
+        int id_contacto_orden PK
+        int id_orden FK
+        int id_usuario_autor FK
+        string medio
+        string detalle "nullable"
+        timestamp fecha
     }
     factura {
         int id_factura PK
@@ -305,6 +338,14 @@ erDiagram
     Orden        ||--o{ pagos          : "registra"
     metodo_pago  ||--o{ pagos          : "utilizado_en"
     Orden        ||--o{ LineaOrden     : "1:N"
+
+    %% M08 v3.8: historial, notas internas y contactos
+    Orden        ||--o{ historial_estado_orden : "cambia_de_estado"
+    usuario      |o--o{ historial_estado_orden : "registra (nullable = sistema)"
+    Orden        ||--o{ nota_orden             : "tiene_notas"
+    usuario      ||--o{ nota_orden             : "escribe"
+    Orden        ||--o{ contacto_orden         : "registra_contactos"
+    usuario      ||--o{ contacto_orden         : "contacta"
 ```
 
 ---
@@ -349,12 +390,15 @@ erDiagram
 | **`carrito`** | `id_carrito` | `id_usuario` $\rightarrow$ `usuario` (opcional) | Carrito vivo con `token_visitante` para usuarios anónimos y fecha de actividad. |
 | **`linea_carrito`** | `id_linea_carrito` | `id_carrito`, `id_variante` | Ítems agregados vivos vinculados a variante con `ref_viva` y `cantidad`. |
 
-### Módulo 5: Cotizaciones y Órdenes Inmutables (3 Tablas)
+### Módulo 5: Cotizaciones y Órdenes Inmutables (6 Tablas)
 | Tabla | PK | FKs | Descripción |
 | :--- | :--- | :--- | :--- |
 | **`cotizacion`** | `id_cotizacion` | `id_usuario`, `id_rol` | Cotización comercial B2B/B2C vinculada a usuario y rol. |
-| **`orden`** | `id_orden` | `id_usuario`, `id_cotizacion` | Orden de compra confirmada con `codigo_visible`, `origen`, `carrito_o_cotizacion`, pasarela y estado. |
-| **`linea_orden`** | `id_linea_orden` | `id_orden` $\rightarrow$ `orden` | Snapshot congelado inmutable (`nombre_producto`, `variante_copia`, `precio_aplicado`, `cantidad`). |w$ `orden` | Snapshot congelado inmutable (`nombre_producto`, `variante_copia`, `precio_aplicado`, `cantidad`). |
+| **`orden`** | `id_orden` | `id_usuario`, `id_cotizacion` | Orden de compra confirmada con `codigo_visible`, `origen`, `carrito_o_cotizacion`, pasarela y estado (nace en `orden_confirmada`). |
+| **`linea_orden`** | `id_linea_orden` | `id_orden` $\rightarrow$ `orden` | Snapshot congelado inmutable (`nombre_producto`, `variante_copia`, `precio_aplicado`, `cantidad`). |
+| **`historial_estado_orden`** | `id_historial_estado_orden` | `id_orden` $\rightarrow$ `orden`, `id_usuario_autor` $\rightarrow$ `usuario` (NULL = sistema) | Transiciones de la orden con estado anterior y nuevo, autor, motivo, referencia externa y fecha (M08 - HU-ORD-03). Solo inserción. |
+| **`nota_orden`** | `id_nota_orden` | `id_orden` $\rightarrow$ `orden`, `id_usuario_autor` $\rightarrow$ `usuario` | Notas internas del personal, nunca visibles al cliente (M08 - HU-ORD-10). Solo inserción. |
+| **`contacto_orden`** | `id_contacto_orden` | `id_orden` $\rightarrow$ `orden`, `id_usuario_autor` $\rightarrow$ `usuario` | Contactos con el cliente iniciados desde la orden: medio, detalle, autor y fecha (M08 - HU-ORD-09). Solo inserción. |
 
 ### Módulo 6: Pagos y Facturación (3 Tablas)
 | Tabla | PK | FKs | Descripción |
@@ -387,7 +431,8 @@ enum_tipo_usuario       -- ('normal', 'empresa')
 enum_estado_usuario     -- ('activo', 'inactivo', 'bloqueado', 'pendiente')
 enum_estado_producto    -- ('activo', 'inactivo', 'agotado', 'descontinuado')
 enum_origen_orden       -- ('carrito', 'cotizacion')
-enum_estado_orden       -- ('pendiente', 'pagado', 'en_preparacion', 'enviado', 'entregado', 'cancelado')
+enum_estado_orden       -- ('orden_confirmada', 'revision_disponibilidad', 'en_preparacion', 'preparada',
+                        --  'despachado', 'entregado', 'cancelado', 'devuelto')  -- v3.8 (M08)
 enum_estado_cotizacion  -- ('borrador', 'enviada', 'aprobada', 'rechazada', 'vencida')
 enum_estado_pago        -- ('pendiente', 'completado', 'fallido', 'reembolsado')
 enum_estado_factura     -- ('emitida', 'pagada', 'anulada')

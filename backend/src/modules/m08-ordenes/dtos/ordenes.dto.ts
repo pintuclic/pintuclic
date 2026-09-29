@@ -21,17 +21,18 @@ export const ListarMisPedidosDto = z.object({
 export type ListarMisPedidosDto = z.infer<typeof ListarMisPedidosDto>;
 
 /**
- * Estados que hoy admite `enum_estado_orden`. ⚠️ PROVISIONAL: no coinciden con la máquina
- * de estados definida el 23/09 (#128). La comprobación de abajo obliga a actualizar esta
- * lista en cuanto cambie `EnumEstadoOrden` en `core/db/types.ts`.
+ * Estados de `enum_estado_orden` (schema v3.8, HU-ORD-03). La comprobación de abajo obliga
+ * a actualizar esta lista en cuanto cambie `EnumEstadoOrden` en `core/db/types.ts`.
  */
 const ESTADOS_ORDEN = [
-  'pendiente',
-  'pagado',
+  'orden_confirmada',
+  'revision_disponibilidad',
   'en_preparacion',
-  'enviado',
+  'preparada',
+  'despachado',
   'entregado',
   'cancelado',
+  'devuelto',
 ] as const satisfies readonly EnumEstadoOrden[];
 type _EstadosSinListar = Exclude<EnumEstadoOrden, (typeof ESTADOS_ORDEN)[number]>;
 const _listaExhaustiva: [_EstadosSinListar] extends [never] ? true : never = true;

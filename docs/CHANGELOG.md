@@ -8,6 +8,19 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.34.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Modelo de Datos: Estados, Historial, Notas Internas y Contactos (Backend / BD)
+- **Alcance General:** Incremento **Minior-feat (v0.3.34.0)** con la primera tanda del modelo de datos de M08 (épica #28), aprobada por el líder técnico. Esquema **3.8** / documentación de BD **v2.6**: de 44 a 47 tablas.
+- **Hitos Clave:**
+  - **Ciclo de estados (`HU-ORD-03`):** `enum_estado_orden` pasa a `orden_confirmada`, `revision_disponibilidad`, `en_preparacion`, `preparada`, `despachado`, `entregado`, `cancelado` y `devuelto`; `orden.estado` nace en `orden_confirmada`.
+  - **Migración segura para bases existentes:** renombra `pagado` → `orden_confirmada` y `enviado` → `despachado` sin perder datos. Es idempotente y funciona con el paso de carga de BD del deploy (`psql -v ON_ERROR_STOP=1`, v0.3.33.1).
+  - **Tablas nuevas:** `historial_estado_orden` (cambios de estado con autor y fecha), `nota_orden` (notas internas, HU-ORD-10) y `contacto_orden` (contactos con el cliente, CA-ORD-09-03), con 6 índices y datos de ejemplo en el seed.
+  - **Backend:** tipos Kysely en `core/db/types.ts`; M08 usa los estados nuevos (Mis pedidos: `despachado` y `devuelto` van a finalizados). Ningún otro módulo usaba los estados de la orden.
+  - **Verificación:** `tsc` y `lint` limpios; pruebas M08 52/52; integración 20/20 en base migrada y en base nueva; simulación del deploy con `psql` sobre el estado actual del servidor.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.34.0_M08_modelo_datos_estados_historial_backend.md](./walkthroughs/M08/walkthrough_v0.3.34.0_M08_modelo_datos_estados_historial_backend.md) · Detalle de BD: [bd/docs/WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md)
+
+---
+
 ## [v0.3.33.1] - 2026-09-29
 ### Core / Infraestructura: Carga del esquema y catálogo de la base de datos en el deploy
 - **Alcance General:** Incremento **PATCH (v0.3.33.1)** que agrega al workflow `Deploy` la carga idempotente del esquema y los datos iniciales desde `bd/sql/`, para que la base de datos del VPS quede operativa con el catálogo y las cuentas de prueba documentadas.

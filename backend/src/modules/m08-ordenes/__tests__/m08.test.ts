@@ -184,7 +184,7 @@ async function ejecutarPruebasM08(): Promise<void> {
 
     // CA-ORD-07-01: listado separado en curso / finalizados con identificador, fecha, total y estado.
     {
-      const repo = new RepoFake([orden(1, 2, 'pagado'), orden(2, 2, 'entregado'), orden(3, 2, 'en_preparacion')]);
+      const repo = new RepoFake([orden(1, 2, 'orden_confirmada'), orden(2, 2, 'entregado'), orden(3, 2, 'en_preparacion')]);
       const pedidos = await new OrdenesService(repo, new RegistroFake()).listarPedidosDeCliente(2, undefined);
       const primero = pedidos.en_curso[0];
       assert(
@@ -196,7 +196,7 @@ async function ejecutarPruebasM08(): Promise<void> {
           primero.codigo === 'ORD-2026-0001' &&
           primero.fecha === '2026-09-01' &&
           primero.total === '171800.00' &&
-          primero.estado === 'pagado',
+          primero.estado === 'orden_confirmada',
         'CA-ORD-07-01: cada pedido muestra identificador, fecha, total y estado'
       );
     }
@@ -223,7 +223,7 @@ async function ejecutarPruebasM08(): Promise<void> {
 
     // CA-SEG-06-05: el listado se pide siempre acotado al cliente autenticado.
     {
-      const repo = new RepoFake([orden(1, 2, 'pagado'), orden(2, 4, 'pagado')]);
+      const repo = new RepoFake([orden(1, 2, 'orden_confirmada'), orden(2, 4, 'orden_confirmada')]);
       const pedidos = await new OrdenesService(repo, new RegistroFake()).listarPedidosDeCliente(2, undefined);
       assert(
         repo.llamadasListar[0]?.idUsuario === 2 && pedidos.en_curso.length === 1,
@@ -235,7 +235,7 @@ async function ejecutarPruebasM08(): Promise<void> {
 
     // CA-ORD-04-01 / CA-ORD-04-02: productos, variante (con su color), cantidades, precios, total y estado.
     {
-      const repo = new RepoFake([orden(1, 2, 'pagado')], {
+      const repo = new RepoFake([orden(1, 2, 'orden_confirmada')], {
         1: [
           {
             nombre_producto: 'Viniltex Antibacterial',
@@ -253,7 +253,7 @@ async function ejecutarPruebasM08(): Promise<void> {
           linea.cantidad === 2 &&
           linea.precio_aplicado === '85900.00' &&
           detalle.total === '171800.00' &&
-          detalle.estado === 'pagado',
+          detalle.estado === 'orden_confirmada',
         'CA-ORD-04-01: el detalle muestra productos, cantidades, precios aplicados, total y estado'
       );
       assert(linea?.variante === 'Galón - Azul Océano (entonado)', 'CA-ORD-04-02: el detalle muestra la variante y el color pedidos');
@@ -274,7 +274,7 @@ async function ejecutarPruebasM08(): Promise<void> {
     // CA-ORD-04-03: la orden ajena se rechaza y el intento queda registrado (CA-SEG-03-05).
     {
       const registro = new RegistroFake();
-      const repo = new RepoFake([orden(1, 4, 'pagado')]);
+      const repo = new RepoFake([orden(1, 4, 'orden_confirmada')]);
       const error = await capturarError(() =>
         new OrdenesService(repo, registro).detallePedidoDeCliente(2, 'ORD-2026-0001', 'GET /api/ordenes/mis-pedidos/ORD-2026-0001')
       );
@@ -289,7 +289,7 @@ async function ejecutarPruebasM08(): Promise<void> {
 
     // CA-SEG-03-06: una orden inexistente responde igual que una ajena.
     {
-      const repo = new RepoFake([orden(1, 4, 'pagado')]);
+      const repo = new RepoFake([orden(1, 4, 'orden_confirmada')]);
       const servicio = new OrdenesService(repo, new RegistroFake());
       const ajena = await capturarError(() => servicio.detallePedidoDeCliente(2, 'ORD-2026-0001', 'GET /test'));
       const inexistente = await capturarError(() => servicio.detallePedidoDeCliente(2, 'ORD-2026-9999', 'GET /test'));
@@ -303,7 +303,7 @@ async function ejecutarPruebasM08(): Promise<void> {
 
     // HU-SEG-06: el detalle del cliente no expone clave primaria, titular ni datos de pago.
     {
-      const repo = new RepoFake([orden(1, 2, 'pagado')]);
+      const repo = new RepoFake([orden(1, 2, 'orden_confirmada')]);
       const detalle = await new OrdenesService(repo, new RegistroFake()).detallePedidoDeCliente(2, 'ORD-2026-0001', 'GET /test');
       const claves = Object.keys(detalle);
       assert(
@@ -316,7 +316,7 @@ async function ejecutarPruebasM08(): Promise<void> {
 
     // CA-ORD-08-01 / CA-ORD-06-02: el identificador lleva a la orden correcta y a ninguna otra.
     {
-      const repo = new RepoFake([orden(1, 2, 'pagado'), orden(2, 4, 'en_preparacion')]);
+      const repo = new RepoFake([orden(1, 2, 'orden_confirmada'), orden(2, 4, 'en_preparacion')]);
       const servicio = new OrdenesService(repo, new RegistroFake());
       const detalle = await servicio.detallePedidoParaPersonal('ORD-2026-0002');
       assert(
@@ -339,11 +339,11 @@ async function ejecutarPruebasM08(): Promise<void> {
       assert(!CodigoOrdenDto.safeParse({ codigo: 'X'.repeat(51) }).success, 'RF-ORD-06-01: un código de más de 50 caracteres se rechaza');
     }
 
-    // --- HU-ORD-07: clasificación tras la definición del 23/09 ----------------
+    // --- HU-ORD-07: clasificación con los estados del esquema v3.8 ---------------
 
-    // CA-ORD-07-01 escenario 2: Despachado (hoy `enviado`) ya cuenta como finalizado.
+    // CA-ORD-07-01 escenario 2: Despachado ya cuenta como finalizado (D02, CA-ORD-03-06).
     {
-      const repo = new RepoFake([orden(1, 2, 'enviado')]);
+      const repo = new RepoFake([orden(1, 2, 'despachado')]);
       const pedidos = await new OrdenesService(repo, new RegistroFake()).listarPedidosDeCliente(2, undefined);
       assert(
         pedidos.en_curso.length === 0 && pedidos.finalizados.length === 1,
@@ -351,25 +351,40 @@ async function ejecutarPruebasM08(): Promise<void> {
       );
     }
 
+    // HU-ORD-03 / CA-ORD-07-01: los estados intermedios siguen en curso y los terminales finalizan.
+    {
+      const repo = new RepoFake([
+        orden(1, 2, 'revision_disponibilidad'),
+        orden(2, 2, 'preparada'),
+        orden(3, 2, 'devuelto'),
+      ]);
+      const pedidos = await new OrdenesService(repo, new RegistroFake()).listarPedidosDeCliente(2, undefined);
+      assert(
+        pedidos.en_curso.map((p) => p.estado).sort().join(',') === 'preparada,revision_disponibilidad' &&
+          pedidos.finalizados.map((p) => p.estado).join(',') === 'devuelto',
+        'HU-ORD-03: revisión de disponibilidad y preparada van en curso; devuelto va en finalizados'
+      );
+    }
+
     // --- HU-ORD-05: listado del personal con filtros ---------------------------
 
     const ordenesGestion = [
-      orden(1, 2, 'pagado', new Date(2026, 8, 1)),
+      orden(1, 2, 'orden_confirmada', new Date(2026, 8, 1)),
       orden(2, 4, 'en_preparacion', new Date(2026, 8, 10)),
       orden(3, 2, 'entregado', new Date(2026, 8, 20)),
-      orden(4, 5, 'pagado', new Date(2026, 8, 30)),
+      orden(4, 5, 'orden_confirmada', new Date(2026, 8, 30)),
     ];
 
     // HU-ORD-05 (bandeja): filtrar por estado muestra solo ese estado.
     {
       const repo = new RepoFake(ordenesGestion);
       const pagina = await new OrdenesService(repo, new RegistroFake()).listarOrdenesParaPersonal(
-        { estado: 'pagado' },
+        { estado: 'orden_confirmada' },
         undefined,
         undefined
       );
       assert(
-        pagina.total === 2 && pagina.items.every((o) => o.estado === 'pagado'),
+        pagina.total === 2 && pagina.items.every((o) => o.estado === 'orden_confirmada'),
         'HU-ORD-05 (bandeja): el filtro por estado devuelve solo órdenes de ese estado'
       );
     }
@@ -471,8 +486,8 @@ async function ejecutarPruebasM08(): Promise<void> {
       { id_usuario: 4, nombre: 'Pinturas del Valle', correo: 'contacto@pinturasvalle.co', telefono: '320 888 9900' },
     ];
     const ordenesBandeja = [
-      orden(1, 2, 'pagado', new Date(2026, 8, 1)),
-      orden(2, 4, 'pagado', new Date(2026, 8, 20)),
+      orden(1, 2, 'orden_confirmada', new Date(2026, 8, 1)),
+      orden(2, 4, 'orden_confirmada', new Date(2026, 8, 20)),
       orden(3, 2, 'en_preparacion', new Date(2026, 8, 10)),
       orden(4, 2, 'entregado', new Date(2026, 8, 25)),
     ];
@@ -551,14 +566,14 @@ async function ejecutarPruebasM08(): Promise<void> {
     {
       const resumen = await new OrdenesService(new RepoFake(ordenesBandeja), new RegistroFake(), reloj).resumenPorEstado();
       assert(
-        resumen.por_estado.pagado === 2 &&
+        resumen.por_estado.orden_confirmada === 2 &&
           resumen.por_estado.en_preparacion === 1 &&
           resumen.por_estado.entregado === 1 &&
           resumen.total === 4,
         'CA-ORD-05-05: los contadores muestran cuántas órdenes hay en cada estado'
       );
       assert(
-        resumen.por_estado.cancelado === 0 && Object.keys(resumen.por_estado).length === 6,
+        resumen.por_estado.cancelado === 0 && Object.keys(resumen.por_estado).length === 8,
         'CA-ORD-05-05: los estados sin órdenes aparecen con cero'
       );
     }
@@ -567,7 +582,7 @@ async function ejecutarPruebasM08(): Promise<void> {
     {
       const repo = new RepoFake(ordenesBandeja, {}, usuariosPrueba);
       const pagina = await new OrdenesService(repo, new RegistroFake(), reloj).listarOrdenesParaPersonal(
-        { estado: 'pagado' },
+        { estado: 'orden_confirmada' },
         undefined,
         undefined,
         'antiguedad'
@@ -586,7 +601,7 @@ async function ejecutarPruebasM08(): Promise<void> {
     // Bogotá ya es 29/09 en UTC, pero una orden del 28/09 lleva 0 días.
     {
       const casiMedianoche = (): Date => new Date('2026-09-29T04:30:00Z');
-      const repo = new RepoFake([orden(1, 2, 'pagado', new Date(2026, 8, 28))]);
+      const repo = new RepoFake([orden(1, 2, 'orden_confirmada', new Date(2026, 8, 28))]);
       const pagina = await new OrdenesService(repo, new RegistroFake(), casiMedianoche).listarOrdenesParaPersonal(
         {},
         undefined,

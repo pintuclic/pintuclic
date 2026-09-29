@@ -12,7 +12,7 @@ bd/
 ├── README.md                      # Este archivo (guía general y mapa del módulo)
 │
 ├── sql/                           # Scripts DDL ejecutables en PostgreSQL
-│   ├── schema_pintuclic.sql       # Script DDL oficial vigente (PostgreSQL 15+ / 18, 44 tablas)
+│   ├── schema_pintuclic.sql       # Script DDL oficial vigente (PostgreSQL 15+ / 18, 47 tablas)
 │   └── seed_pintuclic.sql         # Script de carga inicial de mocks idempotentes
 │
 ├── docs/                          # Documentación viva, manuales y walkthroughs
@@ -29,9 +29,9 @@ bd/
 
 ## 🚀 Acceso Rápido a Recursos Clave
 
-- 📄 **Script SQL Oficial:** [`sql/schema_pintuclic.sql`](./sql/schema_pintuclic.sql)*DDL idempotente para PostgreSQL con 44 tablas y 17 tipos `ENUM` nativos.*
+- 📄 **Script SQL Oficial:** [`sql/schema_pintuclic.sql`](./sql/schema_pintuclic.sql)*DDL idempotente para PostgreSQL con 47 tablas y 17 tipos `ENUM` nativos.*
 - 📘 **Documentación General y ER:** [`docs/DOCUMENTACION_BASE_DATOS.md`](./docs/DOCUMENTACION_BASE_DATOS.md)*Diagrama interactivo Mermaid, diccionario de tablas/columnas y recomendaciones para Kysely.*
-- 🚀 **Walkthroughs de Versiones:** [`docs/WALKTHROUGH_DATABASE.md`](./docs/WALKTHROUGH_DATABASE.md)*Desglose detallado de migraciones (v1.0 $\rightarrow$ v2.0 $\rightarrow$ v2.4 $\rightarrow$ v2.5 / v3.29.0).*
+- 🚀 **Walkthroughs de Versiones:** [`docs/WALKTHROUGH_DATABASE.md`](./docs/WALKTHROUGH_DATABASE.md)*Desglose detallado de migraciones (v1.0 $\rightarrow$ v2.0 $\rightarrow$ v2.4 $\rightarrow$ v2.5 / v3.29.0 $\rightarrow$ v2.6 / v0.3.34.0).*
 - 🛠️ **Guía para Refactorizar:** [`docs/GUIA_REFACTORIZACION_BD.md`](./docs/GUIA_REFACTORIZACION_BD.md)
   *Instrucciones paso a paso, checklist y plantilla obligatoria para agentes de IA y desarrolladores.*
 
@@ -39,8 +39,8 @@ bd/
 
 ## 📌 Estado Actual
 
-- **Versión Activa:** `v2.5 / v3.29.0`
-- **Total de Tablas:** 44 tablas normalizadas.
+- **Versión Activa:** `v2.6 / v0.3.34.0` (esquema 3.8)
+- **Total de Tablas:** 47 tablas normalizadas.
 - **Tipos Enumerados (ENUM):** 17 enums nativos para integridad de estados.
 - **Patrón E-Commerce Inmutable:** `orden` y `linea_orden` con snapshots históricos de compra.
 - **Carrito Vivo Desacoplado:** `carrito` con `token_visitante` y `linea_carrito` con variantes y `ref_viva`.

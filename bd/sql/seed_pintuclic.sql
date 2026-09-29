@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script de Seed y Mocks de Prueba Inicial para Desarrollo y Testing
--- VERSIÓN: 2.4 (Cubre las 36 tablas del esquema relacional oficial)
+-- VERSIÓN: 3.8 (alineado con schema_pintuclic.sql v3.8: estados, historial, notas y contactos de la orden - M08)
 -- MOTOR: PostgreSQL 12+ (Compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
 -- PROPIEDAD: Totalmente idempotente (ON CONFLICT DO NOTHING + setval)
@@ -291,7 +291,7 @@ INSERT INTO linea_carrito (id_linea_carrito, id_carrito, id_variante, ref_viva, 
 ON CONFLICT (id_carrito, id_variante) DO NOTHING;
 
 -- ==============================================================================
--- 5. MÓDULO DE COTIZACIONES Y ÓRDENES (HISTÓRICO INMUTABLE) (3 Tablas)
+-- 5. MÓDULO DE COTIZACIONES Y ÓRDENES (HISTÓRICO INMUTABLE) (6 Tablas)
 -- ==============================================================================
 
 -- 5.1 Cotización
@@ -302,7 +302,7 @@ ON CONFLICT (id_cotizacion) DO NOTHING;
 
 -- 5.2 Orden
 INSERT INTO orden (id_orden, codigo_visible, id_usuario, origen, id_cotizacion, carrito_o_cotizacion, estado, transaccion_pago_id, direccion, sub_total, descuento, total, observaciones, fecha) VALUES
-    (1, 'ORD-2026-0001', 2, 'carrito', NULL, 'carrito_directo', 'pagado', 'TRX-PSE-987654321',
+    (1, 'ORD-2026-0001', 2, 'carrito', NULL, 'carrito_directo', 'orden_confirmada', 'TRX-PSE-987654321',
         'Calle 45 # 12-34, Apt 301, Chapinero, Bogotá D.C.', 171800.00, 0.00, 171800.00,
         'Dejar en portería debidamente sellado', CURRENT_DATE),
     (2, 'ORD-2026-0002', 4, 'cotizacion', 1, 'cotizacion_aprobada', 'en_preparacion', 'TRX-TAR-112233445',
@@ -315,6 +315,24 @@ INSERT INTO linea_orden (id_linea_orden, id_orden, nombre_producto, variante_cop
     (1, 1, 'Viniltex Máxima Protección Antibacterial', 'Galón - Blanco Puro', 85900.00, 2),
     (2, 2, 'Kit Renovación Hogar Premium',              'Kit Corporativo Pro', 425000.00, 1)
 ON CONFLICT (id_linea_orden) DO NOTHING;
+
+-- 5.4 Historial de Estados de la Orden (M08 - HU-ORD-03). Autor NULL = transición automática del sistema.
+INSERT INTO historial_estado_orden (id_historial_estado_orden, id_orden, estado_anterior, estado_nuevo, id_usuario_autor, motivo, referencia_externa, fecha) VALUES
+    (1, 1, NULL,                      'orden_confirmada',        NULL, NULL, NULL, now() - interval '90 minutes'),
+    (2, 2, NULL,                      'orden_confirmada',        NULL, NULL, NULL, now() - interval '90 minutes'),
+    (3, 2, 'orden_confirmada',        'revision_disponibilidad', 1,    NULL, NULL, now() - interval '60 minutes'),
+    (4, 2, 'revision_disponibilidad', 'en_preparacion',          NULL, NULL, NULL, now() - interval '30 minutes')
+ON CONFLICT (id_historial_estado_orden) DO NOTHING;
+
+-- 5.5 Notas Internas del Personal (M08 - HU-ORD-10). Nunca visibles al cliente.
+INSERT INTO nota_orden (id_nota_orden, id_orden, id_usuario_autor, texto, fecha) VALUES
+    (1, 2, 1, 'Cliente corporativo: confirmar el NIT de la factura electrónica antes de despachar.', now() - interval '25 minutes')
+ON CONFLICT (id_nota_orden) DO NOTHING;
+
+-- 5.6 Contactos con el Cliente Registrados desde la Orden (M08 - HU-ORD-09)
+INSERT INTO contacto_orden (id_contacto_orden, id_orden, id_usuario_autor, medio, detalle, fecha) VALUES
+    (1, 2, 1, 'telefono', 'Se confirmó con el cliente la dirección de la bodega para el despacho.', now() - interval '20 minutes')
+ON CONFLICT (id_contacto_orden) DO NOTHING;
 
 -- ==============================================================================
 -- 6. MÓDULO DE PAGOS Y FACTURACIÓN (3 Tablas)
@@ -434,6 +452,9 @@ SELECT setval('linea_carrito_id_linea_carrito_seq',              COALESCE((SELEC
 SELECT setval('cotizacion_id_cotizacion_seq',                    COALESCE((SELECT MAX(id_cotizacion) FROM cotizacion), 1));
 SELECT setval('orden_id_orden_seq',                              COALESCE((SELECT MAX(id_orden) FROM orden), 1));
 SELECT setval('linea_orden_id_linea_orden_seq',                  COALESCE((SELECT MAX(id_linea_orden) FROM linea_orden), 1));
+SELECT setval('historial_estado_orden_id_historial_estado_orden_seq', COALESCE((SELECT MAX(id_historial_estado_orden) FROM historial_estado_orden), 1));
+SELECT setval('nota_orden_id_nota_orden_seq',                    COALESCE((SELECT MAX(id_nota_orden) FROM nota_orden), 1));
+SELECT setval('contacto_orden_id_contacto_orden_seq',            COALESCE((SELECT MAX(id_contacto_orden) FROM contacto_orden), 1));
 SELECT setval('metodo_pago_id_metodo_pago_seq',                  COALESCE((SELECT MAX(id_metodo_pago) FROM metodo_pago), 1));
 SELECT setval('pagos_id_pago_seq',                               COALESCE((SELECT MAX(id_pago) FROM pagos), 1));
 SELECT setval('factura_id_factura_seq',                          COALESCE((SELECT MAX(id_factura) FROM factura), 1));
