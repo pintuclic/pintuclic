@@ -8,6 +8,20 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.35.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Gestión de Órdenes: Cambio de Estado, Historial, Notas y Contactos (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.35.0)** que implementa sobre el modelo de datos de la v0.3.34.0 las operaciones del personal. Sin cambios de esquema ni de archivos compartidos: todo el código vive en `backend/src/modules/m08-ordenes/`.
+- **Hitos Clave:**
+  - **Cambio de estado (`HU-ORD-03`, `CA-ORD-05-01/02`):** `PATCH /api/ordenes/gestion/:codigo/estado` con `ventas.gestionar`. Aplica el ciclo de D01/D02, exige motivo al volver de Preparada a En preparación, guarda autor y fecha en el historial y rechaza con 409 si otra persona cambió la orden entre medias (`CA-ORD-05-08`). Cancelar y devolver siguen sin habilitar (política M11).
+  - **Aviso al cliente (`D05`, `HU-NOT-02`):** al despachar se envía el correo de M18 `cambio_estado_orden`; si falla, el cambio de estado se conserva.
+  - **Notas internas (`HU-ORD-10`):** `POST /api/ordenes/gestion/:codigo/notas`; editarlas o borrarlas responde 405 con la indicación de añadir otra. Nunca aparecen en la vista del cliente.
+  - **Contactos con el cliente (`CA-ORD-09-03`):** `POST /api/ordenes/gestion/:codigo/contactos` con medio y detalle.
+  - **Detalle del personal:** añade `historial`, `notas`, `contactos` y `transiciones_permitidas`. La bandeja cuenta `dias_esperando` desde el último cambio de estado (`CA-ORD-05-07`).
+  - **Verificación:** pruebas en memoria 79/79; integración de lectura 27/27; integración de escritura con ROLLBACK 11/11; 29 peticiones HTTP reales con los resultados esperados.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.35.0_M08_gestion_estados_notas_contactos_backend.md](./walkthroughs/M08/walkthrough_v0.3.35.0_M08_gestion_estados_notas_contactos_backend.md)
+
+---
+
 ## [v0.3.34.0] - 2026-09-29
 ### Módulo: M08 Orden de Venta — Modelo de Datos: Estados, Historial, Notas Internas y Contactos (Backend / BD)
 - **Alcance General:** Incremento **Minior-feat (v0.3.34.0)** con la primera tanda del modelo de datos de M08 (épica #28), aprobada por el líder técnico. Esquema **3.8** / documentación de BD **v2.6**: de 44 a 47 tablas.

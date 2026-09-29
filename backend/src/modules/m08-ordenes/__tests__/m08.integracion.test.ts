@@ -182,6 +182,52 @@ async function ejecutarPruebasIntegracionM08(): Promise<void> {
       'CA-ORD-09-01: el detalle del personal trae el contacto real del cliente'
     );
 
+    // --- Esquema 3.8: historial, notas y contactos del seed (v0.3.34.0) ---------------
+
+    const historial4 = await repo.listarHistorial(orden4.id_orden);
+    assert(
+      historial4.length >= 3 &&
+        historial4[0]?.estado_anterior === null &&
+        historial4.every((c, i) => i === 0 || (historial4[i - 1]?.fecha.getTime() ?? 0) <= c.fecha.getTime()),
+      'CA-ORD-09-02: el historial se lee en orden cronológico y empieza con el nacimiento de la orden'
+    );
+    assert(
+      historial4.some((c) => c.autor === 'Admin Pruebas') && historial4.some((c) => c.autor === null),
+      'CA-ORD-09-02: el historial trae el nombre del autor y null en los cambios automáticos del sistema'
+    );
+
+    const notas4 = await repo.listarNotas(orden4.id_orden);
+    const contactos4 = await repo.listarContactos(orden4.id_orden);
+    assert(
+      notas4.length >= 1 && notas4.every((n) => n.autor.length > 0 && n.texto.length > 0),
+      'CA-ORD-10-02: las notas se leen con el nombre de quien las escribió'
+    );
+    assert(
+      contactos4.length >= 1 && contactos4.every((c) => c.medio.length > 0 && c.autor.length > 0),
+      'CA-ORD-09-03: los contactos registrados se leen con su medio y su autor'
+    );
+
+    const conCambio = (await repo.listarParaPersonal({ idCliente: 4 }, 100, 0)).find((o) => o.codigo_visible === ORDEN_CLIENTE_4);
+    const ultimoHistorial = historial4[historial4.length - 1]?.fecha.getTime();
+    assert(
+      conCambio?.ultimo_cambio instanceof Date && conCambio.ultimo_cambio.getTime() === ultimoHistorial,
+      'CA-ORD-05-07: el listado trae el momento del último cambio de estado'
+    );
+
+    assert(
+      detallePersonal.historial.length === historial4.length &&
+        detallePersonal.notas.length === notas4.length &&
+        detallePersonal.contactos.length === contactos4.length &&
+        detallePersonal.transiciones_permitidas.length > 0,
+      'HU-ORD-09: el detalle del personal reúne historial, notas, contactos y siguientes estados'
+    );
+
+    const vistaCliente4 = await servicio.detallePedidoDeCliente(4, ORDEN_CLIENTE_4, 'GET /integracion');
+    assert(
+      !('notas' in vistaCliente4) && !('historial' in vistaCliente4) && !('contactos' in vistaCliente4),
+      'CA-ORD-10-01: la vista del cliente no incluye notas, historial interno ni contactos'
+    );
+
     console.log(`\n======================================================`);
     console.log(`🎯 RESULTADOS: Superadas: ${superadas} | Fallidas: ${fallidas}`);
     console.log(`======================================================\n`);

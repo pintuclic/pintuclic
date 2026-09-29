@@ -1,5 +1,6 @@
 import type { EnumEstadoOrden, EnumOrigenOrden, LineaOrden, Orden, Usuario } from '../../../core/db/types';
 import type { RegistroSeguridadService } from '../../m20-seguridad/services/registro-seguridad.service';
+import type { NotificacionesService } from '../../m18-notificaciones/services/notificaciones.service';
 
 // ==============================================================================
 // M08 - ORDEN DE VENTA
@@ -41,8 +42,51 @@ export type FilaLineaOrden = Pick<LineaOrden, 'nombre_producto' | 'variante_copi
 /** Fila mínima para el listado de pedidos de un cliente (CA-ORD-07-01). */
 export type FilaResumenOrden = Pick<Orden, 'codigo_visible' | 'fecha' | 'total' | 'estado'>;
 
-/** Fila del listado del personal: la del cliente más el titular. */
-export type FilaResumenOrdenGestion = FilaResumenOrden & Pick<Orden, 'id_usuario'>;
+/**
+ * Fila del listado del personal: la del cliente más el titular y el momento del último
+ * cambio de estado (`null` si la orden aún no tiene historial).
+ */
+export type FilaResumenOrdenGestion = FilaResumenOrden &
+  Pick<Orden, 'id_usuario'> & { readonly ultimo_cambio: Date | null };
+
+/** Cambio de estado tal como se lee de `historial_estado_orden`; `autor` null = sistema (D01). */
+export interface FilaHistorialEstado {
+  readonly estado_anterior: EnumEstadoOrden | null;
+  readonly estado_nuevo: EnumEstadoOrden;
+  readonly autor: string | null;
+  readonly motivo: string | null;
+  readonly fecha: Date;
+}
+
+/** Nota interna tal como se lee de `nota_orden`, con el nombre de quien la escribió. */
+export interface FilaNotaOrden {
+  readonly texto: string;
+  readonly autor: string;
+  readonly fecha: Date;
+}
+
+/** Contacto con el cliente tal como se lee de `contacto_orden`. */
+export interface FilaContactoOrden {
+  readonly medio: string;
+  readonly detalle: string | null;
+  readonly autor: string;
+  readonly fecha: Date;
+}
+
+/** Datos para registrar un cambio de estado de forma atómica (HU-ORD-03). */
+export interface SolicitudCambioEstado {
+  readonly idOrden: number;
+  readonly estadoActual: EnumEstadoOrden;
+  readonly estadoNuevo: EnumEstadoOrden;
+  readonly idAutor: number;
+  readonly motivo: string | null;
+}
+
+/**
+ * Medios con los que el personal registra un contacto con el cliente (CA-ORD-09-03).
+ * ⚠️ PROVISIONAL: la lista cerrada está pendiente del análisis.
+ */
+export type MedioContacto = 'telefono' | 'correo' | 'whatsapp' | 'otro';
 
 /** Datos de contacto del cliente que ve el personal en el detalle (CA-ORD-09-01). */
 export type ContactoCliente = Pick<Usuario, 'nombre' | 'correo' | 'telefono'>;
@@ -104,19 +148,57 @@ export interface DetallePedido {
   readonly lineas: ReadonlyArray<LineaPedido>;
 }
 
+/** Cambio de estado en el detalle del personal (CA-ORD-09-02). `autor` null = sistema. */
+export interface CambioEstado {
+  readonly estado_anterior: EnumEstadoOrden | null;
+  readonly estado_nuevo: EnumEstadoOrden;
+  readonly autor: string | null;
+  readonly motivo: string | null;
+  readonly fecha: string;
+}
+
+/** Nota interna del personal (HU-ORD-10). Nunca forma parte de la vista del cliente. */
+export interface NotaInterna {
+  readonly texto: string;
+  readonly autor: string;
+  readonly fecha: string;
+}
+
+/** Contacto con el cliente registrado desde la orden (CA-ORD-09-03). */
+export interface ContactoRegistrado {
+  readonly medio: string;
+  readonly detalle: string | null;
+  readonly autor: string;
+  readonly fecha: string;
+}
+
 /**
- * Detalle para personal autorizado (HU-ORD-05, HU-ORD-09): añade el titular y su
- * contacto (CA-ORD-09-01). `cliente` es null solo si la cuenta ya no existe.
+ * Detalle para personal autorizado (HU-ORD-05, HU-ORD-09, HU-ORD-10): añade el titular y su
+ * contacto (CA-ORD-09-01), el historial de estados (CA-ORD-09-02), las notas internas
+ * (CA-ORD-10-02), los contactos registrados (CA-ORD-09-03) y los estados a los que se puede
+ * pasar. `cliente` es null solo si la cuenta ya no existe.
  */
 export interface DetallePedidoPersonal extends DetallePedido {
   readonly id_cliente: number;
   readonly cliente: ContactoCliente | null;
+  readonly transiciones_permitidas: ReadonlyArray<EnumEstadoOrden>;
+  readonly historial: ReadonlyArray<CambioEstado>;
+  readonly notas: ReadonlyArray<NotaInterna>;
+  readonly contactos: ReadonlyArray<ContactoRegistrado>;
+}
+
+/** Respuesta al cambiar el estado de una orden (HU-ORD-03, CA-ORD-05-01). */
+export interface ResultadoCambioEstado {
+  readonly codigo: string;
+  readonly estado_anterior: EnumEstadoOrden;
+  readonly estado: EnumEstadoOrden;
+  readonly fecha: string;
+  readonly transiciones_permitidas: ReadonlyArray<EnumEstadoOrden>;
 }
 
 /**
- * Orden en el listado del personal. `dias_esperando` cuenta, por ahora, los días desde
- * la fecha de la orden (CA-ORD-05-07). ⚠️ PROVISIONAL: cuando exista el historial de
- * estados debe contar desde el último cambio de estado.
+ * Orden en el listado del personal. `dias_esperando` cuenta los días desde el último
+ * cambio de estado o, si la orden aún no tiene historial, desde su fecha (CA-ORD-05-07).
  */
 export interface ResumenOrdenGestion extends ResumenPedido {
   readonly id_cliente: number;
@@ -140,3 +222,6 @@ export interface ResumenEstadosOrdenes {
 
 /** Capacidad de M20 que usa este módulo para dejar constancia de accesos denegados (CA-SEG-03-05). */
 export type RegistroAccesosDenegados = Pick<RegistroSeguridadService, 'registrarAccesoDenegado'>;
+
+/** Capacidad de M18 que usa este módulo para avisar al cliente de un cambio de estado (HU-NOT-02, D05). */
+export type NotificadorEstadoOrden = Pick<NotificacionesService, 'notificarCambioEstadoOrden'>;
