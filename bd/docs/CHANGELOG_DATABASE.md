@@ -10,6 +10,18 @@ Este documento constituye el registro histórico y oficial del versionamiento de
 
 ---
 
+## [v2.6 / v0.3.34.0] - 2026-09-29
+### Esquema 3.8 (47 Tablas) - M08 Orden de Venta: estados, historial, notas internas y contactos
+- **Alcance General:** Primera tanda del modelo de datos de **M08** (épica #28), aprobada por el líder técnico:
+  - **Ciclo de estados (`HU-ORD-03`):** `enum_estado_orden` pasa a `orden_confirmada`, `revision_disponibilidad`, `en_preparacion`, `preparada`, `despachado`, `entregado`, `cancelado` y `devuelto`. Migración idempotente para bases existentes (`pagado` → `orden_confirmada`, `enviado` → `despachado`, sin pérdida de datos). `orden.estado` nace en `orden_confirmada`.
+  - **Historial de transiciones (`CA-ORD-03-03 / 03-04`):** tabla `historial_estado_orden` con estado anterior y nuevo, autor (NULL = sistema), motivo, referencia externa y fecha.
+  - **Notas internas (`HU-ORD-10`):** tabla `nota_orden`, nunca visible al cliente.
+  - **Registro de contactos (`CA-ORD-09-03`):** tabla `contacto_orden` con medio, detalle, autor y fecha.
+  - **Infraestructura Kysely y seed:** tipos en `types.ts`; historial, nota y contacto de ejemplo en `seed_pintuclic.sql`.
+  - 🔗 **Detalle y DDL:** [WALKTHROUGH_DATABASE.md#📦-versión-26--v03340-2026-09-29](./WALKTHROUGH_DATABASE.md#-versión-26--v03340-2026-09-29)
+
+---
+
 ## [v2.4] - 2026-09-05
 ### Esquema Relacional Oficial v2.4 (36 Tablas) - M04 Cuentas, Autenticación y Perfil
 - **Alcance General:** Evolución aditiva y oficial del modelo relacional de base de datos para soportar los requerimientos de datos del módulo **M04 (Cuentas, Autenticación y Perfil)**:

@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 3.7 (v3.6 + analítica de búsquedas sin resultado - M02 HU-BUS-06)
+-- VERSIÓN: 3.8 (v3.7 + ciclo de estados, historial, notas internas y contactos de la orden - M08)
 -- MOTOR: PostgreSQL 15+ (usa UNIQUE NULLS NOT DISTINCT; compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 44
+-- TOTAL TABLAS: 47
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -41,9 +41,13 @@ BEGIN
         CREATE TYPE enum_origen_orden AS ENUM ('carrito', 'cotizacion');
     END IF;
 
-    -- Estado del ciclo de vida de una orden de compra
+    -- Estado del ciclo de vida de una orden de venta (M08 - HU-ORD-03, definiciones D01/D02 de la épica #28).
+    -- Las bases creadas antes de v3.8 se migran en la sección 0.1.
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_estado_orden') THEN
-        CREATE TYPE enum_estado_orden AS ENUM ('pendiente', 'pagado', 'en_preparacion', 'enviado', 'entregado', 'cancelado');
+        CREATE TYPE enum_estado_orden AS ENUM (
+            'orden_confirmada', 'revision_disponibilidad', 'en_preparacion', 'preparada',
+            'despachado', 'entregado', 'cancelado', 'devuelto'
+        );
     END IF;
 
     -- Estado del ciclo de vida de una cotización
@@ -109,6 +113,34 @@ BEGIN
         CREATE TYPE enum_clase_color AS ENUM ('entonable', 'colores_fijos', 'sin_color');
     END IF;
 END $$;
+
+-- ------------------------------------------------------------------------------
+-- 0.1 MIGRACIÓN DE enum_estado_orden PARA BASES CREADAS ANTES DE v3.8 (M08)
+-- En una base nueva estas sentencias no cambian nada. En una base existente
+-- renombran los valores antiguos conservando los datos ('pagado' -> 'orden_confirmada',
+-- 'enviado' -> 'despachado') y añaden los estados nuevos. 'pendiente' queda sin uso:
+-- PostgreSQL no permite quitar un valor de un ENUM sin recrear el tipo.
+-- ------------------------------------------------------------------------------
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid
+               WHERE t.typname = 'enum_estado_orden' AND e.enumlabel = 'pagado')
+       AND NOT EXISTS (SELECT 1 FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid
+               WHERE t.typname = 'enum_estado_orden' AND e.enumlabel = 'orden_confirmada') THEN
+        ALTER TYPE enum_estado_orden RENAME VALUE 'pagado' TO 'orden_confirmada';
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid
+               WHERE t.typname = 'enum_estado_orden' AND e.enumlabel = 'enviado')
+       AND NOT EXISTS (SELECT 1 FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid
+               WHERE t.typname = 'enum_estado_orden' AND e.enumlabel = 'despachado') THEN
+        ALTER TYPE enum_estado_orden RENAME VALUE 'enviado' TO 'despachado';
+    END IF;
+END $$;
+
+ALTER TYPE enum_estado_orden ADD VALUE IF NOT EXISTS 'revision_disponibilidad' AFTER 'orden_confirmada';
+ALTER TYPE enum_estado_orden ADD VALUE IF NOT EXISTS 'preparada' AFTER 'en_preparacion';
+ALTER TYPE enum_estado_orden ADD VALUE IF NOT EXISTS 'devuelto' AFTER 'cancelado';
 
 -- ==============================================================================
 -- 1. MÓDULO DE DESCUENTOS, ROLES Y PERMISOS
@@ -621,7 +653,7 @@ CREATE TABLE IF NOT EXISTS orden (
     origen enum_origen_orden NOT NULL DEFAULT 'carrito',
     id_cotizacion INT,
     carrito_o_cotizacion VARCHAR(50),
-    estado enum_estado_orden NOT NULL DEFAULT 'pendiente',
+    estado enum_estado_orden NOT NULL DEFAULT 'orden_confirmada',
     transaccion_pago_id VARCHAR(100) UNIQUE,
     direccion TEXT NOT NULL,
     sub_total NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
@@ -643,6 +675,10 @@ COMMENT ON COLUMN orden.codigo_visible IS 'Código amigable alfanumérico para e
 COMMENT ON COLUMN orden.origen IS 'Flujo de procedencia: carrito de compras o cotización aprobada';
 COMMENT ON COLUMN orden.carrito_o_cotizacion IS 'Identificador descriptivo del origen de la compra';
 COMMENT ON COLUMN orden.transaccion_pago_id IS 'Identificador único de la pasarela de pago vinculada';
+COMMENT ON COLUMN orden.estado IS 'Estado del ciclo de vida (M08 - HU-ORD-03). Nace en orden_confirmada: no existe orden sin pago (RF-ORD-01-01)';
+
+-- Migración (bases anteriores a v3.8): el valor por defecto 'pendiente' contradecía RF-ORD-01-01.
+ALTER TABLE orden ALTER COLUMN estado SET DEFAULT 'orden_confirmada';
 
 -- Tabla: linea_orden
 -- Snapshot inmutable de cada producto y precio en el instante exacto de compra
@@ -663,6 +699,67 @@ COMMENT ON TABLE linea_orden IS 'Snapshot congelado inmutable de productos compr
 COMMENT ON COLUMN linea_orden.nombre_producto IS 'Copia inmutable del nombre del producto al momento de comprar';
 COMMENT ON COLUMN linea_orden.variante_copia IS 'Copia inmutable de la variante/color adquirida';
 COMMENT ON COLUMN linea_orden.precio_aplicado IS 'Precio final unitario cobrado al momento de generar la orden';
+
+-- Tabla: historial_estado_orden (M08 - HU-ORD-03, CA-ORD-03-03 / CA-ORD-03-04)
+-- Historia de las transiciones de una orden: estado alcanzado, autor y momento.
+-- Solo inserción: ningún repositorio la actualiza ni la borra.
+CREATE TABLE IF NOT EXISTS historial_estado_orden (
+    id_historial_estado_orden SERIAL PRIMARY KEY,
+    id_orden INT NOT NULL,
+    estado_anterior enum_estado_orden,
+    estado_nuevo enum_estado_orden NOT NULL,
+    id_usuario_autor INT,
+    motivo TEXT,
+    referencia_externa VARCHAR(150),
+    fecha TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_historial_estado_orden FOREIGN KEY (id_orden)
+        REFERENCES orden (id_orden) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_historial_estado_autor FOREIGN KEY (id_usuario_autor)
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT chk_historial_estado_cambio CHECK (estado_anterior IS DISTINCT FROM estado_nuevo)
+);
+
+COMMENT ON TABLE historial_estado_orden IS 'Historia inmutable de transiciones de la orden (M08 - HU-ORD-03). Solo inserción';
+COMMENT ON COLUMN historial_estado_orden.estado_anterior IS 'NULL cuando la orden nace';
+COMMENT ON COLUMN historial_estado_orden.id_usuario_autor IS 'Quién hizo el cambio; NULL = transición automática del sistema (D01)';
+COMMENT ON COLUMN historial_estado_orden.motivo IS 'Obligatorio al volver de preparada a en_preparacion (D01) y al cancelar; lo exige el servicio de M08';
+COMMENT ON COLUMN historial_estado_orden.referencia_externa IS 'Rastro de una resolución económica hecha fuera de la plataforma (D03)';
+
+-- Tabla: nota_orden (M08 - HU-ORD-10)
+-- Notas internas del personal sobre una orden: nunca visibles al cliente y sin borrado.
+CREATE TABLE IF NOT EXISTS nota_orden (
+    id_nota_orden SERIAL PRIMARY KEY,
+    id_orden INT NOT NULL,
+    id_usuario_autor INT NOT NULL,
+    texto TEXT NOT NULL,
+    fecha TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_nota_orden_orden FOREIGN KEY (id_orden)
+        REFERENCES orden (id_orden) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_nota_orden_autor FOREIGN KEY (id_usuario_autor)
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT chk_nota_orden_texto CHECK (length(trim(texto)) > 0)
+);
+
+COMMENT ON TABLE nota_orden IS 'Notas internas del personal sobre una orden (M08 - HU-ORD-10). Solo inserción; nunca visibles al cliente';
+
+-- Tabla: contacto_orden (M08 - HU-ORD-09, CA-ORD-09-03)
+-- Constancia de cada contacto con el cliente iniciado desde la orden: quién, cuándo y por qué medio.
+CREATE TABLE IF NOT EXISTS contacto_orden (
+    id_contacto_orden SERIAL PRIMARY KEY,
+    id_orden INT NOT NULL,
+    id_usuario_autor INT NOT NULL,
+    medio VARCHAR(30) NOT NULL,
+    detalle TEXT,
+    fecha TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_contacto_orden_orden FOREIGN KEY (id_orden)
+        REFERENCES orden (id_orden) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_contacto_orden_autor FOREIGN KEY (id_usuario_autor)
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT chk_contacto_orden_medio CHECK (length(trim(medio)) > 0)
+);
+
+COMMENT ON TABLE contacto_orden IS 'Registro de contactos con el cliente iniciados desde una orden (M08 - HU-ORD-09). Solo inserción';
+COMMENT ON COLUMN contacto_orden.medio IS 'Medio usado (p. ej. telefono, correo, whatsapp); la lista cerrada está pendiente del análisis';
 
 -- ==============================================================================
 -- 6. MÓDULO DE PAGOS Y FACTURACIÓN
@@ -965,6 +1062,14 @@ CREATE INDEX IF NOT EXISTS idx_pagos_orden ON pagos(id_orden);
 CREATE INDEX IF NOT EXISTS idx_pagos_metodo ON pagos(id_metodo_pago);
 CREATE INDEX IF NOT EXISTS idx_factura_orden ON factura(id_orden);
 
+-- Índices en Historial, Notas y Contactos de la Orden (M08 - v3.8): consulta por orden en orden cronológico
+CREATE INDEX IF NOT EXISTS idx_historial_estado_orden_fecha ON historial_estado_orden(id_orden, fecha);
+CREATE INDEX IF NOT EXISTS idx_historial_estado_autor ON historial_estado_orden(id_usuario_autor);
+CREATE INDEX IF NOT EXISTS idx_nota_orden_orden_fecha ON nota_orden(id_orden, fecha);
+CREATE INDEX IF NOT EXISTS idx_nota_orden_autor ON nota_orden(id_usuario_autor);
+CREATE INDEX IF NOT EXISTS idx_contacto_orden_orden_fecha ON contacto_orden(id_orden, fecha);
+CREATE INDEX IF NOT EXISTS idx_contacto_orden_autor ON contacto_orden(id_usuario_autor);
+
 -- Índices en Reservaciones
 CREATE INDEX IF NOT EXISTS idx_reservacion_usuario ON reservaciones(id_usuario);
 CREATE INDEX IF NOT EXISTS idx_reservacion_producto ON reservaciones(id_producto);
@@ -998,5 +1103,5 @@ CREATE INDEX IF NOT EXISTS idx_bsr_fecha ON busqueda_sin_resultado(fecha);
 CREATE INDEX IF NOT EXISTS idx_bsr_termino ON busqueda_sin_resultado(termino);
 
 -- ==============================================================================
--- FIN DEL SCRIPT DDL (36 TABLAS - v2.4)
+-- FIN DEL SCRIPT DDL (47 TABLAS - v3.8)
 -- ==============================================================================

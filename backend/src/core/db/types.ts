@@ -15,7 +15,17 @@ export type EnumEstadoProducto = 'activo' | 'inactivo' | 'agotado' | 'descontinu
 
 export type EnumOrigenOrden = 'carrito' | 'cotizacion';
 
-export type EnumEstadoOrden = 'pendiente' | 'pagado' | 'en_preparacion' | 'enviado' | 'entregado' | 'cancelado';
+// M08 - HU-ORD-03 (schema v3.8). En bases anteriores a v3.8 puede quedar el valor
+// 'pendiente' sin uso: no se tipa para que ningún módulo lo escriba.
+export type EnumEstadoOrden =
+  | 'orden_confirmada'
+  | 'revision_disponibilidad'
+  | 'en_preparacion'
+  | 'preparada'
+  | 'despachado'
+  | 'entregado'
+  | 'cancelado'
+  | 'devuelto';
 
 export type EnumEstadoCotizacion = 'borrador' | 'enviada' | 'aprobada' | 'rechazada' | 'vencida';
 
@@ -331,6 +341,37 @@ export interface LineaOrdenTable {
   cantidad: Generated<number>;
 }
 
+/** M08 - HU-ORD-03: historia de transiciones de la orden. Solo inserción. */
+export interface HistorialEstadoOrdenTable {
+  id_historial_estado_orden: Generated<number>;
+  id_orden: number;
+  estado_anterior: EnumEstadoOrden | null;
+  estado_nuevo: EnumEstadoOrden;
+  id_usuario_autor: number | null;
+  motivo: string | null;
+  referencia_externa: string | null;
+  fecha: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+/** M08 - HU-ORD-10: notas internas del personal. Solo inserción; nunca visibles al cliente. */
+export interface NotaOrdenTable {
+  id_nota_orden: Generated<number>;
+  id_orden: number;
+  id_usuario_autor: number;
+  texto: string;
+  fecha: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+/** M08 - HU-ORD-09: contactos con el cliente iniciados desde la orden. Solo inserción. */
+export interface ContactoOrdenTable {
+  id_contacto_orden: Generated<number>;
+  id_orden: number;
+  id_usuario_autor: number;
+  medio: string;
+  detalle: string | null;
+  fecha: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
 // ==============================================================================
 // 6. MÓDULO DE PAGOS Y FACTURACIÓN
 // ==============================================================================
@@ -545,6 +586,9 @@ export interface Database {
   cotizacion: CotizacionTable;
   orden: OrdenTable;
   linea_orden: LineaOrdenTable;
+  historial_estado_orden: HistorialEstadoOrdenTable;
+  nota_orden: NotaOrdenTable;
+  contacto_orden: ContactoOrdenTable;
 
   // Pagos y facturación
   metodo_pago: MetodoPagoTable;
@@ -695,6 +739,16 @@ export type OrdenUpdate = Updateable<OrdenTable>;
 export type LineaOrden = Selectable<LineaOrdenTable>;
 export type NewLineaOrden = Insertable<LineaOrdenTable>;
 export type LineaOrdenUpdate = Updateable<LineaOrdenTable>;
+
+// M08 - Historial, notas y contactos: solo inserción, por eso no se exporta tipo de actualización.
+export type HistorialEstadoOrden = Selectable<HistorialEstadoOrdenTable>;
+export type NewHistorialEstadoOrden = Insertable<HistorialEstadoOrdenTable>;
+
+export type NotaOrden = Selectable<NotaOrdenTable>;
+export type NewNotaOrden = Insertable<NotaOrdenTable>;
+
+export type ContactoOrden = Selectable<ContactoOrdenTable>;
+export type NewContactoOrden = Insertable<ContactoOrdenTable>;
 
 export type MetodoPago = Selectable<MetodoPagoTable>;
 export type NewMetodoPago = Insertable<MetodoPagoTable>;

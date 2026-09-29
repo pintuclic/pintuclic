@@ -23,21 +23,22 @@ import {
 // ==============================================================================
 
 /**
- * ⚠️ PROVISIONAL: la BD solo admite los estados de `enum_estado_orden`, que no coinciden
- * con la máquina de estados definida el 23/09 en #128. Cuando se alinee el esquema, este
- * mapa es el único punto a actualizar; al ser un `Record` exhaustivo, TypeScript obliga
- * a clasificar cualquier estado nuevo.
+ * Clasificación de Mis pedidos por estado (schema v3.8, HU-ORD-03). Al ser un `Record`
+ * exhaustivo, TypeScript obliga a clasificar cualquier estado nuevo.
  *
- * `enviado` se trata como Despachado: para domicilio, Despachado ya es finalizado aunque
- * no se registre Entregado (D02, CA-ORD-03-06). Equivalencia por confirmar.
+ * `despachado` ya es finalizado: para domicilio es el cierre normal aunque no se registre
+ * Entregado (D02, CA-ORD-03-06). `devuelto` es terminal; su etiqueta visible al cliente
+ * sigue pendiente (P5).
  */
 const GRUPO_POR_ESTADO: Record<EnumEstadoOrden, GrupoPedido> = {
-  pendiente: 'en_curso',
-  pagado: 'en_curso',
+  orden_confirmada: 'en_curso',
+  revision_disponibilidad: 'en_curso',
   en_preparacion: 'en_curso',
-  enviado: 'finalizados',
+  preparada: 'en_curso',
+  despachado: 'finalizados',
   entregado: 'finalizados',
   cancelado: 'finalizados',
+  devuelto: 'finalizados',
 };
 
 /** Todos los estados, en el orden del enum, para que los contadores incluyan los ceros. */
