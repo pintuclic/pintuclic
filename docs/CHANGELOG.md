@@ -8,6 +8,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.32.3] - 2026-09-28
+### Core / Infraestructura: Actualización de Node 22 a Node 24 en las imágenes Docker
+- **Alcance General:** Incremento **PATCH (v0.3.32.3)** que actualiza la imagen base de Node de `node:22-alpine` a `node:24-alpine` (LTS activo) en las construcciones de backend y frontend ejecutadas por el pipeline de despliegue. Sin cambios de código funcional.
+- **Hitos Clave:**
+  - **Backend:** `backend/Dockerfile` actualizado en las fases `builder` y `runner`.
+  - **Frontend:** `frontend/Dockerfile` actualizado en la fase `build`; el runtime Nginx (`nginx:1.27-alpine`) no cambia.
+  - **Alcance acotado:** no se modificaron workflows, el runner self-hosted, `actions/checkout`, `engines` ni `setup-node`.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.32.3_core_actualizacion_node24_dockerfiles.md](./walkthroughs/core/walkthrough_v0.3.32.3_core_actualizacion_node24_dockerfiles.md)
+
+---
+
 ## [v0.3.32.1] - 2026-09-28
 ### Core / Infraestructura: Recorte del `.env` de despliegue al catálogo de `.env.example`
 - **Alcance General:** Incremento **PATCH (v0.3.32.1)** que limita la generación del `.env` en el job `Deploy` a las **17 variables exactas** de `.env.example`, eliminando claves de configuración que no forman parte de la plantilla oficial.

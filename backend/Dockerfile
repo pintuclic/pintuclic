@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------
 # Fase 1: Build (pnpm + compilación estricta de TypeScript a JavaScript)
 # ------------------------------------------------------------------------------
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -32,7 +32,7 @@ RUN pnpm exec tsc --declaration false --declarationMap false \
 # ------------------------------------------------------------------------------
 # Fase 2: Producción (runtime mínimo y seguro, sin npm ni pnpm)
 # ------------------------------------------------------------------------------
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 
