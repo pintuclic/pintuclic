@@ -3,10 +3,16 @@ import { AppError } from '../../../core/middlewares/errorHandler';
 import { OrdenesRepository } from '../repositories/ordenes.repository';
 import {
   CabeceraOrden,
+  CambioEstado,
+  ContactoRegistrado,
   DetallePedido,
   DetallePedidoPersonal,
+  FilaContactoOrden,
+  FilaHistorialEstado,
+  FilaNotaOrden,
   FiltrosGestionOrdenes,
   GrupoPedido,
+  NotaInterna,
   OrdenListado,
   PaginaOrdenesGestion,
   PedidosCliente,
@@ -14,9 +20,10 @@ import {
   ResumenEstadosOrdenes,
   ResumenPedido,
 } from '../interfaces/m08.interfaces';
+import { transicionesPermitidas } from './ciclo-estados';
 
 // ==============================================================================
-// M08 - SERVICIO DE CONSULTA DE ÓRDENES (HU-ORD-04, 05, 06, 07, 08, 09 y 11)
+// M08 - SERVICIO DE CONSULTA DE ÓRDENES (HU-ORD-04, 05, 06, 07, 08, 09, 10 y 11)
 // La sesión y los permisos los exigen las guardas de M20 en la ruta. Este servicio
 // decide la titularidad: una orden ajena responde igual que una inexistente
 // (CA-ORD-04-03, CA-SEG-03-06) y el intento queda registrado (CA-SEG-03-05).
@@ -77,6 +84,27 @@ function diasEntre(desde: string, hasta: string): number {
   return Math.max(0, Math.round(diferencia / MS_POR_DIA));
 }
 
+// Historial, notas y contactos guardan TIMESTAMPTZ: viajan como instante ISO 8601 (UTC)
+// y la interfaz los muestra en la hora local de quien consulta.
+
+export function aCambioEstado(fila: FilaHistorialEstado): CambioEstado {
+  return {
+    estado_anterior: fila.estado_anterior,
+    estado_nuevo: fila.estado_nuevo,
+    autor: fila.autor,
+    motivo: fila.motivo,
+    fecha: fila.fecha.toISOString(),
+  };
+}
+
+export function aNotaInterna(fila: FilaNotaOrden): NotaInterna {
+  return { texto: fila.texto, autor: fila.autor, fecha: fila.fecha.toISOString() };
+}
+
+export function aContactoRegistrado(fila: FilaContactoOrden): ContactoRegistrado {
+  return { medio: fila.medio, detalle: fila.detalle, autor: fila.autor, fecha: fila.fecha.toISOString() };
+}
+
 export class OrdenesService {
   /**
    * @param reloj Fuente de la hora actual. Se inyecta para que el cálculo de
@@ -126,8 +154,8 @@ export class OrdenesService {
 
   /**
    * Listado del personal con filtros (HU-ORD-05, HU-ORD-08). El permiso se exige en la
-   * ruta. Paginación como en M02. Cada fila indica cuántos días lleva esperando
-   * (CA-ORD-05-07; provisional, ver `ResumenOrdenGestion`).
+   * ruta. Paginación como en M02. Cada fila indica cuántos días lleva esperando desde su
+   * último cambio de estado, con la fecha de Colombia (CA-ORD-05-07).
    */
   async listarOrdenesParaPersonal(
     filtros: FiltrosGestionOrdenes,
@@ -148,13 +176,14 @@ export class OrdenesService {
     return {
       items: filas.map((fila) => {
         const fecha = fechaIso(fila.fecha);
+        const esperaDesde = fila.ultimo_cambio ? formatoFechaColombia.format(fila.ultimo_cambio) : fecha;
         return {
           codigo: fila.codigo_visible,
           fecha,
           total: fila.total,
           estado: fila.estado,
           id_cliente: fila.id_usuario,
-          dias_esperando: diasEntre(fecha, hoy),
+          dias_esperando: diasEntre(esperaDesde, hoy),
         };
       }),
       total,
@@ -200,18 +229,31 @@ export class OrdenesService {
 
   /**
    * Consulta de una orden por su identificador para personal autorizado (CA-ORD-08-01).
-   * Incluye el contacto del cliente (CA-ORD-09-01).
+   * Incluye el contacto del cliente (CA-ORD-09-01), el historial de estados (CA-ORD-09-02),
+   * las notas internas (CA-ORD-10-02), los contactos registrados (CA-ORD-09-03) y los
+   * estados a los que se puede pasar desde el actual (HU-ORD-03).
    */
   async detallePedidoParaPersonal(codigo: string): Promise<DetallePedidoPersonal> {
     const orden = await this.repo.buscarPorCodigo(codigo);
     if (!orden) {
       throw recursoNoEncontrado();
     }
-    const [detalle, contacto] = await Promise.all([
+    const [detalle, contacto, historial, notas, contactos] = await Promise.all([
       this.armarDetalle(orden),
       this.repo.buscarContactoCliente(orden.id_usuario),
+      this.repo.listarHistorial(orden.id_orden),
+      this.repo.listarNotas(orden.id_orden),
+      this.repo.listarContactos(orden.id_orden),
     ]);
-    return { ...detalle, id_cliente: orden.id_usuario, cliente: contacto ?? null };
+    return {
+      ...detalle,
+      id_cliente: orden.id_usuario,
+      cliente: contacto ?? null,
+      transiciones_permitidas: transicionesPermitidas(orden.estado),
+      historial: historial.map(aCambioEstado),
+      notas: notas.map(aNotaInterna),
+      contactos: contactos.map(aContactoRegistrado),
+    };
   }
 
   /** Solo expone lo necesario para la vista (HU-SEG-06): ni clave primaria ni datos de pago. */

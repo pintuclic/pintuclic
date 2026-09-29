@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { EnumEstadoOrden } from '../../../core/db/types';
+import type { MedioContacto } from '../interfaces/m08.interfaces';
 
 // ==============================================================================
 // M08 - DTOs DE ÓRDENES (Zod)
@@ -78,3 +79,32 @@ export type ListarOrdenesGestionDto = z.infer<typeof ListarOrdenesGestionDto>;
 // Historial de compras del cliente desde una orden (HU-ORD-11): solo paginación.
 export const PaginacionDto = z.object({ pagina, limite });
 export type PaginacionDto = z.infer<typeof PaginacionDto>;
+
+// Cambio de estado por el personal (HU-ORD-03, CA-ORD-05-01). Si la transición es
+// válida lo decide el servicio; aquí solo se valida la forma. El motivo es obligatorio
+// al volver de Preparada a En preparación (D01).
+export const CambiarEstadoDto = z.object({
+  estado: z.enum(ESTADOS_ORDEN, { error: `El estado debe ser uno de: ${ESTADOS_ORDEN.join(', ')}` }),
+  motivo: z.string().trim().max(500, 'El motivo no puede superar 500 caracteres').optional(),
+});
+export type CambiarEstadoDto = z.infer<typeof CambiarEstadoDto>;
+
+// Nota interna del personal (HU-ORD-10).
+export const CrearNotaDto = z.object({
+  texto: z
+    .string({ error: 'Escribe el texto de la nota' })
+    .trim()
+    .min(1, 'La nota no puede estar vacía')
+    .max(2000, 'La nota no puede superar 2000 caracteres'),
+});
+export type CrearNotaDto = z.infer<typeof CrearNotaDto>;
+
+/** ⚠️ PROVISIONAL: la lista cerrada de medios está pendiente del análisis (CA-ORD-09-03). */
+const MEDIOS_CONTACTO = ['telefono', 'correo', 'whatsapp', 'otro'] as const satisfies readonly MedioContacto[];
+
+// Contacto con el cliente iniciado desde la orden (CA-ORD-09-03).
+export const RegistrarContactoDto = z.object({
+  medio: z.enum(MEDIOS_CONTACTO, { error: `El medio debe ser uno de: ${MEDIOS_CONTACTO.join(', ')}` }),
+  detalle: z.string().trim().max(1000, 'El detalle no puede superar 1000 caracteres').optional(),
+});
+export type RegistrarContactoDto = z.infer<typeof RegistrarContactoDto>;

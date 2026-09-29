@@ -4,18 +4,24 @@ import {
   CabeceraOrden,
   ContactoCliente,
   FilaConteoEstado,
+  FilaContactoOrden,
+  FilaHistorialEstado,
   FilaLineaOrden,
+  FilaNotaOrden,
   FilaResumenOrden,
   FilaResumenOrdenGestion,
   FiltrosGestionOrdenes,
   OrdenListado,
+  SolicitudCambioEstado,
 } from '../interfaces/m08.interfaces';
 
 // ==============================================================================
-// M08 - REPOSITORIO DE ÓRDENES (HU-ORD-04, 05, 07, 08, 09 y 11)
-// Solo lectura. Las líneas se leen de `linea_orden`, que guarda la copia de la
-// compra, sin unir con el catálogo vivo (ADR-05, CA-ORD-02-01). Del titular solo se
-// leen los datos de contacto que pide el personal (CA-ORD-09-01), nunca credenciales.
+// M08 - REPOSITORIO DE ÓRDENES (HU-ORD-03, 04, 05, 07, 08, 09, 10 y 11)
+// Las líneas se leen de `linea_orden`, que guarda la copia de la compra, sin unir con
+// el catálogo vivo (ADR-05, CA-ORD-02-01). Del titular solo se leen los datos de
+// contacto que pide el personal (CA-ORD-09-01), nunca credenciales.
+// Escrituras: solo el estado de la orden y la inserción en `historial_estado_orden`,
+// `nota_orden` y `contacto_orden`. Ninguna de esas tres tablas se actualiza ni se borra.
 // ==============================================================================
 
 /** Escapa los comodines de LIKE para que el texto del usuario se busque de forma literal. */
@@ -111,6 +117,13 @@ export class OrdenesRepository {
     const direccion = orden === 'antiguedad' ? 'asc' : 'desc';
     return this.baseGestion(filtros)
       .select(['o.codigo_visible', 'o.fecha', 'o.total', 'o.estado', 'o.id_usuario'])
+      .select((eb) =>
+        eb
+          .selectFrom('historial_estado_orden as h')
+          .whereRef('h.id_orden', '=', 'o.id_orden')
+          .select(({ fn }) => fn.max('h.fecha').as('fecha'))
+          .as('ultimo_cambio')
+      )
       .orderBy('o.fecha', direccion)
       .orderBy('o.id_orden', direccion)
       .limit(limite)
@@ -133,6 +146,118 @@ export class OrdenesRepository {
       .groupBy('estado')
       .execute();
     return filas.map((f) => ({ estado: f.estado, total: Number(f.total) }));
+  }
+
+  /** Historial de estados en orden cronológico, con el nombre del autor (CA-ORD-09-02). */
+  async listarHistorial(idOrden: number): Promise<FilaHistorialEstado[]> {
+    return this.db
+      .selectFrom('historial_estado_orden as h')
+      .leftJoin('usuario as u', 'u.id_usuario', 'h.id_usuario_autor')
+      .select(['h.estado_anterior', 'h.estado_nuevo', 'u.nombre as autor', 'h.motivo', 'h.fecha'])
+      .where('h.id_orden', '=', idOrden)
+      .orderBy('h.fecha', 'asc')
+      .orderBy('h.id_historial_estado_orden', 'asc')
+      .execute();
+  }
+
+  /** Notas internas en orden cronológico, con el nombre de quien las escribió (CA-ORD-10-02). */
+  async listarNotas(idOrden: number): Promise<FilaNotaOrden[]> {
+    return this.db
+      .selectFrom('nota_orden as n')
+      .innerJoin('usuario as u', 'u.id_usuario', 'n.id_usuario_autor')
+      .select(['n.texto', 'u.nombre as autor', 'n.fecha'])
+      .where('n.id_orden', '=', idOrden)
+      .orderBy('n.fecha', 'asc')
+      .orderBy('n.id_nota_orden', 'asc')
+      .execute();
+  }
+
+  /** Contactos con el cliente en orden cronológico (CA-ORD-09-03). */
+  async listarContactos(idOrden: number): Promise<FilaContactoOrden[]> {
+    return this.db
+      .selectFrom('contacto_orden as c')
+      .innerJoin('usuario as u', 'u.id_usuario', 'c.id_usuario_autor')
+      .select(['c.medio', 'c.detalle', 'u.nombre as autor', 'c.fecha'])
+      .where('c.id_orden', '=', idOrden)
+      .orderBy('c.fecha', 'asc')
+      .orderBy('c.id_contacto_orden', 'asc')
+      .execute();
+  }
+
+  /**
+   * Cambia el estado y registra la transición en el historial, en una sola transacción
+   * (CA-ORD-03-04). El `UPDATE` solo afecta a la orden si sigue en `estadoActual`: si otra
+   * persona la cambió entre la lectura y la escritura no se modifica nada y se devuelve
+   * `undefined` (CA-ORD-05-08). Devuelve el momento registrado en el historial.
+   */
+  async cambiarEstado(s: SolicitudCambioEstado): Promise<Date | undefined> {
+    return this.enTransaccion(async (trx) => {
+      const resultado = await trx
+        .updateTable('orden')
+        .set({ estado: s.estadoNuevo })
+        .where('id_orden', '=', s.idOrden)
+        .where('estado', '=', s.estadoActual)
+        .executeTakeFirst();
+      if (Number(resultado.numUpdatedRows) === 0) {
+        return undefined;
+      }
+
+      const registro = await trx
+        .insertInto('historial_estado_orden')
+        .values({
+          id_orden: s.idOrden,
+          estado_anterior: s.estadoActual,
+          estado_nuevo: s.estadoNuevo,
+          id_usuario_autor: s.idAutor,
+          motivo: s.motivo,
+        })
+        .returning('fecha')
+        .executeTakeFirstOrThrow();
+      return registro.fecha;
+    });
+  }
+
+  /** Añade una nota interna (HU-ORD-10). No existe operación para editarla ni borrarla. */
+  async crearNota(idOrden: number, idAutor: number, texto: string): Promise<FilaNotaOrden> {
+    return this.enTransaccion(async (trx) => {
+      const { fecha } = await trx
+        .insertInto('nota_orden')
+        .values({ id_orden: idOrden, id_usuario_autor: idAutor, texto })
+        .returning('fecha')
+        .executeTakeFirstOrThrow();
+      const { nombre } = await this.nombreDeUsuario(trx, idAutor);
+      return { texto, autor: nombre, fecha };
+    });
+  }
+
+  /** Registra un contacto con el cliente iniciado desde la orden (CA-ORD-09-03). */
+  async registrarContacto(
+    idOrden: number,
+    idAutor: number,
+    medio: string,
+    detalle: string | null
+  ): Promise<FilaContactoOrden> {
+    return this.enTransaccion(async (trx) => {
+      const { fecha } = await trx
+        .insertInto('contacto_orden')
+        .values({ id_orden: idOrden, id_usuario_autor: idAutor, medio, detalle })
+        .returning('fecha')
+        .executeTakeFirstOrThrow();
+      const { nombre } = await this.nombreDeUsuario(trx, idAutor);
+      return { medio, detalle, autor: nombre, fecha };
+    });
+  }
+
+  private async nombreDeUsuario(db: Kysely<Database>, idUsuario: number): Promise<{ nombre: string }> {
+    return db.selectFrom('usuario').select('nombre').where('id_usuario', '=', idUsuario).executeTakeFirstOrThrow();
+  }
+
+  /**
+   * Ejecuta en una transacción nueva o, si el repositorio ya trabaja dentro de una, en
+   * esa misma. Así las pruebas de integración pueden deshacer todo al terminar.
+   */
+  private enTransaccion<T>(trabajo: (db: Kysely<Database>) => Promise<T>): Promise<T> {
+    return this.db.isTransaction ? trabajo(this.db) : this.db.transaction().execute(trabajo);
   }
 
   /**
