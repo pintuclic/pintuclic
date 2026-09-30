@@ -1,7 +1,7 @@
 <template>
   <div class="font-sans">
     <PageHeader title="Categorías" description="Clasificación a dos niveles: categoría y subcategoría (HU-CAT-01).">
-      <Button variant="conversion" icon="plus" @click="nuevaCategoria">Nueva categoría</Button>
+      <Button variant="action" icon="plus" @click="nuevaCategoria">Nueva categoría</Button>
     </PageHeader>
 
     <div class="grid gap-6 xl:grid-cols-2">
@@ -50,7 +50,7 @@
           <h2 class="font-title text-lg font-semibold text-corporate">
             Subcategorías<span v-if="seleccionada" class="text-neutral-medium"> · {{ seleccionada.nombre }}</span>
           </h2>
-          <Button v-if="seleccionada" variant="subaction" size="sm" icon="plus" @click="nuevaSubcategoria">Nueva subcategoría</Button>
+          <Button v-if="seleccionada" variant="action" size="sm" icon="plus" @click="nuevaSubcategoria">Nueva subcategoría</Button>
         </div>
         <SinResultados
           v-if="!seleccionada"
