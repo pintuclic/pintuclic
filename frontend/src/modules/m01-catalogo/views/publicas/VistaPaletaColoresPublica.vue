@@ -228,7 +228,7 @@
         </h2>
 
         <div
-          class="mt-5 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+          class="mt-5 grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
         >
           <TarjetaProductoPublico
             v-for="producto in productosRecomendados"
@@ -252,7 +252,7 @@
         </h2>
 
         <div
-          class="mt-5 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+          class="mt-5 grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
         >
           <TarjetaProductoPublico
             v-for="producto in productosComplementarios"

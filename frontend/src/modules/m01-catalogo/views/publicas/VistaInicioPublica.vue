@@ -75,7 +75,7 @@
           <button
             type="button"
             class="inline-flex h-11 items-center justify-center gap-2 rounded-button bg-conversion px-7 text-sm font-semibold text-white transition-colors hover:bg-conversion-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion"
-            @click="calculadoraAbierta = true"
+            @click="irCalculadora"
           >
             Calculadora <Calculator :size="18" />
           </button>
@@ -108,7 +108,7 @@
           </router-link>
         </div>
 
-        <div v-if="cargando" class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" aria-live="polite">
+        <div v-if="cargando" class="grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" aria-live="polite">
           <div v-for="indice in 5" :key="indice" class="h-80 animate-pulse rounded-card bg-neutral-white" />
         </div>
         <div v-else-if="error" class="rounded-card border border-neutral-light bg-neutral-white px-6 py-10 text-center">
@@ -118,7 +118,7 @@
             Reintentar
           </button>
         </div>
-        <div v-else-if="productos.length" class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div v-else-if="productos.length" class="grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           <TarjetaProductoPublico
             v-for="(producto, indice) in productos"
             :key="producto.id_producto"
@@ -171,12 +171,6 @@
       @cerrar="menuCategoriasAbierto = false"
       @seleccionar="seleccionarSubcategoria"
     />
-    <CalculadoraPinturaPublica
-      :abierta="calculadoraAbierta"
-      :producto="productos[0]?.detalle"
-      @cerrar="calculadoraAbierta = false"
-      @agregar="agregarProducto"
-    />
   </div>
 </template>
 
@@ -199,13 +193,11 @@ import {
   X,
 } from 'lucide-vue-next';
 import heroStorefront from '../../assets/storefront/hero-storefront.png';
-import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPinturaPublica.vue';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import { useInicioPublico } from '../../composables/publicas/useInicioPublico';
 
 const menuCategoriasAbierto = ref(false);
-const calculadoraAbierta = ref(false);
 const terminoBusqueda = ref('');
 const mensaje = ref<string | null>(null);
 const router = useRouter();
@@ -261,6 +253,10 @@ function seleccionarSubcategoria(idSubcategoria: number): void {
 
 function verProducto(idProducto: number): void {
   void router.push({ name: 'DetalleProductoPublico', params: { productoId: idProducto } });
+}
+
+function irCalculadora(): void {
+  void router.push({ name: 'CalculadoraPinturaPublica', query: { volver: '/' } });
 }
 
 function agregarProducto(): void {
