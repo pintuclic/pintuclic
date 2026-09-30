@@ -5,8 +5,10 @@ import type {
   EventoCambioEstadoOrdenPayload,
   IResultadoEnvio,
 } from '../../m18-notificaciones/interfaces/notificaciones.interfaces';
+import { ZodError } from 'zod';
 import { OrdenesService, lineaRetirada } from '../services/ordenes.service';
 import { GestionOrdenesService } from '../services/gestion-ordenes.service';
+import { CreacionOrdenService } from '../services/creacion-orden.service';
 import { ESTADOS_NO_HABILITADOS, TRANSICIONES } from '../services/ciclo-estados';
 import { CodigoPedidoService } from '../services/codigo-pedido.service';
 import { OrdenesRepository } from '../repositories/ordenes.repository';
@@ -31,9 +33,13 @@ import {
   FilaResumenOrdenGestion,
   FiltrosGestionOrdenes,
   NotificadorEstadoOrden,
+  NuevaOrdenConfirmada,
+  OrdenCreada,
+  OrdenDeOperacion,
   OrdenListado,
   RegistroAccesosDenegados,
   SolicitudCambioEstado,
+  SolicitudPagoConfirmado,
 } from '../interfaces/m08.interfaces';
 
 type UsuarioFake = { readonly id_usuario: number } & ContactoCliente;
@@ -71,6 +77,42 @@ class RepoFake extends OrdenesRepository {
     super(undefined as never); // no se usa la BD en el fake
     // Copia propia: un cambio de estado en una prueba no altera los datos de las demás.
     this.ordenes = ordenes.map((o) => ({ ...o }));
+  }
+
+  // --- HU-ORD-01: creación (réplica del consecutivo y de las órdenes por operación) ---
+  /** Último valor del consecutivo de pedidos; solo avanza si la creación termina bien. */
+  public consecutivo = 0;
+  public readonly operaciones: OrdenDeOperacion[] = [];
+  /** Lo que el servicio pidió insertar, para comprobar la copia exacta. */
+  public readonly creaciones: NuevaOrdenConfirmada[] = [];
+  /** Se ejecuta al empezar la creación; puede lanzar un error para simular la base de datos. */
+  public alCrear: (() => void) | undefined;
+
+  override async buscarPorOperacion(codigoSolicitud: string, transaccionPagoId: string | null): Promise<OrdenDeOperacion[]> {
+    return this.operaciones.filter(
+      (o) => o.codigo_solicitud === codigoSolicitud || (transaccionPagoId !== null && o.transaccion_pago_id === transaccionPagoId)
+    );
+  }
+
+  override async crearOrdenConfirmada(
+    nueva: NuevaOrdenConfirmada,
+    armarCodigo: (consecutivo: number) => string
+  ): Promise<OrdenCreada> {
+    this.alCrear?.();
+    const siguiente = this.consecutivo + 1;
+    const codigo = armarCodigo(siguiente);
+    this.consecutivo = siguiente;
+    this.creaciones.push(nueva);
+    const idOrden = 100 + this.operaciones.length;
+    this.operaciones.push({
+      id_orden: idOrden,
+      codigo_visible: codigo,
+      id_usuario: nueva.orden.id_usuario,
+      estado: 'orden_confirmada',
+      codigo_solicitud: nueva.orden.codigo_solicitud ?? null,
+      transaccion_pago_id: nueva.orden.transaccion_pago_id ?? null,
+    });
+    return { idOrden, codigo, fecha: MOMENTO_ESCRITURA };
   }
 
   /** Cambia el estado de una orden por fuera del servicio, como haría otra persona. */
@@ -311,6 +353,69 @@ async function capturarError(accion: () => Promise<unknown>): Promise<unknown> {
 
 function esNoEncontrado(error: unknown): boolean {
   return error instanceof AppError && error.statusCode === 404 && error.code === 'NOT_FOUND';
+}
+
+/**
+ * Solicitud SOL con el pago confirmado por la pasarela: a domicilio, una línea con dos
+ * descuentos encadenados, una entonada y una de dos unidades. Los importes cuadran como en
+ * una solicitud real, aunque el servicio no los recalcula (D07).
+ */
+function solicitudDePrueba(cambios: Partial<SolicitudPagoConfirmado> = {}): SolicitudPagoConfirmado {
+  return {
+    codigoSolicitud: 'SOL-2026-00042',
+    idCliente: 2,
+    origen: 'carrito',
+    modoEntrega: 'domicilio',
+    direccion: '  Calle 45 # 12-34, Bogotá  ',
+    costoEntrega: '12000.00',
+    subTotal: '275900.00',
+    descuento: '14590.00',
+    total: '273310.00',
+    baseSinImpuesto: '229672.27',
+    importeIva: '43637.73',
+    tasaIva: 19,
+    observaciones: 'Llamar antes de llegar',
+    lineas: [
+      {
+        nombreProducto: 'Viniltex Máxima Protección Antibacterial',
+        varianteCopia: 'Galón - Azul Océano',
+        cantidad: 1,
+        precioInicial: '95900.00',
+        precioAplicado: '81310.00',
+        colorSolicitado: 'Azul Océano',
+        idVarianteRef: 2,
+        descuentos: [
+          { origen: 'Promoción Viniltex', porcentaje: 10, importe: '9590.00' },
+          { origen: 'Cupón de bienvenida', importe: 5000 },
+        ],
+      },
+      {
+        nombreProducto: 'Pintura Entonada de Carta',
+        varianteCopia: 'Galón - Base A',
+        cantidad: 1,
+        precioInicial: 120000,
+        precioAplicado: 120000,
+        colorSolicitado: 'Amarillo Sol',
+        esEntonado: true,
+        baseConsumida: 'Base A - Galón',
+      },
+      {
+        nombreProducto: 'Esmalte Sintético Brillante',
+        varianteCopia: 'Cuarto de Galón - Rojo Colonial',
+        cantidad: 2,
+        precioInicial: '30000',
+        precioAplicado: 30000.0,
+        idVarianteRef: 9,
+      },
+    ],
+    confirmacion: { medio: 'pasarela', transaccionId: 'TRX-PSE-555000111', montoConfirmado: '273310.00' },
+    ...cambios,
+  };
+}
+
+/** Error como los que lanza el driver de PostgreSQL al violar una restricción. */
+function errorPostgres(code: string, constraint: string): Error {
+  return Object.assign(new Error(`violación de ${constraint}`), { code, constraint });
 }
 
 async function ejecutarPruebasM08(): Promise<void> {
@@ -1414,6 +1519,300 @@ async function ejecutarPruebasM08(): Promise<void> {
         }
       }
       assert(rechazaInvalidos, 'HU-ORD-06: un consecutivo que no es entero positivo se rechaza');
+    }
+
+    // --- HU-ORD-01: creación de la orden al confirmarse el pago (contrato para M07) ----
+
+    // 29/09/2026 15:00 en Bogotá.
+    const MOMENTO_PAGO = new Date('2026-09-29T20:00:00Z');
+    const nuevaCreacion = (repo: RepoFake, notificador = new NotificadorFake(), momento = MOMENTO_PAGO) =>
+      new CreacionOrdenService(repo, notificador, new CodigoPedidoService(), () => momento);
+
+    // CA-ORD-01-01: con el pago confirmado por la pasarela nace la orden, con su código y la copia exacta.
+    {
+      const repo = new RepoFake([], {}, personal);
+      const resultado = await nuevaCreacion(repo).crearDesdePagoConfirmado(solicitudDePrueba());
+      const nueva = repo.creaciones[0];
+      assert(
+        resultado.codigo === 'PC-2026-00001' &&
+          resultado.creada &&
+          resultado.estado === 'orden_confirmada' &&
+          resultado.codigoSolicitud === 'SOL-2026-00042',
+        'CA-ORD-01-01: la orden nace en «Orden confirmada» con el código PC-AAAA-NNNNN'
+      );
+      assert(
+        nueva?.orden.codigo_solicitud === 'SOL-2026-00042' &&
+          nueva.orden.transaccion_pago_id === 'TRX-PSE-555000111' &&
+          nueva.orden.origen === 'carrito' &&
+          nueva.orden.id_cotizacion === null &&
+          nueva.orden.carrito_o_cotizacion === 'carrito_directo' &&
+          nueva.orden.fecha === '2026-09-29',
+        'CA-ORD-01-01: la orden conserva la solicitud SOL, la transacción de la pasarela y su origen'
+      );
+      assert(
+        nueva?.orden.total === '273310.00' &&
+          nueva.orden.sub_total === '275900.00' &&
+          nueva.orden.costo_entrega === '12000.00' &&
+          nueva.orden.tasa_iva === '19' &&
+          nueva.orden.direccion === 'Calle 45 # 12-34, Bogotá' &&
+          nueva.orden.modo_entrega === 'domicilio',
+        'D07: los importes, el IVA y la entrega se copian tal como los congeló la solicitud'
+      );
+      const [primera, entonada, tercera] = nueva?.lineas ?? [];
+      assert(
+        primera?.linea.precio_inicial === '95900.00' &&
+          primera.linea.precio_aplicado === '81310.00' &&
+          primera.linea.id_variante_ref === 2 &&
+          primera.descuentos.map((d) => `${d.orden_aplicacion}:${d.origen}:${d.porcentaje}:${d.importe}`).join('|') ===
+            '1:Promoción Viniltex:10:9590.00|2:Cupón de bienvenida:null:5000',
+        'RF-ORD-02-02: cada descuento se guarda con su origen, porcentaje, importe y orden de aplicación'
+      );
+      assert(
+        entonada?.linea.es_entonado === true &&
+          entonada.linea.base_consumida === 'Base A - Galón' &&
+          entonada.linea.precio_aplicado === '120000' &&
+          tercera?.linea.cantidad === 2 &&
+          tercera.linea.precio_aplicado === '30000' &&
+          tercera.linea.es_entonado === false &&
+          tercera.linea.color_solicitado === null &&
+          tercera.descuentos.length === 0,
+        'RF-ORD-02-01: las líneas conservan entonado, base, cantidad y precios tal como se cobraron'
+      );
+      assert(
+        nueva?.historial.idAutor === null && nueva.historial.referenciaExterna === 'TRX-PSE-555000111',
+        'CA-ORD-03-04: el primer registro del historial lo hace el sistema con la referencia de la pasarela'
+      );
+    }
+
+    // CA-ORD-01-03: el pago directo verificado por un empleado genera la orden igual.
+    {
+      const repo = new RepoFake([], {}, personal);
+      const resultado = await nuevaCreacion(repo).crearDesdePagoConfirmado(
+        solicitudDePrueba({
+          modoEntrega: 'recogida',
+          direccion: null,
+          costoEntrega: 0,
+          total: '261310.00',
+          confirmacion: { medio: 'verificacion_manual', idEmpleado: ADMIN, referencia: 'Comprobante Nequi 7781', montoConfirmado: '261310' },
+        })
+      );
+      const nueva = repo.creaciones[0];
+      assert(
+        resultado.creada &&
+          nueva?.orden.transaccion_pago_id === null &&
+          nueva.orden.modo_entrega === 'recogida' &&
+          nueva.orden.direccion === null &&
+          nueva.historial.idAutor === ADMIN &&
+          nueva.historial.referenciaExterna === 'Comprobante Nequi 7781',
+        'CA-ORD-01-03: con verificación manual la orden se crea y el empleado queda como autor del historial'
+      );
+    }
+
+    // CA-ORD-01-04: una compra desde cotización registra la cotización de origen.
+    {
+      const repo = new RepoFake([], {}, personal);
+      await nuevaCreacion(repo).crearDesdePagoConfirmado(solicitudDePrueba({ origen: 'cotizacion', idCotizacion: 1 }));
+      const nueva = repo.creaciones[0];
+      assert(
+        nueva?.orden.origen === 'cotizacion' &&
+          nueva.orden.id_cotizacion === 1 &&
+          nueva.orden.carrito_o_cotizacion === 'cotizacion_aprobada',
+        'CA-ORD-01-04: la orden guarda el identificador de la cotización de la que procede'
+      );
+      const sinCotizacion = await capturarError(() =>
+        nuevaCreacion(repo).crearDesdePagoConfirmado(solicitudDePrueba({ codigoSolicitud: 'SOL-2026-00043', origen: 'cotizacion' }))
+      );
+      const carritoConCotizacion = await capturarError(() =>
+        nuevaCreacion(repo).crearDesdePagoConfirmado(solicitudDePrueba({ codigoSolicitud: 'SOL-2026-00044', idCotizacion: 1 }))
+      );
+      assert(
+        sinCotizacion instanceof ZodError && carritoConCotizacion instanceof ZodError && repo.creaciones.length === 1,
+        'CA-ORD-01-04: la cotización es obligatoria si la compra viene de una, y se rechaza si viene del carrito'
+      );
+    }
+
+    // CA-ORD-01-02 / D06: sin confirmación de pago, o con un pago que no cubre el total, no hay orden.
+    {
+      const repo = new RepoFake([], {}, personal);
+      const { confirmacion: _sinConfirmacion, ...sinPago } = solicitudDePrueba();
+      const errorSinPago = await capturarError(() =>
+        nuevaCreacion(repo).crearDesdePagoConfirmado(sinPago as unknown as SolicitudPagoConfirmado)
+      );
+      const errorPagoCorto = await capturarError(() =>
+        nuevaCreacion(repo).crearDesdePagoConfirmado(
+          solicitudDePrueba({ confirmacion: { medio: 'pasarela', transaccionId: 'TRX-CORTO', montoConfirmado: '273309.99' } })
+        )
+      );
+      assert(errorSinPago instanceof ZodError, 'CA-ORD-01-02: sin confirmación de pago la solicitud se rechaza');
+      assert(
+        esError(errorPagoCorto, 409, 'PAGO_INSUFICIENTE') && repo.creaciones.length === 0 && repo.consecutivo === 0,
+        'D06: un pago inferior al total no crea la orden ni consume número'
+      );
+    }
+
+    // CA-ORD-01-05: la misma confirmación dos veces devuelve la orden ya creada, sin otra ni otro número.
+    {
+      const repo = new RepoFake([], {}, personal);
+      const notificador = new NotificadorFake();
+      const creacion = nuevaCreacion(repo, notificador);
+      const primera = await creacion.crearDesdePagoConfirmado(solicitudDePrueba());
+      const segunda = await creacion.crearDesdePagoConfirmado(solicitudDePrueba());
+      const otraVia = await creacion.crearDesdePagoConfirmado(
+        solicitudDePrueba({ confirmacion: { medio: 'verificacion_manual', idEmpleado: ADMIN, montoConfirmado: '273310.00' } })
+      );
+      await esperarTareasPendientes();
+      assert(
+        segunda.codigo === primera.codigo && !segunda.creada && !otraVia.creada && repo.creaciones.length === 1 && repo.consecutivo === 1,
+        'CA-ORD-01-05: una confirmación repetida no genera una segunda orden ni consume otro número'
+      );
+      assert(notificador.avisos.length === 1, 'D05: la confirmación repetida no vuelve a enviar el correo');
+
+      const siguiente = await creacion.crearDesdePagoConfirmado(
+        solicitudDePrueba({
+          codigoSolicitud: 'SOL-2026-00050',
+          confirmacion: { medio: 'pasarela', transaccionId: 'TRX-PSE-555000222', montoConfirmado: '273310.00' },
+        })
+      );
+      assert(siguiente.codigo === 'PC-2026-00002', 'RF-ORD-06-04: la orden siguiente toma el número siguiente, sin huecos');
+    }
+
+    // CA-ORD-01-05: dos confirmaciones simultáneas; la que pierde devuelve la orden de la que ganó.
+    {
+      const repo = new RepoFake([], {}, personal);
+      repo.alCrear = () => {
+        repo.operaciones.push({
+          id_orden: 7,
+          codigo_visible: 'PC-2026-00007',
+          id_usuario: 2,
+          estado: 'orden_confirmada',
+          codigo_solicitud: 'SOL-2026-00042',
+          transaccion_pago_id: 'TRX-PSE-555000111',
+        });
+        throw errorPostgres('23505', 'uq_orden_codigo_solicitud');
+      };
+      const resultado = await nuevaCreacion(repo).crearDesdePagoConfirmado(solicitudDePrueba());
+      assert(
+        resultado.codigo === 'PC-2026-00007' && !resultado.creada && repo.consecutivo === 0,
+        'CA-ORD-01-05: si otra confirmación de la misma solicitud gana la carrera, se devuelve esa orden'
+      );
+    }
+
+    // Datos contradictorios: una transacción ya usada por otra solicitud, o una solicitud de otro cliente.
+    {
+      const repo = new RepoFake([], {}, personal);
+      const creacion = nuevaCreacion(repo);
+      await creacion.crearDesdePagoConfirmado(solicitudDePrueba());
+      const transaccionRepetida = await capturarError(() =>
+        creacion.crearDesdePagoConfirmado(solicitudDePrueba({ codigoSolicitud: 'SOL-2026-00099' }))
+      );
+      const otroCliente = await capturarError(() => creacion.crearDesdePagoConfirmado(solicitudDePrueba({ idCliente: 4 })));
+      assert(
+        esError(transaccionRepetida, 409, 'TRANSACCION_YA_USADA') && repo.creaciones.length === 1,
+        'CA-ORD-01-05: una transacción de pago ya usada por otra solicitud se rechaza'
+      );
+      assert(
+        esError(otroCliente, 409, 'SOLICITUD_DE_OTRO_CLIENTE'),
+        'CA-ORD-01-05: una solicitud que ya generó la orden de otro cliente se rechaza'
+      );
+    }
+
+    // Referencias inexistentes (cliente, cotización o empleado): error claro en vez de un 500.
+    {
+      const repo = new RepoFake([], {}, personal);
+      repo.alCrear = () => {
+        throw errorPostgres('23503', 'fk_orden_usuario');
+      };
+      const error = await capturarError(() => nuevaCreacion(repo).crearDesdePagoConfirmado(solicitudDePrueba()));
+      assert(
+        esError(error, 400, 'REFERENCIA_INEXISTENTE') && (error as AppError).message === 'El cliente de la solicitud no existe',
+        'HU-ORD-01: un cliente que no existe se informa con un mensaje claro'
+      );
+
+      const errorDesconocido = new Error('conexión perdida');
+      repo.alCrear = () => {
+        throw errorDesconocido;
+      };
+      const otro = await capturarError(() => nuevaCreacion(repo).crearDesdePagoConfirmado(solicitudDePrueba()));
+      assert(otro === errorDesconocido, 'HU-ORD-01: un fallo inesperado se propaga sin disfrazarlo');
+    }
+
+    // Validación del contrato: la forma de los datos se comprueba antes de tocar la base.
+    {
+      const repo = new RepoFake([], {}, personal);
+      const [lineaBase, lineaEntonada] = solicitudDePrueba().lineas;
+      const invalidas: Array<[string, SolicitudPagoConfirmado]> = [
+        ['domicilio sin dirección', solicitudDePrueba({ direccion: '   ' })],
+        ['código SOL con otro formato', solicitudDePrueba({ codigoSolicitud: 'ORD-2026-0001' })],
+        ['sin líneas', solicitudDePrueba({ lineas: [] })],
+        ['importe con tres decimales', solicitudDePrueba({ total: '273310.001' })],
+        ['importe negativo', solicitudDePrueba({ descuento: -1 })],
+        ['número inexacto (0.1 + 0.2)', solicitudDePrueba({ costoEntrega: 0.1 + 0.2 })],
+        ['IVA mayor que 100', solicitudDePrueba({ tasaIva: 120 })],
+        ['cantidad cero', solicitudDePrueba({ lineas: [{ ...lineaBase!, cantidad: 0 }] })],
+        ['entonada sin base', solicitudDePrueba({ lineas: [{ ...lineaEntonada!, baseConsumida: null }] })],
+        ['campo desconocido', { ...solicitudDePrueba(), idSolicitud: 5 } as unknown as SolicitudPagoConfirmado],
+        [
+          'campo mal escrito en una línea',
+          solicitudDePrueba({ lineas: [{ ...lineaBase!, precioAplicad: 1 } as unknown as NonNullable<typeof lineaBase>] }),
+        ],
+      ];
+      const fallidasValidacion: string[] = [];
+      for (const [nombre, datos] of invalidas) {
+        const error = await capturarError(() => nuevaCreacion(repo).crearDesdePagoConfirmado(datos));
+        if (!(error instanceof ZodError)) fallidasValidacion.push(nombre);
+      }
+      assert(
+        fallidasValidacion.length === 0 && repo.creaciones.length === 0,
+        `HU-ORD-01: se rechazan ${invalidas.length} formas inválidas sin crear nada${
+          fallidasValidacion.length ? ` (aceptó: ${fallidasValidacion.join(', ')})` : ''
+        }`
+      );
+    }
+
+    // CA-ORD-06-01: el año del código y la fecha de la orden son los de Colombia.
+    {
+      const repo = new RepoFake([], {}, personal);
+      const nocheVieja = new Date('2027-01-01T04:30:00Z'); // 31/12/2026 23:30 en Bogotá
+      const resultado = await nuevaCreacion(repo, new NotificadorFake(), nocheVieja).crearDesdePagoConfirmado(solicitudDePrueba());
+      assert(
+        resultado.codigo === 'PC-2026-00001' && repo.creaciones[0]?.orden.fecha === '2026-12-31',
+        'CA-ORD-06-01: una orden pagada el 31/12 a las 23:30 en Bogotá es de 2026 aunque en UTC ya sea 2027'
+      );
+    }
+
+    // D05: al nacer la orden el cliente recibe un correo; si falla, la orden sigue creada.
+    {
+      const repo = new RepoFake([], {}, personal);
+      const notificador = new NotificadorFake();
+      await nuevaCreacion(repo, notificador).crearDesdePagoConfirmado(solicitudDePrueba());
+      await esperarTareasPendientes();
+      const aviso = notificador.avisos[0];
+      assert(
+        notificador.avisos.length === 1 &&
+          aviso?.destinatario === 'cliente@pintuclic.co' &&
+          aviso.numeroOrden === 'PC-2026-00001' &&
+          aviso.nuevoEstado === 'Orden confirmada' &&
+          (aviso.comentarios ?? '').includes('SOL-2026-00042'),
+        'D05: al nacer la orden se envía un correo con su número, su estado y la solicitud de origen'
+      );
+
+      const repoFalla = new RepoFake([], {}, personal);
+      const erroresRegistrados: unknown[][] = [];
+      const errorOriginal = console.error;
+      console.error = (...args: unknown[]): void => {
+        erroresRegistrados.push(args);
+      };
+      let creada = false;
+      try {
+        creada = (await nuevaCreacion(repoFalla, new NotificadorFake(true)).crearDesdePagoConfirmado(solicitudDePrueba())).creada;
+        await esperarTareasPendientes();
+      } finally {
+        console.error = errorOriginal;
+      }
+      assert(
+        creada && repoFalla.creaciones.length === 1 && erroresRegistrados.length === 1,
+        'D05: un fallo del correo no invalida la orden y queda registrado en el log'
+      );
     }
 
     console.log(`\n======================================================`);

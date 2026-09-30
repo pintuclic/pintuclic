@@ -18,6 +18,7 @@ import {
   transicionesPermitidas,
 } from './ciclo-estados';
 import { aContactoRegistrado, aNotaInterna } from './ordenes.service';
+import { avisarCliente } from './aviso-cliente';
 
 // ==============================================================================
 // M08 - SERVICIO DE GESTIÓN DE ÓRDENES (HU-ORD-03, 05, 09 y 10)
@@ -25,17 +26,6 @@ import { aContactoRegistrado, aNotaInterna } from './ordenes.service';
 // registrar contactos con el cliente. Los permisos los exigen las guardas de M20 en la
 // ruta; este servicio aplica las reglas del ciclo de estados (`ciclo-estados.ts`).
 // ==============================================================================
-
-/** Fecha y hora de Colombia para el correo al cliente (ej. «29/09/2026, 15:32»). */
-const formatoFechaHoraColombia = new Intl.DateTimeFormat('es-CO', {
-  timeZone: 'America/Bogota',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-});
 
 function recursoNoEncontrado(): AppError {
   return new AppError('Recurso no encontrado', 404, 'NOT_FOUND');
@@ -124,7 +114,12 @@ export class GestionOrdenesService {
     }
 
     if (ESTADOS_QUE_NOTIFICAN.includes(estadoNuevo)) {
-      this.notificarCliente(orden, estadoNuevo, fecha);
+      avisarCliente(this.repo, this.notificador, {
+        idUsuario: orden.id_usuario,
+        codigo: orden.codigo_visible,
+        estado: estadoNuevo,
+        fecha,
+      });
     }
 
     return {
@@ -160,30 +155,5 @@ export class GestionOrdenesService {
       throw recursoNoEncontrado();
     }
     return orden;
-  }
-
-  /**
-   * Aviso al cliente por M18 (HU-NOT-02). No bloquea la respuesta y un fallo del correo
-   * no deshace el cambio de estado, que ya quedó registrado (D05).
-   */
-  private notificarCliente(orden: CabeceraOrden, estadoNuevo: EnumEstadoOrden, fecha: Date): void {
-    void this.repo
-      .buscarContactoCliente(orden.id_usuario)
-      .then((cliente) => {
-        if (!cliente) {
-          return undefined;
-        }
-        return this.notificador.notificarCambioEstadoOrden({
-          idUsuario: orden.id_usuario,
-          destinatario: cliente.correo,
-          nombreCliente: cliente.nombre,
-          numeroOrden: orden.codigo_visible,
-          nuevoEstado: ETIQUETA_ESTADO[estadoNuevo],
-          fechaCambio: formatoFechaHoraColombia.format(fecha),
-        });
-      })
-      .catch((error: unknown) => {
-        console.error('[M08-Ordenes] Error notificando el cambio de estado de la orden:', error);
-      });
   }
 }
