@@ -2,8 +2,17 @@ import { Request, Response } from 'express';
 import { sendSuccess } from '../../../core/utils/apiResponse';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { obtenerIdentidadVigente } from '../../m20-seguridad/middlewares/autorizacion.middleware';
-import { CodigoOrdenDto, ListarMisPedidosDto, ListarOrdenesGestionDto, PaginacionDto } from '../dtos/ordenes.dto';
+import {
+  CambiarEstadoDto,
+  CodigoOrdenDto,
+  CrearNotaDto,
+  ListarMisPedidosDto,
+  ListarOrdenesGestionDto,
+  PaginacionDto,
+  RegistrarContactoDto,
+} from '../dtos/ordenes.dto';
 import { OrdenesService } from '../services/ordenes.service';
+import { GestionOrdenesService } from '../services/gestion-ordenes.service';
 import { FiltrosGestionOrdenes } from '../interfaces/m08.interfaces';
 
 type FiltrosMutables = { -readonly [K in keyof FiltrosGestionOrdenes]: FiltrosGestionOrdenes[K] };
@@ -22,13 +31,16 @@ function filtrosGestionDesde(dto: ListarOrdenesGestionDto): FiltrosGestionOrdene
 }
 
 // ==============================================================================
-// M08 - CONTROLADOR DE CONSULTA DE ÓRDENES (HU-ORD-04, 05, 07, 08, 09 y 11)
+// M08 - CONTROLADOR DE ÓRDENES (HU-ORD-03, 04, 05, 07, 08, 09, 10 y 11)
 // Solo transporte HTTP y delegación. La identidad la resuelven en vivo las guardas
 // de M20 (`sesionVigente`) antes de llegar aquí.
 // ==============================================================================
 
 export class OrdenesController {
-  constructor(private readonly service: OrdenesService) {}
+  constructor(
+    private readonly service: OrdenesService,
+    private readonly gestion: GestionOrdenesService
+  ) {}
 
   private idUsuarioDe(req: Request): number {
     const identidad = obtenerIdentidadVigente(req);
@@ -92,5 +104,38 @@ export class OrdenesController {
   detallePedidoGestion = async (req: Request, res: Response): Promise<Response> => {
     const detalle = await this.service.detallePedidoParaPersonal(this.codigoDe(req));
     return sendSuccess(res, detalle, 'Detalle de la orden');
+  };
+
+  // HU-ORD-03 / CA-ORD-05-01: el personal con «Gestión de pedidos» hace avanzar una orden.
+  cambiarEstado = async (req: Request, res: Response): Promise<Response> => {
+    const codigo = this.codigoDe(req);
+    const { estado, motivo } = CambiarEstadoDto.parse(req.body);
+    const resultado = await this.gestion.cambiarEstado(codigo, estado, this.idUsuarioDe(req), motivo);
+    return sendSuccess(res, resultado, 'Estado de la orden actualizado');
+  };
+
+  // HU-ORD-10: nota interna del personal.
+  crearNota = async (req: Request, res: Response): Promise<Response> => {
+    const codigo = this.codigoDe(req);
+    const { texto } = CrearNotaDto.parse(req.body);
+    const nota = await this.gestion.crearNota(codigo, this.idUsuarioDe(req), texto);
+    return sendSuccess(res, nota, 'Nota interna registrada', 201);
+  };
+
+  // CA-ORD-10-03: una nota no se edita ni se borra; si tiene un error se añade otra.
+  notaNoModificable = (): never => {
+    throw new AppError(
+      'Las notas internas no se pueden modificar ni borrar. Si una nota tiene un error, añade otra que lo aclare.',
+      405,
+      'NOTA_INMUTABLE'
+    );
+  };
+
+  // CA-ORD-09-03: constancia de un contacto con el cliente iniciado desde la orden.
+  registrarContacto = async (req: Request, res: Response): Promise<Response> => {
+    const codigo = this.codigoDe(req);
+    const { medio, detalle } = RegistrarContactoDto.parse(req.body);
+    const contacto = await this.gestion.registrarContacto(codigo, this.idUsuarioDe(req), medio, detalle);
+    return sendSuccess(res, contacto, 'Contacto con el cliente registrado', 201);
   };
 }

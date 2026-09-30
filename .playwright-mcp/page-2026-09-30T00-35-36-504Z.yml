@@ -1,0 +1,198 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - generic [ref=e6] [cursor=pointer]: Envíos a todo el Caquetá
+      - generic [ref=e10] [cursor=pointer]: Productos de calidad
+      - generic [ref=e14] [cursor=pointer]: Asesoría experta
+      - generic [ref=e18] [cursor=pointer]: ¿Necesitas ayuda?
+      - generic [ref=e22] [cursor=pointer]: 322 123 4567
+    - banner [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - link [ref=e28] [cursor=pointer]:
+            - /url: /
+            - img "Pintu Clic" [ref=e29]
+          - button "Categorías" [ref=e30] [cursor=pointer]
+        - generic [ref=e34]:
+          - button "Mi Cuenta Iniciar sesión" [ref=e35] [cursor=pointer]:
+            - generic [ref=e39]:
+              - generic [ref=e40]: Mi Cuenta
+              - generic [ref=e41]: Iniciar sesión
+          - button "Mi Carrito" [ref=e43] [cursor=pointer]
+    - main [ref=e51]:
+      - main [ref=e53]:
+        - generic [ref=e55]:
+          - img "Pinturas y herramientas para tus proyectos" [ref=e56]
+          - generic [ref=e58]:
+            - heading "Todo para tu proyecto, en un solo lugar" [level=1] [ref=e59]: Todo para tu proyecto,en un solo lugar
+            - paragraph [ref=e60]: Pinturas, herramientas y accesorios de las mejores marcas. Calidad, asesoría y envío rápido.
+            - generic [ref=e61]:
+              - link "Comprar ahora" [ref=e62] [cursor=pointer]:
+                - /url: "#productos"
+              - button "Pedir asesoría" [ref=e67]
+        - generic [ref=e75]:
+          - generic [ref=e80]:
+            - paragraph [ref=e81]: Compra segura
+            - paragraph [ref=e82]: Tus datos protegidos
+          - generic [ref=e89]:
+            - paragraph [ref=e90]: Productos de calidad
+            - paragraph [ref=e91]: Las mejores marcas
+          - generic [ref=e98]:
+            - paragraph [ref=e99]: Envíos rápidos
+            - paragraph [ref=e100]: A toda Colombia
+          - generic [ref=e104]:
+            - paragraph [ref=e105]: Pagos seguros
+            - paragraph [ref=e106]: Múltiples métodos
+        - search [ref=e108]:
+          - generic [ref=e109]:
+            - generic [ref=e110]: Buscar productos, marcas o categorías
+            - searchbox "Buscar productos, marcas o categorías Buscar" [ref=e111]
+            - button "Buscar" [ref=e112]
+          - button "Calculadora" [ref=e116]
+          - button "Asesoría de color" [ref=e119]
+        - generic [ref=e126]:
+          - generic [ref=e127]:
+            - heading "Productos destacados" [level=2] [ref=e128]
+            - link "Ver todos" [ref=e129] [cursor=pointer]:
+              - /url: /catalogo
+          - generic [ref=e132]:
+            - article [ref=e133]:
+              - generic [ref=e134]:
+                - generic [ref=e135]: "-15%"
+                - img "Viniltex Máxima Protección Antibacterial" [ref=e136]
+              - generic [ref=e138]:
+                - heading "Viniltex Máxima Protección Antibacterial" [level=3] [ref=e139]
+                - paragraph [ref=e140]: Pintura interior y exterior de alta lavabilidad con acabado mate.
+                - generic [ref=e141]:
+                  - generic [ref=e142]: $85.900 COP
+                  - generic [ref=e143]: $100.200
+                - generic [ref=e144]:
+                  - button "Ver producto" [ref=e145] [cursor=pointer]
+                  - button "Agregar producto al carrito" [ref=e146] [cursor=pointer]
+            - article [ref=e151]:
+              - img "Kit Renovación Hogar Premium" [ref=e153]
+              - generic [ref=e154]:
+                - heading "Kit Renovación Hogar Premium" [level=3] [ref=e155]
+                - paragraph [ref=e156]: Kit práctico para renovar espacios interiores con acabado uniforme.
+                - generic [ref=e157]: $129.900 COP
+                - generic [ref=e159]:
+                  - button "Ver producto" [ref=e160] [cursor=pointer]
+                  - button "Agregar producto al carrito" [ref=e161] [cursor=pointer]
+            - article [ref=e166]:
+              - img "Esmalte Anticorrosivo Secado Rápido" [ref=e168]
+              - generic [ref=e170]:
+                - heading "Esmalte Anticorrosivo Secado Rápido" [level=3] [ref=e171]
+                - paragraph [ref=e172]: Esmalte de alta resistencia para proteger superficies metálicas.
+                - generic [ref=e173]: $115.000 COP
+                - generic [ref=e175]:
+                  - button "Ver producto" [ref=e176] [cursor=pointer]
+                  - button "Agregar producto al carrito" [ref=e177] [cursor=pointer]
+        - generic [ref=e182]:
+          - generic [ref=e183]:
+            - heading "Explora nuestras categorías" [level=2] [ref=e184]
+            - button "Ver categorías" [ref=e185]
+          - generic [ref=e188]:
+            - button [ref=e189]:
+              - strong [ref=e194]: Pinturas Arquitectónicas
+              - generic [ref=e195]: Ver productos
+            - button [ref=e198]:
+              - strong [ref=e203]: Preparación y Protección de Superficies
+              - generic [ref=e204]: Ver productos
+    - contentinfo [ref=e207]:
+      - generic [ref=e208]:
+        - generic [ref=e209]:
+          - generic [ref=e210]:
+            - img "Pintu Clic" [ref=e211]
+            - paragraph [ref=e212]: Todo para tu proyecto en un solo lugar.Calidad y asesoría.
+            - generic [ref=e213]:
+              - link [ref=e214] [cursor=pointer]:
+                - /url: "#"
+              - link [ref=e217] [cursor=pointer]:
+                - /url: "#"
+              - link [ref=e221] [cursor=pointer]:
+                - /url: "#"
+          - generic [ref=e225]:
+            - heading "Categorías" [level=3] [ref=e226]
+            - list [ref=e227]:
+              - listitem [ref=e228]:
+                - link "Pinturas interiores" [ref=e229] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e230]:
+                - link "Pinturas exteriores" [ref=e231] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e232]:
+                - link "Herramientas" [ref=e233] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e234]:
+                - link "Accesorios" [ref=e235] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e236]:
+            - heading "Servicios" [level=3] [ref=e237]
+            - list [ref=e238]:
+              - listitem [ref=e239]:
+                - link "Asesoría de color" [ref=e240] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e241]:
+                - link "Calculadora de pintura" [ref=e242] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e243]:
+                - link "Directorio de pintores" [ref=e244] [cursor=pointer]:
+                  - /url: "#"
+              - listitem [ref=e245]:
+                - link "Centro de ayuda" [ref=e246] [cursor=pointer]:
+                  - /url: "#"
+          - generic [ref=e247]:
+            - heading "Contacto" [level=3] [ref=e248]
+            - list [ref=e249]:
+              - listitem [ref=e250]:
+                - generic [ref=e254]: Florencia-Caquetá
+              - listitem [ref=e255]:
+                - generic [ref=e258]: 322 123 4567
+              - listitem [ref=e259]:
+                - generic [ref=e263]: contacto@pintuclic.com
+        - generic [ref=e264]:
+          - paragraph [ref=e265]: © 2026 PintuClic. Todos los derechos reservados.
+          - generic [ref=e266]:
+            - link "Términos y condiciones" [ref=e267] [cursor=pointer]:
+              - /url: "#"
+            - link "Política de privacidad" [ref=e268] [cursor=pointer]:
+              - /url: "#"
+            - link "Políticas de envío" [ref=e269] [cursor=pointer]:
+              - /url: "#"
+  - dialog [ref=e270]:
+    - generic [ref=e271]:
+      - button "Cerrar ventana" [ref=e273] [cursor=pointer]
+      - generic [ref=e277]:
+        - generic [ref=e278]:
+          - img "PintuClic" [ref=e279]
+          - generic [ref=e280]: PintuClic
+        - generic [ref=e281]:
+          - generic [ref=e282]:
+            - heading "Iniciar sesión" [level=2] [ref=e283]
+            - paragraph [ref=e284]: Ingresa a tu cuenta para ver tus pedidos y ofertas
+          - generic [ref=e285]:
+            - generic [ref=e286]:
+              - generic [ref=e287]: Correo electrónico
+              - textbox "Correo electrónico" [ref=e289]:
+                - /placeholder: ejemplo@correo.com
+                - text: admin@pintuclic.co
+            - generic [ref=e290]:
+              - generic [ref=e291]:
+                - generic [ref=e292]: Contraseña
+                - generic [ref=e293]:
+                  - textbox "Contraseña" [ref=e294]:
+                    - /placeholder: Tu contraseña
+                    - text: Pintuclic2026
+                  - button "Mostrar contraseña" [ref=e295]
+              - button "¿Olvidaste tu contraseña?" [ref=e300] [cursor=pointer]
+            - generic [ref=e327]: Ocurrió un error interno en el servidor
+            - button "Iniciar sesión" [ref=e301] [cursor=pointer]
+          - generic [ref=e302]:
+            - generic [ref=e303]: O
+            - generic [ref=e311]:
+              - button "Iniciar sesión con Google. Se abre en una pestaña nueva." [ref=e313] [cursor=pointer]:
+                - generic [ref=e315]: Iniciar sesión con Google
+              - iframe
+          - generic [ref=e325]:
+            - text: ¿No tienes una cuenta?
+            - button "Regístrate" [ref=e326] [cursor=pointer]

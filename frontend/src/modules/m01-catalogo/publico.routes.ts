@@ -40,14 +40,17 @@ export const publicStorefrontRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: 'productos/:productoId/calculadora',
-    name: 'CalculadoraPinturaProductoPublica',
+    path: 'calculadora',
+    name: 'CalculadoraPinturaPublica',
     component: () => import('./views/publicas/VistaCalculadoraPinturaPublica.vue'),
-    props: true,
     meta: {
       requiereAuth: false,
       titulo: 'Calculadora de pintura · Pintu Clic',
     },
+  },
+  {
+    path: 'productos/:productoId/calculadora',
+    redirect: (to) => ({ name: 'DetalleProductoPublico', params: { productoId: to.params.productoId } }),
   },
   {
     path: 'paleta-colores',

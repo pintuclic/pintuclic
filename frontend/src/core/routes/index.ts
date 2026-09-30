@@ -40,19 +40,25 @@ export const routes: RouteRecordRaw[] = [
     ],
   },
 
+  // Redirección directa para búsquedas del catálogo administrativo
+  {
+    path: '/admin/catalogo/busquedas',
+    redirect: '/admin/catalogo/busquedas-sin-resultado',
+  },
+
   // 3. Layout de Acceso / Auth independiente (fullscreen si aplica)
   {
     path: '/acceso',
     name: 'Acceso',
     component: () => import('@/core/layouts/LayoutAcceso.vue'),
-    children: []
+    children: [],
   },
-  
+
   // 4. Fallback: Cualquier ruta no reconocida redirige al inicio
   {
     path: '/:pathMatch(.*)*',
     redirect: '/',
-  }
+  },
 ];
 
 const router = createRouter({
