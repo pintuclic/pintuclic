@@ -7,6 +7,12 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.0.0] - 2026-09-30
+## Versión estable
+- Solo un cambio de versión, la web funciona bastante bien.
+
+---
+
 ## [v0.3.41.1] - 2026-09-30
 ### Core / Infraestructura: Restauración de `ALLOWED_ORIGINS` en el despliegue (CORS)
 - **Alcance General:** Incremento **PATCH (v0.3.41.1)** que corrige el error 500 en todas las peticiones del navegador (login, registro, carrito, etc.). El `.env` generado por el deploy no incluía `ALLOWED_ORIGINS`, por lo que el backend usaba el default de `localhost` y el middleware CORS rechazaba el origen real `https://www.pintuclic.com`.
