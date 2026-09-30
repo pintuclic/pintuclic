@@ -221,6 +221,8 @@ export interface ColorTable {
 export interface TonosTable {
   id_tono: Generated<number>;
   id_color: number;
+  nombre: string | null;
+  hexagesimal: string | null;
   precio: ColumnType<string, string | number, string | number>;
 }
 
@@ -287,6 +289,7 @@ export interface LineaCarritoTable {
   id_linea_carrito: Generated<number>;
   id_carrito: number;
   id_variante: number;
+  ref_viva: Generated<number>;
   cantidad: Generated<number>;
 }
 
@@ -296,6 +299,8 @@ export interface LineaCarritoTable {
 
 export interface CotizacionTable {
   id_cotizacion: Generated<number>;
+  id_usuario: number | null;
+  id_rol: number | null;
   estado: Generated<EnumEstadoCotizacion>;
   fecha_creacion: ColumnType<Date, string | Date | undefined, string | Date>;
 }
@@ -306,6 +311,7 @@ export interface OrdenTable {
   id_usuario: number;
   origen: Generated<EnumOrigenOrden>;
   id_cotizacion: number | null;
+  carrito_o_cotizacion: string | null;
   estado: Generated<EnumEstadoOrden>;
   transaccion_pago_id: string | null;
   direccion: string;

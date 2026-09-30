@@ -48,6 +48,31 @@ export const GALERIA_PRODUCTO_DEMO = {
   ambiente: ambienteSala,
 };
 
+/** Respaldo visual local mientras un producto público aún no tenga imágenes en HU-CAT-07. */
+const IMAGENES_PUBLICAS_RESPALDO = [
+  viniltexAdvanced,
+  impermeabilizanteEler,
+  brochaPremium,
+  cintaEnmascarar,
+  rodilloProfesional,
+  taladro20v,
+  pinturaAcrilica,
+  viniltexTradicional,
+] as const;
+
+export function obtenerImagenPublicaRespaldo(idProducto: number): string {
+  const mapeo: Record<number, string> = {
+    1: pinturaAcrilica,
+    2: taladro20v,
+    3: rodilloProfesional,
+    4: brochaPremium,
+    5: cintaEnmascarar,
+  };
+  if (mapeo[idProducto]) return mapeo[idProducto];
+  const posicion = Math.abs(idProducto - 1) % IMAGENES_PUBLICAS_RESPALDO.length;
+  return IMAGENES_PUBLICAS_RESPALDO[posicion] ?? pinturaAcrilica;
+}
+
 /** Logo por `id` de marca de la semilla `marcas.mock.ts`. */
 export const LOGO_MARCA_DEMO: Record<string, string> = {
   pintuco: logoPintuco,

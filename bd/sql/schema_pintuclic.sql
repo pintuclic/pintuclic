@@ -431,13 +431,26 @@ COMMENT ON CONSTRAINT uq_color_nombre_marca ON color IS 'Impide nombres de color
 CREATE TABLE IF NOT EXISTS tonos (
     id_tono SERIAL PRIMARY KEY,
     id_color INT NOT NULL,
+    nombre VARCHAR(100),
+    hexagesimal VARCHAR(10),
     precio NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     CONSTRAINT fk_tonos_color FOREIGN KEY (id_color) 
         REFERENCES color (id_color) ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT chk_tonos_precio CHECK (precio >= 0)
 );
 
-COMMENT ON TABLE tonos IS 'Tonos y matices derivados de un color con ajuste de precio';
+COMMENT ON TABLE tonos IS 'Tonos y matices derivados de un color con nombre, código hexadecimal y ajuste de precio';
+
+-- Tabla: presentacion (entidad propia - RF-CAT-03-05)
+CREATE TABLE IF NOT EXISTS presentacion (
+    id_presentacion SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    volumen NUMERIC(10, 3) NOT NULL,
+    estado enum_estado_general NOT NULL DEFAULT 'activo',
+    CONSTRAINT chk_presentacion_volumen CHECK (volumen > 0)
+);
+
+COMMENT ON TABLE presentacion IS 'Presentación comercial como entidad propia (RF-CAT-03-05): nombre y volumen numérico para permitir la comparación de precios entre productos. No se elimina físicamente si está referenciada por variantes; solo se desactiva (CA-CAT-03-10).';
 
 -- Tabla: presentacion (entidad propia - RF-CAT-03-05)
 CREATE TABLE IF NOT EXISTS presentacion (
@@ -567,6 +580,7 @@ CREATE TABLE IF NOT EXISTS linea_carrito (
     id_linea_carrito SERIAL PRIMARY KEY,
     id_carrito INT NOT NULL,
     id_variante INT NOT NULL,
+    ref_viva INT NOT NULL DEFAULT 1,
     cantidad INT NOT NULL DEFAULT 1,
     CONSTRAINT fk_lineacarrito_carrito FOREIGN KEY (id_carrito) 
         REFERENCES carrito (id_carrito) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -576,7 +590,8 @@ CREATE TABLE IF NOT EXISTS linea_carrito (
     CONSTRAINT uq_carrito_variante UNIQUE (id_carrito, id_variante)
 );
 
-COMMENT ON TABLE linea_carrito IS 'Líneas vivas de ítems en carrito vinculadas a la variante de producto';
+COMMENT ON TABLE linea_carrito IS 'Líneas vivas de ítems en carrito vinculadas a la variante de producto y referencia viva';
+COMMENT ON COLUMN linea_carrito.ref_viva IS 'Identificador de referencia viva del carrito (M21)';
 
 -- ==============================================================================
 -- 5. MÓDULO DE COTIZACIONES Y ÓRDENES (HISTÓRICO INMUTABLE)
@@ -585,11 +600,17 @@ COMMENT ON TABLE linea_carrito IS 'Líneas vivas de ítems en carrito vinculadas
 -- Tabla: cotizacion
 CREATE TABLE IF NOT EXISTS cotizacion (
     id_cotizacion SERIAL PRIMARY KEY,
+    id_usuario INT,
+    id_rol INT,
     estado enum_estado_cotizacion NOT NULL DEFAULT 'borrador',
-    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cotizacion_usuario FOREIGN KEY (id_usuario)
+        REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_cotizacion_rol FOREIGN KEY (id_rol)
+        REFERENCES rol (id_rol) ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-COMMENT ON TABLE cotizacion IS 'Cotizaciones comerciales B2B / B2C que pueden originar órdenes';
+COMMENT ON TABLE cotizacion IS 'Cotizaciones comerciales B2B / B2C vinculadas a usuario y rol que pueden originar órdenes';
 
 -- Tabla: orden
 -- Reemplazo inmutable de pedido. Posee código visible, origen y trazabilidad legal.
@@ -599,6 +620,7 @@ CREATE TABLE IF NOT EXISTS orden (
     id_usuario INT NOT NULL,
     origen enum_origen_orden NOT NULL DEFAULT 'carrito',
     id_cotizacion INT,
+    carrito_o_cotizacion VARCHAR(50),
     estado enum_estado_orden NOT NULL DEFAULT 'pendiente',
     transaccion_pago_id VARCHAR(100) UNIQUE,
     direccion TEXT NOT NULL,
@@ -619,6 +641,7 @@ CREATE TABLE IF NOT EXISTS orden (
 COMMENT ON TABLE orden IS 'Cabecera de órdenes de compra inmutables';
 COMMENT ON COLUMN orden.codigo_visible IS 'Código amigable alfanumérico para el cliente (ej. ORD-2026-0001)';
 COMMENT ON COLUMN orden.origen IS 'Flujo de procedencia: carrito de compras o cotización aprobada';
+COMMENT ON COLUMN orden.carrito_o_cotizacion IS 'Identificador descriptivo del origen de la compra';
 COMMENT ON COLUMN orden.transaccion_pago_id IS 'Identificador único de la pasarela de pago vinculada';
 
 -- Tabla: linea_orden

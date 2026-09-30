@@ -2,11 +2,27 @@ import { Request, Response } from 'express';
 import { sendSuccess } from '../../../core/utils/apiResponse';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { obtenerIdentidadVigente } from '../../m20-seguridad/middlewares/autorizacion.middleware';
-import { CodigoOrdenDto, ListarMisPedidosDto } from '../dtos/ordenes.dto';
+import { CodigoOrdenDto, ListarMisPedidosDto, ListarOrdenesGestionDto, PaginacionDto } from '../dtos/ordenes.dto';
 import { OrdenesService } from '../services/ordenes.service';
+import { FiltrosGestionOrdenes } from '../interfaces/m08.interfaces';
+
+type FiltrosMutables = { -readonly [K in keyof FiltrosGestionOrdenes]: FiltrosGestionOrdenes[K] };
+
+/** Traduce la query validada a filtros del dominio; un filtro vacío se trata como ausente. */
+function filtrosGestionDesde(dto: ListarOrdenesGestionDto): FiltrosGestionOrdenes {
+  const filtros: FiltrosMutables = {};
+  if (dto.codigo) filtros.codigo = dto.codigo;
+  if (dto.estado) filtros.estado = dto.estado;
+  if (dto.desde) filtros.desde = dto.desde;
+  if (dto.hasta) filtros.hasta = dto.hasta;
+  if (dto.cliente !== undefined) filtros.idCliente = dto.cliente;
+  if (dto.correo) filtros.correoCliente = dto.correo;
+  if (dto.telefono) filtros.telefonoCliente = dto.telefono;
+  return filtros;
+}
 
 // ==============================================================================
-// M08 - CONTROLADOR DE CONSULTA DE ÓRDENES (HU-ORD-04, HU-ORD-05, HU-ORD-07)
+// M08 - CONTROLADOR DE CONSULTA DE ÓRDENES (HU-ORD-04, 05, 07, 08, 09 y 11)
 // Solo transporte HTTP y delegación. La identidad la resuelven en vivo las guardas
 // de M20 (`sesionVigente`) antes de llegar aquí.
 // ==============================================================================
@@ -48,7 +64,31 @@ export class OrdenesController {
     return sendSuccess(res, detalle, 'Detalle del pedido');
   };
 
-  // HU-ORD-05: consulta por identificador para personal autorizado (permiso exigido en la ruta).
+  // HU-ORD-05 / HU-ORD-08: bandeja y buscador del personal (permiso exigido en la ruta).
+  listarOrdenesGestion = async (req: Request, res: Response): Promise<Response> => {
+    const dto = ListarOrdenesGestionDto.parse(req.query);
+    const pagina = await this.service.listarOrdenesParaPersonal(
+      filtrosGestionDesde(dto),
+      dto.pagina,
+      dto.limite,
+      dto.orden ?? 'recientes'
+    );
+    return sendSuccess(res, pagina, 'Listado de órdenes');
+  };
+
+  // HU-ORD-05 (CA-ORD-05-05): contadores por estado para la navegación del panel.
+  resumenGestion = async (_req: Request, res: Response): Promise<Response> => {
+    return sendSuccess(res, await this.service.resumenPorEstado(), 'Resumen de órdenes por estado');
+  };
+
+  // HU-ORD-11: compras anteriores del titular, abiertas desde una de sus órdenes.
+  historialCliente = async (req: Request, res: Response): Promise<Response> => {
+    const { pagina, limite } = PaginacionDto.parse(req.query);
+    const historial = await this.service.historialDelCliente(this.codigoDe(req), pagina, limite);
+    return sendSuccess(res, historial, 'Historial de compras del cliente');
+  };
+
+  // HU-ORD-08 / HU-ORD-09: detalle de una orden para el personal, con el contacto del cliente.
   detallePedidoGestion = async (req: Request, res: Response): Promise<Response> => {
     const detalle = await this.service.detallePedidoParaPersonal(this.codigoDe(req));
     return sendSuccess(res, detalle, 'Detalle de la orden');

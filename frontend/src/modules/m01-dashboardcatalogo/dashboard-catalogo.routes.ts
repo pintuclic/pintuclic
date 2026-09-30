@@ -2,20 +2,65 @@ import type { RouteRecordRaw } from 'vue-router';
 
 /**
  * ==============================================================================
- * M01 - RUTAS DEL PANEL DE CATÁLOGO
+ * M01 - RUTAS DEL STOREFRONT PÚBLICO (HIJAS DE LayoutHome '/')
  * Ubicación: src/modules/m01-dashboardcatalogo/dashboard-catalogo.routes.ts
  *
- * Se exportan para que el router del panel administrativo (aún por montar,
- * ver App.vue / main.ts) las agregue con `...dashboardCatalogoRoutes`.
- * Carga diferida (lazy loading) por vista, igual que en core/routes.
- *
- * `meta.permiso` documenta el permiso de M17 que el guard de navegación y,
- * sobre todo, el backend deben exigir (Seguridad por Defecto).
+ * Se inyectan como `children` de la ruta raíz montada sobre `@/core/layouts/LayoutHome.vue`.
+ * De esta manera, el header global, categorías, carrito y FooterPrincipal se
+ * mantienen fijos y permanentes, sin duplicidades en las vistas.
  * ==============================================================================
  */
-export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
+export const publicStorefrontRoutes: RouteRecordRaw[] = [
   {
-    path: '/admin/catalogo',
+    path: '',
+    name: 'InicioTiendaPublica',
+    component: () => import('./views/VistaInicioPublica.vue'),
+    meta: {
+      requiereAuth: false,
+      titulo: 'Pintu Clic · Todo para tu proyecto',
+    },
+  },
+  {
+    path: 'catalogo',
+    name: 'CatalogoPublico',
+    component: () => import('./views/VistaCatalogoPublico.vue'),
+    meta: {
+      requiereAuth: false,
+      titulo: 'Catálogo público · Pintu Clic',
+    },
+  },
+  {
+    path: 'productos/:productoId',
+    name: 'DetalleProductoPublico',
+    component: () => import('./views/VistaDetalleProductoPublico.vue'),
+    props: true,
+    meta: {
+      requiereAuth: false,
+      titulo: 'Detalle de producto · Pintu Clic',
+    },
+  },
+  {
+    path: 'paleta-colores',
+    name: 'PaletaColoresPublica',
+    component: () => import('./views/VistaPaletaColoresPublica.vue'),
+    meta: {
+      requiereAuth: false,
+      titulo: 'Paleta de colores · Pintu Clic',
+    },
+  },
+];
+
+/**
+ * ==============================================================================
+ * M01 - RUTAS ADMINISTRATIVAS DEL CATÁLOGO (HIJAS DE LayoutAdmin '/admin')
+ *
+ * Se inyectan como `children` de `/admin` sobre `@/core/layouts/LayoutAdmin.vue`.
+ * Preservan el sidebar, acordeón y navegación sin parpadeos.
+ * ==============================================================================
+ */
+export const adminCatalogoRoutes: RouteRecordRaw[] = [
+  {
+    path: 'catalogo',
     name: 'AdminDashboardCatalogo',
     component: () => import('./views/VistaDashboardCatalogo.vue'),
     meta: {
@@ -25,7 +70,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/productos',
+    path: 'catalogo/productos',
     name: 'AdminProductosListado',
     component: () => import('./views/VistaProductos.vue'),
     meta: {
@@ -35,7 +80,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/productos/nuevo',
+    path: 'catalogo/productos/nuevo',
     name: 'AdminProductoNuevo',
     component: () => import('./views/VistaProductoFormulario.vue'),
     meta: {
@@ -45,7 +90,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/productos/:productoId',
+    path: 'catalogo/productos/:productoId',
     name: 'AdminProductoDetalle',
     component: () => import('./views/VistaProductoDetalle.vue'),
     props: true,
@@ -56,7 +101,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/productos/:productoId/editar',
+    path: 'catalogo/productos/:productoId/editar',
     name: 'AdminProductoEditar',
     component: () => import('./views/VistaProductoFormulario.vue'),
     props: true,
@@ -67,7 +112,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/variantes',
+    path: 'catalogo/variantes',
     name: 'AdminVariantesListado',
     component: () => import('./views/VistaVariantes.vue'),
     meta: {
@@ -77,7 +122,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/variantes/nueva',
+    path: 'catalogo/variantes/nueva',
     name: 'AdminVarianteNueva',
     component: () => import('./views/VistaVarianteFormulario.vue'),
     meta: {
@@ -87,7 +132,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/variantes/:varianteId/editar',
+    path: 'catalogo/variantes/:varianteId/editar',
     name: 'AdminVarianteEditar',
     component: () => import('./views/VistaVarianteFormulario.vue'),
     props: true,
@@ -98,7 +143,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/categorias',
+    path: 'catalogo/categorias',
     name: 'AdminCategorias',
     component: () => import('./views/VistaCategorias.vue'),
     meta: {
@@ -108,7 +153,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/categorias/nueva',
+    path: 'catalogo/categorias/nueva',
     name: 'AdminCategoriaNueva',
     component: () => import('./views/VistaCategoriaFormulario.vue'),
     meta: {
@@ -118,7 +163,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/categorias/subcategorias/nueva',
+    path: 'catalogo/categorias/subcategorias/nueva',
     name: 'AdminSubcategoriaNueva',
     component: () => import('./views/VistaCategoriaFormulario.vue'),
     meta: {
@@ -128,7 +173,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/categorias/:categoriaId/editar',
+    path: 'catalogo/categorias/:categoriaId/editar',
     name: 'AdminCategoriaEditar',
     component: () => import('./views/VistaCategoriaFormulario.vue'),
     props: true,
@@ -139,7 +184,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/marcas',
+    path: 'catalogo/marcas',
     name: 'AdminMarcas',
     component: () => import('./views/VistaMarcas.vue'),
     meta: {
@@ -149,7 +194,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/marcas/nueva',
+    path: 'catalogo/marcas/nueva',
     name: 'AdminMarcaNueva',
     component: () => import('./views/VistaMarcaFormulario.vue'),
     meta: {
@@ -159,7 +204,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/marcas/:marcaId',
+    path: 'catalogo/marcas/:marcaId',
     name: 'AdminMarcaDetalle',
     component: () => import('./views/VistaMarcaDetalle.vue'),
     props: true,
@@ -170,7 +215,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/marcas/:marcaId/editar',
+    path: 'catalogo/marcas/:marcaId/editar',
     name: 'AdminMarcaEditar',
     component: () => import('./views/VistaMarcaFormulario.vue'),
     props: true,
@@ -181,7 +226,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/colores',
+    path: 'catalogo/colores',
     name: 'AdminColores',
     component: () => import('./views/VistaColores.vue'),
     meta: {
@@ -191,7 +236,7 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/admin/catalogo/busquedas-sin-resultado',
+    path: 'catalogo/busquedas-sin-resultado',
     name: 'AdminBusquedasSinResultado',
     component: () => import('./views/VistaBusquedas.vue'),
     meta: {
@@ -200,4 +245,18 @@ export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
       titulo: 'Búsquedas sin resultado',
     },
   },
+];
+
+/**
+ * Agrupador compuesto para compatibilidad con imports existentes
+ */
+export const dashboardCatalogoRoutes: RouteRecordRaw[] = [
+  ...publicStorefrontRoutes.map((r) => ({
+    ...r,
+    path: r.path ? `/${r.path}` : '/',
+  })),
+  ...adminCatalogoRoutes.map((r) => ({
+    ...r,
+    path: `/admin/${r.path}`,
+  })),
 ];

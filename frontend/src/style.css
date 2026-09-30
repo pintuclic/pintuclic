@@ -16,6 +16,13 @@
   
   --color-highlight: #FFC107;
   
+  --color-danger: #E63946;
+  --color-danger-hover: #D62828;
+  --color-danger-subtle: #FDEDEE;
+
+  --color-offer: #E63946;
+  --color-offer-hover: #D62839;
+  
   --color-neutral-white: #FFFFFF;
   --color-neutral-lightest: #F7F8FA;
   --color-neutral-light: #E5E7EB;

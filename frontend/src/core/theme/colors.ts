@@ -39,12 +39,25 @@ export const PINTUCLIC_COLORS = {
     accent: '#3CB148',
   },
 
-  // 5. Rol Destacado: Etiquetas de "Patrocinado", ofertas, alertas comerciales
+  // 5. Rol Destacado: Etiquetas de "Patrocinado", alertas comerciales
   highlight: {
     DEFAULT: '#FFC107',
   },
 
-  // 6. Rol Neutros: Superficies, fondos, bordes y tipografía
+  // 6. Rol Peligro / Acciones Críticas: Cierre de sesión, eliminación, confirmaciones destructivas
+  danger: {
+    DEFAULT: '#E63946',
+    hover: '#D62828',
+    subtle: '#FDEDEE',
+  },
+
+  // 7. Rol Ofertas: Badges promocionales de descuento y campañas comerciales
+  offer: {
+    DEFAULT: '#E63946',
+    hover: '#D62839',
+  },
+
+  // 8. Rol Neutros: Superficies, fondos, bordes y tipografía
   neutral: {
     white: '#FFFFFF',    // Fondos de tarjetas, modales, superficies principales
     lightest: '#F7F8FA', // Gris Muy Claro: Fondos de página, fondo de imágenes de producto

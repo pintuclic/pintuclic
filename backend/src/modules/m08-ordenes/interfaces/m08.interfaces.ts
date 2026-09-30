@@ -1,4 +1,4 @@
-import type { EnumEstadoOrden, EnumOrigenOrden, LineaOrden, Orden } from '../../../core/db/types';
+import type { EnumEstadoOrden, EnumOrigenOrden, LineaOrden, Orden, Usuario } from '../../../core/db/types';
 import type { RegistroSeguridadService } from '../../m20-seguridad/services/registro-seguridad.service';
 
 // ==============================================================================
@@ -8,6 +8,13 @@ import type { RegistroSeguridadService } from '../../m20-seguridad/services/regi
 
 /** Agrupación de la sección de pedidos del cliente (HU-ORD-07, CA-ORD-07-01). */
 export type GrupoPedido = 'en_curso' | 'finalizados';
+
+/**
+ * Orden del listado del personal: `recientes` (más nuevas primero, por defecto) o
+ * `antiguedad` (más antiguas primero, para atender primero lo que lleva más tiempo;
+ * HU-ORD-05, CA-ORD-05-07).
+ */
+export type OrdenListado = 'recientes' | 'antiguedad';
 
 /**
  * Cabecera de la orden tal como la lee el repositorio. Excluye a propósito el
@@ -33,6 +40,36 @@ export type FilaLineaOrden = Pick<LineaOrden, 'nombre_producto' | 'variante_copi
 
 /** Fila mínima para el listado de pedidos de un cliente (CA-ORD-07-01). */
 export type FilaResumenOrden = Pick<Orden, 'codigo_visible' | 'fecha' | 'total' | 'estado'>;
+
+/** Fila del listado del personal: la del cliente más el titular. */
+export type FilaResumenOrdenGestion = FilaResumenOrden & Pick<Orden, 'id_usuario'>;
+
+/** Datos de contacto del cliente que ve el personal en el detalle (CA-ORD-09-01). */
+export type ContactoCliente = Pick<Usuario, 'nombre' | 'correo' | 'telefono'>;
+
+/** Conteo de órdenes por estado tal como lo devuelve la base de datos. */
+export interface FilaConteoEstado {
+  readonly estado: EnumEstadoOrden;
+  readonly total: number;
+}
+
+/**
+ * Filtros del listado del personal (HU-ORD-05, HU-ORD-08, HU-ORD-11). Cada uno es
+ * opcional; si llegan varios se aplican a la vez (AND).
+ * - `desde` / `hasta`: fechas AAAA-MM-DD sobre `orden.fecha`, ambos extremos incluidos.
+ * - `correoCliente` / `telefonoCliente`: coincidencia exacta con el titular (CA-ORD-08-02).
+ * - `excluirIdOrden`: uso interno del historial del cliente (CA-ORD-11-01); no se expone.
+ */
+export interface FiltrosGestionOrdenes {
+  readonly codigo?: string;
+  readonly estado?: EnumEstadoOrden;
+  readonly desde?: string;
+  readonly hasta?: string;
+  readonly idCliente?: number;
+  readonly correoCliente?: string;
+  readonly telefonoCliente?: string;
+  readonly excluirIdOrden?: number;
+}
 
 /** Pedido tal como se muestra en la sección del cliente: identificador, fecha, total y estado. */
 export interface ResumenPedido {
@@ -67,9 +104,38 @@ export interface DetallePedido {
   readonly lineas: ReadonlyArray<LineaPedido>;
 }
 
-/** Detalle para personal autorizado (HU-ORD-05): añade el cliente titular como contexto. */
+/**
+ * Detalle para personal autorizado (HU-ORD-05, HU-ORD-09): añade el titular y su
+ * contacto (CA-ORD-09-01). `cliente` es null solo si la cuenta ya no existe.
+ */
 export interface DetallePedidoPersonal extends DetallePedido {
   readonly id_cliente: number;
+  readonly cliente: ContactoCliente | null;
+}
+
+/**
+ * Orden en el listado del personal. `dias_esperando` cuenta, por ahora, los días desde
+ * la fecha de la orden (CA-ORD-05-07). ⚠️ PROVISIONAL: cuando exista el historial de
+ * estados debe contar desde el último cambio de estado.
+ */
+export interface ResumenOrdenGestion extends ResumenPedido {
+  readonly id_cliente: number;
+  readonly dias_esperando: number;
+}
+
+/** Página del listado del personal, con los metadatos de paginación de M02 (HU-BUS-05). */
+export interface PaginaOrdenesGestion {
+  readonly items: ReadonlyArray<ResumenOrdenGestion>;
+  readonly total: number;
+  readonly pagina: number;
+  readonly limite: number;
+  readonly total_paginas: number;
+}
+
+/** Contadores de la bandeja del personal por estado, incluidos los que están en cero (CA-ORD-05-05). */
+export interface ResumenEstadosOrdenes {
+  readonly por_estado: Readonly<Record<EnumEstadoOrden, number>>;
+  readonly total: number;
 }
 
 /** Capacidad de M20 que usa este módulo para dejar constancia de accesos denegados (CA-SEG-03-05). */

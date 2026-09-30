@@ -1,39 +1,50 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
-import { dashboardCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboard-catalogo.routes';
+import { publicStorefrontRoutes } from '@/modules/m01-catalogo/publico.routes';
+import { adminCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboard-catalogo.routes';
 
 export const routes: RouteRecordRaw[] = [
-  // 1. Portal Público / Tienda (LayoutHome)
+  // 1. Tienda Pública / Storefront (LayoutHome maestro permanente)
   {
     path: '/',
     name: 'Tienda',
     component: () => import('@/core/layouts/LayoutHome.vue'),
     children: [
+      ...publicStorefrontRoutes,
       {
-        path: '',
-        name: 'Inicio',
-        component: () => import('@/modules/m02-productos/views/VistaInicio.vue'),
+        path: 'perfil',
+        name: 'Perfil',
+        component: () => import('@/modules/m04-cuentas/views/VistaPerfil.vue'),
       },
     ],
   },
 
-  // 2. Módulo M01: Panel Administrativo de Catálogo
-  ...dashboardCatalogoRoutes,
+  // 2. Panel Administrativo (LayoutAdmin maestro permanente con sidebar + acordeón)
+  {
+    path: '/admin',
+    name: 'Administracion',
+    component: () => import('@/core/layouts/LayoutAdmin.vue'),
+    children: [
+      { path: '', redirect: '/admin/catalogo' },
+      ...adminCatalogoRoutes,
+      {
+        path: 'solicitudes',
+        name: 'AdminSolicitudesEmpresa',
+        component: () =>
+          import(
+            '@/modules/m04-cuentas/views/admin/VistaAprobacionEmpresas.vue'
+          ),
+      },
+    ],
+  },
 
-  // Redirección y alias para enlaces directos de catálogo
+  // Redirección directa para búsquedas del catálogo administrativo
   {
     path: '/admin/catalogo/busquedas',
     redirect: '/admin/catalogo/busquedas-sin-resultado',
   },
 
-  // Redirección raíz de administración al dashboard principal
-  {
-    path: '/admin',
-    name: 'Administracion',
-    redirect: '/admin/catalogo',
-  },
-
-  // 3. Layout de Acceso / Auth independiente (para vistas de login/recuperación fullscreen si aplica)
+  // 3. Layout de Acceso / Auth independiente (fullscreen si aplica)
   {
     path: '/acceso',
     name: 'Acceso',
