@@ -7,6 +7,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.3.40.0] - 2026-09-30
+
+### M02: Integración Frontend de Búsqueda Tolerante, Facetas Dinámicas y Analítica
+
+* **Alcance General:** Incremento **MINIOR-FEAT (v0.3.40.0)** para la integración transversal de Búsqueda y Navegación (M02) en el Storefront público y panel administrativo.
+* **Hitos Clave:**
+  * **Habilitación de Motor de Búsqueda:** Activación de extensiones `unaccent` y `pg_trgm` en la base de datos PostgreSQL, desbloqueando el endpoint `/api/busqueda/productos` tolerante a fallos tipográficos y acentos.
+  * **Buscador Global Storefront:** Integración de la barra de búsqueda en el Navbar principal (`LayoutHome.vue`) con redirección reactiva a `/catalogo?q=...`.
+  * **Activación de Filtros y Facetas Dinámicas:** En `VistaCatalogoPublico.vue`, se reemplazaron los filtros deshabilitados por filtros interactivos de Marcas, Líneas, Tipo de Resina, Colores, Presentaciones y Rango de Precio con conteos en tiempo real provistos por `/api/busqueda/facetas`.
+  * **Ordenamiento en Servidor:** Conexión del selector de orden con el backend (`relevancia`, `precio_asc`, `precio_desc`, `novedad`).
+  * **Analítica de Búsquedas Fallidas:** Auto-registro anónimo en BD de búsquedas sin resultados y sincronización del servicio del panel administrativo con `/api/busqueda/estadisticas/sin-resultado`.
+* **Versión anterior:** `v0.3.39.0`
+* **Nueva versión:** `v0.3.40.0`
+* **Tipo de cambio:** `Minior-feat`
+
+---
 ## [v0.3.39.0] - 2026-09-30
 
 ### M01: Menú Responsive de Productos, Flujo de Calculadora y Ajustes Responsive

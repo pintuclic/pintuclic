@@ -81,13 +81,19 @@
             <label class="flex min-h-11 min-w-0 items-center gap-1 rounded-input border border-neutral-light bg-neutral-white px-2 text-xs text-neutral-medium sm:gap-2 sm:px-3">
               <ArrowUpDown :size="15" class="shrink-0" />
               <span class="hidden sm:inline">Ordenar:</span>
-              <select v-model="orden" aria-label="Ordenar productos" class="min-w-0 max-w-24 bg-transparent font-medium text-neutral-dark outline-none sm:max-w-none">
+              <select
+                :value="orden"
+                aria-label="Ordenar productos"
+                class="min-w-0 max-w-28 bg-transparent font-medium text-neutral-dark outline-none sm:max-w-none cursor-pointer"
+                @change="cambiarOrden(($event.target as HTMLSelectElement).value as any)"
+              >
                 <option value="relevancia">Relevancia</option>
-                <option value="nombre">Nombre A–Z</option>
                 <option value="precio_asc">Menor precio</option>
                 <option value="precio_desc">Mayor precio</option>
+                <option value="novedad">Novedades</option>
               </select>
             </label>
+
           </div>
           <p class="ml-auto shrink-0 whitespace-nowrap text-right text-[10px] text-neutral-medium sm:text-sm lg:order-1 lg:ml-0">
             <span class="hidden min-[360px]:inline">Mostrando </span><strong class="text-neutral-black">{{ rangoInicio }}–{{ rangoFin }}</strong> de <strong class="text-neutral-black">{{ total }}</strong>
@@ -142,65 +148,134 @@
             </template>
           </fieldset>
 
-          <fieldset class="mt-6 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Marca</legend>
-            <label class="relative mt-3 block">
-              <span class="sr-only">Buscar marca</span>
-              <Search :size="14" class="pointer-events-none absolute left-3 top-3.5 text-neutral-medium" />
-              <input type="search" placeholder="Buscar marca..." class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white pl-9 pr-3 text-xs placeholder:text-neutral-medium" />
-            </label>
-            <label class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark">
-              <input type="checkbox" class="h-4 w-4 rounded accent-action" /> Marcas publicadas <span class="ml-auto text-neutral-medium">{{ cantidadMarcasDisponibles }}</span>
+          <!-- Filtro de Marca (HU-BUS-02) -->
+          <fieldset v-if="facetas.marcas.length" class="mt-6 border-t border-neutral-light pt-5">
+            <legend class="text-sm font-semibold text-neutral-black">Marcas</legend>
+            <label
+              v-for="m in facetas.marcas"
+              :key="m.id"
+              class="mt-2 flex min-h-9 cursor-pointer items-center gap-2 text-xs text-neutral-dark hover:text-action transition-colors"
+            >
+              <input
+                type="checkbox"
+                :checked="marcasSeleccionadas.includes(m.id)"
+                class="h-4 w-4 rounded accent-action cursor-pointer"
+                @change="toggleFiltro(marcasSeleccionadas, m.id)"
+              />
+              <span class="truncate">{{ m.nombre }}</span>
+              <span class="ml-auto text-neutral-medium shrink-0">({{ m.cantidad }})</span>
             </label>
           </fieldset>
 
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Línea</legend>
-            <label class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-medium"><input type="checkbox" class="h-4 w-4 rounded accent-action" /> Opciones al conectar M02</label>
+          <!-- Filtro de Línea Comercial (HU-BUS-02) -->
+          <fieldset v-if="facetas.lineas.length" class="mt-5 border-t border-neutral-light pt-5">
+            <legend class="text-sm font-semibold text-neutral-black">Línea comercial</legend>
+            <label
+              v-for="l in facetas.lineas"
+              :key="l.id"
+              class="mt-2 flex min-h-9 cursor-pointer items-center gap-2 text-xs text-neutral-dark hover:text-action transition-colors"
+            >
+              <input
+                type="checkbox"
+                :checked="lineasSeleccionadas.includes(l.id)"
+                class="h-4 w-4 rounded accent-action cursor-pointer"
+                @change="toggleFiltro(lineasSeleccionadas, l.id)"
+              />
+              <span class="truncate">{{ l.nombre }}</span>
+              <span class="ml-auto text-neutral-medium shrink-0">({{ l.cantidad }})</span>
+            </label>
           </fieldset>
 
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
+          <!-- Filtro de Tipo de Resina (HU-BUS-02) -->
+          <fieldset v-if="facetas.resinas.length" class="mt-5 border-t border-neutral-light pt-5">
             <legend class="text-sm font-semibold text-neutral-black">Tipo de resina</legend>
-            <label class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-medium"><input type="checkbox" class="h-4 w-4 rounded accent-action" /> Opciones al conectar M02</label>
-          </fieldset>
-
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Color</legend>
-            <label v-for="color in muestrasColorDisponibles" :key="color.id" class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark">
-              <input type="checkbox" class="h-4 w-4 rounded accent-action" />
-              <span class="h-4 w-4 shrink-0 rounded-full border border-neutral-light" :style="{ backgroundColor: color.hex }" />
-              {{ color.nombre }}
+            <label
+              v-for="r in facetas.resinas"
+              :key="r.id"
+              class="mt-2 flex min-h-9 cursor-pointer items-center gap-2 text-xs text-neutral-dark hover:text-action transition-colors"
+            >
+              <input
+                type="checkbox"
+                :checked="resinasSeleccionadas.includes(r.id)"
+                class="h-4 w-4 rounded accent-action cursor-pointer"
+                @change="toggleFiltro(resinasSeleccionadas, r.id)"
+              />
+              <span class="truncate">{{ r.nombre }}</span>
+              <span class="ml-auto text-neutral-medium shrink-0">({{ r.cantidad }})</span>
             </label>
-            <p v-if="!muestrasColorDisponibles.length" class="mt-2 text-xs text-neutral-medium">Sin muestras en esta página.</p>
           </fieldset>
 
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Familia cromática</legend>
-            <label v-for="familia in familiasDisponibles" :key="familia" class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark">
-              <input type="checkbox" class="h-4 w-4 rounded accent-action" />{{ familia }}
-            </label>
-            <p v-if="!familiasDisponibles.length" class="mt-2 text-xs text-neutral-medium">Sin familias en esta página.</p>
-          </fieldset>
-
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Presentación</legend>
-            <label v-for="presentacion in presentacionesDisponibles" :key="presentacion" class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark">
-              <input type="checkbox" class="h-4 w-4 rounded accent-action" />{{ presentacion }}
-            </label>
-            <p v-if="!presentacionesDisponibles.length" class="mt-2 text-xs text-neutral-medium">Sin presentaciones en esta página.</p>
-          </fieldset>
-
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Rango de precio</legend>
-            <div class="mt-3 grid grid-cols-2 gap-2">
-              <label><span class="sr-only">Precio mínimo</span><input type="number" min="0" placeholder="Mínimo" class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-3 text-xs placeholder:text-neutral-medium" /></label>
-              <label><span class="sr-only">Precio máximo</span><input type="number" min="0" placeholder="Máximo" class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-3 text-xs placeholder:text-neutral-medium" /></label>
+          <!-- Filtro de Color (HU-BUS-02) -->
+          <fieldset v-if="facetas.colores.length" class="mt-5 border-t border-neutral-light pt-5">
+            <legend class="text-sm font-semibold text-neutral-black">Colores disponibles</legend>
+            <div class="mt-2 flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+              <button
+                v-for="c in facetas.colores"
+                :key="c.id"
+                type="button"
+                class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] border transition-all cursor-pointer"
+                :class="coloresSeleccionados.includes(c.id) ? 'border-action bg-subaction text-action font-semibold' : 'border-neutral-light bg-neutral-white text-neutral-dark hover:border-action'"
+                @click="toggleFiltro(coloresSeleccionados, c.id)"
+              >
+                <span>{{ c.nombre }}</span>
+                <span class="text-[9px] text-neutral-medium">({{ c.cantidad }})</span>
+              </button>
             </div>
           </fieldset>
 
-          <p class="mt-5 rounded-card bg-neutral-lightest p-3 text-[11px] leading-4 text-neutral-medium" role="note">
-            Vista preliminar: los valores completos, conteos y aplicación simultánea se conectarán con las facetas de M02.
-          </p>
+          <!-- Filtro de Presentación (HU-BUS-02) -->
+          <fieldset v-if="facetas.presentaciones.length" class="mt-5 border-t border-neutral-light pt-5">
+            <legend class="text-sm font-semibold text-neutral-black">Presentación</legend>
+            <label
+              v-for="p in facetas.presentaciones"
+              :key="p.id"
+              class="mt-2 flex min-h-9 cursor-pointer items-center gap-2 text-xs text-neutral-dark hover:text-action transition-colors"
+            >
+              <input
+                type="checkbox"
+                :checked="presentacionesSeleccionadas.includes(p.id)"
+                class="h-4 w-4 rounded accent-action cursor-pointer"
+                @change="toggleFiltro(presentacionesSeleccionadas, p.id)"
+              />
+              <span>{{ p.nombre }}</span>
+              <span class="ml-auto text-neutral-medium shrink-0">({{ p.cantidad }})</span>
+            </label>
+          </fieldset>
+
+          <!-- Filtro de Rango de Precio (HU-BUS-02 / RF-BUS-02-04) -->
+          <fieldset class="mt-5 border-t border-neutral-light pt-5">
+            <legend class="text-sm font-semibold text-neutral-black">Rango de precio ($ COP)</legend>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              <label>
+                <span class="sr-only">Precio mínimo</span>
+                <input
+                  v-model.number="inputPrecioMin"
+                  type="number"
+                  min="0"
+                  placeholder="Mínimo"
+                  class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-2.5 text-xs placeholder:text-neutral-medium focus:border-action focus:ring-1 focus:ring-action outline-none"
+                />
+              </label>
+              <label>
+                <span class="sr-only">Precio máximo</span>
+                <input
+                  v-model.number="inputPrecioMax"
+                  type="number"
+                  min="0"
+                  placeholder="Máximo"
+                  class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-2.5 text-xs placeholder:text-neutral-medium focus:border-action focus:ring-1 focus:ring-action outline-none"
+                />
+              </label>
+            </div>
+            <button
+              type="button"
+              class="mt-2 w-full min-h-9 rounded-button border border-action text-action text-xs font-semibold hover:bg-subaction transition-colors cursor-pointer"
+              @click="aplicarRangoPrecio(inputPrecioMin, inputPrecioMax)"
+            >
+              Aplicar precio
+            </button>
+          </fieldset>
+
 
           <fieldset class="mt-6 border-t border-neutral-light pt-5">
             <legend class="font-title text-base font-semibold text-neutral-black">Disponibilidad</legend>
@@ -328,9 +403,11 @@ const router = useRouter();
 const menuCategoriasAbierto = ref(false);
 const filtrosMovilAbiertos = ref(false);
 const mensaje = ref<string | null>(null);
-const orden = ref<OrdenCatalogo>('relevancia');
 const vista = ref<VistaCatalogo>('grid');
 const soloDisponibles = ref(false);
+const inputPrecioMin = ref<number | undefined>();
+const inputPrecioMax = ref<number | undefined>();
+
 const {
   buscar,
   cargando,
@@ -346,19 +423,25 @@ const {
   termino,
   total,
   totalPaginas,
+  facetas,
+  marcasSeleccionadas,
+  lineasSeleccionadas,
+  resinasSeleccionadas,
+  coloresSeleccionados,
+  presentacionesSeleccionadas,
+  orden,
+  cambiarOrden,
+  toggleFiltro,
+  aplicarRangoPrecio,
 } = useCatalogoPublico();
 
 const productosVisibles = computed(() => {
-  const filtrados = soloDisponibles.value
-    ? productos.value.filter((producto) =>
-        producto.detalle?.variantes.some((variante) => variante.existencia_referencial > 0)
-      )
-    : [...productos.value];
-  if (orden.value === 'nombre') return filtrados.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-  if (orden.value === 'precio_asc') return filtrados.sort((a, b) => precioMinimo(a) - precioMinimo(b));
-  if (orden.value === 'precio_desc') return filtrados.sort((a, b) => precioMinimo(b) - precioMinimo(a));
-  return filtrados;
+  if (!soloDisponibles.value) return productos.value;
+  return productos.value.filter((producto) =>
+    producto.detalle?.variantes.some((variante) => variante.existencia_referencial > 0)
+  );
 });
+
 
 const cantidadMarcasDisponibles = computed(() => new Set(productos.value.map((producto) => producto.id_marca)).size);
 const muestrasColorDisponibles = computed(() => {

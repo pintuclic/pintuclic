@@ -51,6 +51,29 @@
           </button>
         </div>
 
+        <!-- Buscador Global Storefront (HU-BUS-01) -->
+        <form
+          class="hidden md:flex items-center relative flex-1 max-w-xs lg:max-w-sm 2xl:max-w-md mx-2 xl:mx-4"
+          role="search"
+          @submit.prevent="ejecutarBusquedaGlobal"
+        >
+          <input
+            v-model="busquedaTextoGlobal"
+            type="search"
+            maxlength="120"
+            placeholder="Buscar pinturas, marcas, colores..."
+            class="w-full h-10 pl-4 pr-10 text-xs rounded-full border border-neutral-light bg-neutral-lightest text-neutral-dark placeholder:text-neutral-medium focus:outline-none focus:border-action focus:ring-1 focus:ring-action transition-all"
+          />
+          <button
+            type="submit"
+            class="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-action hover:bg-action-hover text-white flex items-center justify-center transition-colors cursor-pointer"
+            aria-label="Buscar en el catálogo"
+          >
+            <SearchIcon class="w-4 h-4" />
+          </button>
+        </form>
+
+
         <!-- Enlaces Principales -->
         <nav class="hidden shrink-0 items-center gap-4 whitespace-nowrap text-[15px] font-semibold text-neutral-dark xl:ml-4 xl:flex 2xl:ml-12 2xl:gap-6">
           <router-link 
@@ -243,7 +266,8 @@ import {
   Menu as MenuIcon,
   ChevronDown as ChevronDownIcon,
   User as UserIcon,
-  ShoppingCart as ShoppingCartIcon
+  ShoppingCart as ShoppingCartIcon,
+  Search as SearchIcon,
 } from 'lucide-vue-next';
 
 import { Button, Dropdown, FooterPrincipal, Modal } from '@/core/components';
@@ -274,6 +298,21 @@ const categoriasMovil = ref<readonly CategoriaPublica[]>([]);
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const busquedaTextoGlobal = ref(String(route.query.q || ''));
+
+watchEffect(() => {
+  if (route.query.q !== undefined) {
+    busquedaTextoGlobal.value = String(route.query.q);
+  }
+});
+
+const ejecutarBusquedaGlobal = () => {
+  const query = busquedaTextoGlobal.value.trim();
+  void router.push({
+    path: '/catalogo',
+    query: query ? { q: query } : {},
+  });
+};
 
 const isActivo = (path: string): boolean => {
   if (path === '/') {
