@@ -3,7 +3,7 @@ name: Deploy
 on:
   push:
     branches:
-      - main
+      - develop
   workflow_dispatch:
 
 permissions:
@@ -23,23 +23,76 @@ jobs:
           fetch-depth: 1
           clean: false
 
-      - name: Validar .env presente en el repositorio
+      - name: Generar .env desde GitHub Secrets y Variables
+        shell: bash
+        env:
+          POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ vars.POSTGRES_DB }}
+          BACKEND_PORT: ${{ vars.BACKEND_PORT }}
+          FRONTEND_PORT: ${{ vars.FRONTEND_PORT }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          SMTP_SECURE: ${{ vars.SMTP_SECURE }}
+          SMTP_USER: ${{ vars.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_FROM: ${{ vars.SMTP_FROM }}
+          SMTP_REPLY_TO: ${{ vars.SMTP_REPLY_TO }}
+          SMTP_SIMULACION: ${{ vars.SMTP_SIMULACION }}
+          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
         run: |
-          if [ ! -f .env ]; then
-            echo "No se encontro .env en la raiz del repositorio" >&2
-            echo "Crear .env en el servidor con las variables de .env.example" >&2
+          set -euo pipefail
+          faltantes=""
+          for nombre in POSTGRES_PASSWORD JWT_SECRET JWT_REFRESH_SECRET SMTP_PASS; do
+            if [ -z "${!nombre:-}" ]; then
+              faltantes="${faltantes} ${nombre}"
+            fi
+          done
+          if [ -n "${faltantes}" ]; then
+            echo "ERROR: faltan secretos requeridos:${faltantes}" >&2
+            echo "Configuralos en Settings > Secrets and variables > Actions > Secrets" >&2
             exit 1
           fi
+          umask 077
+          cat > .env <<EOF
+          # Generado automaticamente por GitHub Actions (.github/workflows/deploy.yml)
+          # Origen de la verdad: Secrets y Variables del repositorio. No editar a mano.
+          POSTGRES_USER=${POSTGRES_USER}
+          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          POSTGRES_DB=${POSTGRES_DB}
+          BACKEND_PORT=${BACKEND_PORT}
+          FRONTEND_PORT=${FRONTEND_PORT}
+          JWT_SECRET=${JWT_SECRET}
+          JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+          SMTP_HOST=${SMTP_HOST}
+          SMTP_PORT=${SMTP_PORT}
+          SMTP_SECURE=${SMTP_SECURE}
+          SMTP_USER=${SMTP_USER}
+          SMTP_PASS=${SMTP_PASS}
+          SMTP_FROM=${SMTP_FROM}
+          SMTP_REPLY_TO=${SMTP_REPLY_TO}
+          SMTP_SIMULACION=${SMTP_SIMULACION}
+          GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+          VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+          EOF
+          chmod 600 .env
+          echo "OK: .env generado con $(grep -c '=' .env) variables"
 
       - name: Levantar contenedores con Docker Compose
         run: docker compose up -d --build
 
+      - name: Cargar esquema y catálogo en PostgreSQL
+        run: |
+          docker exec -i pintuclic-db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' < bd/sql/schema_pintuclic.sql
+          docker exec -i pintuclic-db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' < bd/sql/seed_pintuclic.sql
+
       - name: Verificar salud del backend
         run: |
-          set -a
-          source .env
-          set +a
-          URL="http://localhost:${BACKEND_PORT:-3000}/api/health"
+          BACKEND_PORT_VAL=$(grep -E '^BACKEND_PORT=' .env | cut -d= -f2- | tr -d '"')
+          URL="http://localhost:${BACKEND_PORT_VAL:-3000}/api/health"
           for i in $(seq 1 30); do
             if curl -fsS "$URL" >/dev/null 2>&1; then
               echo "Backend saludable en el intento $i"

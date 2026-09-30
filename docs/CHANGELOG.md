@@ -14,13 +14,14 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 * **Alcance General:** Incremento **MINIOR-FEAT (v0.3.40.0)** para la integración transversal de Búsqueda y Navegación (M02) en el Storefront público y panel administrativo.
 * **Hitos Clave:**
   * **Habilitación de Motor de Búsqueda:** Activación de extensiones `unaccent` y `pg_trgm` en la base de datos PostgreSQL, desbloqueando el endpoint `/api/busqueda/productos` tolerante a fallos tipográficos y acentos.
-  * **Buscador Global Storefront:** Integración de la barra de búsqueda en el Navbar principal (`LayoutHome.vue`) con redirección reactiva a `/catalogo?q=...`.
-  * **Activación de Filtros y Facetas Dinámicas:** En `VistaCatalogoPublico.vue`, se reemplazaron los filtros deshabilitados por filtros interactivos de Marcas, Líneas, Tipo de Resina, Colores, Presentaciones y Rango de Precio con conteos en tiempo real provistos por `/api/busqueda/facetas`.
+  * **Buscador Storefront en Catálogo:** Búsqueda en `/catalogo` con debounce y actualización en tiempo real de resultados tolerante a fallos.
+  * **Activación de Filtros y Facetas Dinámicas:** En `VistaCatalogoPublico.vue`, se activaron filtros interactivos de Marcas, Líneas, Tipo de Resina, Colores, Presentaciones y Rango de Precio con conteos en tiempo real provistos por `/api/busqueda/facetas`.
   * **Ordenamiento en Servidor:** Conexión del selector de orden con el backend (`relevancia`, `precio_asc`, `precio_desc`, `novedad`).
   * **Analítica de Búsquedas Fallidas:** Auto-registro anónimo en BD de búsquedas sin resultados y sincronización del servicio del panel administrativo con `/api/busqueda/estadisticas/sin-resultado`.
 * **Versión anterior:** `v0.3.39.0`
 * **Nueva versión:** `v0.3.40.0`
 * **Tipo de cambio:** `Minior-feat`
+* 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M02/walkthrough_v0.3.40.0_M02_integracion_busqueda_facetas_frontend.md](./walkthroughs/M02/walkthrough_v0.3.40.0_M02_integracion_busqueda_facetas_frontend.md)
 
 ---
 ## [v0.3.39.0] - 2026-09-30
@@ -28,27 +29,213 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 ### M01: Menú Responsive de Productos, Flujo de Calculadora y Ajustes Responsive
 
 * **Alcance General:** Incremento **MINIOR-FEAT (v0.3.39.0)** para las Vistas Públicas Frontend del módulo M01. Se implementan mejoras funcionales en el menú de Productos, se corrige el flujo de la calculadora de pintura y se realizan ajustes de adaptación responsive.
-
 * **Hitos Clave:**
-
   * **Menú responsive de Productos:** Se implementa el flujo para visualizar directamente las opciones de "Ver todos los productos" y las categorías disponibles desde dispositivos móviles.
   * **Navegación por categorías:** Se implementa el flujo de Categoría → Subcategorías → Catálogo filtrado, permitiendo cargar únicamente las subcategorías correspondientes a la categoría seleccionada.
   * **Calculadora desde Home y Productos:** Se ajusta el comportamiento para que la calculadora se abra como página completa cuando el usuario ingresa desde Home o Productos.
   * **Calculadora desde Detalle de producto:** Se ajusta el comportamiento para que la calculadora se abra como modal cuando el usuario ya se encuentra consultando un producto específico.
   * **Responsive M01:** Se realizan ajustes en las vistas públicas de M01 para mejorar su adaptación a diferentes tamaños de pantalla.
-
 * **Flujo implementado:**
-
   * `Home / Productos → Calculadora completa → Cálculo → Buscar/Elegir producto`
   * `Detalle de producto → Calculadora → Modal → Resultado → Regresar/continuar`
   * `Productos → Ver todos / Categorías → Categoría → Subcategorías → Catálogo filtrado`
-
 * **Versión anterior:** `v0.3.38.1`
-
 * **Nueva versión:** `v0.3.39.0`
-
 * **Tipo de cambio:** `Minior-feat`
+
+### M05: Carrito de compras (Frontend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.39.0)** para la interfaz e integración frontend del carrito de visitantes y clientes autenticados. No incluye el registro de rutas globales, el checkout/pago ni el despliegue.
+- **Flujos:** carga del carrito, persistencia del visitante mediante `x-visitor-token`, gestión de cantidades y líneas, estado vacío, fusión al autenticar y revalidación antes del checkout autenticado. Los totales de producción proceden de la API.
+- **Integración y verificación:** contra los contenedores aislados backend/PostgreSQL, `GET /api/health` confirmó `database: connected`; la E2E en `localhost` verificó carga, agregar, persistir tras recargar, aumentar/disminuir, eliminar, vaciar y bloqueo del checkout visitante. Las solicitudes verificadas respondieron `200` y no hubo errores CORS ni de consola.
+- **Validaciones frontend:** TypeScript M05, ESLint, sintaxis de `vite.config.mjs` y build aislado pasaron sobre la base frontend completa compatible.
+- **Dependencias pendientes:** registrar explícitamente `m05CarritoRoutes` en el router global; completar el flujo de checkout/pago con M07 y la creación de la orden en M08. M01/M02 deben proveer el catálogo completo que sustituirá los fallbacks visuales.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.3.39.0_M05_carrito_compras_frontend.md](./walkthroughs/M05/walkthrough_v0.3.39.0_M05_carrito_compras_frontend.md)
+
 ---
+
+## [v0.3.38.1] - 2026-09-29
+### Módulo: M08 Orden de Venta — Cierre del backend: diagramas, especificación y dictamen (Documentación)
+- **Alcance General:** Incremento **PATCH (v0.3.38.1)** que cierra el backend de M08. Pone al día sus diagramas y su especificación, que seguían describiendo el ciclo anterior a las definiciones del analista, y deja el dictamen del checklist de cierre del equipo. Sin cambios de comportamiento, de BD ni de archivos compartidos.
+- **Hitos Clave:**
+  - **Máquina de estados:** `Maquina_de_estados_de_la_Orden.drawio.png` muestra el ciclo implementado:
+    - desde Preparada, domicilio pasa a Despachado y recogida a Entregado, con vuelta a En preparación con motivo;
+    - Cancelado y Devuelto aparecen como no habilitados (M11).
+
+    Mantiene el formato editable de draw.io y la página del flujo end-to-end intacta.
+  - **Documento de diseño v2.0** (`equipo-2-doc/assets/diagrams/M08/M08_Orden_de_venta.md`): modelo de datos real, flujo de creación, máquina de estados, arquitectura, aplicación de los ADR y pendientes vigentes. Sus 4 diagramas Mermaid están validados.
+  - **Especificación** (`M08_ESPECIFICACION_ORDEN.md`): las 11 historias con sus 34 requisitos y 49 criterios, copiados de la Tanda 3C, más la implementación de cada historia, las definiciones aplicadas y los pendientes.
+  - **Dictamen de cierre:**
+    - HU-CUE-08 no aplica y HU-ADM-03 se cumple;
+    - HU-SEG-06 se cumple en M08, con una observación externa: el seed da permisos de consulta del personal al rol empresa, y es decisión del líder técnico;
+    - la matriz final es 41 ✅ · 3 ⚠️ · 5 ⛔ de 49.
+  - **Código:** solo un comentario en `m08.routes.ts`. El analista confirmó que notas y contactos exigen `ventas.gestionar`.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.38.1_M08_cierre_documentacion_backend.md](./walkthroughs/M08/walkthrough_v0.3.38.1_M08_cierre_documentacion_backend.md)
+
+---
+
+## [v0.3.38.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Creación de la Orden al Confirmarse el Pago (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.38.0)** con el servicio que convierte una solicitud SOL con el pago confirmado en orden (HU-ORD-01). Lo llamará M07, que no tiene responsable. Sin cambios de BD, de archivos compartidos ni de rutas HTTP.
+- **Hitos Clave:**
+  - **Contrato para M07:** `serviciosOrdenes.creacion.crearDesdePagoConfirmado()`, exportado en `m08.routes.ts`.
+    - Valida la solicitud con Zod estricto: los campos desconocidos se rechazan.
+    - Crea la orden en «Orden confirmada» con el código `PC-AAAA-NNNNN` (consecutivo sin huecos, año de Colombia).
+    - Devuelve `{ codigo, codigoSolicitud, estado, creada }`.
+  - **Reglas:**
+    - sin pago confirmado no hay orden, y un pago inferior al total se rechaza (`RF-ORD-01-01`, D06);
+    - la pasarela y la verificación manual son equivalentes (`CA-ORD-01-03`);
+    - se registra la cotización de origen (`CA-ORD-01-04`);
+    - una confirmación repetida o simultánea devuelve la misma orden (`CA-ORD-01-05`);
+    - todo va en una transacción, así que un fallo no deja nada ni gasta número (`CA-ORD-01-06`, `RF-ORD-06-04`).
+  - **Copia histórica al crear:** líneas, color, precios, descuentos en orden, IVA y entrega tal como los congeló la solicitud, sin recalcular ni redondear (D07). Primer registro del historial con el sistema o el empleado como autor.
+  - **Correo (D05):** «Orden confirmada» al cliente al nacer la orden, sin bloquear. El aviso a M18 pasa a un archivo común con el cambio de estado.
+  - **Verificación:**
+    - `tsc` y `lint` limpios;
+    - pruebas en memoria 117/117;
+    - creación contra PostgreSQL con ROLLBACK 16/16, incluidas dos creaciones simultáneas;
+    - lectura 36/36 y escritura 17/17;
+    - servicio real con correo simulado y HTTP 7/7, en una base temporal.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.38.0_M08_creacion_orden_pago_confirmado_backend.md](./walkthroughs/M08/walkthrough_v0.3.38.0_M08_creacion_orden_pago_confirmado_backend.md)
+
+---
+
+## [v0.3.37.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Copia Histórica Completa de la Orden (Backend / BD)
+- **Alcance General:** Incremento **Minior-feat (v0.3.37.0)** con la segunda tanda del modelo de datos de M08: esquema **3.9** (documentación de BD **v2.7**), de 47 a 49 tablas. Tiene visto bueno del líder técnico y el analista confirmó que está definido.
+- **Hitos Clave:**
+  - **Orden:** solicitud SOL de origen (`codigo_solicitud`, UNIQUE), modo y costo de entrega, y base, importe y tasa de IVA congelados; la dirección es opcional en la recogida.
+  - **Líneas:** color solicitado, precio inicial, referencia a la variante sin FK, entonado y base consumida. Además, las líneas dejan de borrarse en cascada (`RF-ORD-02-04`).
+  - **Tablas nuevas:** `linea_orden_descuento` (descuentos por línea en orden, `RF-ORD-02-02`) y `consecutivo` (numeración sin huecos para `PC-AAAA-NNNNN`, `RF-ORD-06-04`, reutilizable por M07).
+  - **Detalle de M08:**
+    - el cliente y el personal ven el modo de entrega, el IVA, la solicitud y, por línea, el color, el precio inicial, sus descuentos en orden y la marca de producto retirado sin enlace (`RF-ORD-04-03`);
+    - el personal ve además la base consumida de las líneas entonadas (`RF-ORD-09-01`);
+    - la bandeja muestra el modo de entrega (`RF-ORD-05-05`).
+  - **Migración segura:** idempotente y compatible con la carga de BD del deploy. Las órdenes existentes conservan sus datos con los campos nuevos vacíos; el seed añade `ORD-2026-0003` con la copia completa.
+  - **Verificación:**
+    - `tsc` y `lint` limpios;
+    - pruebas en memoria 91/91;
+    - integración de lectura 36/36 e integración de escritura con ROLLBACK 17/17, en base migrada y en base nueva;
+    - simulación del deploy con `psql -v ON_ERROR_STOP=1`, dos veces.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.37.0_M08_copia_historica_backend.md](./walkthroughs/M08/walkthrough_v0.3.37.0_M08_copia_historica_backend.md) · Detalle de BD: [bd/docs/WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md)
+
+---
+
+## [v0.3.36.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Ajustes según la documentación del Drive (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.36.0)** que alinea M08 con la Tanda 3C del Drive tras revisar la documentación vigente. Sin cambios de esquema ni de archivos compartidos.
+- **Hitos Clave:**
+  - **Historia de estados para el cliente (`RF-ORD-04-01`):** `GET /api/ordenes/mis-pedidos/:codigo` añade `historial` con cada estado y su fecha, sin autor ni motivo, que siguen siendo solo del personal (`RF-ORD-09-01`).
+  - **Nombre del cliente en la bandeja (`RF-ORD-05-05`):** cada fila de `GET /api/ordenes/gestion` y del historial del cliente añade `cliente` (nombre del titular).
+  - **Medios de contacto (`RF-ORD-09-02`):** `POST /api/ordenes/gestion/:codigo/contactos` acepta solo `correo` y `telefono`, los medios que la orden conserva; se retiran `whatsapp` y `otro`, que eran provisionales.
+  - **Verificación:** pruebas en memoria 82/82, integración de lectura 29/29, integración de escritura con ROLLBACK 11/11 y comprobación HTTP de los tres cambios.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.36.0_M08_ajustes_documentacion_drive_backend.md](./walkthroughs/M08/walkthrough_v0.3.36.0_M08_ajustes_documentacion_drive_backend.md)
+
+---
+
+## [v0.3.35.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Gestión de Órdenes: Cambio de Estado, Historial, Notas y Contactos (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.35.0)** que implementa sobre el modelo de datos de la v0.3.34.0 las operaciones del personal. Sin cambios de esquema ni de archivos compartidos: todo el código vive en `backend/src/modules/m08-ordenes/`.
+- **Hitos Clave:**
+  - **Cambio de estado (`HU-ORD-03`, `CA-ORD-05-01/02`):** `PATCH /api/ordenes/gestion/:codigo/estado` con `ventas.gestionar`. Aplica el ciclo de D01/D02, exige motivo al volver de Preparada a En preparación, guarda autor y fecha en el historial y rechaza con 409 si otra persona cambió la orden entre medias (`CA-ORD-05-08`). Cancelar y devolver siguen sin habilitar (política M11).
+  - **Aviso al cliente (`D05`, `HU-NOT-02`):** al despachar se envía el correo de M18 `cambio_estado_orden`; si falla, el cambio de estado se conserva.
+  - **Notas internas (`HU-ORD-10`):** `POST /api/ordenes/gestion/:codigo/notas`; editarlas o borrarlas responde 405 con la indicación de añadir otra. Nunca aparecen en la vista del cliente.
+  - **Contactos con el cliente (`CA-ORD-09-03`):** `POST /api/ordenes/gestion/:codigo/contactos` con medio y detalle.
+  - **Detalle del personal:** añade `historial`, `notas`, `contactos` y `transiciones_permitidas`. La bandeja cuenta `dias_esperando` desde el último cambio de estado (`CA-ORD-05-07`).
+  - **Verificación:** pruebas en memoria 79/79; integración de lectura 27/27; integración de escritura con ROLLBACK 11/11; 29 peticiones HTTP reales con los resultados esperados.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.35.0_M08_gestion_estados_notas_contactos_backend.md](./walkthroughs/M08/walkthrough_v0.3.35.0_M08_gestion_estados_notas_contactos_backend.md)
+
+---
+
+## [v0.3.34.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Modelo de Datos: Estados, Historial, Notas Internas y Contactos (Backend / BD)
+- **Alcance General:** Incremento **Minior-feat (v0.3.34.0)** con la primera tanda del modelo de datos de M08 (épica #28), aprobada por el líder técnico. Esquema **3.8** / documentación de BD **v2.6**: de 44 a 47 tablas.
+- **Hitos Clave:**
+  - **Ciclo de estados (`HU-ORD-03`):** `enum_estado_orden` pasa a `orden_confirmada`, `revision_disponibilidad`, `en_preparacion`, `preparada`, `despachado`, `entregado`, `cancelado` y `devuelto`; `orden.estado` nace en `orden_confirmada`.
+  - **Migración segura para bases existentes:** renombra `pagado` → `orden_confirmada` y `enviado` → `despachado` sin perder datos. Es idempotente y funciona con el paso de carga de BD del deploy (`psql -v ON_ERROR_STOP=1`, v0.3.33.1).
+  - **Tablas nuevas:** `historial_estado_orden` (cambios de estado con autor y fecha), `nota_orden` (notas internas, HU-ORD-10) y `contacto_orden` (contactos con el cliente, CA-ORD-09-03), con 6 índices y datos de ejemplo en el seed.
+  - **Backend:** tipos Kysely en `core/db/types.ts`; M08 usa los estados nuevos (Mis pedidos: `despachado` y `devuelto` van a finalizados). Ningún otro módulo usaba los estados de la orden.
+  - **Verificación:** `tsc` y `lint` limpios; pruebas M08 52/52; integración 20/20 en base migrada y en base nueva; simulación del deploy con `psql` sobre el estado actual del servidor.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.34.0_M08_modelo_datos_estados_historial_backend.md](./walkthroughs/M08/walkthrough_v0.3.34.0_M08_modelo_datos_estados_historial_backend.md) · Detalle de BD: [bd/docs/WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md)
+
+---
+
+## [v0.3.33.1] - 2026-09-29
+### Core / Infraestructura: Carga del esquema y catálogo de la base de datos en el deploy
+- **Alcance General:** Incremento **PATCH (v0.3.33.1)** que agrega al workflow `Deploy` la carga idempotente del esquema y los datos iniciales desde `bd/sql/`, para que la base de datos del VPS quede operativa con el catálogo y las cuentas de prueba documentadas.
+- **Hitos Clave:**
+  - **Nuevo paso `Cargar esquema y catálogo en PostgreSQL`:** ejecuta `schema_pintuclic.sql` y `seed_pintuclic.sql` con `psql` dentro del contenedor `pintuclic-db`, usando las credenciales del propio contenedor (`POSTGRES_USER`/`POSTGRES_DB`) y `ON_ERROR_STOP=1`.
+  - **Idempotencia:** el DDL usa `IF NOT EXISTS` (el `DROP SCHEMA` está comentado) y el seed usa `ON CONFLICT DO NOTHING`, por lo que puede ejecutarse en cada despliegue sin borrar `pgdata` ni duplicar registros.
+  - **Credenciales de prueba:** quedan disponibles `admin@pintuclic.co` y los demás usuarios del seed con la contraseña `Pintuclic2026` (hash BCrypt costo 12 ya incluido en `bd/sql/seed_pintuclic.sql`); se recomienda cambiar la clave del admin tras la primera carga.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.33.1_core_carga_bd_en_deploy.md](./walkthroughs/core/walkthrough_v0.3.33.1_core_carga_bd_en_deploy.md)
+
+---
+
+## [v0.3.33.0] - 2026-09-28
+### M17: Integración del frontend de permisos y personal con develop
+- Incremento Minior-feat: incorpora las vistas y flujos existentes de M17 a la base actual de develop, conservando la estructura del módulo.
+- Se conservan los componentes Core y los módulos entrantes de develop; se registran las rutas de M17 dentro de `/admin` sin retirar las del catálogo ni solicitudes.
+- Vitest excluye las pruebas M17 basadas en `node:test`, que se ejecutan mediante `npm run test:m17`; se mantiene también la suite independiente del Core.
+- Walkthrough: [integración M17 frontend](./walkthroughs/M17/walkthrough_v0.3.33.0_M17_integracion_develop_frontend.md).
+
+---
+
+## [v0.3.32.3] - 2026-09-28
+### Core / Infraestructura: Actualización de Node 22 a Node 24 en las imágenes Docker
+- **Alcance General:** Incremento **PATCH (v0.3.32.3)** que actualiza la imagen base de Node de `node:22-alpine` a `node:24-alpine` (LTS activo) en las construcciones de backend y frontend ejecutadas por el pipeline de despliegue. Sin cambios de código funcional.
+- **Hitos Clave:**
+  - **Backend:** `backend/Dockerfile` actualizado en las fases `builder` y `runner`.
+  - **Frontend:** `frontend/Dockerfile` actualizado en la fase `build`; el runtime Nginx (`nginx:1.27-alpine`) no cambia.
+  - **Alcance acotado:** no se modificaron workflows, el runner self-hosted, `actions/checkout`, `engines` ni `setup-node`.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.32.3_core_actualizacion_node24_dockerfiles.md](./walkthroughs/core/walkthrough_v0.3.32.3_core_actualizacion_node24_dockerfiles.md)
+
+---
+
+## [v0.3.32.1] - 2026-09-28
+### Core / Infraestructura: Recorte del `.env` de despliegue al catálogo de `.env.example`
+- **Alcance General:** Incremento **PATCH (v0.3.32.1)** que limita la generación del `.env` en el job `Deploy` a las **17 variables exactas** de `.env.example`, eliminando claves de configuración que no forman parte de la plantilla oficial.
+- **Hitos Clave:**
+  - **Variables removidas del workflow:** `NODE_ENV`, `EXPONER_DETALLE_ERRORES`, `ROLES_ADMINISTRATIVOS`, `ALLOWED_ORIGINS`, `SMTP_MAX_REINTENTOS` y `SMTP_DELAY_REINTENTO_MS`; pasan a usar los valores por defecto del código.
+  - **Matriz final:** *Secrets* = `POSTGRES_PASSWORD`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `SMTP_PASS`; *Variables* = `POSTGRES_USER`, `POSTGRES_DB`, `BACKEND_PORT`, `FRONTEND_PORT`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_FROM`, `SMTP_REPLY_TO`, `SMTP_SIMULACION`, `GOOGLE_CLIENT_ID`, `VITE_GOOGLE_CLIENT_ID`.
+  - **Nota:** `NODE_ENV=production` ya lo fija `backend/Dockerfile`; el frontend proxya `/api` vía Nginx (mismo origen), por lo que `ALLOWED_ORIGINS` no es necesario para las vistas servidas por Nginx.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.32.0_core_generacion_env_desde_secrets_deploy.md](./walkthroughs/core/walkthrough_v0.3.32.0_core_generacion_env_desde_secrets_deploy.md)
+
+---
+
+## [v0.3.32.0] - 2026-09-28
+### Core / Infraestructura: Generación de `.env` desde GitHub Secrets en el Despliegue (CI/CD)
+- **Alcance General:** Incremento **Minior-feat (v0.3.32.0)** que elimina la dependencia de un `.env` creado a mano en el VPS. El job `Deploy` ahora construye el archivo `.env` en tiempo de ejecución a partir de los **Secrets** y **Variables** del repositorio, sin exponer credenciales en el código ni en el historial de Git.
+- **Hitos Clave:**
+  - **Nuevo paso `Generar .env desde GitHub Secrets y Variables`:** mapea los valores por `env:`, valida que los secretos críticos (`POSTGRES_PASSWORD`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `SMTP_PASS`) estén presentes y escribe el `.env` con `umask 077` y `chmod 600`, sin imprimir valores en los logs.
+  - **Separación config/credenciales:** credenciales en *Repository secrets*; configuración no sensible (`POSTGRES_USER`, puertos, `SMTP_HOST`, `ALLOWED_ORIGINS`, `GOOGLE_CLIENT_ID`, etc.) en *Repository variables*.
+  - **Disparadores conservados:** automático en push a `develop` y manual vía `workflow_dispatch`.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.32.0_core_generacion_env_desde_secrets_deploy.md](./walkthroughs/core/walkthrough_v0.3.32.0_core_generacion_env_desde_secrets_deploy.md)
+
+---
+
+## [v0.3.31.0] - 2026-09-28
+### Módulo: M08 Orden de Venta — Bandeja, Búsqueda e Historial del Personal (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.31.0)** que da al personal con «Revisar órdenes» (`ventas.ver`) una bandeja para atender pedidos (HU-ORD-05), un buscador por número, correo o teléfono del cliente (HU-ORD-08), el contacto del cliente en el detalle (HU-ORD-09) y el historial de compras del cliente (HU-ORD-11), según la épica #28 actualizada el 27/09. Sin cambios de esquema.
+- **Hitos Clave:**
+  - **Rutas nuevas:** `GET /api/ordenes/gestion` con filtros combinables, paginación y `orden=antiguedad`; `GET /api/ordenes/gestion/resumen` con contadores por estado; `GET /api/ordenes/gestion/:codigo/historial-cliente`.
+  - **Generador del código `PC-AAAA-NNNNN`** con año de Colombia (D04), a la espera del consecutivo. Mis pedidos trata `enviado` como finalizado (D02).
+  - **Propuesta de modelo de datos** para el líder técnico (`docs/walkthroughs/M08/PROPUESTA_MODELO_DATOS_M08.md`). Criterios: 13 cumplidos, 10 parciales y 26 bloqueados de 49.
+  - **Calidad y Verificación:** `npx tsc --noEmit` y `npm run lint` sin errores ni advertencias; 51/51 pruebas en memoria, 20/20 de integración contra PostgreSQL y 12 peticiones HTTP reales correctas.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.31.0_M08_bandeja_busqueda_historial_backend.md](./walkthroughs/M08/walkthrough_v0.3.31.0_M08_bandeja_busqueda_historial_backend.md)
+
+---
+
+## [v0.3.30.1] - 2026-09-27
+### Core / M01 / M04: Resolución de Conflictos, Corrección de Linter y Restauración de Rutas (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.3.30.1)** que resuelve los conflictos de merge en componentes de registro, restaura las rutas del perfil y administración en el router central, elimina la advertencia de ESLint en tarjetas de catálogo y corrige la etiqueta duplicada en `App.vue`.
+- **Hitos Clave:**
+  - **Saneamiento de Merge y Componentes M04:** Limpieza de marcadores de conflicto Git en `PasoListo.vue` y `PasoVerificacion.vue`, restauración de modales en `LayoutHome.vue` y purga de componentes obsoletos duplicados.
+  - **Restauración de Rutas Centrales (`routes/index.ts`):** Reincorporadas las rutas `/perfil` (`VistaPerfil.vue`) y `/admin/solicitudes` (`VistaAprobacionEmpresas.vue`) bajo el layout unificado.
+  - **Calidad y Estabilidad Frontend:** Corrección de advertencia de `defineProps` en `TarjetaCombinacionColoresPublica.vue` (M01), eliminación de `<script setup>` duplicado en `App.vue`. Frontend con 0 errores y 0 advertencias de ESLint / TypeScript y build 100% exitoso.
+- 🔗 **Versión:** `v0.3.30.1` registrada en `.github/version.txt`.
+
+---
+
+>>>>>>> 129430e744ca0f194300e90c53cfb9b3d97a7c9f
 ## [v0.3.29.1] - 2026-09-25
 ### Sistema: Migración al Versionamiento de Cuatro Segmentos y Bump Obligatorio (Documentación)
 - **Alcance General:** Incremento **PATCH (v0.3.29.1)** que adopta el esquema oficial de cuatro segmentos de [CONTRIBUTING.md](../CONTRIBUTING.md) en todo el proyecto y establece la actualización obligatoria de `.github/version.txt` y su registro en este CHANGELOG por cada entrega. Alcance estrictamente documental: no se modifica ningún archivo de `backend/`.
@@ -283,6 +470,24 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Servicios y Tipado Centralizado (`cuentas.service.ts`, `admin.interface.ts`):** Nuevos métodos cliente `solicitarCambioCorreo`, `confirmarCambioCorreo`, `listarSolicitudesEmpresa` y `dictaminarSolicitudEmpresa`. Contratos de interfaz tipados sin `any`.
   - **Enrutamiento Administrativo Central (`src/core/routes/index.ts`):** Montaje formal de la ruta `/admin/empresas` bajo `LayoutAdmin`.
   - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M04/walkthrough_v3.29.0_M04_aprobacion_empresas_perfil_cambio_correo_frontend.md](./walkthroughs/M04/walkthrough_v3.29.0_M04_aprobacion_empresas_perfil_cambio_correo_frontend.md)
+
+---
+
+## [v3.30.1] - 2026-09-22
+### Módulo: M08 Orden de Venta (Backend)
+- **Alcance:** Montaje del router de M08 en el enrutador central. Las tres consultas entregadas en `v3.30.0` ya responden bajo `/api/ordenes`; antes devolvían 404 porque el módulo no estaba registrado. Sin cambios de lógica.
+- **Hitos Clave:** `backend/src/app.routes.ts` registra `appRouter.use('/ordenes', ordenesRoutes)`, siguiendo el mismo patrón que el resto de módulos. Habilita las pruebas de API del equipo de testing.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m08.test.ts`: 18/18.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v3.30.1_M08_montaje_rutas_backend.md](./walkthroughs/M08/walkthrough_v3.30.1_M08_montaje_rutas_backend.md)
+
+---
+
+## [v3.30.0] - 2026-09-15
+### Módulo: M08 Orden de Venta (Backend)
+- **Alcance:** Primera entrega del backend de M08. El cliente consulta su sección de pedidos (en curso / finalizados, con buscador) y el detalle de un pedido propio; el personal autorizado localiza órdenes por código visible. La creación de órdenes y el ciclo de estados quedan bloqueados por el esquema de BD (ver walkthrough).
+- **Hitos Clave:** `GET /api/ordenes/mis-pedidos`, `GET /api/ordenes/mis-pedidos/:codigo` y `GET /api/ordenes/gestion/:codigo` (permiso `ventas.ver`). Una orden ajena responde igual que una inexistente y el intento queda registrado (M20). Router pendiente de montar en `app.routes.ts`. CA: 8 cumplidos, 6 parciales y 16 bloqueados.
+- **Estado de Calidad:** ✅ `tsc --noEmit` y `npm run lint` sin errores ni advertencias. Suite `m08.test.ts`: 18/18. ⚠️ Pendiente validar contra PostgreSQL real.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v3.30.0_M08_consulta_ordenes_backend.md](./walkthroughs/M08/walkthrough_v3.30.0_M08_consulta_ordenes_backend.md)
 
 ---
 
@@ -660,6 +865,33 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - 🔗 **Walkthrough Técnico Frontend Core:** [walkthrough_v2.3.0_core_design_system_frontend.md](./walkthroughs/core/walkthrough_v2.3.0_core_design_system_frontend.md)
 - **Estado:** ✅ Validado. Componentes implementados estrictamente sobre `src/core/components/` sin afectar otras ramas.
 
+## [v2.5.2] - 2026-09-23
+### Módulo: M17 — Optimización de permisos y flujos en Drawer
+- **Alcance:** La búsqueda inversa reutiliza permisos en caché con concurrencia limitada; se elimina el polling global que reemplazaba listados completos.
+- **Hitos:** Alta y edición de empleados en Drawer, ficha compacta de cliente actualizada y rutas profundas conservadas sin cambiar la estructura del módulo.
+- **Calidad:** ESLint sin advertencias, TypeScript, build y pruebas Core/M17 correctos; la prueba de integración verifica caché, invalidación por sesión y máximo de cuatro solicitudes concurrentes.
+- **Walkthrough:** [Optimización de permisos y Drawers](./walkthroughs/M17/walkthrough_v2.5.2_M17_optimizacion_permisos_drawers_frontend.md).
+
+## [v2.5.1] - 2026-09-15
+### Módulo: M17 — Actualización del menú Core
+- **Alcance:** Merge de `f1ce953` de Core, cuyo único archivo de código modificado es LayoutAdmin; enlaces de M17 y catálogo actualizados sin duplicar perfil ni configuración.
+- **Calidad:** ESLint sin errores ni advertencias, TypeScript/build y pruebas Core/M17 correctos. Se conserva el manejo de foco móvil.
+- **Walkthrough:** [Actualización del menú Core](./walkthroughs/M17/walkthrough_v2.5.1_M17_merge_menu_core_frontend.md).
+
+## [v2.5.0] - 2026-09-15
+### Módulo: M17 y controles oficiales del Core
+- **Alcance:** Select, Textarea y Checkbox compartidos funcionales; Input conserva VeeValidate de M04 y admite v-model independiente. Cambios de Core autorizados expresamente por el usuario.
+- **Hitos:** M17 usa controles y badges oficiales, títulos Poppins y estilos de controles Inter; se conserva la confirmación para retirar permisos dependientes.
+- **Calidad:** ESLint sin errores ni advertencias, TypeScript y build correctos; nueve pruebas de Core/M17 y comprobaciones en navegador de edición, restablecimiento, bloqueo y confirmación.
+- **Walkthrough:** [Controles Core y limpieza M17](./walkthroughs/M17/walkthrough_v2.5.0_M17_controles_core_frontend.md).
+
+## [v2.4.1] - 2026-09-15
+### Módulo: M17 — Sincronización con Core Frontend
+- **Alcance:** Integración de los commits oficiales del Core conservando las rutas M17 bajo `/admin` y la accesibilidad del panel. Cambios compartidos y de M04 autorizados expresamente por el usuario.
+- **Hitos:** Consumo directo de Badge, PageHeader, Button e IconButton; adaptación al Drawer oficial; correcciones de tipado OTP, navegación RouterLink y tokens de estado.
+- **Calidad:** ESLint sin errores ni advertencias, TypeScript y build correctos, ocho pruebas M17 y comprobaciones de render SSR correctas.
+- **Walkthrough:** [Sincronización con Core](./walkthroughs/M17/walkthrough_v2.4.1_M17_sincronizacion_core_frontend.md).
+
 ## [v2.4.0] - 2026-09-15
 ### Módulo: Core Frontend (Layouts)
 - **Alcance General:** Salto a versión **MINOR (v2.4.0)**. Se importaron los componentes globales de `feature/m04-cuentas-auth-perfil` hacia `feature/core-frontend-layouts`.
@@ -668,8 +900,6 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Layouts y Modales:** Inyección de modales de autenticación y confirmación de "Cerrar sesión" en `LayoutHome.vue` y `LayoutAdmin.vue`.
   - **Enrutador Central:** Refactorización de `routes/index.ts` usando el patrón de Layouts globales, en lugar de importar explícitamente M01.
 - **Estado:** ✅ Validado. Cambios sincronizados.
-
----
 
 ## [v2.3.0] - 2026-09-15
 ### Módulo: Core Frontend (Design System Components)
@@ -684,7 +914,43 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - 🔗 **Walkthrough Técnico Frontend Core:** [walkthrough_v2.3.0_core_design_system_frontend.md](./walkthroughs/core/walkthrough_v2.3.0_core_design_system_frontend.md)
 - **Estado:** ✅ Validado. Componentes implementados estrictamente sobre `src/core/components/` sin afectar otras ramas.
 
----
+## [v2.2.6] - 2026-09-14
+### Módulo: M17 e integración de entrega
+- **Alcance:** Se retira la demostración en memoria de M17 para consumir exclusivamente la API; los datos de prueba siguen en SQL central. Se prepara la entrega Git conservando los historiales existentes.
+- **Hitos:** CI con Node 22 y validación previa a despliegue/release; versión de release sincronizada con paquete, lockfile, changelog y walkthrough; guía de transición a Docker Compose y exclusión de temporales.
+- **Calidad:** Instalación limpia con Node 22; lint y compilación frontend/backend correctos, ocho pruebas M17 y cuatro de releases correctas. Docker/servidor no verificados; aviso moderado preexistente de `qs` en backend documentado.
+- **Walkthrough:** [Preparación de Git y despliegue](./walkthroughs/M17/walkthrough_v2.2.6_M17_preparacion_git_despliegue_frontend.md).
+
+## [v2.2.5] - 2026-09-14
+### Módulo: M17 — Adaptación móvil del panel administrativo
+- **Alcance:** Menú móvil con cierre y control de foco, listados en fichas verticales, paginación adaptable y formularios ajustados a pantallas pequeñas. Cambios en core autorizados explícitamente por el usuario.
+- **Calidad:** Build y TypeScript correctos, ESLint sin errores ni advertencias, ocho pruebas M17 correctas y 49 comprobaciones de tamaño entre 320 y 1440 px sin desbordamiento del contenido.
+- **Walkthrough:** [Adaptación móvil de administración](./walkthroughs/M17/walkthrough_v2.2.5_M17_responsivo_movil_frontend.md).
+
+## [v2.2.4] - 2026-09-14
+### Módulo: M17 — Perfil único en administración
+- **Alcance:** Se quitó la entrada duplicada «Administrador» del menú; «Mi perfil» queda como única vista y la URL anterior redirige a ella.
+- **Calidad:** Compilación, ESLint, pruebas M17 y navegación local verificadas.
+- **Walkthrough:** [Consolidación de Mi perfil](./walkthroughs/M17/walkthrough_v2.2.4_M17_perfil_unico_frontend.md).
+
+## [v2.2.3] - 2026-09-14
+### Módulo: M17 — Transición del drawer global
+- **Alcance:** El panel lateral de clientes se desliza desde la derecha al abrirse y sale hacia la derecha al cerrarse; respeta la preferencia de movimiento reducido.
+- **Calidad:** Compilación, ESLint, pruebas de M17 y apertura/cierre en navegador local verificados.
+- **Walkthrough:** [Transición del drawer](./walkthroughs/M17/walkthrough_v2.2.3_M17_transicion_drawer_frontend.md).
+
+## [v2.2.2] - 2026-09-14
+### Módulo: M17 — Componentes visuales compartidos
+- **Alcance:** Se completó `IconButton` en el design system global y se sustituyeron las acciones de icono duplicadas en la lista de empleados y clientes; el alta rápida del dashboard usa el botón global.
+- **Calidad:** Compilación, ESLint y pruebas M17 verificadas. Sin cambios en contratos HTTP ni backend.
+- **Walkthrough:** [Clasificación de componentes globales y M17](./walkthroughs/M17/walkthrough_v2.2.2_M17_componentes_globales_frontend.md).
+
+## [v2.2.1] - 2026-09-14
+### Módulo: M17 — Integración local con core y layouts
+- **Alcance:** Recuperación del frontend local M17 sobre `feature/core-frontend-layouts`, con UI reutilizable en las categorías de `core/components`, rutas bajo `/admin`, estado Pinia y DTOs de módulo que reutilizan validaciones globales.
+- **Calidad:** Compilación de producción y TypeScript correctos, ESLint sin advertencias, ocho pruebas correctas; alta de empleado y ficha de cliente verificadas en navegador en modo demo.
+- **Entrega:** Cambios exclusivamente locales, stash original conservado y sin push.
+- **Walkthrough:** [Integración de M17 con core y layouts](./walkthroughs/M17/walkthrough_v2.2.1_M17_integracion_core_layouts_frontend.md).
 
 ## [v3.35.7] - 2026-09-20
 ### Módulo: M01 Catálogo / Vistas Públicas (Frontend)

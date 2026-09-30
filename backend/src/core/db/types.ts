@@ -7,6 +7,9 @@ import { Generated, ColumnType, Selectable, Insertable, Updateable } from 'kysel
 export type EnumEstadoGeneral = 'activo' | 'inactivo';
 export type EnumClaseColor = 'entonable' | 'colores_fijos' | 'sin_color';
 
+// M08 - RF-ORD-03-06 / RF-ORD-05-05 (schema v3.9): modo de entrega de la orden.
+export type EnumModoEntrega = 'domicilio' | 'recogida';
+
 export type EnumTipoUsuario = 'normal' | 'empresa';
 
 export type EnumEstadoUsuario = 'activo' | 'inactivo' | 'bloqueado' | 'pendiente';
@@ -15,7 +18,17 @@ export type EnumEstadoProducto = 'activo' | 'inactivo' | 'agotado' | 'descontinu
 
 export type EnumOrigenOrden = 'carrito' | 'cotizacion';
 
-export type EnumEstadoOrden = 'pendiente' | 'pagado' | 'en_preparacion' | 'enviado' | 'entregado' | 'cancelado';
+// M08 - HU-ORD-03 (schema v3.8). En bases anteriores a v3.8 puede quedar el valor
+// 'pendiente' sin uso: no se tipa para que ningún módulo lo escriba.
+export type EnumEstadoOrden =
+  | 'orden_confirmada'
+  | 'revision_disponibilidad'
+  | 'en_preparacion'
+  | 'preparada'
+  | 'despachado'
+  | 'entregado'
+  | 'cancelado'
+  | 'devuelto';
 
 export type EnumEstadoCotizacion = 'borrador' | 'enviada' | 'aprobada' | 'rechazada' | 'vencida';
 
@@ -314,10 +327,17 @@ export interface OrdenTable {
   carrito_o_cotizacion: string | null;
   estado: Generated<EnumEstadoOrden>;
   transaccion_pago_id: string | null;
-  direccion: string;
+  // M08 - copia histórica (schema v3.9). NULL en órdenes anteriores a v3.9.
+  codigo_solicitud: string | null;
+  modo_entrega: EnumModoEntrega | null;
+  costo_entrega: ColumnType<string, string | number | undefined, string | number>;
+  direccion: string | null;
   sub_total: ColumnType<string, string | number, string | number>;
   descuento: ColumnType<string, string | number, string | number>;
   total: ColumnType<string, string | number, string | number>;
+  base_sin_impuesto: ColumnType<string | null, string | number | null | undefined, string | number | null>;
+  importe_iva: ColumnType<string | null, string | number | null | undefined, string | number | null>;
+  tasa_iva: ColumnType<string | null, string | number | null | undefined, string | number | null>;
   observaciones: string | null;
   fecha: ColumnType<Date, string | Date | undefined, string | Date>;
 }
@@ -329,6 +349,63 @@ export interface LineaOrdenTable {
   variante_copia: string;
   precio_aplicado: ColumnType<string, string | number, string | number>;
   cantidad: Generated<number>;
+  // M08 - copia histórica (schema v3.9). `id_variante_ref` no tiene FK a propósito (ADR-05).
+  color_solicitado: string | null;
+  precio_inicial: ColumnType<string | null, string | number | null | undefined, string | number | null>;
+  id_variante_ref: number | null;
+  es_entonado: Generated<boolean>;
+  base_consumida: string | null;
+}
+
+/** M08 - RF-ORD-02-02: descuentos aplicados a cada línea, en su orden. Solo inserción. */
+export interface LineaOrdenDescuentoTable {
+  id_linea_orden_descuento: Generated<number>;
+  id_linea_orden: number;
+  orden_aplicacion: number;
+  origen: string;
+  porcentaje: ColumnType<string | null, string | number | null | undefined, string | number | null>;
+  importe: ColumnType<string, string | number, string | number>;
+}
+
+/**
+ * M08 - RF-ORD-06-04: consecutivos corridos sin huecos por tipo de documento (orden, y
+ * en el futuro la solicitud SOL de M07). Se incrementa en la transacción que crea el documento.
+ */
+export interface ConsecutivoTable {
+  id_consecutivo: Generated<number>;
+  nombre: string;
+  ultimo_valor: ColumnType<string, string | number | bigint | undefined, string | number | bigint>;
+}
+
+/** M08 - HU-ORD-03: historia de transiciones de la orden. Solo inserción. */
+export interface HistorialEstadoOrdenTable {
+  id_historial_estado_orden: Generated<number>;
+  id_orden: number;
+  estado_anterior: EnumEstadoOrden | null;
+  estado_nuevo: EnumEstadoOrden;
+  id_usuario_autor: number | null;
+  motivo: string | null;
+  referencia_externa: string | null;
+  fecha: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+/** M08 - HU-ORD-10: notas internas del personal. Solo inserción; nunca visibles al cliente. */
+export interface NotaOrdenTable {
+  id_nota_orden: Generated<number>;
+  id_orden: number;
+  id_usuario_autor: number;
+  texto: string;
+  fecha: ColumnType<Date, string | Date | undefined, string | Date>;
+}
+
+/** M08 - HU-ORD-09: contactos con el cliente iniciados desde la orden. Solo inserción. */
+export interface ContactoOrdenTable {
+  id_contacto_orden: Generated<number>;
+  id_orden: number;
+  id_usuario_autor: number;
+  medio: string;
+  detalle: string | null;
+  fecha: ColumnType<Date, string | Date | undefined, string | Date>;
 }
 
 // ==============================================================================
@@ -545,6 +622,11 @@ export interface Database {
   cotizacion: CotizacionTable;
   orden: OrdenTable;
   linea_orden: LineaOrdenTable;
+  historial_estado_orden: HistorialEstadoOrdenTable;
+  nota_orden: NotaOrdenTable;
+  contacto_orden: ContactoOrdenTable;
+  linea_orden_descuento: LineaOrdenDescuentoTable;
+  consecutivo: ConsecutivoTable;
 
   // Pagos y facturación
   metodo_pago: MetodoPagoTable;
@@ -695,6 +777,21 @@ export type OrdenUpdate = Updateable<OrdenTable>;
 export type LineaOrden = Selectable<LineaOrdenTable>;
 export type NewLineaOrden = Insertable<LineaOrdenTable>;
 export type LineaOrdenUpdate = Updateable<LineaOrdenTable>;
+
+// M08 - Historial, notas y contactos: solo inserción, por eso no se exporta tipo de actualización.
+export type HistorialEstadoOrden = Selectable<HistorialEstadoOrdenTable>;
+export type NewHistorialEstadoOrden = Insertable<HistorialEstadoOrdenTable>;
+
+export type NotaOrden = Selectable<NotaOrdenTable>;
+export type NewNotaOrden = Insertable<NotaOrdenTable>;
+
+export type ContactoOrden = Selectable<ContactoOrdenTable>;
+export type NewContactoOrden = Insertable<ContactoOrdenTable>;
+
+export type LineaOrdenDescuento = Selectable<LineaOrdenDescuentoTable>;
+export type NewLineaOrdenDescuento = Insertable<LineaOrdenDescuentoTable>;
+
+export type Consecutivo = Selectable<ConsecutivoTable>;
 
 export type MetodoPago = Selectable<MetodoPagoTable>;
 export type NewMetodoPago = Insertable<MetodoPagoTable>;
