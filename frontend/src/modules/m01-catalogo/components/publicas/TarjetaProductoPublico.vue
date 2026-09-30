@@ -61,18 +61,18 @@
       <div class="mt-auto pt-3 grid grid-cols-[1fr_auto] gap-2">
         <button
           type="button"
-          class="flex h-9 w-full items-center justify-center rounded-lg border border-action text-action hover:bg-action hover:text-white font-semibold text-xs px-2.5 transition-colors text-center cursor-pointer"
+          class="flex h-11 w-full items-center justify-center rounded-lg border border-action text-action hover:bg-action hover:text-white font-semibold text-xs px-2.5 transition-colors text-center cursor-pointer sm:h-9"
           @click="emit('ver', producto.id_producto)"
         >
           Ver producto
         </button>
         <button
           type="button"
-          class="grid h-9 w-9 place-items-center rounded-lg bg-conversion-hover hover:bg-conversion-accent text-white shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+          class="grid h-11 w-11 place-items-center rounded-lg bg-conversion-hover hover:bg-conversion-accent text-white shadow-sm transition-all active:scale-95 cursor-pointer shrink-0 sm:h-9 sm:w-9"
           aria-label="Agregar producto al carrito"
           @click="emit('agregar', producto.id_producto)"
         >
-          <ShoppingCart :size="16" aria-hidden="true" />
+          <ShoppingCart :size="20" class="sm:h-4 sm:w-4" aria-hidden="true" />
         </button>
       </div>
     </div>

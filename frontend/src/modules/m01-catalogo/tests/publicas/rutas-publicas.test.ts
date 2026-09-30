@@ -14,7 +14,7 @@ describe('integración de las rutas públicas de M01', () => {
       ['/', 'InicioTiendaPublica'],
       ['/catalogo?subcategoria=1', 'CatalogoPublico'],
       ['/productos/1?color=2', 'DetalleProductoPublico'],
-      ['/productos/1/calculadora', 'CalculadoraPinturaProductoPublica'],
+      ['/calculadora', 'CalculadoraPinturaPublica'],
       ['/paleta-colores', 'PaletaColoresPublica'],
     ]) {
       await router.push(url!);
@@ -32,14 +32,13 @@ describe('integración de las rutas públicas de M01', () => {
         expect(actual.matched.at(-1)?.props.default).toBe(true);
       }
 
-      if (nombre === 'CalculadoraPinturaProductoPublica') {
-        expect(actual.params.productoId).toBe('1');
-        expect(actual.matched.at(-1)?.props.default).toBe(true);
-      }
-
       if (nombre === 'CatalogoPublico') {
         expect(actual.query.subcategoria).toBe('1');
       }
     }
+
+    await router.push('/productos/1/calculadora');
+    expect(router.currentRoute.value.name).toBe('DetalleProductoPublico');
+    expect(router.currentRoute.value.params.productoId).toBe('1');
   }, 20000);
 });

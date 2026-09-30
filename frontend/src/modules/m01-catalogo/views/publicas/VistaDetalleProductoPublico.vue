@@ -219,7 +219,7 @@
         <!-- Productos complementarios -->
         <section v-if="complementarios.length" class="mt-16">
           <h2 class="font-title text-xl font-bold text-corporate">Productos que te pueden interesar</h2>
-          <div class="mt-5 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <div class="mt-5 grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             <TarjetaProductoPublico
               v-for="item in complementarios"
               :key="item.id_producto"
@@ -261,6 +261,13 @@
       @cerrar="cartaColoresAbierta = false"
       @seleccionar="seleccionarDesdeCarta"
     />
+    <CalculadoraPinturaPublica
+      v-if="producto"
+      :abierta="calculadoraAbierta"
+      :producto="producto"
+      @cerrar="calculadoraAbierta = false"
+      @agregar="mostrarMensaje('Agregar al carrito requiere M07.')"
+    />
   </div>
 </template>
 
@@ -271,6 +278,7 @@ import { ArrowLeft, Calculator, ChevronDown, CircleAlert, MapPin, PackageOpen, P
 import { MuestraColor } from '@/core/components';
 import { GALERIA_PRODUCTO_DEMO, obtenerImagenPublicaRespaldo } from '../../assets/imagenes-catalogo';
 import CartaColoresProductoPublica from '../../components/publicas/CartaColoresProductoPublica.vue';
+import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPinturaPublica.vue';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import VisualizadorAmbientesPublico from '../../components/publicas/VisualizadorAmbientesPublico.vue';
 import { useDetalleProductoPublico } from '../../composables/publicas/useDetalleProductoPublico';
@@ -307,6 +315,7 @@ watch(
 );
 const menuCategoriasAbierto = ref(false);
 const cartaColoresAbierta = ref(false);
+const calculadoraAbierta = ref(false);
 const descripcionAbierta = ref(true);
 const mensaje = ref<string | null>(null);
 const cantidad = ref(1);
@@ -315,6 +324,7 @@ const modoVista = ref<'ambientes' | 'envase'>('ambientes');
 
 const esPintura = computed(() => {
   if (!producto.value) return false;
+  if (!producto.value.rendimiento_min || !producto.value.rendimiento_max) return false;
   // En Pintu Clic (RF-CAT-02-02, HU-CAT-10), las herramientas y accesorios tienen clase 'sin_color'
   if (producto.value.clase_color === 'sin_color') return false;
   const texto = `${producto.value.nombre} ${producto.value.descripcion ?? ''}`.toLowerCase();
@@ -411,7 +421,6 @@ function seleccionarDesdeCarta(idVariante: number): void {
 }
 
 function volverCatalogo(): void {
-  console.log('VOLVER CATALOGO EJECUTADO');
   void router.push({ name: 'CatalogoPublico' });
 }
 
@@ -433,9 +442,6 @@ function irSubcategoria(id: number): void {
 }
 
 function irCalculadora(): void {
-  void router.push({
-    name: 'CalculadoraPinturaProductoPublica',
-    params: { productoId: props.productoId },
-  });
+  calculadoraAbierta.value = true;
 }
 </script>
