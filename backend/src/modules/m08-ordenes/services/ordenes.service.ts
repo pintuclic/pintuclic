@@ -5,12 +5,16 @@ import {
   CabeceraOrden,
   CambioEstado,
   ContactoRegistrado,
+  DescuentoAplicado,
   DetallePedido,
   DetallePedidoBase,
   DetallePedidoPersonal,
   FilaContactoOrden,
   FilaHistorialEstado,
+  FilaLineaOrden,
   FilaNotaOrden,
+  LineaPedido,
+  LineaPedidoPersonal,
   FiltrosGestionOrdenes,
   GrupoPedido,
   NotaInterna,
@@ -83,6 +87,46 @@ function fechaIso(fecha: Date): string {
 function diasEntre(desde: string, hasta: string): number {
   const diferencia = Date.parse(`${hasta}T00:00:00Z`) - Date.parse(`${desde}T00:00:00Z`);
   return Math.max(0, Math.round(diferencia / MS_POR_DIA));
+}
+
+/**
+ * Un producto está retirado del catálogo (RF-ORD-04-03, CA-ORD-04-04) si la línea remite a
+ * una variante que ya no existe, o que está inactiva o descontinuada, o si su producto está
+ * inactivo o sin publicar. «Agotado» no es retirado: sigue en el catálogo. Una línea sin
+ * referencia no permite afirmarlo y se muestra sin enlace, pero sin la nota de retirado.
+ */
+export function lineaRetirada(fila: FilaLineaOrden): boolean {
+  if (fila.id_variante_ref === null) {
+    return false;
+  }
+  if (fila.variante_estado === null) {
+    return true;
+  }
+  return (
+    fila.variante_estado === 'inactivo' ||
+    fila.variante_estado === 'descontinuado' ||
+    fila.producto_estado === 'inactivo' ||
+    fila.producto_publicado === false
+  );
+}
+
+/** Detalle con las líneas completas del personal; la vista del cliente las recorta. */
+type DetalleCompleto = DetallePedidoBase & { readonly lineas: ReadonlyArray<LineaPedidoPersonal> };
+
+/** Línea tal como la ve el cliente: sin la base que consume, que es un dato de preparación. */
+function aLineaCliente(linea: LineaPedidoPersonal): LineaPedido {
+  return {
+    producto: linea.producto,
+    variante: linea.variante,
+    color_solicitado: linea.color_solicitado,
+    precio_inicial: linea.precio_inicial,
+    descuentos: linea.descuentos,
+    precio_aplicado: linea.precio_aplicado,
+    cantidad: linea.cantidad,
+    es_entonado: linea.es_entonado,
+    retirado: linea.retirado,
+    id_producto: linea.id_producto,
+  };
 }
 
 // Historial, notas y contactos guardan TIMESTAMPTZ: viajan como instante ISO 8601 (UTC)
@@ -158,6 +202,7 @@ export class OrdenesService {
     ]);
     return {
       ...detalle,
+      lineas: detalle.lineas.map(aLineaCliente),
       historial: historial.map((cambio) => ({ estado: cambio.estado_nuevo, fecha: cambio.fecha.toISOString() })),
     };
   }
@@ -194,6 +239,7 @@ export class OrdenesService {
           estado: fila.estado,
           id_cliente: fila.id_usuario,
           cliente: fila.nombre_cliente,
+          modo_entrega: fila.modo_entrega,
           dias_esperando: diasEntre(esperaDesde, hoy),
         };
       }),
@@ -260,32 +306,64 @@ export class OrdenesService {
       ...detalle,
       id_cliente: orden.id_usuario,
       cliente: contacto ?? null,
-      transiciones_permitidas: transicionesPermitidas(orden.estado),
+      transiciones_permitidas: transicionesPermitidas(orden.estado, orden.modo_entrega),
       historial: historial.map(aCambioEstado),
       notas: notas.map(aNotaInterna),
       contactos: contactos.map(aContactoRegistrado),
     };
   }
 
-  /** Solo expone lo necesario para la vista (HU-SEG-06): ni clave primaria ni datos de pago. */
-  private async armarDetalle(orden: CabeceraOrden): Promise<DetallePedidoBase> {
+  /**
+   * Arma el detalle con la copia histórica completa (HU-ORD-02): importes, IVA, modo de
+   * entrega y, por línea, el precio de partida y sus descuentos en orden (RF-ORD-02-02).
+   * Solo expone lo necesario para la vista (HU-SEG-06): ni claves primarias ni datos de pago.
+   */
+  private async armarDetalle(orden: CabeceraOrden): Promise<DetalleCompleto> {
     const lineas = await this.repo.listarLineas(orden.id_orden);
+    const descuentos = await this.repo.listarDescuentos(lineas.map((linea) => linea.id_linea_orden));
+    const descuentosPorLinea = new Map<number, DescuentoAplicado[]>();
+    for (const d of descuentos) {
+      const aplicado: DescuentoAplicado = {
+        orden: d.orden_aplicacion,
+        origen: d.origen,
+        porcentaje: d.porcentaje,
+        importe: d.importe,
+      };
+      descuentosPorLinea.set(d.id_linea_orden, [...(descuentosPorLinea.get(d.id_linea_orden) ?? []), aplicado]);
+    }
+
     return {
       codigo: orden.codigo_visible,
+      codigo_solicitud: orden.codigo_solicitud,
       fecha: fechaIso(orden.fecha),
       estado: orden.estado,
       origen: orden.origen,
+      modo_entrega: orden.modo_entrega,
       direccion: orden.direccion,
       sub_total: orden.sub_total,
       descuento: orden.descuento,
+      costo_entrega: orden.costo_entrega,
       total: orden.total,
+      base_sin_impuesto: orden.base_sin_impuesto,
+      importe_iva: orden.importe_iva,
+      tasa_iva: orden.tasa_iva,
       observaciones: orden.observaciones,
-      lineas: lineas.map((linea) => ({
-        producto: linea.nombre_producto,
-        variante: linea.variante_copia,
-        precio_aplicado: linea.precio_aplicado,
-        cantidad: linea.cantidad,
-      })),
+      lineas: lineas.map((linea) => {
+        const retirado = lineaRetirada(linea);
+        return {
+          producto: linea.nombre_producto,
+          variante: linea.variante_copia,
+          color_solicitado: linea.color_solicitado,
+          precio_inicial: linea.precio_inicial,
+          descuentos: descuentosPorLinea.get(linea.id_linea_orden) ?? [],
+          precio_aplicado: linea.precio_aplicado,
+          cantidad: linea.cantidad,
+          es_entonado: linea.es_entonado,
+          retirado,
+          id_producto: retirado ? null : linea.producto_id,
+          base_consumida: linea.base_consumida,
+        };
+      }),
     };
   }
 }

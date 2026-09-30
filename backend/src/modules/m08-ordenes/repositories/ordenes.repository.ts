@@ -5,24 +5,32 @@ import {
   ContactoCliente,
   FilaConteoEstado,
   FilaContactoOrden,
+  FilaDescuentoLinea,
   FilaHistorialEstado,
   FilaLineaOrden,
   FilaNotaOrden,
   FilaResumenOrden,
   FilaResumenOrdenGestion,
   FiltrosGestionOrdenes,
+  NuevaOrdenConfirmada,
+  OrdenCreada,
+  OrdenDeOperacion,
   OrdenListado,
   SolicitudCambioEstado,
 } from '../interfaces/m08.interfaces';
 
 // ==============================================================================
-// M08 - REPOSITORIO DE ÓRDENES (HU-ORD-03, 04, 05, 07, 08, 09, 10 y 11)
+// M08 - REPOSITORIO DE ÓRDENES (HU-ORD-01, 03, 04, 05, 07, 08, 09, 10 y 11)
 // Las líneas se leen de `linea_orden`, que guarda la copia de la compra, sin unir con
 // el catálogo vivo (ADR-05, CA-ORD-02-01). Del titular solo se leen los datos de
 // contacto que pide el personal (CA-ORD-09-01), nunca credenciales.
-// Escrituras: solo el estado de la orden y la inserción en `historial_estado_orden`,
-// `nota_orden` y `contacto_orden`. Ninguna de esas tres tablas se actualiza ni se borra.
+// Escrituras: la creación de la orden con su copia histórica (HU-ORD-01), el estado de
+// la orden y la inserción en `historial_estado_orden`, `nota_orden` y `contacto_orden`.
+// Nada se borra y, de la orden ya creada, solo se actualiza su estado.
 // ==============================================================================
+
+/** Fila de `consecutivo` que numera los pedidos PC-AAAA-NNNNN (RF-ORD-06-04). */
+const CONSECUTIVO_ORDEN = 'orden';
 
 /** Escapa los comodines de LIKE para que el texto del usuario se busque de forma literal. */
 function patronContiene(texto: string): string {
@@ -42,10 +50,16 @@ export class OrdenesRepository {
         'id_usuario',
         'origen',
         'estado',
+        'codigo_solicitud',
+        'modo_entrega',
+        'costo_entrega',
         'direccion',
         'sub_total',
         'descuento',
         'total',
+        'base_sin_impuesto',
+        'importe_iva',
+        'tasa_iva',
         'observaciones',
         'fecha',
       ])
@@ -53,13 +67,49 @@ export class OrdenesRepository {
       .executeTakeFirst();
   }
 
-  /** Líneas de la orden en el orden en que se registraron. */
+  /**
+   * Líneas de la orden en el orden en que se registraron, con la copia histórica completa
+   * (HU-ORD-02). Del catálogo vivo solo se lee el estado de la variante y del producto
+   * referenciados, para saber si siguen disponibles (RF-ORD-04-03); nada de lo mostrado
+   * sale del catálogo.
+   */
   async listarLineas(idOrden: number): Promise<FilaLineaOrden[]> {
     return this.db
-      .selectFrom('linea_orden')
-      .select(['nombre_producto', 'variante_copia', 'precio_aplicado', 'cantidad'])
-      .where('id_orden', '=', idOrden)
+      .selectFrom('linea_orden as l')
+      .leftJoin('variante as v', 'v.id_variante', 'l.id_variante_ref')
+      .leftJoin('producto as p', 'p.id_producto', 'v.id_producto')
+      .select([
+        'l.id_linea_orden',
+        'l.nombre_producto',
+        'l.variante_copia',
+        'l.precio_aplicado',
+        'l.cantidad',
+        'l.color_solicitado',
+        'l.precio_inicial',
+        'l.id_variante_ref',
+        'l.es_entonado',
+        'l.base_consumida',
+        'v.estado as variante_estado',
+        'p.id_producto as producto_id',
+        'p.estado as producto_estado',
+        'p.publicado as producto_publicado',
+      ])
+      .where('l.id_orden', '=', idOrden)
+      .orderBy('l.id_linea_orden', 'asc')
+      .execute();
+  }
+
+  /** Descuentos de las líneas indicadas, en su orden de aplicación (RF-ORD-02-02). */
+  async listarDescuentos(idsLineas: ReadonlyArray<number>): Promise<FilaDescuentoLinea[]> {
+    if (idsLineas.length === 0) {
+      return [];
+    }
+    return this.db
+      .selectFrom('linea_orden_descuento')
+      .select(['id_linea_orden', 'orden_aplicacion', 'origen', 'porcentaje', 'importe'])
+      .where('id_linea_orden', 'in', [...idsLineas])
       .orderBy('id_linea_orden', 'asc')
+      .orderBy('orden_aplicacion', 'asc')
       .execute();
   }
 
@@ -117,7 +167,7 @@ export class OrdenesRepository {
   ): Promise<FilaResumenOrdenGestion[]> {
     const direccion = orden === 'antiguedad' ? 'asc' : 'desc';
     return this.baseGestion(filtros)
-      .select(['o.codigo_visible', 'o.fecha', 'o.total', 'o.estado', 'o.id_usuario'])
+      .select(['o.codigo_visible', 'o.fecha', 'o.total', 'o.estado', 'o.id_usuario', 'o.modo_entrega'])
       .select((eb) =>
         eb
           .selectFrom('usuario as titular')
@@ -222,6 +272,80 @@ export class OrdenesRepository {
         .returning('fecha')
         .executeTakeFirstOrThrow();
       return registro.fecha;
+    });
+  }
+
+  /**
+   * Órdenes ya registradas para esa solicitud o esa transacción de pago (CA-ORD-01-05).
+   * Puede devolver dos filas si la solicitud y la transacción pertenecen a órdenes distintas.
+   */
+  async buscarPorOperacion(codigoSolicitud: string, transaccionPagoId: string | null): Promise<OrdenDeOperacion[]> {
+    return this.db
+      .selectFrom('orden')
+      .select(['id_orden', 'codigo_visible', 'id_usuario', 'estado', 'codigo_solicitud', 'transaccion_pago_id'])
+      .where((eb) =>
+        transaccionPagoId === null
+          ? eb('codigo_solicitud', '=', codigoSolicitud)
+          : eb.or([eb('codigo_solicitud', '=', codigoSolicitud), eb('transaccion_pago_id', '=', transaccionPagoId)])
+      )
+      .orderBy('id_orden', 'asc')
+      .execute();
+  }
+
+  /**
+   * Crea la orden con su copia histórica en una sola transacción (HU-ORD-01, CA-ORD-01-06):
+   * consecutivo, cabecera, líneas, descuentos y primer registro del historial. Si algo falla
+   * no queda nada escrito y el consecutivo no avanza, así que no hay huecos (RF-ORD-06-04).
+   *
+   * El consecutivo se incrementa primero: el bloqueo de su fila ordena las creaciones
+   * simultáneas, y la segunda recibe el número siguiente cuando la primera termina.
+   */
+  async crearOrdenConfirmada(
+    nueva: NuevaOrdenConfirmada,
+    armarCodigo: (consecutivo: number) => string
+  ): Promise<OrdenCreada> {
+    return this.enTransaccion(async (trx) => {
+      const { ultimo_valor } = await trx
+        .insertInto('consecutivo')
+        .values({ nombre: CONSECUTIVO_ORDEN, ultimo_valor: 1 })
+        .onConflict((oc) => oc.column('nombre').doUpdateSet({ ultimo_valor: sql<string>`consecutivo.ultimo_valor + 1` }))
+        .returning('ultimo_valor')
+        .executeTakeFirstOrThrow();
+      const codigo = armarCodigo(Number(ultimo_valor));
+
+      const { id_orden } = await trx
+        .insertInto('orden')
+        .values({ ...nueva.orden, codigo_visible: codigo, estado: 'orden_confirmada' })
+        .returning('id_orden')
+        .executeTakeFirstOrThrow();
+
+      for (const { linea, descuentos } of nueva.lineas) {
+        const { id_linea_orden } = await trx
+          .insertInto('linea_orden')
+          .values({ ...linea, id_orden })
+          .returning('id_linea_orden')
+          .executeTakeFirstOrThrow();
+        if (descuentos.length > 0) {
+          await trx
+            .insertInto('linea_orden_descuento')
+            .values(descuentos.map((d) => ({ ...d, id_linea_orden })))
+            .execute();
+        }
+      }
+
+      const { fecha } = await trx
+        .insertInto('historial_estado_orden')
+        .values({
+          id_orden,
+          estado_anterior: null,
+          estado_nuevo: 'orden_confirmada',
+          id_usuario_autor: nueva.historial.idAutor,
+          referencia_externa: nueva.historial.referenciaExterna,
+        })
+        .returning('fecha')
+        .executeTakeFirstOrThrow();
+
+      return { idOrden: id_orden, codigo, fecha };
     });
   }
 

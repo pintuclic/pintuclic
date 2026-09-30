@@ -8,6 +8,73 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.38.1] - 2026-09-29
+### Módulo: M08 Orden de Venta — Cierre del backend: diagramas, especificación y dictamen (Documentación)
+- **Alcance General:** Incremento **PATCH (v0.3.38.1)** que cierra el backend de M08. Pone al día sus diagramas y su especificación, que seguían describiendo el ciclo anterior a las definiciones del analista, y deja el dictamen del checklist de cierre del equipo. Sin cambios de comportamiento, de BD ni de archivos compartidos.
+- **Hitos Clave:**
+  - **Máquina de estados:** `Maquina_de_estados_de_la_Orden.drawio.png` muestra el ciclo implementado:
+    - desde Preparada, domicilio pasa a Despachado y recogida a Entregado, con vuelta a En preparación con motivo;
+    - Cancelado y Devuelto aparecen como no habilitados (M11).
+
+    Mantiene el formato editable de draw.io y la página del flujo end-to-end intacta.
+  - **Documento de diseño v2.0** (`equipo-2-doc/assets/diagrams/M08/M08_Orden_de_venta.md`): modelo de datos real, flujo de creación, máquina de estados, arquitectura, aplicación de los ADR y pendientes vigentes. Sus 4 diagramas Mermaid están validados.
+  - **Especificación** (`M08_ESPECIFICACION_ORDEN.md`): las 11 historias con sus 34 requisitos y 49 criterios, copiados de la Tanda 3C, más la implementación de cada historia, las definiciones aplicadas y los pendientes.
+  - **Dictamen de cierre:**
+    - HU-CUE-08 no aplica y HU-ADM-03 se cumple;
+    - HU-SEG-06 se cumple en M08, con una observación externa: el seed da permisos de consulta del personal al rol empresa, y es decisión del líder técnico;
+    - la matriz final es 41 ✅ · 3 ⚠️ · 5 ⛔ de 49.
+  - **Código:** solo un comentario en `m08.routes.ts`. El analista confirmó que notas y contactos exigen `ventas.gestionar`.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.38.1_M08_cierre_documentacion_backend.md](./walkthroughs/M08/walkthrough_v0.3.38.1_M08_cierre_documentacion_backend.md)
+
+---
+
+## [v0.3.38.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Creación de la Orden al Confirmarse el Pago (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.38.0)** con el servicio que convierte una solicitud SOL con el pago confirmado en orden (HU-ORD-01). Lo llamará M07, que no tiene responsable. Sin cambios de BD, de archivos compartidos ni de rutas HTTP.
+- **Hitos Clave:**
+  - **Contrato para M07:** `serviciosOrdenes.creacion.crearDesdePagoConfirmado()`, exportado en `m08.routes.ts`.
+    - Valida la solicitud con Zod estricto: los campos desconocidos se rechazan.
+    - Crea la orden en «Orden confirmada» con el código `PC-AAAA-NNNNN` (consecutivo sin huecos, año de Colombia).
+    - Devuelve `{ codigo, codigoSolicitud, estado, creada }`.
+  - **Reglas:**
+    - sin pago confirmado no hay orden, y un pago inferior al total se rechaza (`RF-ORD-01-01`, D06);
+    - la pasarela y la verificación manual son equivalentes (`CA-ORD-01-03`);
+    - se registra la cotización de origen (`CA-ORD-01-04`);
+    - una confirmación repetida o simultánea devuelve la misma orden (`CA-ORD-01-05`);
+    - todo va en una transacción, así que un fallo no deja nada ni gasta número (`CA-ORD-01-06`, `RF-ORD-06-04`).
+  - **Copia histórica al crear:** líneas, color, precios, descuentos en orden, IVA y entrega tal como los congeló la solicitud, sin recalcular ni redondear (D07). Primer registro del historial con el sistema o el empleado como autor.
+  - **Correo (D05):** «Orden confirmada» al cliente al nacer la orden, sin bloquear. El aviso a M18 pasa a un archivo común con el cambio de estado.
+  - **Verificación:**
+    - `tsc` y `lint` limpios;
+    - pruebas en memoria 117/117;
+    - creación contra PostgreSQL con ROLLBACK 16/16, incluidas dos creaciones simultáneas;
+    - lectura 36/36 y escritura 17/17;
+    - servicio real con correo simulado y HTTP 7/7, en una base temporal.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.38.0_M08_creacion_orden_pago_confirmado_backend.md](./walkthroughs/M08/walkthrough_v0.3.38.0_M08_creacion_orden_pago_confirmado_backend.md)
+
+---
+
+## [v0.3.37.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Copia Histórica Completa de la Orden (Backend / BD)
+- **Alcance General:** Incremento **Minior-feat (v0.3.37.0)** con la segunda tanda del modelo de datos de M08: esquema **3.9** (documentación de BD **v2.7**), de 47 a 49 tablas. Tiene visto bueno del líder técnico y el analista confirmó que está definido.
+- **Hitos Clave:**
+  - **Orden:** solicitud SOL de origen (`codigo_solicitud`, UNIQUE), modo y costo de entrega, y base, importe y tasa de IVA congelados; la dirección es opcional en la recogida.
+  - **Líneas:** color solicitado, precio inicial, referencia a la variante sin FK, entonado y base consumida. Además, las líneas dejan de borrarse en cascada (`RF-ORD-02-04`).
+  - **Tablas nuevas:** `linea_orden_descuento` (descuentos por línea en orden, `RF-ORD-02-02`) y `consecutivo` (numeración sin huecos para `PC-AAAA-NNNNN`, `RF-ORD-06-04`, reutilizable por M07).
+  - **Detalle de M08:**
+    - el cliente y el personal ven el modo de entrega, el IVA, la solicitud y, por línea, el color, el precio inicial, sus descuentos en orden y la marca de producto retirado sin enlace (`RF-ORD-04-03`);
+    - el personal ve además la base consumida de las líneas entonadas (`RF-ORD-09-01`);
+    - la bandeja muestra el modo de entrega (`RF-ORD-05-05`).
+  - **Migración segura:** idempotente y compatible con la carga de BD del deploy. Las órdenes existentes conservan sus datos con los campos nuevos vacíos; el seed añade `ORD-2026-0003` con la copia completa.
+  - **Verificación:**
+    - `tsc` y `lint` limpios;
+    - pruebas en memoria 91/91;
+    - integración de lectura 36/36 e integración de escritura con ROLLBACK 17/17, en base migrada y en base nueva;
+    - simulación del deploy con `psql -v ON_ERROR_STOP=1`, dos veces.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.37.0_M08_copia_historica_backend.md](./walkthroughs/M08/walkthrough_v0.3.37.0_M08_copia_historica_backend.md) · Detalle de BD: [bd/docs/WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md)
+
+---
+
 ## [v0.3.36.0] - 2026-09-29
 ### Módulo: M08 Orden de Venta — Ajustes según la documentación del Drive (Backend)
 - **Alcance General:** Incremento **Minior-feat (v0.3.36.0)** que alinea M08 con la Tanda 3C del Drive tras revisar la documentación vigente. Sin cambios de esquema ni de archivos compartidos.

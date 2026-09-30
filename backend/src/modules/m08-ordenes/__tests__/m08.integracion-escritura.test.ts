@@ -37,8 +37,17 @@ async function contarFilas(conexion: Kysely<Database>, idOrden: number): Promise
   return `${h.t}/${n.t}/${c.t}`;
 }
 
-/** Ejecuta una sentencia que debe fallar por una restricción de la BD, en su propia transacción. */
-async function violaRestriccion(sentencia: (trx: Kysely<Database>) => Promise<unknown>): Promise<boolean> {
+/** Códigos de PostgreSQL: CHECK, UNIQUE y FOREIGN KEY. */
+type CodigoRestriccion = '23514' | '23505' | '23503';
+
+/**
+ * Ejecuta una sentencia que debe fallar por una restricción de la BD, en su propia transacción.
+ * Por defecto espera un CHECK (23514).
+ */
+async function violaRestriccion(
+  sentencia: (trx: Kysely<Database>) => Promise<unknown>,
+  codigo: CodigoRestriccion = '23514'
+): Promise<boolean> {
   try {
     await db.transaction().execute(async (trx) => {
       await sentencia(trx);
@@ -46,7 +55,7 @@ async function violaRestriccion(sentencia: (trx: Kysely<Database>) => Promise<un
     });
     return false;
   } catch (error) {
-    return !(error instanceof DeshacerCambios) && (error as { code?: string }).code === '23514';
+    return !(error instanceof DeshacerCambios) && (error as { code?: string }).code === codigo;
   }
 }
 
@@ -179,6 +188,73 @@ async function ejecutarPruebasEscrituraM08(): Promise<void> {
       ),
       'BD: una nota en blanco se rechaza (chk_nota_orden_texto)'
     );
+
+    // Esquema 3.9: copia histórica, solicitud de origen, descuentos y retención de la orden.
+    const ordenBase = {
+      id_usuario: 2,
+      sub_total: 1000,
+      descuento: 0,
+      total: 1000,
+    } as const;
+    assert(
+      await violaRestriccion((trx) =>
+        trx
+          .insertInto('orden')
+          .values({ ...ordenBase, codigo_visible: 'PRUEBA-DOMICILIO', modo_entrega: 'domicilio', direccion: null })
+          .execute()
+      ),
+      'BD: una orden a domicilio sin dirección se rechaza (chk_orden_direccion_domicilio)'
+    );
+    assert(
+      await violaRestriccion(async (trx) => {
+        await trx
+          .insertInto('orden')
+          .values({ ...ordenBase, codigo_visible: 'PRUEBA-SOL-1', modo_entrega: 'recogida', codigo_solicitud: 'SOL-PRUEBA-1' })
+          .execute();
+        await trx
+          .insertInto('orden')
+          .values({ ...ordenBase, codigo_visible: 'PRUEBA-SOL-2', modo_entrega: 'recogida', codigo_solicitud: 'SOL-PRUEBA-1' })
+          .execute();
+      }, '23505'),
+      'BD: una solicitud SOL no puede generar dos órdenes (uq_orden_codigo_solicitud)'
+    );
+    assert(
+      await violaRestriccion((trx) =>
+        trx
+          .insertInto('orden')
+          .values({ ...ordenBase, codigo_visible: 'PRUEBA-IVA', modo_entrega: 'recogida', tasa_iva: 120 })
+          .execute()
+      ),
+      'BD: una tasa de IVA fuera de 0–100 se rechaza (chk_orden_iva)'
+    );
+    const primeraLinea = await db
+      .selectFrom('linea_orden')
+      .select('id_linea_orden')
+      .where('id_orden', '=', inicial.id_orden)
+      .executeTakeFirst();
+    if (primeraLinea) {
+      assert(
+        await violaRestriccion(async (trx) => {
+          const descuento = { id_linea_orden: primeraLinea.id_linea_orden, orden_aplicacion: 1, importe: 10 };
+          await trx.insertInto('linea_orden_descuento').values({ ...descuento, origen: 'Prueba A' }).execute();
+          await trx.insertInto('linea_orden_descuento').values({ ...descuento, origen: 'Prueba B' }).execute();
+        }, '23505'),
+        'BD: dos descuentos no pueden ocupar la misma posición en una línea (uq_lod_orden_aplicacion)'
+      );
+      assert(
+        await violaRestriccion((trx) => trx.deleteFrom('orden').where('id_orden', '=', inicial.id_orden).execute(), '23503'),
+        'BD: una orden con datos asociados no se puede borrar (RF-ORD-02-04)'
+      );
+      const reglaLineas = await sql<{ al_borrar: string }>`
+        SELECT confdeltype::text AS al_borrar FROM pg_constraint WHERE conname = 'fk_lineaorden_orden'
+      `.execute(db);
+      assert(
+        reglaLineas.rows[0]?.al_borrar === 'r',
+        'BD: las líneas ya no se borran en cascada con la orden (fk_lineaorden_orden ON DELETE RESTRICT)'
+      );
+    } else {
+      assert(false, `${CODIGO} no tiene líneas en el seed`);
+    }
 
     // Nada de lo anterior quedó escrito.
     const final = await new OrdenesRepository(db).buscarPorCodigo(CODIGO);

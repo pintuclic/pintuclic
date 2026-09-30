@@ -1,8 +1,8 @@
 # 📘 Arquitectura y Documentación del Esquema de Base de Datos - PINTUCLIC
 
-> **Versión Actual:** 2.6 / v0.3.34.0 — esquema 3.8 (M08: estados, historial, notas internas y contactos de la orden)  
+> **Versión Actual:** 2.7 / v0.3.37.0 — esquema 3.9 (M08: copia histórica de la orden, descuentos por línea y consecutivo)  
 > **Motor de Base de Datos:** PostgreSQL 13+ (`gen_random_uuid()` nativo; compatible con PostgreSQL 18)  
-> **Total de Tablas:** 47  
+> **Total de Tablas:** 49  
 > **Script DDL Oficial:** [`../sql/schema_pintuclic.sql`](../sql/schema_pintuclic.sql)  
 > **Script de Mocks / Seed Oficial:** [`../sql/seed_pintuclic.sql`](../sql/seed_pintuclic.sql)  
 > **Guía Oficial de Mocks y Datos de Prueba:** [`./GUIA_MOCKS_Y_DATOS_PRUEBA.md`](./GUIA_MOCKS_Y_DATOS_PRUEBA.md)  
@@ -14,6 +14,7 @@
 
 | Versión | Fecha | Tablas Nuevas | Tablas Deprecadas | Cambios Destacados | Detalle Completo |
 | :---: | :---: | :--- | :--- | :--- | :--- |
+| **v2.7 / v0.3.37.0** (esquema 3.9) | 2026-09-29 | `linea_orden_descuento`, `consecutivo` (2) | Ninguna | M08 Orden de venta: copia histórica completa. `orden` añade solicitud SOL de origen, modo y costo de entrega, base, importe y tasa de IVA (dirección opcional en recogida). `linea_orden` añade color solicitado, precio inicial, referencia a la variante sin FK, entonado y base consumida, y pasa a `ON DELETE RESTRICT`. Descuentos por línea en orden y consecutivo sin huecos para `PC-AAAA-NNNNN`. Nuevo `enum_modo_entrega`. Total 49 tablas. | [Ver v2.7](./WALKTHROUGH_DATABASE.md#-versión-27--v03370-2026-09-29) |
 | **v2.6 / v0.3.34.0** (esquema 3.8) | 2026-09-29 | `historial_estado_orden`, `nota_orden`, `contacto_orden` (3) | Ninguna | M08 Orden de venta: `enum_estado_orden` pasa al ciclo de HU-ORD-03 (`orden_confirmada` … `devuelto`) con migración idempotente para bases existentes (`pagado` → `orden_confirmada`, `enviado` → `despachado`); `orden.estado` nace en `orden_confirmada`; historial de transiciones con autor, notas internas y registro de contactos. Total 47 tablas. | [Ver v2.6](./WALKTHROUGH_DATABASE.md#-versión-26--v03340-2026-09-29) |
 | **v2.5 / v3.29.0** | 2026-09-22 | Ninguna (Ajuste estructural de 6 tablas) | Ninguna | Sincronización del modelo ER: bloque fusionado `variante` $\rightarrow$ `base` (`id_variante`, `prefijo`) $\rightarrow$ `color` (`id_base`) $\rightarrow$ `tonos` (`nombre`, `hexagesimal`), `linea_carrito.ref_viva`, `cotizacion.id_usuario/id_rol` y `orden.carrito_o_cotizacion`. Total 44 tablas. | [Ver v2.5](./WALKTHROUGH_DATABASE.md#-versión-25--v3290-2026-09-22) |
 | **v2.4** | 2026-09-05 | `direccion_cliente`, `solicitud_empresa`, `solicitud_actualizacion_nit`, `usuario_identidad_externa`, `codigo_verificacion` (5) | Ninguna | Módulo Cuentas y Perfil (M04). Múltiples direcciones (`HU-CUE-07`), flujo B2B corporativo con aprobación admin (`HU-CUE-03/09`), federación Google Identity (`HU-CUE-02`) y almacén OTP efímero con TTL (`HU-CUE-01/05`). Total 36 tablas. | [Ver v2.4](./WALKTHROUGH_DATABASE.md#-versión-24-2026-09-05) |
@@ -229,10 +230,16 @@ erDiagram
         string carrito_o_cotizacion
         enum estado "M08 v3.8: orden_confirmada, revision_disponibilidad, en_preparacion, preparada, despachado, entregado, cancelado, devuelto"
         int transaccion_pago_id "unico"
-        string direccion
+        string codigo_solicitud "M08 v3.9: SOL de M07, unico, nullable"
+        enum modo_entrega "M08 v3.9: domicilio, recogida"
+        decimal costo_entrega "M08 v3.9"
+        string direccion "nullable en recogida"
         decimal sub_total
         decimal descuento
         decimal total
+        decimal base_sin_impuesto "M08 v3.9"
+        decimal importe_iva "M08 v3.9"
+        decimal tasa_iva "M08 v3.9"
         string observaciones "nullable"
         date fecha
     }
@@ -243,6 +250,25 @@ erDiagram
         string variante_copia "copia"
         decimal precio_aplicado "copia"
         int cantidad
+        string color_solicitado "M08 v3.9, copia"
+        decimal precio_inicial "M08 v3.9, copia"
+        int id_variante_ref "M08 v3.9, sin FK"
+        boolean es_entonado "M08 v3.9"
+        string base_consumida "M08 v3.9, copia"
+    }
+    %% ==== M08 v3.9: descuentos por línea y consecutivo ====
+    linea_orden_descuento {
+        int id_linea_orden_descuento PK
+        int id_linea_orden FK
+        int orden_aplicacion
+        string origen
+        decimal porcentaje "nullable = importe fijo"
+        decimal importe
+    }
+    consecutivo {
+        int id_consecutivo PK
+        string nombre "unico: orden, solicitud"
+        bigint ultimo_valor
     }
     %% ==== M08 v3.8: historial de estados, notas internas y contactos ====
     historial_estado_orden {
@@ -346,6 +372,9 @@ erDiagram
     usuario      ||--o{ nota_orden             : "escribe"
     Orden        ||--o{ contacto_orden         : "registra_contactos"
     usuario      ||--o{ contacto_orden         : "contacta"
+
+    %% M08 v3.9: descuentos por línea
+    LineaOrden   ||--o{ linea_orden_descuento  : "aplica_descuentos"
 ```
 
 ---
@@ -390,12 +419,14 @@ erDiagram
 | **`carrito`** | `id_carrito` | `id_usuario` $\rightarrow$ `usuario` (opcional) | Carrito vivo con `token_visitante` para usuarios anónimos y fecha de actividad. |
 | **`linea_carrito`** | `id_linea_carrito` | `id_carrito`, `id_variante` | Ítems agregados vivos vinculados a variante con `ref_viva` y `cantidad`. |
 
-### Módulo 5: Cotizaciones y Órdenes Inmutables (6 Tablas)
+### Módulo 5: Cotizaciones y Órdenes Inmutables (8 Tablas)
 | Tabla | PK | FKs | Descripción |
 | :--- | :--- | :--- | :--- |
 | **`cotizacion`** | `id_cotizacion` | `id_usuario`, `id_rol` | Cotización comercial B2B/B2C vinculada a usuario y rol. |
-| **`orden`** | `id_orden` | `id_usuario`, `id_cotizacion` | Orden de compra confirmada con `codigo_visible`, `origen`, `carrito_o_cotizacion`, pasarela y estado (nace en `orden_confirmada`). |
-| **`linea_orden`** | `id_linea_orden` | `id_orden` $\rightarrow$ `orden` | Snapshot congelado inmutable (`nombre_producto`, `variante_copia`, `precio_aplicado`, `cantidad`). |
+| **`orden`** | `id_orden` | `id_usuario`, `id_cotizacion` | Orden de compra confirmada con `codigo_visible`, `origen`, `carrito_o_cotizacion`, pasarela y estado (nace en `orden_confirmada`). Desde v3.9 conserva la solicitud SOL de origen (`codigo_solicitud` UNIQUE), el modo y costo de entrega, y la base, el importe y la tasa de IVA; la dirección es opcional en recogida. |
+| **`linea_orden`** | `id_linea_orden` | `id_orden` $\rightarrow$ `orden` (RESTRICT) | Snapshot congelado inmutable (`nombre_producto`, `variante_copia`, `precio_aplicado`, `cantidad`). Desde v3.9: `color_solicitado`, `precio_inicial`, `id_variante_ref` sin FK, `es_entonado` y `base_consumida`. |
+| **`linea_orden_descuento`** | `id_linea_orden_descuento` | `id_linea_orden` $\rightarrow$ `linea_orden` | Descuentos aplicados a cada línea con origen, porcentaje, importe y orden de aplicación (M08 - RF-ORD-02-02). Solo inserción. |
+| **`consecutivo`** | `id_consecutivo` | Ninguna | Numeración corrida sin huecos por tipo de documento (M08 - RF-ORD-06-04; reutilizable por M07). |
 | **`historial_estado_orden`** | `id_historial_estado_orden` | `id_orden` $\rightarrow$ `orden`, `id_usuario_autor` $\rightarrow$ `usuario` (NULL = sistema) | Transiciones de la orden con estado anterior y nuevo, autor, motivo, referencia externa y fecha (M08 - HU-ORD-03). Solo inserción. |
 | **`nota_orden`** | `id_nota_orden` | `id_orden` $\rightarrow$ `orden`, `id_usuario_autor` $\rightarrow$ `usuario` | Notas internas del personal, nunca visibles al cliente (M08 - HU-ORD-10). Solo inserción. |
 | **`contacto_orden`** | `id_contacto_orden` | `id_orden` $\rightarrow$ `orden`, `id_usuario_autor` $\rightarrow$ `usuario` | Contactos con el cliente iniciados desde la orden: medio, detalle, autor y fecha (M08 - HU-ORD-09). Solo inserción. |
@@ -433,6 +464,7 @@ enum_estado_producto    -- ('activo', 'inactivo', 'agotado', 'descontinuado')
 enum_origen_orden       -- ('carrito', 'cotizacion')
 enum_estado_orden       -- ('orden_confirmada', 'revision_disponibilidad', 'en_preparacion', 'preparada',
                         --  'despachado', 'entregado', 'cancelado', 'devuelto')  -- v3.8 (M08)
+enum_modo_entrega       -- ('domicilio', 'recogida')  -- v3.9 (M08)
 enum_estado_cotizacion  -- ('borrador', 'enviada', 'aprobada', 'rechazada', 'vencida')
 enum_estado_pago        -- ('pendiente', 'completado', 'fallido', 'reembolsado')
 enum_estado_factura     -- ('emitida', 'pagada', 'anulada')

@@ -1,4 +1,4 @@
-import { EnumEstadoOrden } from '../../../core/db/types';
+import { EnumEstadoOrden, EnumModoEntrega } from '../../../core/db/types';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { OrdenesRepository } from '../repositories/ordenes.repository';
 import {
@@ -18,6 +18,7 @@ import {
   transicionesPermitidas,
 } from './ciclo-estados';
 import { aContactoRegistrado, aNotaInterna } from './ordenes.service';
+import { avisarCliente } from './aviso-cliente';
 
 // ==============================================================================
 // M08 - SERVICIO DE GESTIÓN DE ÓRDENES (HU-ORD-03, 05, 09 y 10)
@@ -26,19 +27,26 @@ import { aContactoRegistrado, aNotaInterna } from './ordenes.service';
 // ruta; este servicio aplica las reglas del ciclo de estados (`ciclo-estados.ts`).
 // ==============================================================================
 
-/** Fecha y hora de Colombia para el correo al cliente (ej. «29/09/2026, 15:32»). */
-const formatoFechaHoraColombia = new Intl.DateTimeFormat('es-CO', {
-  timeZone: 'America/Bogota',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-});
-
 function recursoNoEncontrado(): AppError {
   return new AppError('Recurso no encontrado', 404, 'NOT_FOUND');
+}
+
+/**
+ * Mensaje de una transición rechazada. Si la bloquea el modo de entrega (D02, RF-ORD-03-06)
+ * lo dice, para que el empleado sepa qué hacer en su lugar.
+ */
+function mensajeTransicionNoPermitida(
+  desde: EnumEstadoOrden,
+  hacia: EnumEstadoOrden,
+  modo: EnumModoEntrega | null
+): string {
+  if (desde === 'preparada' && modo === 'recogida' && hacia === 'despachado') {
+    return 'Una orden de recogida en almacén no se despacha: al recogerla pasa directamente a «Entregado»';
+  }
+  if (desde === 'preparada' && modo === 'domicilio' && hacia === 'entregado') {
+    return 'Una orden a domicilio primero se despacha; «Entregado» es un paso posterior y opcional';
+  }
+  return `Una orden en «${ETIQUETA_ESTADO[desde]}» no puede pasar a «${ETIQUETA_ESTADO[hacia]}»`;
 }
 
 export class GestionOrdenesService {
@@ -71,12 +79,13 @@ export class GestionOrdenesService {
         'OPERACION_NO_HABILITADA'
       );
     }
-    if (!esTransicionPermitida(estadoActual, estadoNuevo)) {
+    const modo = orden.modo_entrega;
+    if (!esTransicionPermitida(estadoActual, estadoNuevo, modo)) {
       throw new AppError(
-        `Una orden en «${ETIQUETA_ESTADO[estadoActual]}» no puede pasar a «${ETIQUETA_ESTADO[estadoNuevo]}»`,
+        mensajeTransicionNoPermitida(estadoActual, estadoNuevo, modo),
         409,
         'TRANSICION_NO_PERMITIDA',
-        { permitidas: transicionesPermitidas(estadoActual) }
+        { permitidas: transicionesPermitidas(estadoActual, modo) }
       );
     }
 
@@ -105,7 +114,12 @@ export class GestionOrdenesService {
     }
 
     if (ESTADOS_QUE_NOTIFICAN.includes(estadoNuevo)) {
-      this.notificarCliente(orden, estadoNuevo, fecha);
+      avisarCliente(this.repo, this.notificador, {
+        idUsuario: orden.id_usuario,
+        codigo: orden.codigo_visible,
+        estado: estadoNuevo,
+        fecha,
+      });
     }
 
     return {
@@ -113,7 +127,7 @@ export class GestionOrdenesService {
       estado_anterior: estadoActual,
       estado: estadoNuevo,
       fecha: fecha.toISOString(),
-      transiciones_permitidas: transicionesPermitidas(estadoNuevo),
+      transiciones_permitidas: transicionesPermitidas(estadoNuevo, modo),
     };
   }
 
@@ -141,30 +155,5 @@ export class GestionOrdenesService {
       throw recursoNoEncontrado();
     }
     return orden;
-  }
-
-  /**
-   * Aviso al cliente por M18 (HU-NOT-02). No bloquea la respuesta y un fallo del correo
-   * no deshace el cambio de estado, que ya quedó registrado (D05).
-   */
-  private notificarCliente(orden: CabeceraOrden, estadoNuevo: EnumEstadoOrden, fecha: Date): void {
-    void this.repo
-      .buscarContactoCliente(orden.id_usuario)
-      .then((cliente) => {
-        if (!cliente) {
-          return undefined;
-        }
-        return this.notificador.notificarCambioEstadoOrden({
-          idUsuario: orden.id_usuario,
-          destinatario: cliente.correo,
-          nombreCliente: cliente.nombre,
-          numeroOrden: orden.codigo_visible,
-          nuevoEstado: ETIQUETA_ESTADO[estadoNuevo],
-          fechaCambio: formatoFechaHoraColombia.format(fecha),
-        });
-      })
-      .catch((error: unknown) => {
-        console.error('[M08-Ordenes] Error notificando el cambio de estado de la orden:', error);
-      });
   }
 }

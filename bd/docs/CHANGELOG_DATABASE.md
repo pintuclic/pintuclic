@@ -10,6 +10,23 @@ Este documento constituye el registro histórico y oficial del versionamiento de
 
 ---
 
+## [v2.7 / v0.3.37.0] - 2026-09-29
+### Esquema 3.9 (49 Tablas) - M08 Orden de Venta: copia histórica, descuentos por línea y consecutivo
+- **Alcance General:** Segunda tanda del modelo de datos de **M08** (épica #28), con visto bueno del líder técnico y definida por el análisis:
+  - **Copia histórica de la orden (`HU-ORD-02`, `RF-ORD-05-05`):** `orden` añade:
+    - `codigo_solicitud` (SOL de M07, UNIQUE);
+    - `modo_entrega` (nuevo `enum_modo_entrega`) y `costo_entrega` (0 por ahora);
+    - `base_sin_impuesto`, `importe_iva` y `tasa_iva`.
+
+    La dirección pasa a ser opcional en la recogida.
+  - **Copia histórica de las líneas (`RF-ORD-02-01`, `RF-ORD-04-03`, `RF-CUM-01-09`):** `linea_orden` añade `color_solicitado`, `precio_inicial`, `id_variante_ref` (sin FK), `es_entonado` y `base_consumida`, y deja de borrarse en cascada (`ON DELETE RESTRICT`, `RF-ORD-02-04`).
+  - **Descuentos por línea (`RF-ORD-02-02`):** tabla `linea_orden_descuento` con origen, porcentaje, importe y orden de aplicación.
+  - **Consecutivo sin huecos (`RF-ORD-06-04`):** tabla `consecutivo` para `PC-AAAA-NNNNN`, reutilizable por M07 para `SOL-AAAA-NNNNN`.
+  - **Migración idempotente:** las órdenes existentes conservan sus datos con los campos nuevos en `NULL`. El seed añade `ORD-2026-0003` con la copia completa.
+  - 🔗 **Detalle y DDL:** [WALKTHROUGH_DATABASE.md#📦-versión-27--v03370-2026-09-29](./WALKTHROUGH_DATABASE.md#-versión-27--v03370-2026-09-29)
+
+---
+
 ## [v2.6 / v0.3.34.0] - 2026-09-29
 ### Esquema 3.8 (47 Tablas) - M08 Orden de Venta: estados, historial, notas internas y contactos
 - **Alcance General:** Primera tanda del modelo de datos de **M08** (épica #28), aprobada por el líder técnico:
