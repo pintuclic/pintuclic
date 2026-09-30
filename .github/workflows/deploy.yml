@@ -84,6 +84,11 @@ jobs:
       - name: Levantar contenedores con Docker Compose
         run: docker compose up -d --build
 
+      - name: Cargar esquema y catálogo en PostgreSQL
+        run: |
+          docker exec -i pintuclic-db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' < bd/sql/schema_pintuclic.sql
+          docker exec -i pintuclic-db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' < bd/sql/seed_pintuclic.sql
+
       - name: Verificar salud del backend
         run: |
           BACKEND_PORT_VAL=$(grep -E '^BACKEND_PORT=' .env | cut -d= -f2- | tr -d '"')
