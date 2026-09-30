@@ -2,7 +2,7 @@
   <div>
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
       <p class="text-sm text-neutral-medium">{{ AYUDA_CLASE[producto.clase_color] }}</p>
-      <Button variant="conversion" size="sm" icon="plus" :disabled="producto.estado !== 'activo'" @click="nueva">Nueva variante</Button>
+      <Button variant="action" size="sm" icon="plus" @click="nueva">Nueva variante</Button>
     </div>
 
     <Alert v-if="producto.clase_color === 'entonable' && !cargandoOpciones && !bases.length" variant="warning" class="mb-3">
@@ -154,6 +154,10 @@ async function cargarOpciones(): Promise<void> {
 }
 
 function nueva(): void {
+  if (props.producto.estado !== 'activo') {
+    errorOpciones.value = 'El producto está inactivo: reactívalo para registrarle variantes.';
+    return;
+  }
   abrirFormulario({
     modo: 'crear', titulo: `Nueva variante · ${props.producto.nombre}`,
     valores: { id_producto: props.producto.id_producto },

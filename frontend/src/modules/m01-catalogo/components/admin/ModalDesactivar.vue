@@ -33,7 +33,7 @@
       <div class="flex justify-end gap-3 pt-2">
         <Button variant="neutral" :disabled="ejecutando" @click="cerrar">Cancelar</Button>
         <Button
-          :variant="modo === 'desactivar' ? 'danger' : 'conversion'"
+          :variant="modo === 'desactivar' ? 'danger' : 'action'"
           :disabled="ejecutando || consultando"
           @click="confirmar"
         >

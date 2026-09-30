@@ -5,10 +5,16 @@
         <nav class="text-xs text-neutral-medium" aria-label="Migas de pan">
           <router-link to="/" class="transition-colors hover:text-action">Inicio</router-link>
           <ChevronRight :size="13" class="mx-1 inline" />
-          <span class="font-medium text-corporate">Productos</span>
+          <span :class="seleccionActual ? 'text-neutral-medium' : 'font-medium text-corporate'">Productos</span>
+          <template v-if="seleccionActual">
+            <ChevronRight :size="13" class="mx-1 inline" />
+            <span class="text-neutral-medium">{{ seleccionActual.categoria }}</span>
+            <ChevronRight :size="13" class="mx-1 inline" />
+            <span class="font-medium text-corporate">{{ seleccionActual.subcategoria }}</span>
+          </template>
         </nav>
-        <h1 class="font-title mt-4 text-3xl font-bold text-corporate sm:text-4xl">Catálogo de productos</h1>
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-neutral-medium">Explora pinturas, herramientas y accesorios publicados para completar tu proyecto.</p>
+        <h1 class="font-title mt-4 text-3xl font-bold text-corporate sm:text-4xl">{{ seleccionActual?.subcategoria ?? 'Todos los productos' }}</h1>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-neutral-medium">{{ seleccionActual ? `Productos de ${seleccionActual.categoria}` : 'Explora pinturas, herramientas y accesorios publicados para completar tu proyecto.' }}</p>
       </section>
 
       <section class="mx-auto max-w-7xl px-4 pb-6 sm:px-6">
@@ -33,7 +39,7 @@
           <button
             type="button"
             class="inline-flex h-11 items-center justify-center gap-2 rounded-button bg-conversion px-7 text-sm font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-conversion-hover hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion"
-            @click="calculadoraAbierta = true"
+            @click="irCalculadora"
           >
             <Calculator :size="18" /> Calculadora
           </button>
@@ -62,32 +68,37 @@
       </div>
 
       <!-- Barra de Filtros y Ordenamiento -->
-      <section class="sticky top-0 z-30 border-y border-neutral-light bg-neutral-white/95 shadow-sm backdrop-blur">
-        <div class="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6">
-          <div class="flex items-center gap-3">
+      <section class="sticky top-20 z-30 border-y border-neutral-light bg-neutral-white/95 shadow-sm backdrop-blur">
+        <div class="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-4 py-2 sm:gap-3 sm:px-6">
+          <div class="flex min-w-0 items-center gap-2 lg:order-2 lg:ml-auto">
             <button
               type="button"
-              class="inline-flex min-h-11 items-center gap-2 rounded-button border border-action bg-neutral-white px-4 text-sm font-medium text-action transition-colors hover:bg-action hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action lg:hidden"
+              class="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-button border border-action bg-neutral-white px-2 text-xs font-medium text-action transition-colors hover:bg-action hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action sm:gap-2 sm:px-4 sm:text-sm lg:hidden"
               @click="filtrosMovilAbiertos = true"
             >
               <SlidersHorizontal :size="17" /> Filtros
             </button>
-            <p class="text-xs text-neutral-medium sm:text-sm">
-              Mostrando <strong class="text-neutral-black">{{ rangoInicio }}–{{ rangoFin }}</strong> de <strong class="text-neutral-black">{{ total }}</strong>
-            </p>
-          </div>
-          <div class="flex items-center gap-2">
-            <label class="flex min-h-11 items-center gap-2 rounded-input border border-neutral-light bg-neutral-white px-3 text-xs text-neutral-medium">
-              <ArrowUpDown :size="15" />
+            <label class="flex min-h-11 min-w-0 items-center gap-1 rounded-input border border-neutral-light bg-neutral-white px-2 text-xs text-neutral-medium sm:gap-2 sm:px-3">
+              <ArrowUpDown :size="15" class="shrink-0" />
               <span class="hidden sm:inline">Ordenar:</span>
-              <select v-model="orden" class="bg-transparent font-medium text-neutral-dark outline-none">
+              <select
+                :value="orden"
+                aria-label="Ordenar productos"
+                class="min-w-0 max-w-28 bg-transparent font-medium text-neutral-dark outline-none sm:max-w-none cursor-pointer"
+                @change="cambiarOrden(($event.target as HTMLSelectElement).value as any)"
+              >
                 <option value="relevancia">Relevancia</option>
-                <option value="nombre">Nombre A–Z</option>
                 <option value="precio_asc">Menor precio</option>
                 <option value="precio_desc">Mayor precio</option>
+                <option value="novedad">Novedades</option>
               </select>
             </label>
-            <div class="hidden rounded-button border border-neutral-light bg-neutral-white p-1 sm:flex" aria-label="Tipo de vista">
+
+          </div>
+          <p class="ml-auto shrink-0 whitespace-nowrap text-right text-[10px] text-neutral-medium sm:text-sm lg:order-1 lg:ml-0">
+            <span class="hidden min-[360px]:inline">Mostrando </span><strong class="text-neutral-black">{{ rangoInicio }}–{{ rangoFin }}</strong> de <strong class="text-neutral-black">{{ total }}</strong>
+          </p>
+          <div class="hidden rounded-button border border-neutral-light bg-neutral-white p-1 sm:flex lg:order-3" aria-label="Tipo de vista">
               <button
                 type="button"
                 class="grid h-9 w-9 place-items-center rounded-button transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
@@ -106,7 +117,6 @@
               >
                 <List :size="18" />
               </button>
-            </div>
           </div>
         </div>
       </section>
@@ -138,65 +148,134 @@
             </template>
           </fieldset>
 
-          <fieldset class="mt-6 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Marca</legend>
-            <label class="relative mt-3 block">
-              <span class="sr-only">Buscar marca</span>
-              <Search :size="14" class="pointer-events-none absolute left-3 top-3.5 text-neutral-medium" />
-              <input type="search" placeholder="Buscar marca..." class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white pl-9 pr-3 text-xs placeholder:text-neutral-medium" />
-            </label>
-            <label class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark">
-              <input type="checkbox" class="h-4 w-4 rounded accent-action" /> Marcas publicadas <span class="ml-auto text-neutral-medium">{{ cantidadMarcasDisponibles }}</span>
+          <!-- Filtro de Marca (HU-BUS-02) -->
+          <fieldset v-if="facetas.marcas.length" class="mt-6 border-t border-neutral-light pt-5">
+            <legend class="text-sm font-semibold text-neutral-black">Marcas</legend>
+            <label
+              v-for="m in facetas.marcas"
+              :key="m.id"
+              class="mt-2 flex min-h-9 cursor-pointer items-center gap-2 text-xs text-neutral-dark hover:text-action transition-colors"
+            >
+              <input
+                type="checkbox"
+                :checked="marcasSeleccionadas.includes(m.id)"
+                class="h-4 w-4 rounded accent-action cursor-pointer"
+                @change="toggleFiltro(marcasSeleccionadas, m.id)"
+              />
+              <span class="truncate">{{ m.nombre }}</span>
+              <span class="ml-auto text-neutral-medium shrink-0">({{ m.cantidad }})</span>
             </label>
           </fieldset>
 
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Línea</legend>
-            <label class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-medium"><input type="checkbox" class="h-4 w-4 rounded accent-action" /> Opciones al conectar M02</label>
+          <!-- Filtro de Línea Comercial (HU-BUS-02) -->
+          <fieldset v-if="facetas.lineas.length" class="mt-5 border-t border-neutral-light pt-5">
+            <legend class="text-sm font-semibold text-neutral-black">Línea comercial</legend>
+            <label
+              v-for="l in facetas.lineas"
+              :key="l.id"
+              class="mt-2 flex min-h-9 cursor-pointer items-center gap-2 text-xs text-neutral-dark hover:text-action transition-colors"
+            >
+              <input
+                type="checkbox"
+                :checked="lineasSeleccionadas.includes(l.id)"
+                class="h-4 w-4 rounded accent-action cursor-pointer"
+                @change="toggleFiltro(lineasSeleccionadas, l.id)"
+              />
+              <span class="truncate">{{ l.nombre }}</span>
+              <span class="ml-auto text-neutral-medium shrink-0">({{ l.cantidad }})</span>
+            </label>
           </fieldset>
 
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
+          <!-- Filtro de Tipo de Resina (HU-BUS-02) -->
+          <fieldset v-if="facetas.resinas.length" class="mt-5 border-t border-neutral-light pt-5">
             <legend class="text-sm font-semibold text-neutral-black">Tipo de resina</legend>
-            <label class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-medium"><input type="checkbox" class="h-4 w-4 rounded accent-action" /> Opciones al conectar M02</label>
-          </fieldset>
-
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Color</legend>
-            <label v-for="color in muestrasColorDisponibles" :key="color.id" class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark">
-              <input type="checkbox" class="h-4 w-4 rounded accent-action" />
-              <span class="h-4 w-4 shrink-0 rounded-full border border-neutral-light" :style="{ backgroundColor: color.hex }" />
-              {{ color.nombre }}
+            <label
+              v-for="r in facetas.resinas"
+              :key="r.id"
+              class="mt-2 flex min-h-9 cursor-pointer items-center gap-2 text-xs text-neutral-dark hover:text-action transition-colors"
+            >
+              <input
+                type="checkbox"
+                :checked="resinasSeleccionadas.includes(r.id)"
+                class="h-4 w-4 rounded accent-action cursor-pointer"
+                @change="toggleFiltro(resinasSeleccionadas, r.id)"
+              />
+              <span class="truncate">{{ r.nombre }}</span>
+              <span class="ml-auto text-neutral-medium shrink-0">({{ r.cantidad }})</span>
             </label>
-            <p v-if="!muestrasColorDisponibles.length" class="mt-2 text-xs text-neutral-medium">Sin muestras en esta página.</p>
           </fieldset>
 
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Familia cromática</legend>
-            <label v-for="familia in familiasDisponibles" :key="familia" class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark">
-              <input type="checkbox" class="h-4 w-4 rounded accent-action" />{{ familia }}
-            </label>
-            <p v-if="!familiasDisponibles.length" class="mt-2 text-xs text-neutral-medium">Sin familias en esta página.</p>
-          </fieldset>
-
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Presentación</legend>
-            <label v-for="presentacion in presentacionesDisponibles" :key="presentacion" class="mt-2 flex min-h-9 items-center gap-2 text-xs text-neutral-dark">
-              <input type="checkbox" class="h-4 w-4 rounded accent-action" />{{ presentacion }}
-            </label>
-            <p v-if="!presentacionesDisponibles.length" class="mt-2 text-xs text-neutral-medium">Sin presentaciones en esta página.</p>
-          </fieldset>
-
-          <fieldset class="mt-5 border-t border-neutral-light pt-5" disabled>
-            <legend class="text-sm font-semibold text-neutral-black">Rango de precio</legend>
-            <div class="mt-3 grid grid-cols-2 gap-2">
-              <label><span class="sr-only">Precio mínimo</span><input type="number" min="0" placeholder="Mínimo" class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-3 text-xs placeholder:text-neutral-medium" /></label>
-              <label><span class="sr-only">Precio máximo</span><input type="number" min="0" placeholder="Máximo" class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-3 text-xs placeholder:text-neutral-medium" /></label>
+          <!-- Filtro de Color (HU-BUS-02) -->
+          <fieldset v-if="facetas.colores.length" class="mt-5 border-t border-neutral-light pt-5">
+            <legend class="text-sm font-semibold text-neutral-black">Colores disponibles</legend>
+            <div class="mt-2 flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
+              <button
+                v-for="c in facetas.colores"
+                :key="c.id"
+                type="button"
+                class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] border transition-all cursor-pointer"
+                :class="coloresSeleccionados.includes(c.id) ? 'border-action bg-subaction text-action font-semibold' : 'border-neutral-light bg-neutral-white text-neutral-dark hover:border-action'"
+                @click="toggleFiltro(coloresSeleccionados, c.id)"
+              >
+                <span>{{ c.nombre }}</span>
+                <span class="text-[9px] text-neutral-medium">({{ c.cantidad }})</span>
+              </button>
             </div>
           </fieldset>
 
-          <p class="mt-5 rounded-card bg-neutral-lightest p-3 text-[11px] leading-4 text-neutral-medium" role="note">
-            Vista preliminar: los valores completos, conteos y aplicación simultánea se conectarán con las facetas de M02.
-          </p>
+          <!-- Filtro de Presentación (HU-BUS-02) -->
+          <fieldset v-if="facetas.presentaciones.length" class="mt-5 border-t border-neutral-light pt-5">
+            <legend class="text-sm font-semibold text-neutral-black">Presentación</legend>
+            <label
+              v-for="p in facetas.presentaciones"
+              :key="p.id"
+              class="mt-2 flex min-h-9 cursor-pointer items-center gap-2 text-xs text-neutral-dark hover:text-action transition-colors"
+            >
+              <input
+                type="checkbox"
+                :checked="presentacionesSeleccionadas.includes(p.id)"
+                class="h-4 w-4 rounded accent-action cursor-pointer"
+                @change="toggleFiltro(presentacionesSeleccionadas, p.id)"
+              />
+              <span>{{ p.nombre }}</span>
+              <span class="ml-auto text-neutral-medium shrink-0">({{ p.cantidad }})</span>
+            </label>
+          </fieldset>
+
+          <!-- Filtro de Rango de Precio (HU-BUS-02 / RF-BUS-02-04) -->
+          <fieldset class="mt-5 border-t border-neutral-light pt-5">
+            <legend class="text-sm font-semibold text-neutral-black">Rango de precio ($ COP)</legend>
+            <div class="mt-3 grid grid-cols-2 gap-2">
+              <label>
+                <span class="sr-only">Precio mínimo</span>
+                <input
+                  v-model.number="inputPrecioMin"
+                  type="number"
+                  min="0"
+                  placeholder="Mínimo"
+                  class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-2.5 text-xs placeholder:text-neutral-medium focus:border-action focus:ring-1 focus:ring-action outline-none"
+                />
+              </label>
+              <label>
+                <span class="sr-only">Precio máximo</span>
+                <input
+                  v-model.number="inputPrecioMax"
+                  type="number"
+                  min="0"
+                  placeholder="Máximo"
+                  class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-2.5 text-xs placeholder:text-neutral-medium focus:border-action focus:ring-1 focus:ring-action outline-none"
+                />
+              </label>
+            </div>
+            <button
+              type="button"
+              class="mt-2 w-full min-h-9 rounded-button border border-action text-action text-xs font-semibold hover:bg-subaction transition-colors cursor-pointer"
+              @click="aplicarRangoPrecio(inputPrecioMin, inputPrecioMax)"
+            >
+              Aplicar precio
+            </button>
+          </fieldset>
+
 
           <fieldset class="mt-6 border-t border-neutral-light pt-5">
             <legend class="font-title text-base font-semibold text-neutral-black">Disponibilidad</legend>
@@ -216,7 +295,7 @@
 
         <!-- Cuadrícula de Productos -->
         <div class="min-w-0">
-          <div v-if="cargando" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 xl:grid-cols-4" aria-live="polite">
+          <div v-if="cargando" class="grid grid-cols-1 gap-x-6 gap-y-8 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4" aria-live="polite">
             <div v-for="n in 8" :key="n" class="h-96 animate-pulse rounded-card bg-neutral-light" />
           </div>
           <div v-else-if="error" class="rounded-card border border-neutral-light bg-neutral-white p-12 text-center shadow-sm">
@@ -226,7 +305,7 @@
               Reintentar
             </button>
           </div>
-          <div v-else-if="productosVisibles.length" :class="vista === 'grid' ? 'grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 xl:grid-cols-4' : 'grid grid-cols-1 gap-6'">
+          <div v-else-if="productosVisibles.length" :class="vista === 'grid' ? 'grid grid-cols-1 gap-x-6 gap-y-8 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4' : 'grid grid-cols-1 gap-6'">
             <TarjetaProductoPublico
               v-for="producto in productosVisibles"
               :key="producto.id_producto"
@@ -288,12 +367,6 @@
       @cerrar="menuCategoriasAbierto = false"
       @seleccionar="seleccionarDesdeMenu"
     />
-    <CalculadoraPinturaPublica
-      :abierta="calculadoraAbierta"
-      :producto="productos[0]?.detalle"
-      @cerrar="calculadoraAbierta = false"
-      @agregar="mostrarMensaje('Agregar al carrito requiere M07.')"
-    />
   </div>
 </template>
 
@@ -314,7 +387,6 @@ import {
   X,
 } from 'lucide-vue-next';
 import { Paginacion } from '@/core/components';
-import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPinturaPublica.vue';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import { useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
@@ -330,11 +402,12 @@ const fondoCompletaProyecto = {
 const router = useRouter();
 const menuCategoriasAbierto = ref(false);
 const filtrosMovilAbiertos = ref(false);
-const calculadoraAbierta = ref(false);
 const mensaje = ref<string | null>(null);
-const orden = ref<OrdenCatalogo>('relevancia');
 const vista = ref<VistaCatalogo>('grid');
 const soloDisponibles = ref(false);
+const inputPrecioMin = ref<number | undefined>();
+const inputPrecioMax = ref<number | undefined>();
+
 const {
   buscar,
   cargando,
@@ -350,19 +423,25 @@ const {
   termino,
   total,
   totalPaginas,
+  facetas,
+  marcasSeleccionadas,
+  lineasSeleccionadas,
+  resinasSeleccionadas,
+  coloresSeleccionados,
+  presentacionesSeleccionadas,
+  orden,
+  cambiarOrden,
+  toggleFiltro,
+  aplicarRangoPrecio,
 } = useCatalogoPublico();
 
 const productosVisibles = computed(() => {
-  const filtrados = soloDisponibles.value
-    ? productos.value.filter((producto) =>
-        producto.detalle?.variantes.some((variante) => variante.existencia_referencial > 0)
-      )
-    : [...productos.value];
-  if (orden.value === 'nombre') return filtrados.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-  if (orden.value === 'precio_asc') return filtrados.sort((a, b) => precioMinimo(a) - precioMinimo(b));
-  if (orden.value === 'precio_desc') return filtrados.sort((a, b) => precioMinimo(b) - precioMinimo(a));
-  return filtrados;
+  if (!soloDisponibles.value) return productos.value;
+  return productos.value.filter((producto) =>
+    producto.detalle?.variantes.some((variante) => variante.existencia_referencial > 0)
+  );
 });
+
 
 const cantidadMarcasDisponibles = computed(() => new Set(productos.value.map((producto) => producto.id_marca)).size);
 const muestrasColorDisponibles = computed(() => {
@@ -398,6 +477,13 @@ const presentacionesDisponibles = computed(() => [
 
 const rangoInicio = computed(() => (total.value === 0 ? 0 : (pagina.value - 1) * 8 + 1));
 const rangoFin = computed(() => Math.min(pagina.value * 8, total.value));
+const seleccionActual = computed(() => {
+  for (const categoria of categorias.value) {
+    const item = categoria.subcategorias.find((sub) => sub.id_subcategoria === subcategoria.value);
+    if (item) return { categoria: categoria.nombre, subcategoria: item.nombre };
+  }
+  return null;
+});
 
 function precioMinimo(producto: ProductoDestacadoPublico): number {
   const precios = producto.detalle?.variantes.map((variante) => variante.precio_vigente) ?? [];
@@ -412,10 +498,12 @@ function limpiarFiltros(): void {
   soloDisponibles.value = false;
   orden.value = 'relevancia';
   limpiar();
+  void router.push('/catalogo');
 }
 
 function seleccionarFiltro(id: number | undefined): void {
   seleccionarSubcategoria(id);
+  void router.push({ path: '/catalogo', query: id === undefined ? {} : { subcategoria: id } });
   filtrosMovilAbiertos.value = false;
 }
 
@@ -426,5 +514,9 @@ function seleccionarDesdeMenu(id: number): void {
 
 function verProducto(id: number): void {
   void router.push({ name: 'DetalleProductoPublico', params: { productoId: id } });
+}
+
+function irCalculadora(): void {
+  void router.push({ name: 'CalculadoraPinturaPublica', query: { volver: router.currentRoute.value.fullPath } });
 }
 </script>

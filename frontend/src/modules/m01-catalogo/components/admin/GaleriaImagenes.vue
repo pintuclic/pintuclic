@@ -29,7 +29,7 @@
       </div>
       <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
         <Checkbox v-model="nueva.es_principal" label="Usar como imagen principal (la que aparece en listados)" />
-        <Button type="submit" variant="conversion" size="sm" icon="plus" :disabled="subiendo || !nueva.imagen">
+        <Button type="submit" variant="action" size="sm" icon="plus" :disabled="subiendo">
           {{ subiendo ? 'Subiendo…' : 'Subir imagen' }}
         </Button>
       </div>

@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import { publicStorefrontRoutes } from '@/modules/m01-catalogo/publico.routes';
-import { adminCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboard-catalogo.routes';
+import { adminCatalogoRoutes } from '@/modules/m01-catalogo/catalogo.routes';
+import { m17Routes } from '@/modules/m17-permisos/m17.routes';
 import { ordenesRoutes } from '@/modules/m08-ordenes/m08-ordenes.routes';
 
 export const routes: RouteRecordRaw[] = [
@@ -30,6 +31,7 @@ export const routes: RouteRecordRaw[] = [
     children: [
       { path: '', redirect: '/admin/catalogo' },
       ...adminCatalogoRoutes,
+      ...m17Routes,
       {
         path: 'solicitudes',
         name: 'AdminSolicitudesEmpresa',

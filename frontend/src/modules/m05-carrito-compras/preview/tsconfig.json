@@ -1,0 +1,9 @@
+{
+  "extends": "../../../../tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node"],
+    "tsBuildInfoFile": "./.tsconfig.preview.tsbuildinfo"
+  },
+  "include": ["../**/*.ts", "../**/*.vue"],
+  "exclude": ["./.vite-cache", "./dist"]
+}

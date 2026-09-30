@@ -76,7 +76,7 @@ graph TD
     classDef vue fill:#41b883,stroke:#35495e,stroke-width:2px,color:#fff;
     classDef pinia fill:#ffe56b,stroke:#f39c12,stroke-width:2px,color:#333;
     classDef backend fill:#2c3e50,stroke:#2c3e50,stroke-width:2px,color:#fff;
-  
+
     A:::vue
     B:::vue
     C:::pinia
@@ -132,8 +132,8 @@ Cualquier agente de IA o desarrollador que construya código para el frontend de
 
 ### 4.2. Paleta Oficial de Colores y Tokens Semánticos (Obligatoria)
 
-> 🚨 **REGLA DE ORO DE DISEÑO (TOLERANCIA CERO):**  
-> Todo desarrollador o Agente de IA **DEBE utilizar única y exclusivamente los tokens oficiales** declarados en `src/core/theme/colors.ts` y mapeados en `tailwind.config.ts`.  
+> 🚨 **REGLA DE ORO DE DISEÑO (TOLERANCIA CERO):**
+> Todo desarrollador o Agente de IA **DEBE utilizar única y exclusivamente los tokens oficiales** declarados en `src/core/theme/colors.ts` y mapeados en `tailwind.config.ts`.
 > Queda terminantemente PROHIBIDO inventar clases con valores arbitrarios (ej. `bg-[#002855]`, `text-[#123]`) o usar colores de Tailwind ajenos a la marca (ej. `bg-purple-600`, `text-pink-500`).
 
 | Rol de Negocio | Color | HEX | Clases Tailwind | Aplicación Principal |
@@ -202,8 +202,8 @@ Residen exclusivamente dentro de la carpeta del módulo respectivo y definen los
 
 ### 5.3. Prohibición Absoluta de DTOs Inline en Vistas y Componentes (`.vue`)
 
-> ⛔ **DIRECTIVA OBLIGATORIA (TOLERANCIA CERO):**  
-> Queda terminantemente PROHIBIDO para cualquier desarrollador o Agente de IA declarar esquemas Zod inline (`z.object({...})`), reglas complejas de validación o expresiones regulares sueltas dentro de componentes o vistas Vue (`.vue`).  
+> ⛔ **DIRECTIVA OBLIGATORIA (TOLERANCIA CERO):**
+> Queda terminantemente PROHIBIDO para cualquier desarrollador o Agente de IA declarar esquemas Zod inline (`z.object({...})`), reglas complejas de validación o expresiones regulares sueltas dentro de componentes o vistas Vue (`.vue`).
 > **Todo esquema de formulario DEBE residir en su archivo `.dto.ts` correspondiente dentro de `dtos/` e importarse en el componente mediante `toTypedSchema(miSchemaDto)`.**
 
 ---

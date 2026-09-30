@@ -4,9 +4,8 @@
       <Button v-if="marcaFija" variant="neutral" icon="back" :to="{ name: 'M01Marcas' }">Volver a marcas</Button>
       <Button
         v-if="recurso !== 'productos'"
-        variant="conversion"
+        variant="action"
         icon="plus"
-        :disabled="!idMarca"
         @click="crear"
       >
         {{ textoCrear }}
@@ -31,6 +30,9 @@
     </div>
 
     <Alert v-if="taxonomias.error" variant="danger" class="mb-5">{{ taxonomias.error }}</Alert>
+    <Alert v-if="avisoMarca && !idMarca" variant="warning" class="mb-5" dismissible @close="avisoMarca = false">
+      Selecciona primero la marca a la que pertenecerá el registro.
+    </Alert>
 
     <SinResultados
       v-if="!idMarca"
@@ -84,6 +86,9 @@
       @reintentar="bases.recargar"
     >
       <template #cell-nombre="{ row }"><span class="font-medium text-neutral-black">{{ row.nombre }}</span></template>
+      <template #cell-productos="{ row }">
+        <Button variant="action" size="sm" @click="baseProductos = row">Productos que la ofrecen</Button>
+      </template>
       <template #cell-estado="{ row }"><Badge :estado="row.estado" table /></template>
       <template #cell-acciones="{ row }">
         <AccionesFila
@@ -177,6 +182,8 @@
       :guardar="formulario.guardar"
       @guardado="recargarActual"
     />
+    <!-- HU-CAT-12 flujo 2: qué productos entonables se preparan sobre cada base. -->
+    <ModalProductosBase :model-value="baseProductos !== null" :base="baseProductos" @update:model-value="!$event && (baseProductos = null)" />
     <ModalDesactivar
       v-model="cicloVida.abierto"
       :nombre="cicloVida.nombre"
@@ -196,6 +203,7 @@ import PanelListado from '../../components/admin/PanelListado.vue';
 import AccionesFila from '../../components/admin/AccionesFila.vue';
 import ModalFormularioCatalogo from '../../components/admin/ModalFormularioCatalogo.vue';
 import ModalDesactivar from '../../components/admin/ModalDesactivar.vue';
+import ModalProductosBase from '../../components/admin/ModalProductosBase.vue';
 import { useListado } from '../../composables/useListado';
 import { useEdicion } from '../../composables/useEdicion';
 import { FAMILIAS_CROMATICAS, familiaCromatica } from '../../composables/useColorCielab';
@@ -223,6 +231,9 @@ const idMarca = computed<number | null>(() => {
 const nombreMarca = computed(() => (idMarca.value ? taxonomias.nombreMarca(idMarca.value) : ''));
 
 const familia = ref('');
+const baseProductos = ref<Base | null>(null);
+/** El botón «Nuevo…» siempre se ve activo; si falta la marca, se avisa en lugar de deshabilitarlo. */
+const avisoMarca = ref(false);
 const lineas = useListado(() => CatalogoAdmin.lineas.listarPorMarca(idMarca.value!), { texto: (l) => `${l.nombre} ${l.gama_comercial ?? ''}` });
 const bases = useListado(() => CatalogoAdmin.bases.listarPorMarca(idMarca.value!), { texto: (b) => b.nombre });
 const colores = useListado(() => CatalogoAdmin.colores.listarPorMarca(idMarca.value!), {
@@ -259,6 +270,7 @@ const columnasLineas = [
 ];
 const columnasBases = [
   { key: 'nombre', label: 'Base' },
+  { key: 'productos', label: 'Productos entonables' },
   { key: 'estado', label: 'Estado' },
   { key: 'acciones', label: 'Acciones', align: 'right' as const },
 ];
@@ -298,7 +310,11 @@ const esquemaActual = computed(() => {
 });
 
 function crear(): void {
-  if (!idMarca.value || recurso.value === 'productos') return;
+  if (recurso.value === 'productos') return;
+  if (!idMarca.value) {
+    avisoMarca.value = true;
+    return;
+  }
   const api = CatalogoAdmin[recurso.value];
   abrirFormulario({
     modo: 'crear',

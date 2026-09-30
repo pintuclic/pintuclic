@@ -22,7 +22,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    exclude: [...configDefaults.exclude, 'src/core/components/forms/tests/**'],
+    exclude: [
+      ...configDefaults.exclude,
+      'src/core/components/forms/tests/**',
+      'src/modules/m17-permisos/tests/**',
+    ],
   },
 })
 

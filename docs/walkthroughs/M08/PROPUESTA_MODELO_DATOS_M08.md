@@ -3,6 +3,23 @@
 * **Para:** Ibsen (líder técnico) · **De:** Manuel (backend M08) · **Fecha:** 24/09/2026, ampliada el 28/09/2026 con las historias HU-ORD-08 a 11 y los criterios nuevos de HU-ORD-03 (sección 8)
 * **Base:** definiciones D01–D08 de la épica **#28** (actualización del 23/09/2026) y esquema `bd/sql/schema_pintuclic.sql` v3.7 en `develop`.
 * **Estado:** propuesta para revisión. No modifica ningún archivo compartido; los cambios de `schema_pintuclic.sql`, `seed_pintuclic.sql` y `core/db/types.ts` los decide y aplica el líder técnico.
+* **✅ Aplicado en v0.3.34.0 (29/09/2026, con aprobación del líder técnico):** secciones 1 (estados), 2 (historial), 8 · notas internas y 8 · registro de contactos. Detalle en `bd/docs/WALKTHROUGH_DATABASE.md` (versión 2.6) y `walkthrough_v0.3.34.0_M08_modelo_datos_estados_historial_backend.md`. Diferencias con lo propuesto:
+  * las claves primarias siguen la guía de BD (`id_historial_estado_orden`, `id_nota_orden`, `id_contacto_orden`);
+  * el historial añade `CHECK (estado_anterior IS DISTINCT FROM estado_nuevo)`;
+  * el motivo obligatorio se exige en el servicio, no con un `CHECK`.
+* **✅ Aplicado en v0.3.37.0 (29/09/2026, con visto bueno del líder técnico y confirmación del analista):**
+  secciones 3 (relación SOL → PC), 4 (consecutivo), 5 (copia histórica) y 8 · líneas entonadas. Detalle en
+  `bd/docs/WALKTHROUGH_DATABASE.md` (versión 2.7) y `walkthrough_v0.3.37.0_M08_copia_historica_backend.md`.
+  Diferencias con lo propuesto:
+  * **Relación SOL → PC:** se guarda `orden.codigo_solicitud` (el código visible `SOL-AAAA-NNNNN`, UNIQUE) en lugar de
+    `id_solicitud`, porque la tabla de M07 aún no existe.
+  * **Consecutivo:** se eligió el contador sin huecos (opción B), porque RF-ORD-06-04 dice que un salto solo puede ser un
+    pedido cancelado. La tabla `consecutivo` es genérica, para que M07 la use también con SOL.
+  * **Copia histórica:** `sub_total` es la suma de precios iniciales, `descuento` la suma de descuentos y `total` lo
+    cobrado. Los importes se copian congelados de la solicitud: la base de datos no redondea ni recalcula (el redondeo
+    sigue pendiente del analista principal).
+  * **Retención:** `linea_orden` pasa a `ON DELETE RESTRICT` (sección 7.5).
+  * **Base de las líneas entonadas:** `base_consumida VARCHAR(150)`.
 
 La épica #28 deja pendiente de líder técnico: *«Modelo y enum reconciliados con las transiciones definidas; permisos e historial persistente validados»*. Este documento propone ese modelo para que la revisión parta de algo concreto. Cada bloque indica qué criterios desbloquea y qué decisión queda abierta.
 
@@ -12,17 +29,17 @@ La épica #28 deja pendiente de líder técnico: *«Modelo y enum reconciliados 
 
 | # | Cambio | Desbloquea | Decisión abierta |
 | --- | --- | --- | --- |
-| 1 | Nuevos valores de `enum_estado_orden` | HU-ORD-03 y el avance de HU-ORD-05: #131, #176, #177 (esc. 2), #183 | Si `pendiente` se elimina recreando el tipo o queda sin uso |
-| 2 | Tabla `historial_estado_orden` | #421, #131, #136, #422, historia de #150 | Si se protege con un disparador de solo inserción |
-| 3 | `orden.id_solicitud` (relación SOL → PC) | #110, #113, #115, #417, #418 (junto con M07) | Diseño de la solicitud y de `pagos` (M07) |
-| 4 | Consecutivo del código `PC-AAAA-NNNNN` | #180, #426 | Secuencia (con posibles huecos) o contador sin huecos |
-| 5 | Copia histórica: color, precio inicial, descuentos, IVA y entrega | #124, #125, #420, #150, #152, #424, #136, #183 (esc. 3) | Qué pasa con `sub_total` y `descuento` actuales |
+| 1 | ✅ Nuevos valores de `enum_estado_orden` (v0.3.34.0) | HU-ORD-03 y el avance de HU-ORD-05: #131, #176, #177 (esc. 2), #183 | Resuelto: `pendiente` queda sin uso en bases migradas |
+| 2 | ✅ Tabla `historial_estado_orden` (v0.3.34.0) | #421, #131, #136, #422, historia de #150 | Si se protege con un disparador de solo inserción |
+| 3 | ✅ Relación SOL → PC como `orden.codigo_solicitud` (v0.3.37.0) | #110, #113, #115, #417, #418 (junto con M07) | Diseño de la solicitud y de `pagos` (M07) |
+| 4 | ✅ Consecutivo del código `PC-AAAA-NNNNN` (v0.3.37.0) | #180, #426 | Secuencia (con posibles huecos) o contador sin huecos |
+| 5 | ✅ Copia histórica: color, precio inicial, descuentos, IVA y entrega (v0.3.37.0) | #124, #125, #420, #150, #152, #424, #136, #183 (esc. 3) | Qué pasa con `sub_total` y `descuento` actuales |
 | 6 | Verificación de disponibilidad por línea | #134, #131 (esc. 3) | Reparto con M09 |
 | 7 | Permisos y aclaraciones | Seguridad de HU-ORD-05; #115 | Ver sección 7 |
-| 8 | Notas internas (`nota_orden`) | HU-ORD-10: #904, #905, #906 | Si se protege con un disparador de solo inserción |
-| 9 | Registro de contactos (`contacto_orden`) | #903 | Qué medios de contacto se admiten |
+| 8 | ✅ Notas internas (`nota_orden`) (v0.3.34.0) | HU-ORD-10: #904, #905, #906 | Si se protege con un disparador de solo inserción |
+| 9 | ✅ Registro de contactos (`contacto_orden`) (v0.3.34.0) | #903 | Qué medios de contacto se admiten |
 | 10 | Dinero por devolver (`devolucion_dinero_orden`) | #422, #891, #892 | Política de M11 |
-| 11 | Línea entonada: `es_entonado` y `base_consumida` | #893, #901 | — |
+| 11 | ✅ Línea entonada: `es_entonado` y `base_consumida` (v0.3.37.0) | #893, #901 | — |
 
 ---
 

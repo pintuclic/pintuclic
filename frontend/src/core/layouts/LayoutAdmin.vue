@@ -130,6 +130,10 @@
               <DropletIcon class="w-4 h-4 shrink-0" />
               Colores
             </router-link>
+            <router-link to="/admin/catalogo/bases" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+              <PaintBucketIcon class="w-4 h-4 shrink-0" />
+              Bases
+            </router-link>
             <router-link to="/admin/catalogo/busquedas-sin-resultado" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <SearchIcon class="w-4 h-4 shrink-0" />
               Búsquedas
@@ -282,6 +286,7 @@ import {
   LayoutGrid as LayoutGridIcon,
   Tag as TagIcon,
   Droplet as DropletIcon,
+  PaintBucket as PaintBucketIcon,
   Search as SearchIcon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
