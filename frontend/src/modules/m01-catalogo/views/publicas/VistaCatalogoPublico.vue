@@ -5,10 +5,16 @@
         <nav class="text-xs text-neutral-medium" aria-label="Migas de pan">
           <router-link to="/" class="transition-colors hover:text-action">Inicio</router-link>
           <ChevronRight :size="13" class="mx-1 inline" />
-          <span class="font-medium text-corporate">Productos</span>
+          <span :class="seleccionActual ? 'text-neutral-medium' : 'font-medium text-corporate'">Productos</span>
+          <template v-if="seleccionActual">
+            <ChevronRight :size="13" class="mx-1 inline" />
+            <span class="text-neutral-medium">{{ seleccionActual.categoria }}</span>
+            <ChevronRight :size="13" class="mx-1 inline" />
+            <span class="font-medium text-corporate">{{ seleccionActual.subcategoria }}</span>
+          </template>
         </nav>
-        <h1 class="font-title mt-4 text-3xl font-bold text-corporate sm:text-4xl">Catálogo de productos</h1>
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-neutral-medium">Explora pinturas, herramientas y accesorios publicados para completar tu proyecto.</p>
+        <h1 class="font-title mt-4 text-3xl font-bold text-corporate sm:text-4xl">{{ seleccionActual?.subcategoria ?? 'Todos los productos' }}</h1>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-neutral-medium">{{ seleccionActual ? `Productos de ${seleccionActual.categoria}` : 'Explora pinturas, herramientas y accesorios publicados para completar tu proyecto.' }}</p>
       </section>
 
       <section class="mx-auto max-w-7xl px-4 pb-6 sm:px-6">
@@ -33,7 +39,7 @@
           <button
             type="button"
             class="inline-flex h-11 items-center justify-center gap-2 rounded-button bg-conversion px-7 text-sm font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-conversion-hover hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion"
-            @click="calculadoraAbierta = true"
+            @click="irCalculadora"
           >
             <Calculator :size="18" /> Calculadora
           </button>
@@ -62,32 +68,31 @@
       </div>
 
       <!-- Barra de Filtros y Ordenamiento -->
-      <section class="sticky top-0 z-30 border-y border-neutral-light bg-neutral-white/95 shadow-sm backdrop-blur">
-        <div class="mx-auto flex min-h-16 max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6">
-          <div class="flex items-center gap-3">
+      <section class="sticky top-20 z-30 border-y border-neutral-light bg-neutral-white/95 shadow-sm backdrop-blur">
+        <div class="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-4 py-2 sm:gap-3 sm:px-6">
+          <div class="flex min-w-0 items-center gap-2 lg:order-2 lg:ml-auto">
             <button
               type="button"
-              class="inline-flex min-h-11 items-center gap-2 rounded-button border border-action bg-neutral-white px-4 text-sm font-medium text-action transition-colors hover:bg-action hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action lg:hidden"
+              class="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-button border border-action bg-neutral-white px-2 text-xs font-medium text-action transition-colors hover:bg-action hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action sm:gap-2 sm:px-4 sm:text-sm lg:hidden"
               @click="filtrosMovilAbiertos = true"
             >
               <SlidersHorizontal :size="17" /> Filtros
             </button>
-            <p class="text-xs text-neutral-medium sm:text-sm">
-              Mostrando <strong class="text-neutral-black">{{ rangoInicio }}–{{ rangoFin }}</strong> de <strong class="text-neutral-black">{{ total }}</strong>
-            </p>
-          </div>
-          <div class="flex items-center gap-2">
-            <label class="flex min-h-11 items-center gap-2 rounded-input border border-neutral-light bg-neutral-white px-3 text-xs text-neutral-medium">
-              <ArrowUpDown :size="15" />
+            <label class="flex min-h-11 min-w-0 items-center gap-1 rounded-input border border-neutral-light bg-neutral-white px-2 text-xs text-neutral-medium sm:gap-2 sm:px-3">
+              <ArrowUpDown :size="15" class="shrink-0" />
               <span class="hidden sm:inline">Ordenar:</span>
-              <select v-model="orden" class="bg-transparent font-medium text-neutral-dark outline-none">
+              <select v-model="orden" aria-label="Ordenar productos" class="min-w-0 max-w-24 bg-transparent font-medium text-neutral-dark outline-none sm:max-w-none">
                 <option value="relevancia">Relevancia</option>
                 <option value="nombre">Nombre A–Z</option>
                 <option value="precio_asc">Menor precio</option>
                 <option value="precio_desc">Mayor precio</option>
               </select>
             </label>
-            <div class="hidden rounded-button border border-neutral-light bg-neutral-white p-1 sm:flex" aria-label="Tipo de vista">
+          </div>
+          <p class="ml-auto shrink-0 whitespace-nowrap text-right text-[10px] text-neutral-medium sm:text-sm lg:order-1 lg:ml-0">
+            <span class="hidden min-[360px]:inline">Mostrando </span><strong class="text-neutral-black">{{ rangoInicio }}–{{ rangoFin }}</strong> de <strong class="text-neutral-black">{{ total }}</strong>
+          </p>
+          <div class="hidden rounded-button border border-neutral-light bg-neutral-white p-1 sm:flex lg:order-3" aria-label="Tipo de vista">
               <button
                 type="button"
                 class="grid h-9 w-9 place-items-center rounded-button transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
@@ -106,7 +111,6 @@
               >
                 <List :size="18" />
               </button>
-            </div>
           </div>
         </div>
       </section>
@@ -216,7 +220,7 @@
 
         <!-- Cuadrícula de Productos -->
         <div class="min-w-0">
-          <div v-if="cargando" class="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 xl:grid-cols-4" aria-live="polite">
+          <div v-if="cargando" class="grid grid-cols-1 gap-x-6 gap-y-8 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4" aria-live="polite">
             <div v-for="n in 8" :key="n" class="h-96 animate-pulse rounded-card bg-neutral-light" />
           </div>
           <div v-else-if="error" class="rounded-card border border-neutral-light bg-neutral-white p-12 text-center shadow-sm">
@@ -226,7 +230,7 @@
               Reintentar
             </button>
           </div>
-          <div v-else-if="productosVisibles.length" :class="vista === 'grid' ? 'grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 xl:grid-cols-4' : 'grid grid-cols-1 gap-6'">
+          <div v-else-if="productosVisibles.length" :class="vista === 'grid' ? 'grid grid-cols-1 gap-x-6 gap-y-8 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4' : 'grid grid-cols-1 gap-6'">
             <TarjetaProductoPublico
               v-for="producto in productosVisibles"
               :key="producto.id_producto"
@@ -288,12 +292,6 @@
       @cerrar="menuCategoriasAbierto = false"
       @seleccionar="seleccionarDesdeMenu"
     />
-    <CalculadoraPinturaPublica
-      :abierta="calculadoraAbierta"
-      :producto="productos[0]?.detalle"
-      @cerrar="calculadoraAbierta = false"
-      @agregar="mostrarMensaje('Agregar al carrito requiere M07.')"
-    />
   </div>
 </template>
 
@@ -314,7 +312,6 @@ import {
   X,
 } from 'lucide-vue-next';
 import { Paginacion } from '@/core/components';
-import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPinturaPublica.vue';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import { useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
@@ -330,7 +327,6 @@ const fondoCompletaProyecto = {
 const router = useRouter();
 const menuCategoriasAbierto = ref(false);
 const filtrosMovilAbiertos = ref(false);
-const calculadoraAbierta = ref(false);
 const mensaje = ref<string | null>(null);
 const orden = ref<OrdenCatalogo>('relevancia');
 const vista = ref<VistaCatalogo>('grid');
@@ -398,6 +394,13 @@ const presentacionesDisponibles = computed(() => [
 
 const rangoInicio = computed(() => (total.value === 0 ? 0 : (pagina.value - 1) * 8 + 1));
 const rangoFin = computed(() => Math.min(pagina.value * 8, total.value));
+const seleccionActual = computed(() => {
+  for (const categoria of categorias.value) {
+    const item = categoria.subcategorias.find((sub) => sub.id_subcategoria === subcategoria.value);
+    if (item) return { categoria: categoria.nombre, subcategoria: item.nombre };
+  }
+  return null;
+});
 
 function precioMinimo(producto: ProductoDestacadoPublico): number {
   const precios = producto.detalle?.variantes.map((variante) => variante.precio_vigente) ?? [];
@@ -412,10 +415,12 @@ function limpiarFiltros(): void {
   soloDisponibles.value = false;
   orden.value = 'relevancia';
   limpiar();
+  void router.push('/catalogo');
 }
 
 function seleccionarFiltro(id: number | undefined): void {
   seleccionarSubcategoria(id);
+  void router.push({ path: '/catalogo', query: id === undefined ? {} : { subcategoria: id } });
   filtrosMovilAbiertos.value = false;
 }
 
@@ -426,5 +431,9 @@ function seleccionarDesdeMenu(id: number): void {
 
 function verProducto(id: number): void {
   void router.push({ name: 'DetalleProductoPublico', params: { productoId: id } });
+}
+
+function irCalculadora(): void {
+  void router.push({ name: 'CalculadoraPinturaPublica', query: { volver: router.currentRoute.value.fullPath } });
 }
 </script>

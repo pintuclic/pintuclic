@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-neutral-lightest font-sans">
+  <div class="flex min-h-screen min-w-0 flex-col bg-neutral-lightest font-sans">
 
     <!-- Top Bar Azul Oscuro -->
-    <div class="bg-corporate text-white py-1.5 text-xs font-medium tracking-wide">
+    <div class="hidden bg-corporate py-1.5 text-xs font-medium tracking-wide text-white xl:block">
       <div class="container mx-auto px-4 lg:px-8 flex justify-end items-center gap-6">
         <div class="flex items-center gap-1.5 cursor-pointer hover:text-white/80 transition-colors">
           <MapPinIcon class="w-3.5 h-3.5" /> Envíos a todo el Caquetá
@@ -23,28 +23,36 @@
     </div>
 
     <!-- Main Navbar Blanco -->
-    <header class="bg-white border-b border-neutral-light sticky top-0 z-40 shadow-sm">
-      <div class="container mx-auto px-4 lg:px-8 h-20 flex items-center justify-between">
+    <header class="sticky top-0 z-40 w-screen border-b border-neutral-light bg-white shadow-sm xl:w-auto">
+      <div class="container relative mx-auto flex h-20 w-full min-w-0 items-center justify-between px-4 lg:px-8">
 
-        <!-- Logo y Categorías -->
-        <div class="flex items-center gap-6">
+        <!-- Logo y categorías -->
+        <div class="flex min-w-0 items-center gap-6">
           <router-link to="/" class="flex-shrink-0 cursor-pointer">
             <img src="@/assets/logo.png" alt="Pintu Clic" class="h-10 object-contain" />
           </router-link>
-          
-          <button 
+          <button
             type="button"
-            class="flex items-center gap-2 bg-action hover:bg-action-hover text-white transition-colors px-4 py-2.5 rounded-lg font-bold text-sm cursor-pointer shadow-sm"
+            class="grid h-11 w-11 place-items-center rounded-button bg-action text-white shadow-sm xl:hidden"
+            :aria-label="showMenuMovil ? 'Cerrar menú principal' : 'Abrir menú principal'"
+            :aria-expanded="showMenuMovil"
+            @click="openMenuMovil"
+          >
+            <MenuIcon class="h-5 w-5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class="hidden items-center gap-2 rounded-lg bg-action px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-action-hover xl:flex"
             @click="openCategorias"
           >
-            <MenuIcon class="w-5 h-5" />
+            <MenuIcon class="h-5 w-5" aria-hidden="true" />
             Categorías
-            <ChevronDownIcon class="w-4 h-4 ml-1" />
+            <ChevronDownIcon class="ml-1 h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
         <!-- Enlaces Principales -->
-        <nav class="hidden xl:flex items-center gap-6 font-semibold text-neutral-dark text-[15px]">
+        <nav class="hidden shrink-0 items-center gap-4 whitespace-nowrap text-[15px] font-semibold text-neutral-dark xl:ml-4 xl:flex 2xl:ml-12 2xl:gap-6">
           <router-link 
             to="/" 
             class="relative py-1 cursor-pointer group transition-colors"
@@ -90,7 +98,7 @@
         </nav>
 
         <!-- Acciones Derecha -->
-        <div class="flex items-center gap-6">
+        <div class="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-3 lg:right-8 xl:static xl:ml-auto xl:translate-y-0 xl:gap-6">
 
           <!-- Acciones: Mi Cuenta -->
           <Dropdown v-if="authStore.isAuthenticated" align="right" width="w-48">
@@ -160,10 +168,21 @@
           </button>
         </div>
       </div>
+      <MenuNavegacionMovil
+        :abierto="showMenuMovil"
+        :cargando="cargandoCategoriasMovil"
+        :error="errorCategoriasMovil"
+        :categorias="categoriasMovil"
+        :subcategoria-actual="Number(route.query.subcategoria) || undefined"
+        @cerrar="showMenuMovil = false"
+        @recargar-categorias="cargarCategoriasMovil"
+        @seleccionar-todos="handleSelectTodos"
+        @seleccionar="handleSelectSubcategoria"
+      />
     </header>
 
     <!-- Slot Principal Dinámico (Vistas inyectadas por Vue Router) -->
-    <main class="flex-1">
+    <main class="min-w-0 flex-1">
       <router-view />
     </main>
 
@@ -201,14 +220,15 @@
       </div>
     </Modal>
 
-    <!-- Modal Global de Categorías M01 -->
     <MenuCategoriasPublico
       :abierto="showCategorias"
       :cargando="cargandoCategorias"
       :categorias="categorias"
       @cerrar="showCategorias = false"
+      @seleccionar-todos="handleSelectTodos"
       @seleccionar="handleSelectSubcategoria"
     />
+
   </div>
 </template>
 
@@ -230,45 +250,14 @@ import { Button, Dropdown, FooterPrincipal, Modal } from '@/core/components';
 import ModalLogin from '@/modules/m04-cuentas/components/auth/ModalLogin.vue';
 import RegistroWizard from '@/modules/m04-cuentas/components/registro/RegistroWizard.vue';
 import RecuperarPasswordWizard from '@/modules/m04-cuentas/components/recuperacion/RecuperarPasswordWizard.vue';
-import MenuCategoriasPublico from '@/modules/m01-dashboardcatalogo/components/publicas/MenuCategoriasPublico.vue';
-import { CatalogoPublicoService } from '@/modules/m01-dashboardcatalogo/services/catalogo-publico.service';
-import type { CategoriaPublica } from '@/modules/m01-dashboardcatalogo/interfaces/catalogo-publico.interface';
+import MenuCategoriasPublico from '@/modules/m01-catalogo/components/publicas/MenuCategoriasPublico.vue';
+import MenuNavegacionMovil from '@/modules/m01-catalogo/components/publicas/MenuNavegacionMovil.vue';
+import { CatalogoPublicoService } from '@/modules/m01-catalogo/services/publicas/catalogo-publico.service';
+import type { CategoriaPublica } from '@/modules/m01-catalogo/interfaces/publicas/catalogo-publico.interface';
 import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import { watchEffect } from 'vue';
-
-// Categorías predefinidas de respaldo (garantiza UI funcional incluso si el backend está iniciando)
-const CATEGORIAS_FALLBACK: readonly CategoriaPublica[] = [
-  {
-    id_categoria: 1,
-    nombre: 'Pinturas',
-    subcategorias: [
-      { id_subcategoria: 1, nombre: 'Pinturas Interiores' },
-      { id_subcategoria: 2, nombre: 'Pinturas Exteriores' },
-      { id_subcategoria: 3, nombre: 'Esmaltes y Barnices' },
-      { id_subcategoria: 4, nombre: 'Pinturas en Spray' },
-    ],
-  },
-  {
-    id_categoria: 2,
-    nombre: 'Herramientas',
-    subcategorias: [
-      { id_subcategoria: 5, nombre: 'Brochas y Rodillos' },
-      { id_subcategoria: 6, nombre: 'Espátulas y Llanas' },
-      { id_subcategoria: 7, nombre: 'Cintas y Protección' },
-    ],
-  },
-  {
-    id_categoria: 3,
-    nombre: 'Preparación y Acabados',
-    subcategorias: [
-      { id_subcategoria: 8, nombre: 'Estucos y Masillas' },
-      { id_subcategoria: 9, nombre: 'Lijas y Abrasivos' },
-      { id_subcategoria: 10, nombre: 'Selladores y Primer' },
-    ],
-  },
-];
 
 // Estado global local del layout para modales
 const showLogin = ref(false);
@@ -276,8 +265,12 @@ const showWizard = ref(false);
 const showRecover = ref(false);
 const showLogoutConfirm = ref(false);
 const showCategorias = ref(false);
+const showMenuMovil = ref(false);
 const cargandoCategorias = ref(false);
 const categorias = ref<readonly CategoriaPublica[]>([]);
+const cargandoCategoriasMovil = ref(false);
+const errorCategoriasMovil = ref(false);
+const categoriasMovil = ref<readonly CategoriaPublica[]>([]);
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -304,31 +297,52 @@ const closeAllModals = () => {
   showWizard.value = false;
   showRecover.value = false;
   showCategorias.value = false;
+  showMenuMovil.value = false;
+};
+
+const cargarCategoriasMovil = async () => {
+  cargandoCategoriasMovil.value = true;
+  errorCategoriasMovil.value = false;
+  try {
+    categoriasMovil.value = await CatalogoPublicoService.listarCategorias();
+  } catch {
+    errorCategoriasMovil.value = true;
+  } finally {
+    cargandoCategoriasMovil.value = false;
+  }
+};
+
+const openMenuMovil = () => {
+  const abrir = !showMenuMovil.value;
+  closeAllModals();
+  showMenuMovil.value = abrir;
+  if (abrir && categoriasMovil.value.length === 0) void cargarCategoriasMovil();
 };
 
 const openCategorias = async () => {
   closeAllModals();
   showCategorias.value = true;
-  if (categorias.value.length === 0) {
-    cargandoCategorias.value = true;
-    try {
-      const data = await CatalogoPublicoService.listarCategorias();
-      if (Array.isArray(data) && data.length > 0) {
-        categorias.value = data;
-      } else {
-        categorias.value = CATEGORIAS_FALLBACK;
-      }
-    } catch {
-      categorias.value = CATEGORIAS_FALLBACK;
-    } finally {
-      cargandoCategorias.value = false;
-    }
+  if (categorias.value.length > 0) return;
+  cargandoCategorias.value = true;
+  try {
+    categorias.value = await CatalogoPublicoService.listarCategorias();
+  } catch {
+    categorias.value = [];
+  } finally {
+    cargandoCategorias.value = false;
   }
 };
 
 const handleSelectSubcategoria = (idSubcategoria: number) => {
   showCategorias.value = false;
+  showMenuMovil.value = false;
   void router.push({ path: '/catalogo', query: { subcategoria: idSubcategoria } });
+};
+
+const handleSelectTodos = () => {
+  showCategorias.value = false;
+  showMenuMovil.value = false;
+  void router.push({ path: '/catalogo' });
 };
 
 const openLogin = () => {
