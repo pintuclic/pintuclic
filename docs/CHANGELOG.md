@@ -7,6 +7,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.3.41.0] - 2026-09-30
+
+### M01: Vista de Gestión de Bases y Unificación de Botones del Panel Administrativo
+
+* **Alcance General:** Incremento **MINIOR-FEAT (v0.3.41.0)** que agrega al panel administrativo la vista de gestión de bases (HU-CAT-12) y unifica el color de los botones de acción.
+* **Hitos Clave:**
+  * **Vista de bases:** nueva ruta `/admin/catalogo/bases` para listar, crear, editar, desactivar y reactivar las bases de cada marca, con enlace «Bases» en el menú lateral.
+  * **Asignación a productos entonables:** modal «Productos que ofrecen esta base» (RF-CAT-12-02/03) conectado a `/api/catalogo/productos/:id/bases`.
+  * **Botones del panel:** todos los botones de acción usan el token `action`; ya no se deshabilitan en reposo, sino que indican qué falta.
+  * **Corrección de enrutamiento:** el panel admin vuelve a usar `m01-catalogo` y se elimina la carpeta `m01-dashboardcatalogo`, reintroducida por error en #1040.
+* **Versión anterior:** `v0.3.40.0`
+* **Nueva versión:** `v0.3.41.0`
+* **Tipo de cambio:** `Minior-feat`
+* 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.3.41.0_M01_vista_bases_frontend.md](./walkthroughs/M01/walkthrough_v0.3.41.0_M01_vista_bases_frontend.md)
+
+---
 ## [v0.3.40.0] - 2026-09-30
 
 ### M02: Integración Frontend de Búsqueda Tolerante, Facetas Dinámicas y Analítica
