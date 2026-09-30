@@ -7,6 +7,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.3.41.1] - 2026-09-30
+### Core / Infraestructura: Restauración de `ALLOWED_ORIGINS` en el despliegue (CORS)
+- **Alcance General:** Incremento **PATCH (v0.3.41.1)** que corrige el error 500 en todas las peticiones del navegador (login, registro, carrito, etc.). El `.env` generado por el deploy no incluía `ALLOWED_ORIGINS`, por lo que el backend usaba el default de `localhost` y el middleware CORS rechazaba el origen real `https://www.pintuclic.com`.
+- **Hitos Clave:**
+  - **`.env.example`:** nueva sección 5 con `ALLOWED_ORIGINS=https://www.pintuclic.com,https://pintuclic.com`.
+  - **`deploy.yml`:** la Variable `ALLOWED_ORIGINS` se mapea al `.env` generado y se valida que no venga vacía, fallando con mensaje claro antes de levantar contenedores.
+  - **Configuración:** la Variable `ALLOWED_ORIGINS` queda creada en GitHub Actions (Repository variables).
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.41.1_core_restauracion_allowed_origins.md](./walkthroughs/core/walkthrough_v0.3.41.1_core_restauracion_allowed_origins.md)
+
+---
+
 ## [v0.3.41.0] - 2026-09-30
 
 ### M01: Vista de Gestión de Bases y Unificación de Botones del Panel Administrativo
@@ -172,6 +183,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Backend:** tipos Kysely en `core/db/types.ts`; M08 usa los estados nuevos (Mis pedidos: `despachado` y `devuelto` van a finalizados). Ningún otro módulo usaba los estados de la orden.
   - **Verificación:** `tsc` y `lint` limpios; pruebas M08 52/52; integración 20/20 en base migrada y en base nueva; simulación del deploy con `psql` sobre el estado actual del servidor.
   - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.34.0_M08_modelo_datos_estados_historial_backend.md](./walkthroughs/M08/walkthrough_v0.3.34.0_M08_modelo_datos_estados_historial_backend.md) · Detalle de BD: [bd/docs/WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md)
+
+---
+
+## [v0.3.33.1] - 2026-09-29
+### Core / Infraestructura: Carga del esquema y catálogo de la base de datos en el deploy
+- **Alcance General:** Incremento **PATCH (v0.3.33.1)** que agrega al workflow `Deploy` la carga idempotente del esquema y los datos iniciales desde `bd/sql/`, para que la base de datos del VPS quede operativa con el catálogo y las cuentas de prueba documentadas.
+- **Hitos Clave:**
+  - **Nuevo paso `Cargar esquema y catálogo en PostgreSQL`:** ejecuta `schema_pintuclic.sql` y `seed_pintuclic.sql` con `psql` dentro del contenedor `pintuclic-db`, usando las credenciales del propio contenedor (`POSTGRES_USER`/`POSTGRES_DB`) y `ON_ERROR_STOP=1`.
+  - **Idempotencia:** el DDL usa `IF NOT EXISTS` (el `DROP SCHEMA` está comentado) y el seed usa `ON CONFLICT DO NOTHING`, por lo que puede ejecutarse en cada despliegue sin borrar `pgdata` ni duplicar registros.
+  - **Credenciales de prueba:** quedan disponibles `admin@pintuclic.co` y los demás usuarios del seed con la contraseña `Pintuclic2026` (hash BCrypt costo 12 ya incluido en `bd/sql/seed_pintuclic.sql`); se recomienda cambiar la clave del admin tras la primera carga.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.33.1_core_carga_bd_en_deploy.md](./walkthroughs/core/walkthrough_v0.3.33.1_core_carga_bd_en_deploy.md)
 
 ---
 
