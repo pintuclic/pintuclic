@@ -8,7 +8,7 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 ## [v0.4.0.0] - 2026-09-30
-## Versión estable
+### Versión estable
 - Solo un cambio de versión, la web funciona bastante bien.
 
 ---
