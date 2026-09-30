@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import { publicStorefrontRoutes } from '@/modules/m01-catalogo/publico.routes';
 import { adminCatalogoRoutes } from '@/modules/m01-dashboardcatalogo/dashboard-catalogo.routes';
+import { ordenesRoutes } from '@/modules/m08-ordenes/m08-ordenes.routes';
 
 export const routes: RouteRecordRaw[] = [
   // 1. Tienda Pública / Storefront (LayoutHome maestro permanente)
@@ -16,6 +17,8 @@ export const routes: RouteRecordRaw[] = [
         name: 'Perfil',
         component: () => import('@/modules/m04-cuentas/views/VistaPerfil.vue'),
       },
+      // M08: sección de pedidos del cliente (pendiente de aprobación, ver reporte de parada)
+      ...ordenesRoutes,
     ],
   },
 

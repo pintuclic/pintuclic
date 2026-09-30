@@ -50,8 +50,24 @@ export const ESTADOS: Record<EstadoOrden, PresentacionEstado> = {
   // Rojo: error o alerta.
   cancelado: {
     etiqueta: 'Cancelado',
-    clases: 'bg-neutral-lightest text-neutral-dark',
+    clases: 'bg-danger-subtle text-danger',
   },
+};
+
+/**
+ * Descripción de cada etapa en la línea de tiempo, tomada del diseño
+ * «Seguimiento de Pedido» del Figma.
+ *
+ * ⚠️ Son textos fijos de la interfaz, no datos: el backend no devuelve ninguna
+ * descripción ni fecha por etapa.
+ */
+export const DESCRIPCION_ETAPA: Record<EstadoOrden, string> = {
+  pendiente: 'Tu orden fue registrada y está a la espera de confirmación de pago.',
+  pagado: 'Transacción aprobada mediante pasarela segura.',
+  en_preparacion: 'Pinturas en proceso de envasado y embalaje en bodega.',
+  enviado: 'Entregado a la transportadora aliada para su despacho.',
+  entregado: 'Confirmación de recibido con firma en el destino.',
+  cancelado: 'El pedido fue cancelado y no continuará su proceso.',
 };
 
 /** Orden de la línea de tiempo del pedido, para deducir los pasos recorridos. */
