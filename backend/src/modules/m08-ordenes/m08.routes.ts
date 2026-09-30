@@ -6,6 +6,7 @@ import { servicioNotificaciones } from '../m18-notificaciones/notificaciones.rou
 import { OrdenesRepository } from './repositories/ordenes.repository';
 import { OrdenesService } from './services/ordenes.service';
 import { GestionOrdenesService } from './services/gestion-ordenes.service';
+import { CreacionOrdenService } from './services/creacion-orden.service';
 import { OrdenesController } from './controllers/ordenes.controller';
 
 // ==============================================================================
@@ -37,6 +38,15 @@ const ordenesRepo = new OrdenesRepository(db);
 const ordenesService = new OrdenesService(ordenesRepo, serviciosSeguridad.registro);
 const gestionService = new GestionOrdenesService(ordenesRepo, servicioNotificaciones);
 const ordenesCtrl = new OrdenesController(ordenesService, gestionService);
+
+/**
+ * Servicios de M08 para otros módulos. `creacion.crearDesdePagoConfirmado()` es el punto
+ * por el que M07 convierte una solicitud con el pago confirmado en orden (HU-ORD-01). No
+ * tiene ruta HTTP: quien confirma el pago (pasarela o «Verificación de pagos») es M07.
+ */
+export const serviciosOrdenes = {
+  creacion: new CreacionOrdenService(ordenesRepo, servicioNotificaciones),
+};
 
 const ordenesRoutes = Router();
 

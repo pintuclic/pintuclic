@@ -8,6 +8,32 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.38.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Creación de la Orden al Confirmarse el Pago (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.38.0)** con el servicio que convierte una solicitud SOL con el pago confirmado en orden (HU-ORD-01). Lo llamará M07, que no tiene responsable. Sin cambios de BD, de archivos compartidos ni de rutas HTTP.
+- **Hitos Clave:**
+  - **Contrato para M07:** `serviciosOrdenes.creacion.crearDesdePagoConfirmado()`, exportado en `m08.routes.ts`.
+    - Valida la solicitud con Zod estricto: los campos desconocidos se rechazan.
+    - Crea la orden en «Orden confirmada» con el código `PC-AAAA-NNNNN` (consecutivo sin huecos, año de Colombia).
+    - Devuelve `{ codigo, codigoSolicitud, estado, creada }`.
+  - **Reglas:**
+    - sin pago confirmado no hay orden, y un pago inferior al total se rechaza (`RF-ORD-01-01`, D06);
+    - la pasarela y la verificación manual son equivalentes (`CA-ORD-01-03`);
+    - se registra la cotización de origen (`CA-ORD-01-04`);
+    - una confirmación repetida o simultánea devuelve la misma orden (`CA-ORD-01-05`);
+    - todo va en una transacción, así que un fallo no deja nada ni gasta número (`CA-ORD-01-06`, `RF-ORD-06-04`).
+  - **Copia histórica al crear:** líneas, color, precios, descuentos en orden, IVA y entrega tal como los congeló la solicitud, sin recalcular ni redondear (D07). Primer registro del historial con el sistema o el empleado como autor.
+  - **Correo (D05):** «Orden confirmada» al cliente al nacer la orden, sin bloquear. El aviso a M18 pasa a un archivo común con el cambio de estado.
+  - **Verificación:**
+    - `tsc` y `lint` limpios;
+    - pruebas en memoria 117/117;
+    - creación contra PostgreSQL con ROLLBACK 16/16, incluidas dos creaciones simultáneas;
+    - lectura 36/36 y escritura 17/17;
+    - servicio real con correo simulado y HTTP 7/7, en una base temporal.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.38.0_M08_creacion_orden_pago_confirmado_backend.md](./walkthroughs/M08/walkthrough_v0.3.38.0_M08_creacion_orden_pago_confirmado_backend.md)
+
+---
+
 ## [v0.3.37.0] - 2026-09-29
 ### Módulo: M08 Orden de Venta — Copia Histórica Completa de la Orden (Backend / BD)
 - **Alcance General:** Incremento **Minior-feat (v0.3.37.0)** con la segunda tanda del modelo de datos de M08: esquema **3.9** (documentación de BD **v2.7**), de 47 a 49 tablas. Tiene visto bueno del líder técnico y el analista confirmó que está definido.

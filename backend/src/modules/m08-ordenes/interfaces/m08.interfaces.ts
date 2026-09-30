@@ -6,6 +6,9 @@ import type {
   EnumOrigenOrden,
   LineaOrden,
   LineaOrdenDescuento,
+  NewLineaOrden,
+  NewLineaOrdenDescuento,
+  NewOrden,
   Orden,
   Usuario,
 } from '../../../core/db/types';
@@ -324,3 +327,125 @@ export type RegistroAccesosDenegados = Pick<RegistroSeguridadService, 'registrar
 
 /** Capacidad de M18 que usa este módulo para avisar al cliente de un cambio de estado (HU-NOT-02, D05). */
 export type NotificadorEstadoOrden = Pick<NotificacionesService, 'notificarCambioEstadoOrden'>;
+
+// ==============================================================================
+// HU-ORD-01: CREACIÓN DE LA ORDEN AL CONFIRMARSE EL PAGO (contrato para M07)
+// M07 administra la solicitud SOL y el cobro; cuando el pago queda confirmado llama a
+// `serviciosOrdenes.creacion.crearDesdePagoConfirmado()` con estos datos. Los importes
+// llegan congelados desde la solicitud y se copian sin recalcular ni redondear (D07).
+// ==============================================================================
+
+/**
+ * Importe congelado de la solicitud: texto con hasta 2 decimales («95900.00») o un número
+ * que se escriba exacto con ellos (95900 o 95900.5). Nunca negativo.
+ */
+export type Importe = string | number;
+
+/**
+ * Confirmación del pago que autoriza crear la orden (RF-ORD-01-01). Las dos vías son
+ * equivalentes (CA-ORD-01-03): la pasarela aporta su identificador de transacción y el
+ * empleado que verificó un pago directo (D06) queda como autor del primer registro del
+ * historial. `montoConfirmado` es lo que se recibió: si no cubre el total, no hay orden (D06).
+ */
+export type ConfirmacionPago =
+  | {
+      readonly medio: 'pasarela';
+      readonly transaccionId: string;
+      readonly montoConfirmado: Importe;
+    }
+  | {
+      readonly medio: 'verificacion_manual';
+      readonly idEmpleado: number;
+      /** Referencia del pago recibido por otro medio (ej. número del comprobante), si la hay. */
+      readonly referencia?: string | null;
+      readonly montoConfirmado: Importe;
+    };
+
+/** Descuento aplicado a una línea; el orden del arreglo es su orden de aplicación (RF-ORD-02-02). */
+export interface DescuentoSolicitud {
+  readonly origen: string;
+  /** `null` si fue un importe fijo, no un porcentaje. */
+  readonly porcentaje?: Importe | null;
+  readonly importe: Importe;
+}
+
+/** Línea de la solicitud tal como se cobró (RF-ORD-02-01). */
+export interface LineaSolicitud {
+  readonly nombreProducto: string;
+  readonly varianteCopia: string;
+  readonly cantidad: number;
+  /** Precio unitario de partida, antes de descuentos. */
+  readonly precioInicial: Importe;
+  /** Precio unitario cobrado, después de descuentos. */
+  readonly precioAplicado: Importe;
+  readonly colorSolicitado?: string | null;
+  /** Variante del catálogo, solo para saber después si sigue disponible (sin FK, ADR-05). */
+  readonly idVarianteRef?: number | null;
+  /** Una línea entonada exige el color solicitado y la base que consume (RF-ORD-09-01). */
+  readonly esEntonado?: boolean;
+  readonly baseConsumida?: string | null;
+  readonly descuentos?: ReadonlyArray<DescuentoSolicitud>;
+}
+
+/** Solicitud de compra con el pago confirmado, lista para convertirse en orden (HU-ORD-01). */
+export interface SolicitudPagoConfirmado {
+  /** Código SOL-AAAA-NNNNN de M07 (D04). Identifica la operación: una solicitud genera una sola orden. */
+  readonly codigoSolicitud: string;
+  readonly idCliente: number;
+  readonly origen: EnumOrigenOrden;
+  /** Obligatorio si `origen` es `cotizacion` y prohibido si es `carrito` (CA-ORD-01-04). */
+  readonly idCotizacion?: number | null;
+  readonly modoEntrega: EnumModoEntrega;
+  /** Obligatoria a domicilio. */
+  readonly direccion?: string | null;
+  readonly costoEntrega: Importe;
+  readonly subTotal: Importe;
+  readonly descuento: Importe;
+  readonly total: Importe;
+  readonly baseSinImpuesto: Importe;
+  readonly importeIva: Importe;
+  /** Porcentaje de IVA vigente al crear la solicitud (0 a 100). */
+  readonly tasaIva: Importe;
+  readonly observaciones?: string | null;
+  readonly lineas: ReadonlyArray<LineaSolicitud>;
+  readonly confirmacion: ConfirmacionPago;
+}
+
+/**
+ * Respuesta a M07. `creada` es `false` si esa solicitud ya tenía orden: una confirmación
+ * repetida devuelve la orden existente en lugar de crear otra (CA-ORD-01-05).
+ */
+export interface ResultadoCreacionOrden {
+  readonly codigo: string;
+  readonly codigoSolicitud: string;
+  readonly estado: EnumEstadoOrden;
+  readonly creada: boolean;
+}
+
+/** Orden ya registrada para una solicitud o una transacción de pago (CA-ORD-01-05). */
+export type OrdenDeOperacion = Pick<
+  Orden,
+  'id_orden' | 'codigo_visible' | 'id_usuario' | 'estado' | 'codigo_solicitud' | 'transaccion_pago_id'
+>;
+
+/**
+ * Orden validada y lista para insertar. El repositorio completa el código visible con el
+ * consecutivo que obtiene dentro de la misma transacción (RF-ORD-06-04).
+ */
+export interface NuevaOrdenConfirmada {
+  readonly orden: Omit<NewOrden, 'id_orden' | 'codigo_visible' | 'estado'> & { readonly fecha: string };
+  readonly lineas: ReadonlyArray<{
+    readonly linea: Omit<NewLineaOrden, 'id_linea_orden' | 'id_orden'>;
+    readonly descuentos: ReadonlyArray<Omit<NewLineaOrdenDescuento, 'id_linea_orden_descuento' | 'id_linea_orden'>>;
+  }>;
+  /** Primer registro del historial: `null` → orden_confirmada (CA-ORD-03-04). */
+  readonly historial: { readonly idAutor: number | null; readonly referenciaExterna: string | null };
+}
+
+/** Lo que devuelve el repositorio al crear la orden. */
+export interface OrdenCreada {
+  readonly idOrden: number;
+  readonly codigo: string;
+  /** Momento del primer registro del historial (para el correo al cliente). */
+  readonly fecha: Date;
+}
