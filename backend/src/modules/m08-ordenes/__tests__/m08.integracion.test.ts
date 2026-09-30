@@ -240,6 +240,51 @@ async function ejecutarPruebasIntegracionM08(): Promise<void> {
       'RF-ORD-05-05: la bandeja trae el nombre real del cliente'
     );
 
+    // --- Esquema 3.9: copia histórica completa (ORD-2026-0003 del seed) ---------------
+
+    const ORDEN_COPIA = 'ORD-2026-0003';
+    if (!(await repo.buscarPorCodigo(ORDEN_COPIA))) {
+      assert(false, `Falta ${ORDEN_COPIA} del seed v3.9: ejecuta npm run db y npm run db:seed`);
+    } else {
+      const copiaCliente = await servicio.detallePedidoDeCliente(2, ORDEN_COPIA, 'GET /integracion');
+      const copiaPersonal = await servicio.detallePedidoParaPersonal(ORDEN_COPIA);
+      const [vigente, entonada, retirada] = copiaCliente.lineas;
+
+      assert(
+        copiaCliente.modo_entrega === 'recogida' &&
+          copiaCliente.direccion === null &&
+          copiaCliente.codigo_solicitud === 'SOL-2026-00001' &&
+          copiaCliente.costo_entrega === '0.00',
+        'CA-ORD-04-01: la orden de recogida trae su modo de entrega, sin dirección, y la solicitud de origen'
+      );
+      assert(
+        copiaCliente.tasa_iva === '19.00' && copiaCliente.base_sin_impuesto === '219588.24' && copiaCliente.importe_iva === '41721.76',
+        'CA-ORD-02-05: la orden conserva la tasa y los importes de IVA con que se cobró'
+      );
+      assert(
+        vigente?.precio_inicial === '95900.00' &&
+          vigente.descuentos.map((d) => `${d.orden}:${d.origen}:${d.importe}`).join(' | ') ===
+            '1:Promoción Viniltex:9590.00 | 2:Cupón de bienvenida:5000.00' &&
+          vigente.descuentos[1]?.porcentaje === null,
+        'CA-ORD-02-02: los descuentos se leen con su origen, importe y orden de aplicación'
+      );
+      assert(
+        entonada?.es_entonado === true && entonada.color_solicitado === 'Amarillo Sol',
+        'CA-ORD-04-02: la línea entonada trae el color pedido'
+      );
+      assert(
+        vigente?.retirado === false && vigente.id_producto === 1 && retirada?.retirado === true && retirada.id_producto === null,
+        'CA-ORD-04-04: la variante inexistente se marca como retirada y sin enlace; la vigente enlaza a su producto'
+      );
+      assert(
+        copiaPersonal.lineas[1]?.base_consumida === 'Base A - Galón' && copiaCliente.lineas.every((l) => !('base_consumida' in l)),
+        'RF-ORD-09-01: la base que consume la línea entonada solo llega al personal'
+      );
+
+      const filaCopia = (await repo.listarParaPersonal({ codigo: ORDEN_COPIA }, 10, 0))[0];
+      assert(filaCopia?.modo_entrega === 'recogida', 'RF-ORD-05-05: la bandeja trae el modo de entrega');
+    }
+
     console.log(`\n======================================================`);
     console.log(`🎯 RESULTADOS: Superadas: ${superadas} | Fallidas: ${fallidas}`);
     console.log(`======================================================\n`);

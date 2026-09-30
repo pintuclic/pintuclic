@@ -1,10 +1,10 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 3.8 (v3.7 + ciclo de estados, historial, notas internas y contactos de la orden - M08)
+-- VERSIÓN: 3.9 (v3.8 + copia histórica de la orden, descuentos por línea y consecutivo sin huecos - M08)
 -- MOTOR: PostgreSQL 15+ (usa UNIQUE NULLS NOT DISTINCT; compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
--- TOTAL TABLAS: 47
+-- TOTAL TABLAS: 49
 -- ==============================================================================
 
 -- Si deseas recrear el esquema desde cero, puedes descomentar la siguiente línea:
@@ -111,6 +111,11 @@ BEGIN
     -- Clase de color de un producto (M01 - HU-CAT-02, RF-CAT-02-03)
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_clase_color') THEN
         CREATE TYPE enum_clase_color AS ENUM ('entonable', 'colores_fijos', 'sin_color');
+    END IF;
+
+    -- Modo de entrega de la orden (M08 - RF-ORD-03-06, RF-ORD-05-05; M10): envío a domicilio o recogida en almacén
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_modo_entrega') THEN
+        CREATE TYPE enum_modo_entrega AS ENUM ('domicilio', 'recogida');
     END IF;
 END $$;
 
@@ -655,19 +660,33 @@ CREATE TABLE IF NOT EXISTS orden (
     carrito_o_cotizacion VARCHAR(50),
     estado enum_estado_orden NOT NULL DEFAULT 'orden_confirmada',
     transaccion_pago_id VARCHAR(100) UNIQUE,
-    direccion TEXT NOT NULL,
+    codigo_solicitud VARCHAR(20),
+    modo_entrega enum_modo_entrega,
+    costo_entrega NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    direccion TEXT,
     sub_total NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     descuento NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     total NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    base_sin_impuesto NUMERIC(12, 2),
+    importe_iva NUMERIC(12, 2),
+    tasa_iva NUMERIC(5, 2),
     observaciones TEXT,
     fecha DATE NOT NULL DEFAULT CURRENT_DATE,
-    CONSTRAINT fk_orden_usuario FOREIGN KEY (id_usuario) 
+    CONSTRAINT fk_orden_usuario FOREIGN KEY (id_usuario)
         REFERENCES usuario (id_usuario) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT fk_orden_cotizacion FOREIGN KEY (id_cotizacion) 
+    CONSTRAINT fk_orden_cotizacion FOREIGN KEY (id_cotizacion)
         REFERENCES cotizacion (id_cotizacion) ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT uq_orden_codigo_solicitud UNIQUE (codigo_solicitud),
     CONSTRAINT chk_orden_subtotal CHECK (sub_total >= 0),
     CONSTRAINT chk_orden_descuento CHECK (descuento >= 0),
-    CONSTRAINT chk_orden_total CHECK (total >= 0)
+    CONSTRAINT chk_orden_total CHECK (total >= 0),
+    CONSTRAINT chk_orden_costo_entrega CHECK (costo_entrega >= 0),
+    CONSTRAINT chk_orden_iva CHECK (
+        (base_sin_impuesto IS NULL OR base_sin_impuesto >= 0)
+        AND (importe_iva IS NULL OR importe_iva >= 0)
+        AND (tasa_iva IS NULL OR (tasa_iva >= 0 AND tasa_iva <= 100))
+    ),
+    CONSTRAINT chk_orden_direccion_domicilio CHECK (modo_entrega IS DISTINCT FROM 'domicilio' OR direccion IS NOT NULL)
 );
 
 COMMENT ON TABLE orden IS 'Cabecera de órdenes de compra inmutables';
@@ -680,6 +699,49 @@ COMMENT ON COLUMN orden.estado IS 'Estado del ciclo de vida (M08 - HU-ORD-03). N
 -- Migración (bases anteriores a v3.8): el valor por defecto 'pendiente' contradecía RF-ORD-01-01.
 ALTER TABLE orden ALTER COLUMN estado SET DEFAULT 'orden_confirmada';
 
+-- Migración (bases anteriores a v3.9): copia histórica de la orden (M08 - HU-ORD-02, RF-ORD-05-05).
+-- Las órdenes ya existentes quedan con los campos nuevos en NULL (o costo 0): no se inventan datos pasados.
+ALTER TABLE orden ADD COLUMN IF NOT EXISTS codigo_solicitud VARCHAR(20);
+ALTER TABLE orden ADD COLUMN IF NOT EXISTS modo_entrega enum_modo_entrega;
+ALTER TABLE orden ADD COLUMN IF NOT EXISTS costo_entrega NUMERIC(12, 2) NOT NULL DEFAULT 0.00;
+ALTER TABLE orden ADD COLUMN IF NOT EXISTS base_sin_impuesto NUMERIC(12, 2);
+ALTER TABLE orden ADD COLUMN IF NOT EXISTS importe_iva NUMERIC(12, 2);
+ALTER TABLE orden ADD COLUMN IF NOT EXISTS tasa_iva NUMERIC(5, 2);
+ALTER TABLE orden ALTER COLUMN direccion DROP NOT NULL;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_orden_codigo_solicitud') THEN
+        ALTER TABLE orden ADD CONSTRAINT uq_orden_codigo_solicitud UNIQUE (codigo_solicitud);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_orden_costo_entrega') THEN
+        ALTER TABLE orden ADD CONSTRAINT chk_orden_costo_entrega CHECK (costo_entrega >= 0);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_orden_iva') THEN
+        ALTER TABLE orden ADD CONSTRAINT chk_orden_iva CHECK (
+            (base_sin_impuesto IS NULL OR base_sin_impuesto >= 0)
+            AND (importe_iva IS NULL OR importe_iva >= 0)
+            AND (tasa_iva IS NULL OR (tasa_iva >= 0 AND tasa_iva <= 100))
+        );
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_orden_direccion_domicilio') THEN
+        ALTER TABLE orden ADD CONSTRAINT chk_orden_direccion_domicilio
+            CHECK (modo_entrega IS DISTINCT FROM 'domicilio' OR direccion IS NOT NULL);
+    END IF;
+END $$;
+
+-- Comentarios de las columnas de v3.9 (después de la migración, para que existan también en bases antiguas).
+COMMENT ON COLUMN orden.codigo_solicitud IS 'Código SOL-AAAA-NNNNN de la solicitud de compra de M07 que originó la orden (D04, RF-CHK-04-13). Sin FK hasta que exista la tabla de M07; UNIQUE: una solicitud genera una sola orden';
+COMMENT ON COLUMN orden.modo_entrega IS 'Envío a domicilio o recogida en almacén (RF-ORD-03-06). NULL solo en órdenes anteriores a v3.9';
+COMMENT ON COLUMN orden.costo_entrega IS 'Costo de envío congelado; 0 mientras el negocio no fije tarifa (Tanda 12)';
+COMMENT ON COLUMN orden.direccion IS 'Dirección de entrega; obligatoria cuando el modo es domicilio (RF-ORD-09-01)';
+COMMENT ON COLUMN orden.sub_total IS 'Suma de los precios iniciales de las líneas antes de descuentos';
+COMMENT ON COLUMN orden.descuento IS 'Suma de los descuentos aplicados; el desglose está en linea_orden_descuento (RF-ORD-02-02)';
+COMMENT ON COLUMN orden.total IS 'Importe cobrado, congelado desde la solicitud sin recalcular (D07)';
+COMMENT ON COLUMN orden.base_sin_impuesto IS 'Base gravable congelada de la solicitud (D07)';
+COMMENT ON COLUMN orden.importe_iva IS 'IVA cobrado, congelado de la solicitud (D07)';
+COMMENT ON COLUMN orden.tasa_iva IS 'Porcentaje de IVA vigente al comprar; no cambia si el administrador lo modifica después (CA-ORD-02-05)';
+
 -- Tabla: linea_orden
 -- Snapshot inmutable de cada producto y precio en el instante exacto de compra
 CREATE TABLE IF NOT EXISTS linea_orden (
@@ -689,16 +751,84 @@ CREATE TABLE IF NOT EXISTS linea_orden (
     variante_copia VARCHAR(150) NOT NULL,
     precio_aplicado NUMERIC(12, 2) NOT NULL,
     cantidad INT NOT NULL DEFAULT 1,
-    CONSTRAINT fk_lineaorden_orden FOREIGN KEY (id_orden) 
-        REFERENCES orden (id_orden) ON UPDATE CASCADE ON DELETE CASCADE,
+    color_solicitado VARCHAR(150),
+    precio_inicial NUMERIC(12, 2),
+    id_variante_ref INT,
+    es_entonado BOOLEAN NOT NULL DEFAULT false,
+    base_consumida VARCHAR(150),
+    CONSTRAINT fk_lineaorden_orden FOREIGN KEY (id_orden)
+        REFERENCES orden (id_orden) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT chk_lineaorden_precio CHECK (precio_aplicado >= 0),
-    CONSTRAINT chk_lineaorden_cantidad CHECK (cantidad > 0)
+    CONSTRAINT chk_lineaorden_cantidad CHECK (cantidad > 0),
+    CONSTRAINT chk_lineaorden_precio_inicial CHECK (precio_inicial IS NULL OR precio_inicial >= 0)
 );
 
 COMMENT ON TABLE linea_orden IS 'Snapshot congelado inmutable de productos comprados en una orden';
 COMMENT ON COLUMN linea_orden.nombre_producto IS 'Copia inmutable del nombre del producto al momento de comprar';
 COMMENT ON COLUMN linea_orden.variante_copia IS 'Copia inmutable de la variante/color adquirida';
 COMMENT ON COLUMN linea_orden.precio_aplicado IS 'Precio final unitario cobrado al momento de generar la orden';
+-- Migración (bases anteriores a v3.9): copia histórica de las líneas (M08 - HU-ORD-02).
+ALTER TABLE linea_orden ADD COLUMN IF NOT EXISTS color_solicitado VARCHAR(150);
+ALTER TABLE linea_orden ADD COLUMN IF NOT EXISTS precio_inicial NUMERIC(12, 2);
+ALTER TABLE linea_orden ADD COLUMN IF NOT EXISTS id_variante_ref INT;
+ALTER TABLE linea_orden ADD COLUMN IF NOT EXISTS es_entonado BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE linea_orden ADD COLUMN IF NOT EXISTS base_consumida VARCHAR(150);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_lineaorden_precio_inicial') THEN
+        ALTER TABLE linea_orden ADD CONSTRAINT chk_lineaorden_precio_inicial
+            CHECK (precio_inicial IS NULL OR precio_inicial >= 0);
+    END IF;
+    -- RF-ORD-02-04: los datos de una orden no se eliminan físicamente. Antes v3.9 las líneas se
+    -- borraban en cascada con la orden; ahora el borrado de la orden queda bloqueado.
+    IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_lineaorden_orden' AND confdeltype = 'c') THEN
+        ALTER TABLE linea_orden DROP CONSTRAINT fk_lineaorden_orden;
+        ALTER TABLE linea_orden ADD CONSTRAINT fk_lineaorden_orden FOREIGN KEY (id_orden)
+            REFERENCES orden (id_orden) ON UPDATE CASCADE ON DELETE RESTRICT;
+    END IF;
+END $$;
+
+-- Comentarios de las columnas de v3.9 (después de la migración, para que existan también en bases antiguas).
+COMMENT ON COLUMN linea_orden.color_solicitado IS 'Copia del color pedido cuando lo hay (RF-ORD-02-01, CA-ORD-04-02)';
+COMMENT ON COLUMN linea_orden.precio_inicial IS 'Precio unitario de partida antes de descuentos; con linea_orden_descuento reconstruye el cobro (RF-ORD-02-02)';
+COMMENT ON COLUMN linea_orden.id_variante_ref IS 'Referencia informativa a la variante, sin FK a propósito (ADR-05): solo sirve para saber si el producto sigue en el catálogo (RF-ORD-04-03)';
+COMMENT ON COLUMN linea_orden.es_entonado IS 'Color de carta entonado a medida: no admite devolución (RF-POS-04-04, CA-ORD-03-10)';
+COMMENT ON COLUMN linea_orden.base_consumida IS 'Copia de la variante de base que consume la línea entonada (RF-CUM-01-09, RF-ORD-09-01)';
+
+-- Tabla: linea_orden_descuento (M08 - HU-ORD-02, RF-ORD-02-02 / CA-ORD-02-02)
+-- Desglose de cada descuento aplicado a una línea, en el orden en que se aplicó.
+CREATE TABLE IF NOT EXISTS linea_orden_descuento (
+    id_linea_orden_descuento SERIAL PRIMARY KEY,
+    id_linea_orden INT NOT NULL,
+    orden_aplicacion SMALLINT NOT NULL,
+    origen VARCHAR(150) NOT NULL,
+    porcentaje NUMERIC(5, 2),
+    importe NUMERIC(12, 2) NOT NULL,
+    CONSTRAINT fk_lod_linea_orden FOREIGN KEY (id_linea_orden)
+        REFERENCES linea_orden (id_linea_orden) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT uq_lod_orden_aplicacion UNIQUE (id_linea_orden, orden_aplicacion),
+    CONSTRAINT chk_lod_orden_aplicacion CHECK (orden_aplicacion > 0),
+    CONSTRAINT chk_lod_origen CHECK (length(trim(origen)) > 0),
+    CONSTRAINT chk_lod_importe CHECK (importe >= 0),
+    CONSTRAINT chk_lod_porcentaje CHECK (porcentaje IS NULL OR (porcentaje >= 0 AND porcentaje <= 100))
+);
+
+COMMENT ON TABLE linea_orden_descuento IS 'Descuentos aplicados a cada línea con su origen, porcentaje, importe y orden (M08 - RF-ORD-02-02). Copia congelada; solo inserción';
+COMMENT ON COLUMN linea_orden_descuento.porcentaje IS 'NULL cuando el descuento es un importe fijo';
+
+-- Tabla: consecutivo (M08 - HU-ORD-06, RF-ORD-06-04; reutilizable por M07 para SOL-AAAA-NNNNN)
+-- Numeración corrida sin huecos: se incrementa dentro de la misma transacción que crea el documento,
+-- de modo que si la creación falla el número no se consume. Un salto solo puede ser una orden cancelada.
+CREATE TABLE IF NOT EXISTS consecutivo (
+    id_consecutivo SERIAL PRIMARY KEY,
+    nombre VARCHAR(30) NOT NULL UNIQUE,
+    ultimo_valor BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT chk_consecutivo_valor CHECK (ultimo_valor >= 0),
+    CONSTRAINT chk_consecutivo_nombre CHECK (length(trim(nombre)) > 0)
+);
+
+COMMENT ON TABLE consecutivo IS 'Consecutivos corridos sin huecos por tipo de documento (orden = PC-AAAA-NNNNN, anexo B de la Tanda 2). Nunca se reinicia con el año';
 
 -- Tabla: historial_estado_orden (M08 - HU-ORD-03, CA-ORD-03-03 / CA-ORD-03-04)
 -- Historia de las transiciones de una orden: estado alcanzado, autor y momento.
@@ -1103,5 +1233,5 @@ CREATE INDEX IF NOT EXISTS idx_bsr_fecha ON busqueda_sin_resultado(fecha);
 CREATE INDEX IF NOT EXISTS idx_bsr_termino ON busqueda_sin_resultado(termino);
 
 -- ==============================================================================
--- FIN DEL SCRIPT DDL (47 TABLAS - v3.8)
+-- FIN DEL SCRIPT DDL (49 TABLAS - v3.9)
 -- ==============================================================================

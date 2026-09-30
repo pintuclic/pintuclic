@@ -8,6 +8,27 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.37.0] - 2026-09-29
+### Módulo: M08 Orden de Venta — Copia Histórica Completa de la Orden (Backend / BD)
+- **Alcance General:** Incremento **Minior-feat (v0.3.37.0)** con la segunda tanda del modelo de datos de M08: esquema **3.9** (documentación de BD **v2.7**), de 47 a 49 tablas. Tiene visto bueno del líder técnico y el analista confirmó que está definido.
+- **Hitos Clave:**
+  - **Orden:** solicitud SOL de origen (`codigo_solicitud`, UNIQUE), modo y costo de entrega, y base, importe y tasa de IVA congelados; la dirección es opcional en la recogida.
+  - **Líneas:** color solicitado, precio inicial, referencia a la variante sin FK, entonado y base consumida. Además, las líneas dejan de borrarse en cascada (`RF-ORD-02-04`).
+  - **Tablas nuevas:** `linea_orden_descuento` (descuentos por línea en orden, `RF-ORD-02-02`) y `consecutivo` (numeración sin huecos para `PC-AAAA-NNNNN`, `RF-ORD-06-04`, reutilizable por M07).
+  - **Detalle de M08:**
+    - el cliente y el personal ven el modo de entrega, el IVA, la solicitud y, por línea, el color, el precio inicial, sus descuentos en orden y la marca de producto retirado sin enlace (`RF-ORD-04-03`);
+    - el personal ve además la base consumida de las líneas entonadas (`RF-ORD-09-01`);
+    - la bandeja muestra el modo de entrega (`RF-ORD-05-05`).
+  - **Migración segura:** idempotente y compatible con la carga de BD del deploy. Las órdenes existentes conservan sus datos con los campos nuevos vacíos; el seed añade `ORD-2026-0003` con la copia completa.
+  - **Verificación:**
+    - `tsc` y `lint` limpios;
+    - pruebas en memoria 91/91;
+    - integración de lectura 36/36 e integración de escritura con ROLLBACK 17/17, en base migrada y en base nueva;
+    - simulación del deploy con `psql -v ON_ERROR_STOP=1`, dos veces.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.37.0_M08_copia_historica_backend.md](./walkthroughs/M08/walkthrough_v0.3.37.0_M08_copia_historica_backend.md) · Detalle de BD: [bd/docs/WALKTHROUGH_DATABASE.md](../bd/docs/WALKTHROUGH_DATABASE.md)
+
+---
+
 ## [v0.3.36.0] - 2026-09-29
 ### Módulo: M08 Orden de Venta — Ajustes según la documentación del Drive (Backend)
 - **Alcance General:** Incremento **Minior-feat (v0.3.36.0)** que alinea M08 con la Tanda 3C del Drive tras revisar la documentación vigente. Sin cambios de esquema ni de archivos compartidos.

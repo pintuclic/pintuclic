@@ -1,4 +1,4 @@
-import { EnumEstadoOrden } from '../../../core/db/types';
+import { EnumEstadoOrden, EnumModoEntrega } from '../../../core/db/types';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { OrdenesRepository } from '../repositories/ordenes.repository';
 import {
@@ -41,6 +41,24 @@ function recursoNoEncontrado(): AppError {
   return new AppError('Recurso no encontrado', 404, 'NOT_FOUND');
 }
 
+/**
+ * Mensaje de una transición rechazada. Si la bloquea el modo de entrega (D02, RF-ORD-03-06)
+ * lo dice, para que el empleado sepa qué hacer en su lugar.
+ */
+function mensajeTransicionNoPermitida(
+  desde: EnumEstadoOrden,
+  hacia: EnumEstadoOrden,
+  modo: EnumModoEntrega | null
+): string {
+  if (desde === 'preparada' && modo === 'recogida' && hacia === 'despachado') {
+    return 'Una orden de recogida en almacén no se despacha: al recogerla pasa directamente a «Entregado»';
+  }
+  if (desde === 'preparada' && modo === 'domicilio' && hacia === 'entregado') {
+    return 'Una orden a domicilio primero se despacha; «Entregado» es un paso posterior y opcional';
+  }
+  return `Una orden en «${ETIQUETA_ESTADO[desde]}» no puede pasar a «${ETIQUETA_ESTADO[hacia]}»`;
+}
+
 export class GestionOrdenesService {
   constructor(
     private readonly repo: OrdenesRepository,
@@ -71,12 +89,13 @@ export class GestionOrdenesService {
         'OPERACION_NO_HABILITADA'
       );
     }
-    if (!esTransicionPermitida(estadoActual, estadoNuevo)) {
+    const modo = orden.modo_entrega;
+    if (!esTransicionPermitida(estadoActual, estadoNuevo, modo)) {
       throw new AppError(
-        `Una orden en «${ETIQUETA_ESTADO[estadoActual]}» no puede pasar a «${ETIQUETA_ESTADO[estadoNuevo]}»`,
+        mensajeTransicionNoPermitida(estadoActual, estadoNuevo, modo),
         409,
         'TRANSICION_NO_PERMITIDA',
-        { permitidas: transicionesPermitidas(estadoActual) }
+        { permitidas: transicionesPermitidas(estadoActual, modo) }
       );
     }
 
@@ -113,7 +132,7 @@ export class GestionOrdenesService {
       estado_anterior: estadoActual,
       estado: estadoNuevo,
       fecha: fecha.toISOString(),
-      transiciones_permitidas: transicionesPermitidas(estadoNuevo),
+      transiciones_permitidas: transicionesPermitidas(estadoNuevo, modo),
     };
   }
 

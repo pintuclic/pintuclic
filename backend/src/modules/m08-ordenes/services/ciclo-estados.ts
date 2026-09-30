@@ -1,4 +1,4 @@
-import { EnumEstadoOrden } from '../../../core/db/types';
+import { EnumEstadoOrden, EnumModoEntrega } from '../../../core/db/types';
 
 // ==============================================================================
 // M08 - CICLO DE ESTADOS DE LA ORDEN (HU-ORD-03, definiciones D01 y D02 de la épica #28)
@@ -14,8 +14,7 @@ import { EnumEstadoOrden } from '../../../core/db/types';
  * - `en_preparacion` → `preparada`: actor y condiciones pendientes del análisis (P1).
  * - `preparada` → `en_preparacion`: única vuelta atrás permitida, con motivo (D01).
  * - `preparada` → `despachado` (domicilio) o `entregado` (recogida en una sola acción, D02).
- *   El sistema aún no guarda el modo de entrega (copia histórica pendiente), así que
- *   ambas salidas quedan disponibles.
+ *   Cuál de las dos aplica lo decide el modo de entrega de la orden (ver `transicionesPermitidas`).
  * - `despachado` → `entregado`: opcional; Despachado ya es cierre normal a domicilio (D02).
  *
  * `cancelado` y `devuelto` no se alcanzan todavía: dependen de la política de M11 y del
@@ -54,12 +53,36 @@ export const ETIQUETA_ESTADO: Readonly<Record<EnumEstadoOrden, string>> = {
  */
 export const ESTADOS_QUE_NOTIFICAN: readonly EnumEstadoOrden[] = ['despachado'];
 
-export function transicionesPermitidas(estado: EnumEstadoOrden): readonly EnumEstadoOrden[] {
-  return TRANSICIONES[estado];
+/**
+ * Salida que el modo de entrega excluye desde Preparada (D02, RF-ORD-03-06): la recogida
+ * se cierra en Entregado sin despacho, y el envío a domicilio pasa por Despachado.
+ */
+const EXCLUIDA_POR_MODO: Readonly<Record<EnumModoEntrega, EnumEstadoOrden>> = {
+  recogida: 'despachado',
+  domicilio: 'entregado',
+};
+
+/**
+ * Estados a los que puede pasar una orden. Desde Preparada depende del modo de entrega;
+ * las órdenes anteriores a la copia histórica (`modo` null) conservan las dos salidas.
+ */
+export function transicionesPermitidas(
+  estado: EnumEstadoOrden,
+  modo: EnumModoEntrega | null = null
+): readonly EnumEstadoOrden[] {
+  const posibles = TRANSICIONES[estado];
+  if (estado !== 'preparada' || modo === null) {
+    return posibles;
+  }
+  return posibles.filter((destino) => destino !== EXCLUIDA_POR_MODO[modo]);
 }
 
-export function esTransicionPermitida(desde: EnumEstadoOrden, hacia: EnumEstadoOrden): boolean {
-  return TRANSICIONES[desde].includes(hacia);
+export function esTransicionPermitida(
+  desde: EnumEstadoOrden,
+  hacia: EnumEstadoOrden,
+  modo: EnumModoEntrega | null = null
+): boolean {
+  return transicionesPermitidas(desde, modo).includes(hacia);
 }
 
 /** Volver de Preparada a En preparación exige motivo (D01). */
