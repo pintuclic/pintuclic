@@ -61,7 +61,7 @@
     <template #footer>
       <div class="flex justify-end gap-3">
         <Button variant="neutral" :disabled="guardando" @click="cerrar">Cancelar</Button>
-        <Button type="submit" form="form-producto" :variant="producto ? 'action' : 'conversion'" :disabled="guardando">
+        <Button type="submit" form="form-producto" variant="action" :disabled="guardando">
           {{ guardando ? 'Guardando…' : producto ? 'Guardar cambios' : 'Crear producto' }}
         </Button>
       </div>

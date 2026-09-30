@@ -21,7 +21,7 @@
           {{ publicando ? 'Procesando…' : producto.publicado ? 'Retirar del catálogo público' : 'Publicar' }}
         </Button>
         <Button
-          :variant="producto.estado === 'activo' ? 'danger-outline' : 'conversion'"
+          :variant="producto.estado === 'activo' ? 'danger-outline' : 'action'"
           :icon="producto.estado === 'activo' ? 'power' : 'refresh'"
           @click="cambiarEstado"
         >
@@ -79,7 +79,7 @@
             <option value="">Selecciona…</option>
             <option v-for="b in basesDisponibles" :key="b.id_base" :value="b.id_base">{{ b.nombre }}</option>
           </Select>
-          <Button type="submit" variant="conversion" icon="plus" :disabled="!baseElegida || ocupadoBases">Asignar</Button>
+          <Button type="submit" variant="action" icon="plus" :disabled="ocupadoBases">Asignar</Button>
         </form>
         <SinResultados v-if="!basesProducto.length" icon="grid" title="Sin bases asignadas" description="Asigna las bases sobre las que se prepara este producto." compact />
         <ul v-else class="divide-y divide-neutral-light">
@@ -292,7 +292,13 @@ async function operarBases(accion: () => Promise<Base[]>): Promise<void> {
   }
 }
 
-const asignarBase = () => operarBases(() => CatalogoAdmin.productos.asignarBase(idProducto.value, Number(baseElegida.value)));
+function asignarBase(): Promise<void> {
+  if (!baseElegida.value) {
+    errorBases.value = 'Selecciona la base que quieres asignar';
+    return Promise.resolve();
+  }
+  return operarBases(() => CatalogoAdmin.productos.asignarBase(idProducto.value, Number(baseElegida.value)));
+}
 const quitarBase = (idBase: number) => operarBases(() => CatalogoAdmin.productos.quitarBase(idProducto.value, idBase));
 
 // --- Rendimiento (HU-CAT-10) ------------------------------------------------------
