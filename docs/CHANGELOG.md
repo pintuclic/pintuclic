@@ -8,6 +8,26 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.38.1] - 2026-09-29
+### Módulo: M08 Orden de Venta — Cierre del backend: diagramas, especificación y dictamen (Documentación)
+- **Alcance General:** Incremento **PATCH (v0.3.38.1)** que cierra el backend de M08. Pone al día sus diagramas y su especificación, que seguían describiendo el ciclo anterior a las definiciones del analista, y deja el dictamen del checklist de cierre del equipo. Sin cambios de comportamiento, de BD ni de archivos compartidos.
+- **Hitos Clave:**
+  - **Máquina de estados:** `Maquina_de_estados_de_la_Orden.drawio.png` muestra el ciclo implementado:
+    - desde Preparada, domicilio pasa a Despachado y recogida a Entregado, con vuelta a En preparación con motivo;
+    - Cancelado y Devuelto aparecen como no habilitados (M11).
+
+    Mantiene el formato editable de draw.io y la página del flujo end-to-end intacta.
+  - **Documento de diseño v2.0** (`equipo-2-doc/assets/diagrams/M08/M08_Orden_de_venta.md`): modelo de datos real, flujo de creación, máquina de estados, arquitectura, aplicación de los ADR y pendientes vigentes. Sus 4 diagramas Mermaid están validados.
+  - **Especificación** (`M08_ESPECIFICACION_ORDEN.md`): las 11 historias con sus 34 requisitos y 49 criterios, copiados de la Tanda 3C, más la implementación de cada historia, las definiciones aplicadas y los pendientes.
+  - **Dictamen de cierre:**
+    - HU-CUE-08 no aplica y HU-ADM-03 se cumple;
+    - HU-SEG-06 se cumple en M08, con una observación externa: el seed da permisos de consulta del personal al rol empresa, y es decisión del líder técnico;
+    - la matriz final es 41 ✅ · 3 ⚠️ · 5 ⛔ de 49.
+  - **Código:** solo un comentario en `m08.routes.ts`. El analista confirmó que notas y contactos exigen `ventas.gestionar`.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.38.1_M08_cierre_documentacion_backend.md](./walkthroughs/M08/walkthrough_v0.3.38.1_M08_cierre_documentacion_backend.md)
+
+---
+
 ## [v0.3.38.0] - 2026-09-29
 ### Módulo: M08 Orden de Venta — Creación de la Orden al Confirmarse el Pago (Backend)
 - **Alcance General:** Incremento **Minior-feat (v0.3.38.0)** con el servicio que convierte una solicitud SOL con el pago confirmado en orden (HU-ORD-01). Lo llamará M07, que no tiene responsable. Sin cambios de BD, de archivos compartidos ni de rutas HTTP.
