@@ -5,7 +5,7 @@ import type {
   EventoCambioEstadoOrdenPayload,
   IResultadoEnvio,
 } from '../../m18-notificaciones/interfaces/notificaciones.interfaces';
-import { OrdenesService } from '../services/ordenes.service';
+import { OrdenesService, lineaRetirada } from '../services/ordenes.service';
 import { GestionOrdenesService } from '../services/gestion-ordenes.service';
 import { ESTADOS_NO_HABILITADOS, TRANSICIONES } from '../services/ciclo-estados';
 import { CodigoPedidoService } from '../services/codigo-pedido.service';
@@ -23,6 +23,7 @@ import {
   ContactoCliente,
   FilaConteoEstado,
   FilaContactoOrden,
+  FilaDescuentoLinea,
   FilaHistorialEstado,
   FilaLineaOrden,
   FilaNotaOrden,
@@ -57,6 +58,7 @@ class RepoFake extends OrdenesRepository {
   public readonly historial = new Map<number, FilaHistorialEstado[]>();
   public readonly notas = new Map<number, FilaNotaOrden[]>();
   public readonly contactos = new Map<number, FilaContactoOrden[]>();
+  public readonly descuentos: FilaDescuentoLinea[] = [];
   /** Se ejecuta justo antes de escribir un cambio de estado; sirve para simular a otra persona. */
   public antesDeCambiar: (() => void) | undefined;
   private readonly ordenes: CabeceraOrden[];
@@ -151,6 +153,13 @@ class RepoFake extends OrdenesRepository {
     return this.lineas[idOrden] ?? [];
   }
 
+  /** Réplica del SQL: descuentos de las líneas pedidas, por línea y orden de aplicación. */
+  override async listarDescuentos(idsLineas: ReadonlyArray<number>): Promise<FilaDescuentoLinea[]> {
+    return this.descuentos
+      .filter((d) => idsLineas.includes(d.id_linea_orden))
+      .sort((a, b) => a.id_linea_orden - b.id_linea_orden || a.orden_aplicacion - b.orden_aplicacion);
+  }
+
   override async listarDeCliente(idUsuario: number, termino: string | undefined): Promise<FilaResumenOrden[]> {
     this.llamadasListar.push({ idUsuario, termino });
     return this.ordenes
@@ -206,6 +215,7 @@ class RepoFake extends OrdenesRepository {
           total: o.total,
           estado: o.estado,
           id_usuario: o.id_usuario,
+          modo_entrega: o.modo_entrega,
           nombre_cliente: this.usuarios.find((u) => u.id_usuario === o.id_usuario)?.nombre ?? null,
           ultimo_cambio: ultimo,
         };
@@ -255,12 +265,38 @@ function orden(
     id_usuario: idUsuario,
     origen: 'carrito',
     estado,
+    codigo_solicitud: null,
+    modo_entrega: 'domicilio',
+    costo_entrega: '0.00',
     direccion: 'Calle 45 # 12-34, Bogotá',
     sub_total: '171800.00',
     descuento: '0.00',
     total: '171800.00',
+    base_sin_impuesto: '144369.75',
+    importe_iva: '27430.25',
+    tasa_iva: '19.00',
     observaciones: null,
     fecha,
+  };
+}
+
+/** Línea copiada con valores por defecto: sin descuentos, color, referencia ni entonado. */
+function linea(datos: Partial<FilaLineaOrden> & Pick<FilaLineaOrden, 'nombre_producto'>): FilaLineaOrden {
+  return {
+    id_linea_orden: 1,
+    variante_copia: 'Galón',
+    precio_aplicado: '85900.00',
+    cantidad: 1,
+    color_solicitado: null,
+    precio_inicial: null,
+    id_variante_ref: null,
+    es_entonado: false,
+    base_consumida: null,
+    variante_estado: null,
+    producto_id: null,
+    producto_estado: null,
+    producto_publicado: null,
+    ...datos,
   };
 }
 
@@ -351,32 +387,35 @@ async function ejecutarPruebasM08(): Promise<void> {
     {
       const repo = new RepoFake([orden(1, 2, 'orden_confirmada')], {
         1: [
-          {
+          linea({
             nombre_producto: 'Viniltex Antibacterial',
             variante_copia: 'Galón - Azul Océano (entonado)',
             precio_aplicado: '85900.00',
             cantidad: 2,
-          },
+          }),
         ],
       });
       const detalle = await new OrdenesService(repo, new RegistroFake()).detallePedidoDeCliente(2, 'ORD-2026-0001', 'GET /test');
-      const linea = detalle.lineas[0];
+      const primeraLinea = detalle.lineas[0];
       assert(
-        linea !== undefined &&
-          linea.producto === 'Viniltex Antibacterial' &&
-          linea.cantidad === 2 &&
-          linea.precio_aplicado === '85900.00' &&
+        primeraLinea !== undefined &&
+          primeraLinea.producto === 'Viniltex Antibacterial' &&
+          primeraLinea.cantidad === 2 &&
+          primeraLinea.precio_aplicado === '85900.00' &&
           detalle.total === '171800.00' &&
           detalle.estado === 'orden_confirmada',
         'CA-ORD-04-01: el detalle muestra productos, cantidades, precios aplicados, total y estado'
       );
-      assert(linea?.variante === 'Galón - Azul Océano (entonado)', 'CA-ORD-04-02: el detalle muestra la variante y el color pedidos');
+      assert(
+        primeraLinea?.variante === 'Galón - Azul Océano (entonado)',
+        'CA-ORD-04-02: el detalle muestra la variante y el color pedidos'
+      );
     }
 
     // CA-ORD-02-01 / CA-ORD-02-04: el detalle devuelve los datos copiados en la compra, sin consultar el catálogo.
     {
       const repo = new RepoFake([orden(1, 2, 'entregado')], {
-        1: [{ nombre_producto: 'Producto retirado', variante_copia: 'Cuarto', precio_aplicado: '10000.00', cantidad: 1 }],
+        1: [linea({ nombre_producto: 'Producto retirado', variante_copia: 'Cuarto', precio_aplicado: '10000.00', cantidad: 1 })],
       });
       const detalle = await new OrdenesService(repo, new RegistroFake()).detallePedidoDeCliente(2, 'ORD-2026-0001', 'GET /test');
       assert(
@@ -568,7 +607,7 @@ async function ejecutarPruebasM08(): Promise<void> {
       const pagina = await new OrdenesService(repo, new RegistroFake()).listarOrdenesParaPersonal({}, undefined, undefined);
       const claves = Object.keys(pagina.items[0] ?? {});
       assert(
-        claves.join(',') === 'codigo,fecha,total,estado,id_cliente,cliente,dias_esperando',
+        claves.join(',') === 'codigo,fecha,total,estado,id_cliente,cliente,modo_entrega,dias_esperando',
         'HU-SEG-06: cada orden del listado solo trae código, fecha, total, estado, cliente y días esperando'
       );
     }
@@ -732,7 +771,7 @@ async function ejecutarPruebasM08(): Promise<void> {
         detalle.cliente?.nombre === 'Pinturas del Valle' &&
           detalle.cliente?.correo === 'contacto@pinturasvalle.co' &&
           detalle.cliente?.telefono === '320 888 9900' &&
-          detalle.direccion.length > 0,
+          (detalle.direccion ?? '').length > 0,
         'CA-ORD-09-01: el detalle del personal trae el contacto del cliente y la dirección'
       );
       assert(
@@ -799,16 +838,55 @@ async function ejecutarPruebasM08(): Promise<void> {
       );
     }
 
-    // D02: la recogida en tienda pasa de Preparada a Entregado en una sola acción, sin despacho.
+    // CA-ORD-03-03 / D02: la recogida pasa de Preparada a Entregado en una sola acción, sin despacho.
+    {
+      const repo = new RepoFake([{ ...orden(1, 2, 'preparada'), modo_entrega: 'recogida', direccion: null }], {}, personal);
+      const gestion = new GestionOrdenesService(repo, new NotificadorFake());
+      const detalleAntes = await new OrdenesService(repo, new RegistroFake()).detallePedidoParaPersonal('ORD-2026-0001');
+      const despachar = await capturarError(() => gestion.cambiarEstado('ORD-2026-0001', 'despachado', ADMIN, undefined));
+      const resultado = await gestion.cambiarEstado('ORD-2026-0001', 'entregado', ADMIN, undefined);
+      const cambios = repo.historial.get(1) ?? [];
+      assert(
+        detalleAntes.transiciones_permitidas.join(',') === 'en_preparacion,entregado' &&
+          esError(despachar, 409, 'TRANSICION_NO_PERMITIDA') &&
+          despachar instanceof AppError &&
+          despachar.message.includes('no se despacha'),
+        'D02: una orden de recogida no ofrece ni admite el despacho'
+      );
+      assert(
+        resultado.estado === 'entregado' &&
+          cambios.length === 1 &&
+          cambios[0]?.estado_anterior === 'preparada' &&
+          cambios[0].autor === 'Admin Pruebas' &&
+          cambios[0].fecha === MOMENTO_ESCRITURA,
+        'CA-ORD-03-03: al registrar la recogida la orden queda Entregada con fecha y autor, sin despacho'
+      );
+    }
+
+    // D02 / RF-ORD-03-06: a domicilio, Preparada pasa a Despachado; Entregado es posterior y opcional.
     {
       const repo = new RepoFake([orden(1, 2, 'preparada')], {}, personal);
-      const resultado = await new GestionOrdenesService(repo, new NotificadorFake()).cambiarEstado(
-        'ORD-2026-0001',
-        'entregado',
-        ADMIN,
-        undefined
+      const gestion = new GestionOrdenesService(repo, new NotificadorFake());
+      const entregarYa = await capturarError(() => gestion.cambiarEstado('ORD-2026-0001', 'entregado', ADMIN, undefined));
+      const despacho = await gestion.cambiarEstado('ORD-2026-0001', 'despachado', ADMIN, undefined);
+      assert(
+        esError(entregarYa, 409, 'TRANSICION_NO_PERMITIDA') &&
+          entregarYa instanceof AppError &&
+          entregarYa.message.includes('primero se despacha') &&
+          despacho.estado === 'despachado' &&
+          despacho.transiciones_permitidas.join(',') === 'entregado',
+        'D02: una orden a domicilio se despacha antes de poder marcarse Entregada'
       );
-      assert(resultado.estado === 'entregado', 'D02: una orden preparada puede entregarse directamente (recogida)');
+    }
+
+    // Órdenes anteriores a la copia histórica (sin modo de entrega): conservan las dos salidas.
+    {
+      const repo = new RepoFake([{ ...orden(1, 2, 'preparada'), modo_entrega: null }], {}, personal);
+      const detalle = await new OrdenesService(repo, new RegistroFake()).detallePedidoParaPersonal('ORD-2026-0001');
+      assert(
+        detalle.transiciones_permitidas.join(',') === 'en_preparacion,despachado,entregado',
+        'D02: una orden sin modo de entrega registrado conserva las dos salidas de Preparada'
+      );
     }
 
     // HU-ORD-03: un salto que el ciclo no permite se rechaza y no cambia nada.
@@ -1137,6 +1215,168 @@ async function ejecutarPruebasM08(): Promise<void> {
           TRANSICIONES.devuelto.length === 0 &&
           ESTADOS_NO_HABILITADOS.every((e) => !destinos.includes(e)),
         'HU-ORD-03: los estados finales no tienen salida y cancelar/devolver no están en el ciclo manual'
+      );
+    }
+
+    // --- HU-ORD-02 / 04 / 05 / 09: copia histórica completa (schema v3.9) --------------
+
+    const ordenRecogida: CabeceraOrden = {
+      ...orden(3, 2, 'orden_confirmada'),
+      codigo_solicitud: 'SOL-2026-00001',
+      modo_entrega: 'recogida',
+      direccion: null,
+      sub_total: '275900.00',
+      descuento: '14590.00',
+      total: '261310.00',
+      base_sin_impuesto: '219588.24',
+      importe_iva: '41721.76',
+      tasa_iva: '19.00',
+    };
+    const lineasRecogida: FilaLineaOrden[] = [
+      linea({
+        id_linea_orden: 3,
+        nombre_producto: 'Viniltex Máxima Protección Antibacterial',
+        variante_copia: 'Galón - Azul Océano',
+        color_solicitado: 'Azul Océano',
+        precio_inicial: '95900.00',
+        precio_aplicado: '81310.00',
+        id_variante_ref: 2,
+        variante_estado: 'activo',
+        producto_id: 1,
+        producto_estado: 'activo',
+        producto_publicado: true,
+      }),
+      linea({
+        id_linea_orden: 4,
+        nombre_producto: 'Pintura Entonada de Carta (ejemplo)',
+        variante_copia: 'Galón - Base A',
+        color_solicitado: 'Amarillo Sol',
+        precio_inicial: '120000.00',
+        precio_aplicado: '120000.00',
+        es_entonado: true,
+        base_consumida: 'Base A - Galón',
+      }),
+      linea({
+        id_linea_orden: 5,
+        nombre_producto: 'Esmalte Sintético Brillante',
+        variante_copia: 'Cuarto de Galón - Rojo Colonial',
+        color_solicitado: 'Rojo Colonial',
+        precio_inicial: '30000.00',
+        precio_aplicado: '30000.00',
+        cantidad: 2,
+        id_variante_ref: 9999,
+      }),
+    ];
+    const repoRecogida = (): RepoFake => {
+      const repo = new RepoFake([ordenRecogida], { 3: lineasRecogida }, personal);
+      repo.descuentos.push(
+        { id_linea_orden: 3, orden_aplicacion: 2, origen: 'Cupón de bienvenida', porcentaje: null, importe: '5000.00' },
+        { id_linea_orden: 3, orden_aplicacion: 1, origen: 'Promoción Viniltex', porcentaje: '10.00', importe: '9590.00' }
+      );
+      return repo;
+    };
+
+    // CA-ORD-02-02: el cliente ve cuáles descuentos se aplicaron, en qué orden y cuánto descontó cada uno.
+    {
+      const detalle = await new OrdenesService(repoRecogida(), new RegistroFake()).detallePedidoDeCliente(2, 'ORD-2026-0003', 'GET /test');
+      const conDescuentos = detalle.lineas[0];
+      assert(
+        conDescuentos?.precio_inicial === '95900.00' &&
+          conDescuentos.descuentos.map((d) => `${d.orden}:${d.origen}:${d.porcentaje ?? 'fijo'}:${d.importe}`).join(' | ') ===
+            '1:Promoción Viniltex:10.00:9590.00 | 2:Cupón de bienvenida:fijo:5000.00' &&
+          conDescuentos.precio_aplicado === '81310.00' &&
+          detalle.lineas[1]?.descuentos.length === 0,
+        'CA-ORD-02-02: cada descuento aparece con su origen, porcentaje, importe y orden de aplicación'
+      );
+    }
+
+    // CA-ORD-02-05: la orden conserva el porcentaje de IVA y los importes con que se cobró.
+    {
+      const detalle = await new OrdenesService(repoRecogida(), new RegistroFake()).detallePedidoDeCliente(2, 'ORD-2026-0003', 'GET /test');
+      assert(
+        detalle.tasa_iva === '19.00' && detalle.base_sin_impuesto === '219588.24' && detalle.importe_iva === '41721.76',
+        'CA-ORD-02-05: el detalle conserva la tasa de IVA aplicada, la base y el impuesto cobrados'
+      );
+    }
+
+    // CA-ORD-04-01 / RF-ORD-03-06: el detalle muestra el modo de entrega; en recogida no hay dirección.
+    {
+      const detalle = await new OrdenesService(repoRecogida(), new RegistroFake()).detallePedidoDeCliente(2, 'ORD-2026-0003', 'GET /test');
+      assert(
+        detalle.modo_entrega === 'recogida' &&
+          detalle.direccion === null &&
+          detalle.costo_entrega === '0.00' &&
+          detalle.codigo_solicitud === 'SOL-2026-00001',
+        'CA-ORD-04-01: el detalle muestra el modo de entrega, su costo y la solicitud de origen'
+      );
+    }
+
+    // CA-ORD-04-02: la línea entonada muestra el color que se pidió.
+    {
+      const detalle = await new OrdenesService(repoRecogida(), new RegistroFake()).detallePedidoDeCliente(2, 'ORD-2026-0003', 'GET /test');
+      const entonada = detalle.lineas[1];
+      assert(
+        entonada?.es_entonado === true && entonada.color_solicitado === 'Amarillo Sol',
+        'CA-ORD-04-02: el detalle de una línea entonada muestra el color pedido'
+      );
+    }
+
+    // CA-ORD-04-04 / RF-ORD-04-03: el producto retirado conserva sus datos, sin enlace y marcado como retirado.
+    {
+      const detalle = await new OrdenesService(repoRecogida(), new RegistroFake()).detallePedidoDeCliente(2, 'ORD-2026-0003', 'GET /test');
+      const vigente = detalle.lineas[0];
+      const retirada = detalle.lineas[2];
+      assert(
+        retirada?.retirado === true &&
+          retirada.id_producto === null &&
+          retirada.producto === 'Esmalte Sintético Brillante' &&
+          retirada.precio_aplicado === '30000.00' &&
+          retirada.cantidad === 2,
+        'CA-ORD-04-04: la línea de un producto retirado conserva sus datos, sin enlace y con la marca de retirado'
+      );
+      assert(
+        vigente?.retirado === false && vigente.id_producto === 1 && detalle.lineas[1]?.id_producto === null,
+        'RF-ORD-04-03: un producto vigente trae su id para enlazar; sin referencia no hay enlace'
+      );
+    }
+
+    // RF-ORD-04-03: qué cuenta como retirado. «Agotado» sigue en el catálogo.
+    {
+      const base = linea({ nombre_producto: 'P', id_variante_ref: 1, variante_estado: 'activo', producto_id: 1, producto_estado: 'activo', producto_publicado: true });
+      assert(
+        !lineaRetirada(base) &&
+          !lineaRetirada({ ...base, variante_estado: 'agotado' }) &&
+          lineaRetirada({ ...base, variante_estado: null }) &&
+          lineaRetirada({ ...base, variante_estado: 'descontinuado' }) &&
+          lineaRetirada({ ...base, variante_estado: 'inactivo' }) &&
+          lineaRetirada({ ...base, producto_estado: 'inactivo' }) &&
+          lineaRetirada({ ...base, producto_publicado: false }) &&
+          !lineaRetirada({ ...base, id_variante_ref: null }),
+        'RF-ORD-04-03: retirado = variante inexistente, inactiva o descontinuada, o producto inactivo o sin publicar'
+      );
+    }
+
+    // RF-ORD-09-01: la base que consume cada línea entonada la ve el personal, no el cliente.
+    {
+      const servicio = new OrdenesService(repoRecogida(), new RegistroFake());
+      const personalVista = await servicio.detallePedidoParaPersonal('ORD-2026-0003');
+      const clienteVista = await servicio.detallePedidoDeCliente(2, 'ORD-2026-0003', 'GET /test');
+      assert(
+        personalVista.lineas[1]?.base_consumida === 'Base A - Galón' &&
+          personalVista.lineas.every((l) => 'base_consumida' in l) &&
+          clienteVista.lineas.every((l) => !('base_consumida' in l)),
+        'RF-ORD-09-01: el detalle del personal trae la base que consume la línea entonada; el del cliente no'
+      );
+    }
+
+    // RF-ORD-05-05: cada fila de la bandeja muestra el modo de entrega.
+    {
+      const repo = new RepoFake([ordenRecogida, orden(1, 2, 'orden_confirmada')], {}, personal);
+      const pagina = await new OrdenesService(repo, new RegistroFake(), reloj).listarOrdenesParaPersonal({}, undefined, undefined);
+      const porCodigo = new Map(pagina.items.map((o) => [o.codigo, o.modo_entrega]));
+      assert(
+        porCodigo.get('ORD-2026-0003') === 'recogida' && porCodigo.get('ORD-2026-0001') === 'domicilio',
+        'RF-ORD-05-05: la bandeja muestra el modo de entrega de cada orden'
       );
     }
 

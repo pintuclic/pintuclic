@@ -5,6 +5,7 @@ import {
   ContactoCliente,
   FilaConteoEstado,
   FilaContactoOrden,
+  FilaDescuentoLinea,
   FilaHistorialEstado,
   FilaLineaOrden,
   FilaNotaOrden,
@@ -42,10 +43,16 @@ export class OrdenesRepository {
         'id_usuario',
         'origen',
         'estado',
+        'codigo_solicitud',
+        'modo_entrega',
+        'costo_entrega',
         'direccion',
         'sub_total',
         'descuento',
         'total',
+        'base_sin_impuesto',
+        'importe_iva',
+        'tasa_iva',
         'observaciones',
         'fecha',
       ])
@@ -53,13 +60,49 @@ export class OrdenesRepository {
       .executeTakeFirst();
   }
 
-  /** Líneas de la orden en el orden en que se registraron. */
+  /**
+   * Líneas de la orden en el orden en que se registraron, con la copia histórica completa
+   * (HU-ORD-02). Del catálogo vivo solo se lee el estado de la variante y del producto
+   * referenciados, para saber si siguen disponibles (RF-ORD-04-03); nada de lo mostrado
+   * sale del catálogo.
+   */
   async listarLineas(idOrden: number): Promise<FilaLineaOrden[]> {
     return this.db
-      .selectFrom('linea_orden')
-      .select(['nombre_producto', 'variante_copia', 'precio_aplicado', 'cantidad'])
-      .where('id_orden', '=', idOrden)
+      .selectFrom('linea_orden as l')
+      .leftJoin('variante as v', 'v.id_variante', 'l.id_variante_ref')
+      .leftJoin('producto as p', 'p.id_producto', 'v.id_producto')
+      .select([
+        'l.id_linea_orden',
+        'l.nombre_producto',
+        'l.variante_copia',
+        'l.precio_aplicado',
+        'l.cantidad',
+        'l.color_solicitado',
+        'l.precio_inicial',
+        'l.id_variante_ref',
+        'l.es_entonado',
+        'l.base_consumida',
+        'v.estado as variante_estado',
+        'p.id_producto as producto_id',
+        'p.estado as producto_estado',
+        'p.publicado as producto_publicado',
+      ])
+      .where('l.id_orden', '=', idOrden)
+      .orderBy('l.id_linea_orden', 'asc')
+      .execute();
+  }
+
+  /** Descuentos de las líneas indicadas, en su orden de aplicación (RF-ORD-02-02). */
+  async listarDescuentos(idsLineas: ReadonlyArray<number>): Promise<FilaDescuentoLinea[]> {
+    if (idsLineas.length === 0) {
+      return [];
+    }
+    return this.db
+      .selectFrom('linea_orden_descuento')
+      .select(['id_linea_orden', 'orden_aplicacion', 'origen', 'porcentaje', 'importe'])
+      .where('id_linea_orden', 'in', [...idsLineas])
       .orderBy('id_linea_orden', 'asc')
+      .orderBy('orden_aplicacion', 'asc')
       .execute();
   }
 
@@ -117,7 +160,7 @@ export class OrdenesRepository {
   ): Promise<FilaResumenOrdenGestion[]> {
     const direccion = orden === 'antiguedad' ? 'asc' : 'desc';
     return this.baseGestion(filtros)
-      .select(['o.codigo_visible', 'o.fecha', 'o.total', 'o.estado', 'o.id_usuario'])
+      .select(['o.codigo_visible', 'o.fecha', 'o.total', 'o.estado', 'o.id_usuario', 'o.modo_entrega'])
       .select((eb) =>
         eb
           .selectFrom('usuario as titular')
