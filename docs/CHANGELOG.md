@@ -8,6 +8,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.39.0] - 2026-09-30
+### Módulo: M05 Carrito de compras (Frontend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.39.0)** para la interfaz e integración frontend del carrito de visitantes y clientes autenticados. No incluye el registro de rutas globales, el checkout/pago ni el despliegue.
+- **Flujos:** carga del carrito, persistencia del visitante mediante `x-visitor-token`, gestión de cantidades y líneas, estado vacío, fusión al autenticar y revalidación antes del checkout autenticado. Los totales de producción proceden de la API.
+- **Integración y verificación:** contra los contenedores aislados backend/PostgreSQL, `GET /api/health` confirmó `database: connected`; la E2E en `localhost` verificó carga, agregar, persistir tras recargar, aumentar/disminuir, eliminar, vaciar y bloqueo del checkout visitante. Las solicitudes verificadas respondieron `200` y no hubo errores CORS ni de consola.
+- **Validaciones frontend:** TypeScript M05, ESLint, sintaxis de `vite.config.mjs` y build aislado pasaron sobre la base frontend completa compatible. La comprobación TypeScript posterior sobre FRONTEND reportó diagnósticos en M04, no en M05; no se declara TypeScript limpio para esa base.
+- **Dependencias pendientes:** registrar explícitamente `m05CarritoRoutes` en el router global; completar el flujo de checkout/pago con M07 y la creación de la orden en M08. M01/M02 deben proveer el catálogo completo que sustituirá los fallbacks visuales.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.3.39.0_M05_carrito_compras_frontend.md](./walkthroughs/M05/walkthrough_v0.3.39.0_M05_carrito_compras_frontend.md)
+
+---
+
 ## [v0.3.38.1] - 2026-09-29
 ### Módulo: M08 Orden de Venta — Cierre del backend: diagramas, especificación y dictamen (Documentación)
 - **Alcance General:** Incremento **PATCH (v0.3.38.1)** que cierra el backend de M08. Pone al día sus diagramas y su especificación, que seguían describiendo el ciclo anterior a las definiciones del analista, y deja el dictamen del checklist de cierre del equipo. Sin cambios de comportamiento, de BD ni de archivos compartidos.
