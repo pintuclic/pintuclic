@@ -7,7 +7,32 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.3.39.0] - 2026-09-30
 
+### M01: Menú Responsive de Productos, Flujo de Calculadora y Ajustes Responsive
+
+* **Alcance General:** Incremento **MINIOR-FEAT (v0.3.39.0)** para las Vistas Públicas Frontend del módulo M01. Se implementan mejoras funcionales en el menú de Productos, se corrige el flujo de la calculadora de pintura y se realizan ajustes de adaptación responsive.
+
+* **Hitos Clave:**
+
+  * **Menú responsive de Productos:** Se implementa el flujo para visualizar directamente las opciones de "Ver todos los productos" y las categorías disponibles desde dispositivos móviles.
+  * **Navegación por categorías:** Se implementa el flujo de Categoría → Subcategorías → Catálogo filtrado, permitiendo cargar únicamente las subcategorías correspondientes a la categoría seleccionada.
+  * **Calculadora desde Home y Productos:** Se ajusta el comportamiento para que la calculadora se abra como página completa cuando el usuario ingresa desde Home o Productos.
+  * **Calculadora desde Detalle de producto:** Se ajusta el comportamiento para que la calculadora se abra como modal cuando el usuario ya se encuentra consultando un producto específico.
+  * **Responsive M01:** Se realizan ajustes en las vistas públicas de M01 para mejorar su adaptación a diferentes tamaños de pantalla.
+
+* **Flujo implementado:**
+
+  * `Home / Productos → Calculadora completa → Cálculo → Buscar/Elegir producto`
+  * `Detalle de producto → Calculadora → Modal → Resultado → Regresar/continuar`
+  * `Productos → Ver todos / Categorías → Categoría → Subcategorías → Catálogo filtrado`
+
+* **Versión anterior:** `v0.3.38.1`
+
+* **Nueva versión:** `v0.3.39.0`
+
+* **Tipo de cambio:** `Minior-feat`
+---
 ## [v0.3.29.1] - 2026-09-25
 ### Sistema: Migración al Versionamiento de Cuatro Segmentos y Bump Obligatorio (Documentación)
 - **Alcance General:** Incremento **PATCH (v0.3.29.1)** que adopta el esquema oficial de cuatro segmentos de [CONTRIBUTING.md](../CONTRIBUTING.md) en todo el proyecto y establece la actualización obligatoria de `.github/version.txt` y su registro en este CHANGELOG por cada entrega. Alcance estrictamente documental: no se modifica ningún archivo de `backend/`.
