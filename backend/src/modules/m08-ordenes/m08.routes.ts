@@ -30,7 +30,7 @@ export const PERMISO_VER_ORDENES = 'ventas.ver';
  * Lo exigen las operaciones que escriben: avanzar el estado (CA-ORD-05-01 / 05-02), dejar
  * notas internas y registrar contactos. Leer sigue exigiendo solo `ventas.ver`.
  *
- * ⚠️ Que notas y contactos pidan este permiso es una decisión de diseño pendiente de confirmar.
+ * Que notas y contactos también lo exijan lo confirmó el analista el 29/09/2026.
  */
 export const PERMISO_GESTIONAR_ORDENES = 'ventas.gestionar';
 
