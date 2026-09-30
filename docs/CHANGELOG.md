@@ -7,6 +7,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.3.41.1] - 2026-09-30
+### Core / Infraestructura: Restauración de `ALLOWED_ORIGINS` en el despliegue (CORS)
+- **Alcance General:** Incremento **PATCH (v0.3.41.1)** que corrige el error 500 en todas las peticiones del navegador (login, registro, carrito, etc.). El `.env` generado por el deploy no incluía `ALLOWED_ORIGINS`, por lo que el backend usaba el default de `localhost` y el middleware CORS rechazaba el origen real `https://www.pintuclic.com`.
+- **Hitos Clave:**
+  - **`.env.example`:** nueva sección 5 con `ALLOWED_ORIGINS=https://www.pintuclic.com,https://pintuclic.com`.
+  - **`deploy.yml`:** la Variable `ALLOWED_ORIGINS` se mapea al `.env` generado y se valida que no venga vacía, fallando con mensaje claro antes de levantar contenedores.
+  - **Configuración:** la Variable `ALLOWED_ORIGINS` queda creada en GitHub Actions (Repository variables).
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.41.1_core_restauracion_allowed_origins.md](./walkthroughs/core/walkthrough_v0.3.41.1_core_restauracion_allowed_origins.md)
+
+---
+
 ## [v0.3.41.0] - 2026-09-30
 
 ### M01: Vista de Gestión de Bases y Unificación de Botones del Panel Administrativo
