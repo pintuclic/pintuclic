@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue';
 import { OrdenesService } from '../services/ordenes.service';
-import { PEDIDOS_MOCK } from '../services/ordenes.mock';
+import { clasificarErrorCarga, type TipoErrorCarga } from './clasificarErrorCarga';
 import { FILTROS } from '../dtos/estado-pedido.dto';
 import type { PedidosCliente, ResumenPedido } from '../interfaces/ordenes.interface';
 
@@ -16,6 +16,10 @@ import type { PedidosCliente, ResumenPedido } from '../interfaces/ordenes.interf
  * admite ni filtros ni paginación: devuelve todos los pedidos del cliente de una
  * vez. La búsqueda, en cambio, SÍ va al servidor, porque busca también dentro de
  * los productos de cada pedido y eso el cliente no puede hacerlo.
+ *
+ * Si la consulta falla NUNCA se muestran datos de ejemplo: la lista queda vacía,
+ * `tipoError` indica el motivo y la vista ofrece reintentar. Mientras hay error,
+ * `sinPedidos` y `sinResultados` son falsos para no afirmar «no tienes pedidos».
  * ==============================================================================
  */
 
@@ -27,7 +31,7 @@ export function useMisPedidos(opciones: { porPagina?: number } = {}) {
   const pedidos = ref<PedidosCliente>(VACIO);
   const cargando = ref(false);
   const error = ref<string | null>(null);
-  const usandoMock = ref(false);
+  const tipoError = ref<TipoErrorCarga | null>(null);
   const busqueda = ref('');
   const filtro = ref('todos');
   const pagina = ref(1);
@@ -37,20 +41,16 @@ export function useMisPedidos(opciones: { porPagina?: number } = {}) {
   async function cargar(): Promise<void> {
     cargando.value = true;
     error.value = null;
+    tipoError.value = null;
     try {
       pedidos.value = await OrdenesService.misPedidos(busqueda.value);
-      usandoMock.value = false;
     } catch (e: unknown) {
-      const err = e as { response?: { status?: number } };
-      if (err.response?.status === 401) {
-        error.value = 'Inicia sesión para ver tus pedidos.';
-        pedidos.value = VACIO;
-      } else {
-        // Red de seguridad para maquetar sin backend, igual que en M01.
-        error.value = 'No fue posible cargar tus pedidos.';
-        pedidos.value = PEDIDOS_MOCK;
-        usandoMock.value = true;
-      }
+      pedidos.value = VACIO;
+      tipoError.value = clasificarErrorCarga(e);
+      error.value =
+        tipoError.value === 'sesion'
+          ? 'Inicia sesión para ver tus pedidos.'
+          : 'No pudimos cargar tus pedidos. Inténtalo de nuevo en unos segundos.';
     } finally {
       cargando.value = false;
     }
@@ -99,9 +99,14 @@ export function useMisPedidos(opciones: { porPagina?: number } = {}) {
 
   /** Distingue «no tienes pedidos» de «tu búsqueda o filtro no encontró nada». */
   const sinPedidos = computed(
-    () => pedidos.value.en_curso.length === 0 && pedidos.value.finalizados.length === 0
+    () =>
+      tipoError.value === null &&
+      pedidos.value.en_curso.length === 0 &&
+      pedidos.value.finalizados.length === 0
   );
-  const sinResultados = computed(() => !sinPedidos.value && total.value === 0);
+  const sinResultados = computed(
+    () => tipoError.value === null && !sinPedidos.value && total.value === 0
+  );
 
   // Cambiar de filtro o de búsqueda devuelve siempre a la primera página.
   watch([filtro, busqueda], () => {
@@ -117,7 +122,7 @@ export function useMisPedidos(opciones: { porPagina?: number } = {}) {
     pagina,
     cargando,
     error,
-    usandoMock,
+    tipoError,
     busqueda,
     filtro,
     sinPedidos,
