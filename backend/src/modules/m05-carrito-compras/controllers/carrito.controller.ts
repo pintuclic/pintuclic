@@ -6,6 +6,7 @@ import {
   agregarItemSchema,
   actualizarItemSchema,
   fusionarCarritoSchema,
+  tokenVisitanteSchema,
 } from '../dtos';
 
 // ==============================================================================
@@ -21,19 +22,27 @@ export class CarritoController {
   constructor(private readonly carritoService: CarritoService) {}
 
   /**
-   * Extrae el token de visitante del header HTTP.
-   * Lanza AppError si el header no está presente.
+   * Extrae y valida el token de visitante del header HTTP.
+   * Sin header responde 400 MISSING_VISITOR_TOKEN; si no es un UUID, 400 INVALID_VISITOR_TOKEN.
    */
   private extraerTokenVisitante(req: Request): string {
     const token = req.headers[HEADER_TOKEN_VISITANTE];
-    if (!token || typeof token !== 'string' || token.trim() === '') {
+    if (token === undefined || token === '') {
       throw new AppError(
         `El header '${HEADER_TOKEN_VISITANTE}' es obligatorio para operaciones de carrito anónimo`,
         400,
         'MISSING_VISITOR_TOKEN'
       );
     }
-    return token.trim();
+    const resultado = tokenVisitanteSchema.safeParse(token);
+    if (!resultado.success) {
+      throw new AppError(
+        `El header '${HEADER_TOKEN_VISITANTE}' debe ser un UUID válido`,
+        400,
+        'INVALID_VISITOR_TOKEN'
+      );
+    }
+    return resultado.data;
   }
 
   /**

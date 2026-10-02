@@ -1,4 +1,7 @@
+import { Request, Response } from 'express';
+import { ZodError } from 'zod';
 import { CarritoService } from '../services/carrito.service';
+import { CarritoController } from '../controllers/carrito.controller';
 import { CarritoRepository } from '../repositories/carrito.repository';
 import { LineaCarritoRepository } from '../repositories/linea-carrito.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
@@ -49,6 +52,36 @@ function lineaViva(overrides: Partial<LineaCarritoViva> = {}): LineaCarritoViva 
     estado_variante: 'activo',
     ...overrides,
   };
+}
+
+// ---- Fakes de HTTP para probar el controlador --------------------------------
+
+type PeticionFalsa = {
+  headers: Record<string, string | string[] | undefined>;
+  params?: Record<string, string>;
+  body?: unknown;
+  user?: { id: number };
+};
+
+function peticion(datos: PeticionFalsa): Request {
+  return { params: {}, body: {}, ...datos } as unknown as Request;
+}
+
+/** Respuesta falsa que guarda el código y el cuerpo que escribe `sendSuccess`. */
+class RespuestaFalsa {
+  public codigo = 0;
+  public cuerpo: unknown;
+  status(codigo: number): this {
+    this.codigo = codigo;
+    return this;
+  }
+  json(cuerpo: unknown): this {
+    this.cuerpo = cuerpo;
+    return this;
+  }
+  comoResponse(): Response {
+    return this as unknown as Response;
+  }
 }
 
 // ---- Fakes de repositorios --------------------------------------------------
@@ -415,6 +448,52 @@ async function ejecutarPruebasM05(): Promise<void> {
 
     const justo = await service.agregarItemVisitante(TOKEN, { id_variante: 10, cantidad: 9 });
     assert(justo.lineas[0]?.cantidad === 999, 'D2-03: 990 + 9 = 999 se acepta (el tope es inclusivo)');
+  }
+
+  // ---------------------------------------------------------------------------
+  // D3: el token de visitante debe ser un UUID (header y cuerpo de /fusionar)
+  // ---------------------------------------------------------------------------
+  console.log('\n--- D3: Validación del token de visitante ---');
+  {
+    const carritoRepo = new CarritoRepoFake();
+    const lineaRepo = new LineaRepoFake();
+    const ctrl = new CarritoController(new CarritoService(carritoRepo, lineaRepo));
+    const UUID = '3f1c2b9a-6d4e-4f8a-9b7c-1a2b3c4d5e6f';
+
+    await esperarError(
+      () => ctrl.obtenerCarritoVisitante(peticion({ headers: {} }), new RespuestaFalsa().comoResponse()),
+      400,
+      'MISSING_VISITOR_TOKEN',
+      'D3-01: sin header x-visitor-token responde 400 MISSING_VISITOR_TOKEN'
+    );
+    for (const invalido of ['tok-abc-123', 'x'.repeat(255), "1' OR '1'='1", '3f1c2b9a6d4e4f8a9b7c1a2b3c4d5e6f']) {
+      await esperarError(
+        () => ctrl.obtenerCarritoVisitante(peticion({ headers: { 'x-visitor-token': invalido } }), new RespuestaFalsa().comoResponse()),
+        400,
+        'INVALID_VISITOR_TOKEN',
+        `D3-02: el header «${invalido.slice(0, 20)}» no es un UUID y responde 400 INVALID_VISITOR_TOKEN`
+      );
+    }
+    await esperarError(
+      () => ctrl.obtenerCarritoVisitante(peticion({ headers: { 'x-visitor-token': [UUID, UUID] } }), new RespuestaFalsa().comoResponse()),
+      400,
+      'INVALID_VISITOR_TOKEN',
+      'D3-03: un header repetido (arreglo) se rechaza'
+    );
+    assert(carritoRepo.tabla.size === 0, 'D3-04: ningún token rechazado crea un carrito');
+
+    const res = new RespuestaFalsa();
+    await ctrl.obtenerCarritoVisitante(peticion({ headers: { 'x-visitor-token': ` ${UUID.toUpperCase()} ` } }), res.comoResponse());
+    const creado = [...carritoRepo.tabla.values()][0];
+    assert(res.codigo === 200 && creado?.token_visitante === UUID, 'D3-05: un UUID válido se acepta normalizado a minúsculas y sin espacios');
+
+    let rechazoCuerpo = false;
+    try {
+      await ctrl.fusionarCarrito(peticion({ headers: {}, user: { id: 42 }, body: { token_visitante: 'tok-abc-123' } }), new RespuestaFalsa().comoResponse());
+    } catch (error) {
+      rechazoCuerpo = error instanceof ZodError;
+    }
+    assert(rechazoCuerpo, 'D3-06: /fusionar rechaza con ZodError (400) un token_visitante que no es UUID');
   }
 
   // ---------------------------------------------------------------------------
