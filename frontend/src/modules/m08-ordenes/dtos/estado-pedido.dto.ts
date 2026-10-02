@@ -1,4 +1,4 @@
-import type { EstadoOrden } from '../interfaces/ordenes.interface';
+import type { EstadoOrden, ModoEntrega } from '../interfaces/ordenes.interface';
 
 /**
  * ==============================================================================
@@ -22,24 +22,29 @@ export interface PresentacionEstado {
 }
 
 export const ESTADOS: Record<EstadoOrden, PresentacionEstado> = {
-  // Gris: información secundaria, sin acción del usuario.
-  pendiente: {
-    etiqueta: 'Pendiente',
-    clases: 'bg-neutral-lightest text-neutral-medium ring-1 ring-inset ring-neutral-light',
-  },
-  // Azul de acción: confirmado, el proceso avanza.
-  pagado: {
-    etiqueta: 'Pagado',
+  // Azul de acción: el pedido quedó confirmado y el proceso arranca.
+  orden_confirmada: {
+    etiqueta: 'Orden confirmada',
     clases: 'bg-subaction text-action',
   },
-  // Amarillo: en curso, requiere espera.
+  // Amarillo: en curso, requiere espera mientras se verifica el stock.
+  revision_disponibilidad: {
+    etiqueta: 'En revisión',
+    clases: 'bg-highlight/20 text-corporate',
+  },
+  // Amarillo: en curso, se está preparando.
   en_preparacion: {
     etiqueta: 'En preparación',
     clases: 'bg-highlight/20 text-corporate',
   },
-  // Azul corporativo: hito estructural del pedido.
-  enviado: {
-    etiqueta: 'Enviado',
+  // Azul de acción: lista para salir.
+  preparada: {
+    etiqueta: 'Preparada',
+    clases: 'bg-subaction text-action',
+  },
+  // Azul corporativo: hito logístico, va en camino.
+  despachado: {
+    etiqueta: 'Despachado',
     clases: 'bg-subaction text-corporate',
   },
   // Verde: estado positivo, éxito.
@@ -52,6 +57,11 @@ export const ESTADOS: Record<EstadoOrden, PresentacionEstado> = {
     etiqueta: 'Cancelado',
     clases: 'bg-danger-subtle text-danger',
   },
+  // Rojo: el pedido volvió.
+  devuelto: {
+    etiqueta: 'Devuelto',
+    clases: 'bg-danger-subtle text-danger',
+  },
 };
 
 /**
@@ -62,22 +72,60 @@ export const ESTADOS: Record<EstadoOrden, PresentacionEstado> = {
  * descripción ni fecha por etapa.
  */
 export const DESCRIPCION_ETAPA: Record<EstadoOrden, string> = {
-  pendiente: 'Tu orden fue registrada y está a la espera de confirmación de pago.',
-  pagado: 'Transacción aprobada mediante pasarela segura.',
+  orden_confirmada: 'Tu orden fue recibida correctamente y el pago quedó confirmado.',
+  revision_disponibilidad: 'Estamos verificando la disponibilidad física de tus productos.',
   en_preparacion: 'Pinturas en proceso de envasado y embalaje en bodega.',
-  enviado: 'Entregado a la transportadora aliada para su despacho.',
+  preparada: 'Tu pedido está listo y a la espera de ser despachado.',
+  despachado: 'Entregado a la transportadora aliada para su envío.',
   entregado: 'Confirmación de recibido con firma en el destino.',
   cancelado: 'El pedido fue cancelado y no continuará su proceso.',
+  devuelto: 'El pedido fue devuelto después de la entrega.',
 };
 
-/** Orden de la línea de tiempo del pedido, para deducir los pasos recorridos. */
-export const SECUENCIA_ESTADOS: readonly EstadoOrden[] = [
-  'pendiente',
-  'pagado',
+/**
+ * Etapas de la línea de tiempo, según el diagrama oficial
+ * (docs/assets/diagrams/M08/Maquina_de_estados_de_la_Orden.drawio.png).
+ *
+ * ⚠️ Desde «Preparada» el flujo BIFURCA según el modo de entrega:
+ *   · domicilio → Despachado → Entregado
+ *   · recogida  → Entregado (sin pasar por Despachado)
+ *
+ * El backend aplica la misma regla (`EXCLUIDA_POR_MODO` en ciclo-estados.ts), así
+ * que pintar siempre «Despachado» mostraría al cliente de recogida en tienda una
+ * etapa por la que su pedido nunca va a pasar.
+ */
+const SECUENCIA_BASE: readonly EstadoOrden[] = [
+  'orden_confirmada',
+  'revision_disponibilidad',
   'en_preparacion',
-  'enviado',
-  'entregado',
+  'preparada',
 ];
+
+/**
+ * Texto de la etapa ajustado al modo de entrega. En recogida en tienda no hay
+ * despacho ni destino: el cliente pasa a recoger, así que las dos etapas finales
+ * se redactan de otra forma.
+ */
+export function descripcionEtapa(estado: EstadoOrden, modo: ModoEntrega | null): string {
+  if (modo === 'recogida') {
+    if (estado === 'preparada') {
+      return 'Tu pedido está listo y te espera en el punto de recogida.';
+    }
+    if (estado === 'entregado') {
+      return 'Confirmación de entrega en el punto de recogida.';
+    }
+  }
+  return DESCRIPCION_ETAPA[estado];
+}
+
+export function secuenciaSegunEntrega(modo: ModoEntrega | null): readonly EstadoOrden[] {
+  // Sin modo (órdenes anteriores a la copia histórica) se muestra el camino completo.
+  if (modo === 'recogida') return [...SECUENCIA_BASE, 'entregado'];
+  return [...SECUENCIA_BASE, 'despachado', 'entregado'];
+}
+
+/** Camino completo. Solo para quien necesite recorrer todas las etapas posibles. */
+export const SECUENCIA_ESTADOS: readonly EstadoOrden[] = secuenciaSegunEntrega('domicilio');
 
 /**
  * Filtros de la vista. El backend NO admite filtrar: devuelve todo y el filtrado
@@ -85,10 +133,14 @@ export const SECUENCIA_ESTADOS: readonly EstadoOrden[] = [
  */
 export const FILTROS: ReadonlyArray<{ id: string; etiqueta: string; estados: EstadoOrden[] }> = [
   { id: 'todos', etiqueta: 'Todos', estados: [] },
-  { id: 'proceso', etiqueta: 'En proceso', estados: ['pendiente', 'pagado', 'en_preparacion'] },
-  { id: 'enviado', etiqueta: 'Enviado', estados: ['enviado'] },
+  {
+    id: 'proceso',
+    etiqueta: 'En proceso',
+    estados: ['orden_confirmada', 'revision_disponibilidad', 'en_preparacion', 'preparada'],
+  },
+  { id: 'enviado', etiqueta: 'Enviado', estados: ['despachado'] },
   { id: 'entregado', etiqueta: 'Entregado', estados: ['entregado'] },
-  { id: 'cancelado', etiqueta: 'Cancelado', estados: ['cancelado'] },
+  { id: 'cancelado', etiqueta: 'Cancelado', estados: ['cancelado', 'devuelto'] },
 ];
 
 /** Formato de moneda colombiana, sin decimales (los precios del catálogo son enteros). */
@@ -111,4 +163,44 @@ export function formatearFecha(iso: string): string {
     month: 'long',
     year: 'numeric',
   });
+}
+
+/** Etiqueta de la forma de entrega elegida en el checkout (M10). */
+export const MODO_ENTREGA: Record<ModoEntrega, string> = {
+  domicilio: 'Envío a domicilio',
+  recogida: 'Recogida en tienda',
+};
+
+/**
+ * Momento de un hito del historial. A diferencia de `fecha` del pedido, aquí sí
+ * llega la hora (ISO con zona), que es lo que pide la línea de tiempo del diseño.
+ */
+export function formatearFechaHora(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString('es-CO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+/**
+ * Fecha abreviada para tablas. «30 sept 2026» en lugar de «30 de septiembre de
+ * 2026»: en la bandeja del personal conviven ocho columnas y la forma larga
+ * desbordaba el ancho del panel.
+ */
+const MESES_CORTOS = [
+  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+] as const;
+
+export function formatearFechaCorta(iso: string): string {
+  const [a, m, d] = iso.split('-').map(Number);
+  if (!a || !m || !d) return iso;
+  // Se arma a mano porque `toLocaleDateString` en es-CO devuelve «30 de sept de
+  // 2026», con dos preposiciones que en una tabla de ocho columnas sobran.
+  return d + ' ' + MESES_CORTOS[m - 1] + ' ' + a;
 }

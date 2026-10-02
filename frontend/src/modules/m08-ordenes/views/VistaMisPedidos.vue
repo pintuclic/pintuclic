@@ -1,51 +1,119 @@
 <template>
-  <div class="bg-neutral-lightest min-h-screen pb-12">
-    <!-- Cabecera de la sección -->
-    <div class="container mx-auto px-4 md:px-8 pt-6">
-      <!-- Fondo con el token 'subaction', sin hexadecimales arbitrarios (infraestructura 4.2). -->
-      <div
-        class="relative h-32 md:h-40 overflow-hidden rounded-card shadow-sm border border-neutral-light bg-subaction flex items-center"
-      >
-        <div class="px-8 md:px-12">
-          <h1 class="text-2xl md:text-3xl font-bold text-corporate mb-1.5">
-            Mis Pedidos
-          </h1>
-          <p class="text-neutral-medium text-sm max-w-md">
-            Consulta el estado de tus compras y abre cualquier pedido para ver su detalle.
-          </p>
-        </div>
+  <!--
+    Dos pantallas en un mismo archivo, porque el Figma las trata como dos:
+
+      · sin código  → «Mis pedidos»: el marco de Mi Perfil (encabezado, barra lateral
+        y tarjeta de soporte) con el listado dentro.
+      · con código  → «Seguimiento de Pedido»: pantalla propia, con su encabezado, su
+        ruta de navegación y el detalle a todo el ancho, sin barra lateral.
+
+    PerfilSidebarNav y TarjetaSoporte son de M04: se importan tal cual, no se
+    modifican (Directiva 3).
+  -->
+
+  <!-- ==================== SEGUIMIENTO DE PEDIDO ==================== -->
+  <div v-if="codigo" class="bg-neutral-lightest min-h-screen font-sans pb-12">
+    <!--
+      Encabezado propio con la misma fotografía y el mismo degradado que el hero de la
+      página de inicio, como plantea el diseño. La imagen es un recurso de M01: se
+      importa tal cual, sin copiarla ni modificar nada de ese módulo.
+    -->
+    <div class="relative overflow-hidden bg-corporate min-h-56 md:min-h-[17.5rem] flex items-center">
+      <img
+        :src="heroSeguimiento"
+        alt=""
+        aria-hidden="true"
+        class="absolute inset-0 h-full w-full object-cover object-center"
+      />
+      <div class="absolute inset-0 bg-corporate/45" />
+      <div class="absolute inset-0 bg-gradient-to-r from-corporate via-corporate/85 to-corporate/25" />
+      <div class="relative z-10 w-full container mx-auto px-4 md:px-8 py-10 md:py-12">
+        <nav class="flex items-center gap-2 text-xs text-white/80 mb-3" aria-label="Ruta de navegación">
+          <RouterLink to="/" class="hover:text-white transition-colors">Inicio</RouterLink>
+          <ChevronRightIcon class="w-3 h-3" aria-hidden="true" />
+          <RouterLink to="/pedidos" class="hover:text-white transition-colors">Mis Pedidos</RouterLink>
+          <ChevronRightIcon class="w-3 h-3" aria-hidden="true" />
+          <span class="text-white" aria-current="page">Seguimiento de Pedido</span>
+        </nav>
+        <h1 class="text-2xl md:text-3xl font-title font-bold text-white">
+          Seguimiento de Pedido
+        </h1>
+        <p class="text-white/80 text-sm mt-1.5 max-w-lg">
+          Consulta en tiempo real el estado y detalles de tu compra.
+        </p>
       </div>
     </div>
 
     <div class="container mx-auto px-4 md:px-8 mt-6">
-      <!--
-        La sección resuelve por sí misma el maestro-detalle: al pulsar «Ver detalle»
-        la lista se estrecha a la izquierda y el seguimiento aparece a la derecha,
-        sin cambiar de pantalla.
-      -->
-      <SeccionMisPedidos
-        :con-buscador="true"
-        :con-grupos="true"
-        :por-pagina="5"
-        :codigo-inicial="codigo"
-      />
+      <RouterLink
+        to="/pedidos"
+        class="inline-flex items-center gap-2 rounded-button border border-neutral-light bg-white px-4 py-2 text-sm font-medium text-corporate transition-colors hover:border-action hover:text-action mb-5"
+      >
+        <ArrowLeftIcon class="w-4 h-4" />
+        Anterior
+      </RouterLink>
+
+      <PanelSeguimiento :key="codigo" :codigo="codigo" />
+    </div>
+  </div>
+
+  <!-- ==================== MIS PEDIDOS ==================== -->
+  <div v-else class="bg-neutral-lightest min-h-screen font-sans pb-12">
+    <div
+      class="relative h-32 md:h-40 overflow-hidden mx-4 md:mx-8 mt-6 rounded-2xl shadow-sm border border-neutral-light bg-subaction flex justify-between"
+    >
+      <div class="relative h-full flex flex-col justify-center px-8 md:px-12 z-10 w-full md:w-1/2">
+        <h1 class="text-2xl md:text-3xl font-title font-bold text-corporate mb-1.5">
+          Mis Pedidos
+        </h1>
+        <p class="text-neutral-medium text-sm font-sans font-normal max-w-md">
+          Consulte el estado de sus compras y abra cualquier pedido para ver su seguimiento.
+        </p>
+      </div>
+      <div
+        class="absolute inset-0 md:relative md:inset-auto md:w-1/2 h-full flex justify-end pointer-events-none"
+      >
+        <img
+          src="@/assets/banner_perfil.png"
+          alt=""
+          aria-hidden="true"
+          class="h-full w-auto object-contain object-right [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_30%)] [mask-image:linear-gradient(to_right,transparent_0%,black_30%)]"
+        />
+      </div>
+    </div>
+
+    <div
+      class="container mx-auto px-4 md:px-8 mt-6 grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-6 items-start"
+    >
+      <aside class="order-1 lg:col-start-1 flex flex-col gap-6">
+        <PerfilSidebarNav />
+        <div class="hidden lg:block">
+          <TarjetaSoporte />
+        </div>
+      </aside>
+
+      <main class="order-2 lg:col-start-2 min-w-0 flex flex-col gap-6">
+        <SeccionMisPedidos :titulo="true" :con-buscador="true" :con-grupos="true" :por-pagina="5" />
+        <div class="block lg:hidden">
+          <TarjetaSoporte />
+        </div>
+      </main>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { RouterLink } from 'vue-router';
+import { ArrowLeft as ArrowLeftIcon, ChevronRight as ChevronRightIcon } from 'lucide-vue-next';
+import PerfilSidebarNav from '@/modules/m04-cuentas/components/perfil/PerfilSidebarNav.vue';
+import TarjetaSoporte from '@/modules/m04-cuentas/components/perfil/TarjetaSoporte.vue';
+import heroSeguimiento from '@/modules/m01-catalogo/assets/storefront/hero-storefront.png';
 import SeccionMisPedidos from '../components/SeccionMisPedidos.vue';
+import PanelSeguimiento from '../components/PanelSeguimiento.vue';
 
 /**
- * Vista de la sección de pedidos del cliente.
- *
- * Deliberadamente autónoma: no depende de ningún componente de otro módulo, para
- * que M08 pueda entregarse por separado. Cuando M04 llegue a `develop`, esta vista
- * puede incorporar su barra lateral de perfil (`PerfilSidebarNav`) y el perfil
- * puede incrustar `SeccionMisPedidos` — ver el documento de separación.
- *
- * `codigo` llega desde enlaces directos del tipo /pedidos/ORD-2026-0001 y abre ese
- * pedido de entrada; a partir de ahí la navegación ocurre dentro de la sección.
+ * `codigo` llega de la ruta /pedidos/:codigo y decide cuál de las dos pantallas se
+ * muestra. Vacío significa el listado.
  */
 withDefaults(defineProps<{ codigo?: string }>(), { codigo: '' });
 </script>

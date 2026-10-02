@@ -5,7 +5,7 @@
       :key="f.id"
       type="button"
       :aria-pressed="modelValue === f.id"
-      class="inline-flex items-center gap-2 rounded-button px-4 py-2 text-sm font-medium transition-colors"
+      class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors"
       :class="
         modelValue === f.id
           ? 'bg-action text-white'

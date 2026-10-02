@@ -14,17 +14,27 @@
  * ==============================================================================
  */
 
-/** Estados admitidos por `enum_estado_orden` en la base de datos. */
+/**
+ * Estados admitidos por `enum_estado_orden` en la base de datos.
+ *
+ * Alineados con la máquina de estados oficial del diagrama desde que el backend
+ * la implementó (v0.3.x): ya no son los seis provisionales anteriores.
+ */
 export type EstadoOrden =
-  | 'pendiente'
-  | 'pagado'
+  | 'orden_confirmada'
+  | 'revision_disponibilidad'
   | 'en_preparacion'
-  | 'enviado'
+  | 'preparada'
+  | 'despachado'
   | 'entregado'
-  | 'cancelado';
+  | 'cancelado'
+  | 'devuelto';
 
 /** Origen de la orden (RF-ORD-01-03). */
 export type OrigenOrden = 'carrito' | 'cotizacion';
+
+/** `enum_modo_entrega` en la base de datos. */
+export type ModoEntrega = 'domicilio' | 'recogida';
 
 /** Agrupación que devuelve el backend ya resuelta (CA-ORD-07-01). */
 export type GrupoPedido = 'en_curso' | 'finalizados';
@@ -51,23 +61,42 @@ export interface LineaPedido {
   readonly cantidad: number;
 }
 
+/**
+ * Momento en que el pedido entró en un estado (RF-ORD-04-01).
+ *
+ * `fecha` es un ISO CON HORA (el backend la serializa con `toISOString()`), al
+ * contrario que `DetallePedido.fecha`, que es solo AAAA-MM-DD. Por eso la línea de
+ * tiempo usa `formatearFechaHora` y la cabecera `formatearFecha`.
+ *
+ * Al cliente solo se le entrega el estado y el momento: ni el autor ni el motivo,
+ * que son datos del personal (RF-ORD-09-01).
+ */
+export interface HitoEstado {
+  readonly estado: EstadoOrden;
+  readonly fecha: string; // ISO 8601 con hora
+}
+
 /** Detalle de un pedido propio (HU-ORD-04). */
 export interface DetallePedido {
   readonly codigo: string;
-  readonly fecha: string;
+  readonly codigo_solicitud: string | null;
+  readonly fecha: string; // AAAA-MM-DD
   readonly estado: EstadoOrden;
   readonly origen: OrigenOrden;
-  readonly direccion: string;
+  readonly modo_entrega: ModoEntrega | null;
+  /** Nula cuando el pedido se recoge en tienda. */
+  readonly direccion: string | null;
   readonly sub_total: string;
   readonly descuento: string;
+  readonly costo_entrega: string;
   readonly total: string;
+  /** Desglose fiscal. Nulo en pedidos anteriores a su implantación. */
+  readonly base_sin_impuesto: string | null;
+  readonly importe_iva: string | null;
+  readonly tasa_iva: string | null;
   readonly observaciones: string | null;
   readonly lineas: ReadonlyArray<LineaPedido>;
-}
-
-/** Detalle para personal autorizado: añade el titular (HU-ORD-05). */
-export interface DetallePedidoPersonal extends DetallePedido {
-  readonly id_cliente: number;
+  readonly historial: ReadonlyArray<HitoEstado>;
 }
 
 /** Sobre estándar de la API de Pintuclic. */
@@ -75,4 +104,113 @@ export interface ApiResponse<T> {
   readonly success: true;
   readonly data: T;
   readonly message?: string;
+}
+
+// ==============================================================================
+// VISTAS DEL PERSONAL (HU-ORD-01, HU-ORD-03, HU-ORD-05)
+// Exigen permiso `ventas.ver`; cambiar el estado exige además `ventas.gestionar`.
+// ==============================================================================
+
+/** Contacto del titular, que el listado del cliente nunca incluye. */
+export interface ContactoCliente {
+  readonly nombre: string;
+  readonly correo: string;
+  readonly telefono: string | null;
+}
+
+/** Línea con los datos internos que el cliente no ve. */
+export interface LineaPedidoPersonal extends LineaPedido {
+  readonly sku?: string | null;
+}
+
+/** Cambio de estado en el detalle del personal (CA-ORD-09-02). `autor` nulo = sistema. */
+export interface CambioEstado {
+  readonly estado_anterior: EstadoOrden | null;
+  readonly estado_nuevo: EstadoOrden;
+  readonly autor: string | null;
+  readonly motivo: string | null;
+  readonly fecha: string;
+}
+
+/** Nota interna del personal (HU-ORD-10). Nunca se muestra al cliente. */
+export interface NotaInterna {
+  readonly texto: string;
+  readonly autor: string;
+  readonly fecha: string;
+}
+
+/** Contacto con el cliente registrado desde la orden (CA-ORD-09-03). */
+export interface ContactoRegistrado {
+  readonly medio: string;
+  readonly detalle: string | null;
+  readonly autor: string;
+  readonly fecha: string;
+}
+
+/**
+ * Fila del listado del personal.
+ *
+ * `dias_esperando` cuenta desde el último cambio de estado, o desde la fecha del
+ * pedido si todavía no tiene historial (CA-ORD-05-07): es el dato que permite ver
+ * de un vistazo qué órdenes llevan demasiado tiempo paradas.
+ */
+export interface ResumenOrdenGestion extends ResumenPedido {
+  readonly id_cliente: number;
+  readonly cliente: string | null;
+  readonly modo_entrega: ModoEntrega | null;
+  readonly dias_esperando: number;
+}
+
+/** Página del listado del personal, con los metadatos de paginación de M02. */
+export interface PaginaOrdenesGestion {
+  readonly items: ReadonlyArray<ResumenOrdenGestion>;
+  readonly total: number;
+  readonly pagina: number;
+  readonly limite: number;
+  readonly total_paginas: number;
+}
+
+/** Contadores de la bandeja por estado, incluidos los que están en cero (CA-ORD-05-05). */
+export interface ResumenEstadosOrdenes {
+  readonly por_estado: Readonly<Record<EstadoOrden, number>>;
+  readonly total: number;
+}
+
+/** Filtros que admite GET /api/ordenes/gestion. Todos son opcionales. */
+export interface FiltrosGestion {
+  codigo?: string;
+  estado?: EstadoOrden | '';
+  desde?: string; // AAAA-MM-DD
+  hasta?: string; // AAAA-MM-DD
+  cliente?: number;
+  /** CA-ORD-08-02: el dato que da el cliente cuando no recuerda su número de pedido. */
+  correo?: string;
+  telefono?: string;
+  orden?: 'recientes' | 'antiguedad';
+  pagina?: number;
+  limite?: number;
+}
+
+/** Detalle completo para el personal autorizado (HU-ORD-05, HU-ORD-09, HU-ORD-10). */
+export interface DetalleOrdenGestion extends Omit<DetallePedido, 'historial' | 'lineas'> {
+  readonly lineas: ReadonlyArray<LineaPedidoPersonal>;
+  readonly id_cliente: number;
+  readonly cliente: ContactoCliente | null;
+  /**
+   * Estados a los que el backend permite avanzar DESDE el actual. La vista no
+   * decide nada: pinta exactamente lo que llega aquí (CA-ORD-05-01).
+   */
+  readonly transiciones_permitidas: ReadonlyArray<EstadoOrden>;
+  readonly historial: ReadonlyArray<CambioEstado>;
+  readonly notas: ReadonlyArray<NotaInterna>;
+  readonly contactos: ReadonlyArray<ContactoRegistrado>;
+}
+
+/** Respuesta de PATCH /api/ordenes/gestion/:codigo/estado. */
+export interface ResultadoCambioEstado {
+  readonly codigo: string;
+  readonly estado_anterior: EstadoOrden;
+  readonly estado: EstadoOrden;
+  readonly fecha: string;
+  readonly transiciones_permitidas: ReadonlyArray<EstadoOrden>;
 }

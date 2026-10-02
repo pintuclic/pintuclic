@@ -56,6 +56,16 @@
           @cambiar-password="showCambiarPasswordModal = true"
         />
 
+        <!--
+          M08 — Sección «Mis pedidos», bajo la información personal, como en el diseño
+          «Mi-Perfil_Usuario natural / Empresa» del Figma.
+
+          Añadido sin modificar nada de M04: no se toca el formulario, ni la barra
+          lateral, ni la lógica de esta vista. «Ver detalle» navega a /pedidos/:codigo,
+          que es la pantalla «Seguimiento de Pedido».
+        -->
+        <SeccionMisPedidos :titulo="true" :con-buscador="true" :con-grupos="true" :por-pagina="3" />
+
         <!-- En pantallas móviles y teléfonos (< lg), la sección de ayuda va DEBAJO de Información Personal -->
         <div class="block lg:hidden">
           <TarjetaSoporte />
@@ -112,6 +122,7 @@ import { usePerfil } from '@/modules/m04-cuentas/composables/usePerfil';
 import { Modal } from '@/core/components';
 import PerfilSidebarNav from '@/modules/m04-cuentas/components/perfil/PerfilSidebarNav.vue';
 import TarjetaSoporte from '@/modules/m04-cuentas/components/perfil/TarjetaSoporte.vue';
+import SeccionMisPedidos from '@/modules/m08-ordenes/components/SeccionMisPedidos.vue';
 import PerfilDatosForm, { type GuardarPerfilPayload } from '@/modules/m04-cuentas/components/perfil/PerfilDatosForm.vue';
 import ModalConfirmarPassword from '@/modules/m04-cuentas/components/perfil/ModalConfirmarPassword.vue';
 import ModalCambiarPassword from '@/modules/m04-cuentas/components/perfil/ModalCambiarPassword.vue';

@@ -7,7 +7,7 @@
   <component
     :is="compacto ? 'button' : 'article'"
     v-bind="compacto ? { type: 'button' } : {}"
-    class="block w-full text-left bg-white rounded-card shadow-sm transition-colors"
+    class="block w-full text-left bg-white rounded-2xl shadow-sm transition-colors"
     :class="[
       compacto ? 'p-4' : 'p-5',
       seleccionado
@@ -48,14 +48,14 @@
         ⚠️ FALTA EN EL BACKEND: el listado no devuelve imagen del producto.
       -->
       <div
-        class="w-24 h-24 shrink-0 rounded-card bg-neutral-lightest grid place-items-center"
+        class="w-24 h-24 shrink-0 rounded-xl bg-neutral-lightest grid place-items-center"
         aria-hidden="true"
       >
         <PackageIcon class="w-9 h-9 text-neutral-medium" />
       </div>
 
       <div class="flex-1 min-w-0">
-        <h3 class="font-bold text-neutral-black text-lg truncate">Pedido {{ pedido.codigo }}</h3>
+        <h3 class="font-bold text-neutral-black text-lg truncate">Pedido #{{ pedido.codigo }}</h3>
         <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-neutral-medium text-sm mt-1.5">
           <span class="inline-flex items-center gap-1.5">
             <CalendarIcon class="w-4 h-4 shrink-0" />

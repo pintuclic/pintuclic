@@ -16,7 +16,7 @@ import type { DetallePedido, PedidosCliente } from '../interfaces/ordenes.interf
 export const PEDIDOS_MOCK: PedidosCliente = {
   en_curso: [
     { codigo: 'ORD-2026-0002', fecha: '2026-09-23', total: '425000.00', estado: 'en_preparacion' },
-    { codigo: 'ORD-2026-0001', fecha: '2026-09-23', total: '171800.00', estado: 'pagado' },
+    { codigo: 'ORD-2026-0001', fecha: '2026-09-23', total: '171800.00', estado: 'orden_confirmada' },
   ],
   finalizados: [
     { codigo: 'ORD-2026-0000', fecha: '2026-09-02', total: '96400.00', estado: 'entregado' },
@@ -25,14 +25,21 @@ export const PEDIDOS_MOCK: PedidosCliente = {
 
 export const DETALLE_MOCK: DetallePedido = {
   codigo: 'ORD-2026-0001',
+  codigo_solicitud: null,
   fecha: '2026-09-23',
-  estado: 'pagado',
+  estado: 'orden_confirmada',
   origen: 'carrito',
+  modo_entrega: 'domicilio',
   direccion: 'Calle 45 # 12-34, Apt 301, Chapinero, Bogotá D.C.',
   sub_total: '171800.00',
   descuento: '0.00',
+  costo_entrega: '0.00',
   total: '171800.00',
+  base_sin_impuesto: '144369.75',
+  importe_iva: '27430.25',
+  tasa_iva: '19.00',
   observaciones: 'Dejar en portería debidamente sellado',
+  historial: [{ estado: 'orden_confirmada', fecha: '2026-09-23T14:32:00.000Z' }],
   lineas: [
     {
       producto: 'Viniltex Máxima Protección Antibacterial',

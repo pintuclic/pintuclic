@@ -20,6 +20,15 @@
     </div>
 
     <div v-else-if="pedido" class="flex flex-col gap-4">
+      <!--
+        Dos columnas, como en el diseño «Seguimiento de Pedido»:
+          · izquierda — cabecera, línea de tiempo y aviso del estado en curso
+          · derecha   — datos de despacho y detalle de la compra
+        Por debajo de lg se apilan en una sola columna.
+      -->
+      <div class="grid gap-4 items-start lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)]">
+        <div class="flex flex-col gap-4 min-w-0">
+
       <!-- ===== 1. Cabecera del pedido ===== -->
       <div class="bg-white border border-neutral-light rounded-card p-4 sm:p-5">
         <div class="flex flex-wrap items-center gap-4">
@@ -62,7 +71,7 @@
       <!-- ===== 2. Línea de tiempo ===== -->
       <div class="bg-white border border-neutral-light rounded-card overflow-hidden">
         <!-- Pedido cancelado: no encaja en la secuencia -->
-        <div v-if="pedido.estado === 'cancelado'" class="p-5">
+        <div v-if="esFinalSinSecuencia" class="p-5">
           <div class="flex items-start gap-3 rounded-card bg-danger-subtle px-4 py-3" role="status">
             <AlertIcon class="w-5 h-5 text-danger shrink-0 mt-0.5" />
             <div>
@@ -132,15 +141,16 @@
               </p>
             </div>
 
-            <!--
-              El diseño muestra fecha y hora por etapa.
-              ⚠️ FALTA EN EL BACKEND: no hay historial de estados, así que solo se
-              distingue lo pendiente de lo ya recorrido.
-            -->
+            <!-- Fecha y hora reales de la etapa, tomadas del historial del pedido. -->
             <div class="shrink-0 text-right">
-              <span v-if="!paso.recorrido && !paso.actual" class="text-xs text-neutral-medium">
-                Pendiente
+              <span
+                v-if="paso.fecha"
+                class="text-xs tabular-nums"
+                :class="paso.actual ? 'text-action font-medium' : 'text-neutral-medium'"
+              >
+                {{ formatearFechaHora(paso.fecha) }}
               </span>
+              <span v-else class="text-xs text-neutral-medium">Pendiente</span>
             </div>
           </li>
         </ol>
@@ -148,7 +158,7 @@
 
       <!-- ===== 3. Aviso del estado en curso ===== -->
       <div
-        v-if="pedido.estado !== 'cancelado'"
+        v-if="!esFinalSinSecuencia"
         class="flex items-start gap-3 rounded-card bg-subaction/50 border border-subaction px-4 py-3.5"
       >
         <span class="w-8 h-8 rounded-full bg-action grid place-items-center shrink-0">
@@ -160,6 +170,10 @@
         </div>
       </div>
 
+        </div>
+
+        <div class="flex flex-col gap-4 min-w-0">
+
       <!-- ===== 4. Datos de despacho ===== -->
       <div class="bg-white border border-neutral-light rounded-card p-4 sm:p-5">
         <h3 class="flex items-center gap-2 font-bold text-corporate mb-4">
@@ -167,7 +181,14 @@
           Datos de despacho
         </h3>
         <dl class="grid gap-3.5 text-sm">
-          <div class="flex gap-2.5">
+          <div v-if="pedido.modo_entrega" class="flex gap-2.5">
+            <TruckIcon class="w-4 h-4 text-neutral-medium shrink-0 mt-0.5" />
+            <div>
+              <dt class="text-neutral-medium text-xs">Forma de entrega</dt>
+              <dd class="text-neutral-black mt-0.5">{{ MODO_ENTREGA[pedido.modo_entrega] }}</dd>
+            </div>
+          </div>
+          <div v-if="pedido.direccion" class="flex gap-2.5">
             <MapPinIcon class="w-4 h-4 text-neutral-medium shrink-0 mt-0.5" />
             <div>
               <dt class="text-neutral-medium text-xs">Dirección de entrega</dt>
@@ -224,10 +245,27 @@
             <dt>Subtotal</dt>
             <dd class="tabular-nums">{{ formatearCOP(pedido.sub_total) }}</dd>
           </div>
-          <!-- ⚠️ FALTA EN EL BACKEND: no hay columna de costo de envío. -->
           <div v-if="Number(pedido.descuento) > 0" class="flex justify-between text-danger">
             <dt>Descuento</dt>
             <dd class="tabular-nums">− {{ formatearCOP(pedido.descuento) }}</dd>
+          </div>
+          <div
+            v-if="Number(pedido.costo_entrega) > 0"
+            class="flex justify-between text-neutral-dark"
+          >
+            <dt>Costo de entrega</dt>
+            <dd class="tabular-nums">{{ formatearCOP(pedido.costo_entrega) }}</dd>
+          </div>
+          <!--
+            El IVA ya va dentro del total (el catálogo publica precios con impuesto
+            incluido): se muestra discriminado, nunca sumado aparte.
+          -->
+          <div v-if="pedido.importe_iva" class="flex justify-between text-neutral-medium text-xs">
+            <dt>
+              IVA incluido
+              <span v-if="pedido.tasa_iva">({{ Number(pedido.tasa_iva) }} %)</span>
+            </dt>
+            <dd class="tabular-nums">{{ formatearCOP(pedido.importe_iva) }}</dd>
           </div>
           <div
             class="flex justify-between items-center rounded-card bg-conversion/10 px-4 py-3 mt-2"
@@ -238,6 +276,33 @@
             </dd>
           </div>
         </dl>
+      </div>
+
+        </div>
+      </div>
+
+      <!--
+        ===== 5.b Cancelación =====
+        HU-POS-01 y HU-POS-02 están bloqueadas a la espera de la política de M11, y el
+        backend rechaza esas transiciones con 409 OPERACION_NO_HABILITADA. El informe
+        final del backend deja este aviso como pendiente del frontend: el cliente que
+        quiere cancelar debe saber qué hacer en lugar de buscar un botón que no existe.
+      -->
+      <div
+        v-if="puedeIntentarCancelar"
+        class="flex items-start gap-3 rounded-card border border-neutral-light bg-white px-4 py-3.5"
+      >
+        <AlertIcon class="w-5 h-5 text-neutral-medium shrink-0 mt-0.5" />
+        <div>
+          <p class="font-semibold text-neutral-black text-sm">
+            ¿Necesitas cancelar este pedido?
+          </p>
+          <p class="text-neutral-medium text-xs mt-1">
+            La cancelación en línea todavía no está disponible. Escríbenos por WhatsApp
+            con el número <span class="font-semibold text-neutral-dark">{{ pedido.codigo }}</span>
+            y lo gestionamos contigo.
+          </p>
+        </div>
       </div>
 
       <!-- ===== 6. Ayuda ===== -->
@@ -282,10 +347,13 @@ import { OrdenesService } from '../services/ordenes.service';
 import { DETALLE_MOCK } from '../services/ordenes.mock';
 import {
   ESTADOS,
-  SECUENCIA_ESTADOS,
+  secuenciaSegunEntrega,
   DESCRIPCION_ETAPA,
+  descripcionEtapa,
   formatearCOP,
   formatearFecha,
+  formatearFechaHora,
+  MODO_ENTREGA,
 } from '../dtos/estado-pedido.dto';
 import type { DetallePedido, EstadoOrden } from '../interfaces/ordenes.interface';
 
@@ -304,37 +372,51 @@ const cargando = ref(false);
 const noEncontrado = ref(false);
 
 const presentacion = computed(() =>
-  pedido.value ? ESTADOS[pedido.value.estado] : ESTADOS.pendiente
+  pedido.value ? ESTADOS[pedido.value.estado] : ESTADOS.orden_confirmada
 );
 
-/** Pasos deducidos del enum: el backend no expone historial. */
+/** Cancelado y devuelto no encajan en la secuencia lineal de etapas. */
+const esFinalSinSecuencia = computed(
+  () => pedido.value?.estado === 'cancelado' || pedido.value?.estado === 'devuelto'
+);
+
 const pasos = computed(() => {
   if (!pedido.value) return [];
-  const actual = SECUENCIA_ESTADOS.indexOf(pedido.value.estado);
-  return SECUENCIA_ESTADOS.map((estado, i) => ({
+  // La secuencia depende del modo de entrega: la recogida en tienda no pasa por
+  // «Despachado» (diagrama oficial de la máquina de estados).
+  const secuencia = secuenciaSegunEntrega(pedido.value.modo_entrega);
+  const actual = secuencia.indexOf(pedido.value.estado);
+  const historial = pedido.value.historial ?? [];
+  return secuencia.map((estado, i) => ({
     estado,
     etiqueta: ESTADOS[estado].etiqueta,
-    descripcion: DESCRIPCION_ETAPA[estado],
+    descripcion: descripcionEtapa(estado, pedido.value!.modo_entrega),
     recorrido: actual >= 0 && i < actual,
     actual: i === actual,
+    /** Momento real en que el pedido entró en la etapa; vacío si todavía no ocurrió. */
+    fecha: historial.find((h) => h.estado === estado)?.fecha ?? '',
   }));
 });
 
 /** Aviso destacado bajo la línea de tiempo, según la etapa en curso. */
 const AVISOS: Record<EstadoOrden, { titulo: string; detalle: string }> = {
-  pendiente: {
-    titulo: 'Tu pedido está registrado',
-    detalle: 'Te avisaremos en cuanto se confirme el pago.',
+  orden_confirmada: {
+    titulo: '¡Tu pedido fue confirmado!',
+    detalle: 'Ya estamos gestionando tu compra.',
   },
-  pagado: {
-    titulo: '¡Tu pago fue confirmado!',
-    detalle: 'Ya estamos preparando tu pedido.',
+  revision_disponibilidad: {
+    titulo: 'Estamos revisando la disponibilidad',
+    detalle: 'Te avisaremos en cuanto verifiquemos tus productos.',
   },
   en_preparacion: {
     titulo: 'Tu pedido se está preparando',
     detalle: 'Te avisaremos cuando salga de bodega.',
   },
-  enviado: {
+  preparada: {
+    titulo: 'Tu pedido está listo',
+    detalle: 'Muy pronto saldrá hacia tu destino.',
+  },
+  despachado: {
     titulo: '¡Tu pedido está en camino!',
     detalle: 'Te notificaremos cuando llegue a tu destino.',
   },
@@ -343,9 +425,20 @@ const AVISOS: Record<EstadoOrden, { titulo: string; detalle: string }> = {
     detalle: 'Gracias por comprar en Pintu Clic.',
   },
   cancelado: { titulo: '', detalle: '' },
+  devuelto: { titulo: '', detalle: '' },
 };
 
-const avisoEstado = computed(() => (pedido.value ? AVISOS[pedido.value.estado] : AVISOS.pendiente));
+/**
+ * Un pedido ya entregado, cancelado o devuelto no admite cancelación: el aviso solo
+ * tiene sentido mientras sigue su curso.
+ */
+const puedeIntentarCancelar = computed(() => {
+  const estado = pedido.value?.estado;
+  if (!estado) return false;
+  return estado !== 'entregado' && estado !== 'cancelado' && estado !== 'devuelto';
+});
+
+const avisoEstado = computed(() => (pedido.value ? AVISOS[pedido.value.estado] : AVISOS.orden_confirmada));
 
 async function cargar(): Promise<void> {
   cargando.value = true;
@@ -354,7 +447,10 @@ async function cargar(): Promise<void> {
     pedido.value = await OrdenesService.detalle(props.codigo);
   } catch (e: unknown) {
     const err = e as { response?: { status?: number } };
-    if (err.response?.status === 404) {
+    const estado = err.response?.status;
+    // Con 401/403/404 NO se cae al mock: mostrar datos de ejemplo a quien perdió la
+    // sesión es peor que no mostrar nada. El mock solo cubre la caída del servidor.
+    if (estado === 404 || estado === 403 || estado === 401) {
       noEncontrado.value = true;
       pedido.value = null;
     } else {

@@ -7,6 +7,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.1.0] - 2026-10-01
+### M08 - Orden de venta: sección de pedidos y seguimiento del cliente (Frontend)
+- **Alcance General:** Incremento **MINOR (v0.4.1.0)** con las dos vistas del cliente: «Mis pedidos» (HU-ORD-07) y «Seguimiento de pedido» (HU-ORD-02, HU-ORD-04, HU-ORD-06). Las vistas del personal quedan fuera: su diseño todavía no está aprobado.
+- **Hitos Clave:**
+  - **«Mis pedidos» bajo la información personal del perfil**, como plantean los diseños «Mi-Perfil_Usuario natural» y «Mi-Perfil_Usuario Empresa». Filtros por estado, buscador, separación entre pedidos en curso y finalizados, y paginación.
+  - **«Seguimiento de pedido» como pantalla propia**, con su encabezado, su ruta de navegación y el contenido en dos columnas: línea de tiempo a la izquierda; datos de despacho y detalle de la compra a la derecha.
+  - **La línea de tiempo sigue el diagrama oficial:** desde «Preparada» el flujo bifurca según el modo de entrega, así que la recogida en tienda no muestra la etapa «Despachado», por la que su pedido nunca pasa.
+  - **Datos nuevos del backend ya en pantalla:** historial de estados con fecha y hora reales, forma de entrega, costo de entrega e IVA discriminado.
+  - **Aviso de cancelación al cliente:** cubre el pendiente que el informe final del backend asigna al frontend. La cancelación está bloqueada por la política de M11 y el backend responde 409 `OPERACION_NO_HABILITADA`.
+  - **Corrección en la presentación de errores:** un 401 se identifica como sesión expirada en lugar de «pedido no encontrado», y deja de caerse a los datos de ejemplo. 403 y 404 siguen siendo indistinguibles entre sí (CA-SEG-03-06).
+  - **Separación de rutas:** las del personal pasan a `m08-ordenes-admin.routes.ts`, de modo que cada parte del módulo pueda entregarse por separado.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias en M08; las tres pantallas abiertas contra el backend real.
+- **Pendiente de aprobación (Directiva 3):** 11 líneas añadidas en `m04-cuentas/views/VistaPerfil.vue` para incrustar la sección de pedidos. Ninguna línea existente fue modificada.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.1.0_M08_pedidos_y_seguimiento_cliente_frontend.md`
+
+---
 ## [v0.4.0.0] - 2026-09-30
 ### Versión estable
 - Solo un cambio de versión, la web funciona bastante bien.
