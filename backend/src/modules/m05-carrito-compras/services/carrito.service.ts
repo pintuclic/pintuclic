@@ -1,4 +1,5 @@
 import { AppError } from '../../../core/middlewares/errorHandler';
+import { Carrito } from '../../../core/db/types';
 import { CarritoRepository } from '../repositories/carrito.repository';
 import { LineaCarritoRepository } from '../repositories/linea-carrito.repository';
 import { AgregarItemDTO, ActualizarItemDTO, FusionarCarritoDTO, CANTIDAD_MAXIMA_POR_LINEA } from '../dtos';
@@ -59,17 +60,8 @@ export class CarritoService {
    * El token opaco identifica al dispositivo sin exponer ni exigir datos personales (RNF-CAR-01-01).
    */
   async obtenerOCrearCarritoVisitante(tokenVisitante: string): Promise<CarritoVivo> {
-    let carrito = await this.carritoRepo.buscarPorToken(tokenVisitante);
-
-    if (!carrito) {
-      carrito = await this.carritoRepo.crear({
-        token_visitante: tokenVisitante,
-        id_usuario: null,
-      });
-    } else {
-      await this.carritoRepo.refrescarActividad(carrito.id_carrito);
-    }
-
+    const carrito = await this.asegurarCarritoVisitante(tokenVisitante);
+    await this.carritoRepo.refrescarActividad(carrito.id_carrito);
     return this.construirCarritoVivo(carrito.id_carrito, 'visitante');
   }
 
@@ -78,18 +70,21 @@ export class CarritoService {
    * Si no tiene carrito previo, crea uno asociado a su cuenta.
    */
   async obtenerOCrearCarritoCliente(idUsuario: number): Promise<CarritoVivo> {
-    let carrito = await this.carritoRepo.buscarPorUsuario(idUsuario);
-
-    if (!carrito) {
-      carrito = await this.carritoRepo.crear({
-        token_visitante: null,
-        id_usuario: idUsuario,
-      });
-    } else {
-      await this.carritoRepo.refrescarActividad(carrito.id_carrito);
-    }
-
+    const carrito = await this.asegurarCarritoCliente(idUsuario);
+    await this.carritoRepo.refrescarActividad(carrito.id_carrito);
     return this.construirCarritoVivo(carrito.id_carrito, 'cliente');
+  }
+
+  /** Cabecera del carrito del visitante; la crea si el token todavía no tiene una. */
+  private async asegurarCarritoVisitante(tokenVisitante: string): Promise<Carrito> {
+    const carrito = await this.carritoRepo.buscarPorToken(tokenVisitante);
+    return carrito ?? this.carritoRepo.crear({ token_visitante: tokenVisitante, id_usuario: null });
+  }
+
+  /** Cabecera del carrito del cliente; la crea si la cuenta todavía no tiene una. */
+  private async asegurarCarritoCliente(idUsuario: number): Promise<Carrito> {
+    const carrito = await this.carritoRepo.buscarPorUsuario(idUsuario);
+    return carrito ?? this.carritoRepo.crear({ token_visitante: null, id_usuario: idUsuario });
   }
 
   // ============================================================================
@@ -98,31 +93,44 @@ export class CarritoService {
 
   /**
    * Agrega una variante al carrito del visitante o acumula si ya existe (RF-CAR-02-0X).
+   * Si el token todavía no tiene carrito, lo crea: agregar no exige un GET previo.
    * Diferida la autenticación estrictamente al momento del checkout (RF-CAR-01-02).
    */
   async agregarItemVisitante(
     tokenVisitante: string,
     datos: AgregarItemDTO
   ): Promise<CarritoVivo> {
-    const carrito = await this.carritoRepo.buscarPorToken(tokenVisitante);
-    if (!carrito) {
-      throw new AppError('Carrito de visitante no encontrado. Inicialice el carrito primero.', 404, 'NOT_FOUND');
-    }
+    await this.validarVarianteVendible(datos.id_variante);
+    const carrito = await this.asegurarCarritoVisitante(tokenVisitante);
     return this.procesarAgregarItem(carrito.id_carrito, datos, 'visitante');
   }
 
   /**
    * Agrega una variante al carrito del cliente autenticado o acumula si ya existe (RF-CAR-02-0X).
+   * Si la cuenta todavía no tiene carrito, lo crea.
    */
   async agregarItemCliente(
     idUsuario: number,
     datos: AgregarItemDTO
   ): Promise<CarritoVivo> {
-    const carrito = await this.carritoRepo.buscarPorUsuario(idUsuario);
-    if (!carrito) {
-      throw new AppError('Carrito de cliente no encontrado. Inicialice el carrito primero.', 404, 'NOT_FOUND');
-    }
+    await this.validarVarianteVendible(datos.id_variante);
+    const carrito = await this.asegurarCarritoCliente(idUsuario);
     return this.procesarAgregarItem(carrito.id_carrito, datos, 'cliente');
+  }
+
+  /**
+   * Solo se agregan variantes que existen y están a la venta. Sin esta comprobación, un id
+   * inválido llegaba a la llave foránea y respondía 500. Se valida antes de crear el
+   * carrito, para que una petición rechazada no deje carritos vacíos.
+   */
+  private async validarVarianteVendible(idVariante: number): Promise<void> {
+    const variante = await this.lineaRepo.buscarVariante(idVariante);
+    if (!variante) {
+      throw new AppError('La variante solicitada no existe', 404, 'VARIANTE_NO_ENCONTRADA');
+    }
+    if (variante.estado !== 'activo') {
+      throw new AppError('La variante solicitada no está disponible para la venta', 422, 'VARIANTE_NO_DISPONIBLE');
+    }
   }
 
   /**
@@ -133,16 +141,6 @@ export class CarritoService {
     datos: AgregarItemDTO,
     origen: OrigenCarrito
   ): Promise<CarritoVivo> {
-    // Solo se agregan variantes que existen y están a la venta. Sin esta comprobación,
-    // un id inválido llegaba a la llave foránea y respondía 500.
-    const variante = await this.lineaRepo.buscarVariante(datos.id_variante);
-    if (!variante) {
-      throw new AppError('La variante solicitada no existe', 404, 'VARIANTE_NO_ENCONTRADA');
-    }
-    if (variante.estado !== 'activo') {
-      throw new AppError('La variante solicitada no está disponible para la venta', 422, 'VARIANTE_NO_DISPONIBLE');
-    }
-
     // Insertar o acumular en una sola sentencia atómica, sin superar el tope por línea.
     const linea = await this.lineaRepo.agregarOAcumular(
       idCarrito,

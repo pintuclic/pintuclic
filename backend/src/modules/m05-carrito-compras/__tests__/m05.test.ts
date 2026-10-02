@@ -662,6 +662,48 @@ async function ejecutarPruebasM05(): Promise<void> {
   }
 
   // ---------------------------------------------------------------------------
+  // B3: agregar crea el carrito si todavía no existe
+  // ---------------------------------------------------------------------------
+  console.log('\n--- B3: Agregar sin inicializar el carrito ---');
+  {
+    const carritoRepo = new CarritoRepoFake();
+    const lineaRepo = new LineaRepoFake();
+    const service = new CarritoService(carritoRepo, lineaRepo);
+
+    const visitante = await service.agregarItemVisitante('tok-b3', { id_variante: 10, cantidad: 2 });
+    assert(
+      visitante.origen === 'visitante' && visitante.token_visitante === 'tok-b3' && visitante.lineas[0]?.cantidad === 2,
+      'B3-01: el visitante agrega sin GET previo y el carrito se crea con su línea'
+    );
+    const otraVez = await service.agregarItemVisitante('tok-b3', { id_variante: 10, cantidad: 1 });
+    assert(
+      otraVez.id_carrito === visitante.id_carrito && carritoRepo.tabla.size === 1,
+      'B3-02: el segundo agregado reutiliza el mismo carrito (no crea otro)'
+    );
+
+    const cliente = await service.agregarItemCliente(55, { id_variante: 20, cantidad: 1 });
+    assert(
+      cliente.origen === 'cliente' && cliente.id_usuario === 55 && cliente.total_lineas === 1,
+      'B3-03: el cliente sin carrito agrega y el carrito queda asociado a su cuenta'
+    );
+
+    const obtenido = await service.obtenerOCrearCarritoVisitante('tok-b3');
+    assert(
+      JSON.stringify(Object.keys(otraVez).sort()) === JSON.stringify(Object.keys(obtenido).sort()),
+      'B3-04: la respuesta de agregar tiene la misma forma que la de GET /visitante'
+    );
+
+    const antes = carritoRepo.tabla.size;
+    await esperarError(
+      () => service.agregarItemVisitante('tok-b3-nuevo', { id_variante: 999, cantidad: 1 }),
+      404,
+      'VARIANTE_NO_ENCONTRADA',
+      'B3-05: una variante inválida se rechaza antes de crear el carrito'
+    );
+    assert(carritoRepo.tabla.size === antes, 'B3-06: la petición rechazada no deja un carrito vacío');
+  }
+
+  // ---------------------------------------------------------------------------
   // Resumen final
   // ---------------------------------------------------------------------------
   console.log(`\n${'='.repeat(60)}`);

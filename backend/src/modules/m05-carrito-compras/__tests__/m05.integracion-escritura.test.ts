@@ -171,6 +171,36 @@ async function ejecutarPruebasIntegracionEscrituraM05(): Promise<void> {
     }
 
     // -------------------------------------------------------------------------
+    // B3: agregar sin GET previo crea el carrito
+    // -------------------------------------------------------------------------
+    console.log('\n--- B3: Agregar sin inicializar el carrito ---');
+    try {
+      await db.transaction().execute(async (trx) => {
+        const servicio = servicioSobre(trx);
+        const carrito = await servicio.agregarItemVisitante(TOKEN_VISITANTE, { id_variante: 1, cantidad: 2 });
+        const guardado = await trx
+          .selectFrom('carrito')
+          .select('id_carrito')
+          .where('token_visitante', '=', TOKEN_VISITANTE)
+          .execute();
+        assert(
+          guardado.length === 1 && guardado[0]?.id_carrito === carrito.id_carrito && carrito.lineas[0]?.cantidad === 2,
+          'B3-INT-01: el carrito del visitante se crea en la base junto con su primera línea'
+        );
+
+        const cliente = await servicio.agregarItemCliente(USUARIO_SIN_CARRITO, { id_variante: 2, cantidad: 1 });
+        assert(
+          cliente.id_usuario === USUARIO_SIN_CARRITO && cliente.total_lineas === 1,
+          'B3-INT-02: el carrito del cliente se crea al agregar el primer ítem'
+        );
+
+        throw new DeshacerCambios();
+      });
+    } catch (error) {
+      if (!(error instanceof DeshacerCambios)) throw error;
+    }
+
+    // -------------------------------------------------------------------------
     // B1: la fusión limita al tope de 999 y avisa
     // -------------------------------------------------------------------------
     console.log('\n--- B1: Tope de 999 en la fusión ---');
