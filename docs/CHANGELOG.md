@@ -20,6 +20,25 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 
 ---
+## [v0.4.4.0] - 2026-10-02
+### M05 - Carrito de compras: integración del backend en `develop` (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.4.4.0)**. Integra el backend del carrito de `feature/m05-carrito-compras`: el frontend de M05 (`v0.3.39.0`) llamaba a 10 endpoints `/api/carrito/*` que no existían en `develop`. Se monta `/carrito`, se renombra el módulo a `m05-carrito-compras` y se corrigen 4 defectos y 4 mejoras, sin cambiar la forma de las respuestas que consume el frontend.
+- **⚠️ Archivos compartidos (aprobados):** `backend/src/app.routes.ts` (+2 líneas) y `backend/src/core/middlewares/cors.middleware.ts` (`X-Visitor-Token` en `allowedHeaders`; ver [reporte de parada](./walkthroughs/M05/reporte_parada_v0.4.4.0_M05_cors_x_visitor_token_backend.md)).
+- **Correcciones:**
+  - **Variante inválida:** `404 VARIANTE_NO_ENCONTRADA` / `422 VARIANTE_NO_DISPONIBLE` en lugar de `500` por la llave foránea.
+  - **Tope de 999 por línea** también al acumular (`422 CANTIDAD_MAXIMA_EXCEDIDA`) y al fusionar (queda en 999 y se avisa en el campo opcional `avisos`).
+  - **Token de visitante** validado como UUID con Zod (header `x-visitor-token` y body de `/fusionar`).
+  - **Fusión en una sola transacción:** transferir líneas y borrar el carrito de visitante ya no pueden quedar a medias.
+  - **Agregado atómico** con `INSERT … ON CONFLICT DO UPDATE` y el tope en el `WHERE`: con el código anterior, 8 agregados simultáneos dejaban 4 unidades.
+  - **Agregar crea el carrito** si aún no existe (antes `404 "Inicialice el carrito primero"`).
+  - **Controlador alineado con M08:** identidad desde `obtenerIdentidadVigente(req)` y `:idLinea` validado con Zod (`404` si es ilegible).
+- **Decisiones provisionales:** tope de 999 (RF-CAR-02-07 PENDIENTE) y fusión sumando con límite y aviso (RF-CAR-04-03 PENDIENTE).
+- **Pendientes:** cambio de precio en la revalidación (RF-CAR-05-01/05), precios de empresa (RF-CAR-04-02 → M06), líneas de cotización (RF-CAR-05-06 → M21), `UNIQUE` en `carrito` (→ `bd/`), nombre e imagen del producto (→ M01) y token no UUID del seed (→ `bd/`).
+- **Verificación:** `tsc` 0 errores · `eslint --max-warnings=0` 0/0 · `m05.test.ts` 72/72 · `m05.integracion-escritura.test.ts` 19/19 contra PostgreSQL · flujo HTTP completo (visitante → login → fusión → revalidación).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.4.4.0_M05_integracion_carrito_backend.md](./walkthroughs/M05/walkthrough_v0.4.4.0_M05_integracion_carrito_backend.md)
+
+
+---
 ## [v0.4.3.0] - 2026-10-02
 ### M08 - Orden de venta: detalle completo de cada línea del pedido (Frontend)
 - **Alcance General:** Incremento **MINOR (v0.4.3.0)**. Las líneas del pedido mostraban 4 de los 10 campos que el backend entrega. Con esto pasan a mostrarlos todos y se cumplen dos criterios de aceptación que estaban pendientes.
