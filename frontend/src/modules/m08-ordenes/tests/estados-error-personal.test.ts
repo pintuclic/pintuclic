@@ -183,6 +183,16 @@ describe('VistaGestionOrdenes (bandeja)', () => {
     expect(vista.text()).not.toContain('PRUEBA-0001');
   });
 
+  it('el aviso de error usa el estilo de peligro de Alert (variant, no tone)', async () => {
+    servicio.listarGestion.mockRejectedValueOnce(errorHttp(500));
+    const vista = await montar(VistaGestionOrdenes);
+    const aviso = vista.find('[role="alert"]');
+
+    expect(aviso.exists()).toBe(true);
+    expect(aviso.classes()).toContain('bg-danger-subtle');
+    expect(aviso.classes()).not.toContain('bg-subaction/60');
+  });
+
   it.each([401, 403])('con un %i explica el motivo sin ofrecer reintentar', async (status) => {
     servicio.listarGestion.mockRejectedValueOnce(errorHttp(status));
     const vista = await montar(VistaGestionOrdenes);

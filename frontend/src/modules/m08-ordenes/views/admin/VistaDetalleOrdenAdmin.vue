@@ -69,7 +69,7 @@
         </Button>
       </PageHeader>
 
-      <Alert v-if="avisoExito" tone="success" class="mb-5">{{ avisoExito }}</Alert>
+      <Alert v-if="avisoExito" variant="success" class="mb-5">{{ avisoExito }}</Alert>
 
       <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] items-start">
         <!-- ================= Columna principal ================= -->

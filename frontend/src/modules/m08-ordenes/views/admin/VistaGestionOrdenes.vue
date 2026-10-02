@@ -52,7 +52,7 @@
       </button>
     </div>
 
-    <Alert v-if="error" tone="danger" class="mb-5">
+    <Alert v-if="error" variant="danger" class="mb-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <span>{{ error }}</span>
         <!-- 401 y 403 no se arreglan reintentando; un fallo del servidor o de red, sí. -->
