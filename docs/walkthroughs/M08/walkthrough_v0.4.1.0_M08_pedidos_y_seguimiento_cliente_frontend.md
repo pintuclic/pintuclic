@@ -154,7 +154,15 @@ Verificado contra el backend y la base de datos reales.
 
 ---
 
-## 8. DICTAMEN
+## 8. AJUSTES POSTERIORES
+
+| Versión | Cambio |
+|---|---|
+| `v0.4.1.1` | El encabezado de «Seguimiento de pedido» pasa al tratamiento de «Mi Perfil» (fondo `subaction` con la ilustración a la derecha), en lugar de la fotografía del catálogo. Se conservan la ruta de navegación y los textos. Solicitado en revisión de diseño; sin cambios de funcionalidad ni de contrato. |
+
+---
+
+## 9. DICTAMEN
 
 Las dos vistas del cliente están implementadas, contrastadas con el Figma y
 verificadas contra datos reales. El módulo no queda cerrado de extremo a extremo

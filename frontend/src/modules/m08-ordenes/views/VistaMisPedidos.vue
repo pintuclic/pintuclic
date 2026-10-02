@@ -14,33 +14,40 @@
   <!-- ==================== SEGUIMIENTO DE PEDIDO ==================== -->
   <div v-if="codigo" class="bg-neutral-lightest min-h-screen font-sans pb-12">
     <!--
-      Encabezado propio con la misma fotografía y el mismo degradado que el hero de la
-      página de inicio, como plantea el diseño. La imagen es un recurso de M01: se
-      importa tal cual, sin copiarla ni modificar nada de ese módulo.
+      Mismo encabezado que «Mi Perfil»: azul claro con la ilustración a la derecha, para
+      que las pantallas del cliente se vean de la misma familia. Añade la ruta de
+      navegación, que es lo propio de esta pantalla.
     -->
-    <div class="relative overflow-hidden bg-corporate min-h-56 md:min-h-[17.5rem] flex items-center">
-      <img
-        :src="heroSeguimiento"
-        alt=""
-        aria-hidden="true"
-        class="absolute inset-0 h-full w-full object-cover object-center"
-      />
-      <div class="absolute inset-0 bg-corporate/45" />
-      <div class="absolute inset-0 bg-gradient-to-r from-corporate via-corporate/85 to-corporate/25" />
-      <div class="relative z-10 w-full container mx-auto px-4 md:px-8 py-10 md:py-12">
-        <nav class="flex items-center gap-2 text-xs text-white/80 mb-3" aria-label="Ruta de navegación">
-          <RouterLink to="/" class="hover:text-white transition-colors">Inicio</RouterLink>
+    <div
+      class="relative overflow-hidden mx-4 md:mx-8 mt-6 rounded-2xl shadow-sm border border-neutral-light bg-subaction flex justify-between min-h-40 md:min-h-44"
+    >
+      <div class="relative h-full flex flex-col justify-center px-8 md:px-12 py-7 z-10 w-full md:w-3/5">
+        <nav
+          class="flex items-center gap-2 text-xs text-neutral-medium mb-2.5"
+          aria-label="Ruta de navegación"
+        >
+          <RouterLink to="/" class="hover:text-action transition-colors">Inicio</RouterLink>
           <ChevronRightIcon class="w-3 h-3" aria-hidden="true" />
-          <RouterLink to="/pedidos" class="hover:text-white transition-colors">Mis Pedidos</RouterLink>
+          <RouterLink to="/pedidos" class="hover:text-action transition-colors">Mis Pedidos</RouterLink>
           <ChevronRightIcon class="w-3 h-3" aria-hidden="true" />
-          <span class="text-white" aria-current="page">Seguimiento de Pedido</span>
+          <span class="text-corporate font-medium" aria-current="page">Seguimiento de Pedido</span>
         </nav>
-        <h1 class="text-2xl md:text-3xl font-title font-bold text-white">
+        <h1 class="text-2xl md:text-3xl font-title font-bold text-corporate">
           Seguimiento de Pedido
         </h1>
-        <p class="text-white/80 text-sm mt-1.5 max-w-lg">
+        <p class="text-neutral-medium text-sm font-sans font-normal mt-1.5 max-w-md">
           Consulta en tiempo real el estado y detalles de tu compra.
         </p>
+      </div>
+      <div
+        class="absolute inset-0 md:relative md:inset-auto md:w-2/5 h-full flex justify-end pointer-events-none"
+      >
+        <img
+          src="@/assets/banner_perfil.png"
+          alt=""
+          aria-hidden="true"
+          class="h-full w-auto object-contain object-right [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_30%)] [mask-image:linear-gradient(to_right,transparent_0%,black_30%)]"
+        />
       </div>
     </div>
 
@@ -107,7 +114,6 @@ import { RouterLink } from 'vue-router';
 import { ArrowLeft as ArrowLeftIcon, ChevronRight as ChevronRightIcon } from 'lucide-vue-next';
 import PerfilSidebarNav from '@/modules/m04-cuentas/components/perfil/PerfilSidebarNav.vue';
 import TarjetaSoporte from '@/modules/m04-cuentas/components/perfil/TarjetaSoporte.vue';
-import heroSeguimiento from '@/modules/m01-catalogo/assets/storefront/hero-storefront.png';
 import SeccionMisPedidos from '../components/SeccionMisPedidos.vue';
 import PanelSeguimiento from '../components/PanelSeguimiento.vue';
 

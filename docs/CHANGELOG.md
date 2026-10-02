@@ -7,6 +7,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.1.1] - 2026-10-01
+### M08 - Orden de venta: encabezado de «Seguimiento de pedido» (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.4.1.1)**. Ajuste visual solicitado en revisión de diseño, sin cambios de funcionalidad ni de contrato.
+- **Hitos Clave:**
+  - El encabezado de «Seguimiento de pedido» adopta el mismo tratamiento que el de «Mi Perfil»: fondo `subaction` con la ilustración a la derecha y el título en `corporate`, en lugar de la fotografía del catálogo con velo oscuro que se había usado.
+  - Se conservan la ruta de navegación «Inicio › Mis Pedidos › Seguimiento de Pedido», el título y el texto de apoyo.
+  - Deja de importarse `hero-storefront.png` de M01: la pantalla ya no depende de recursos de otro módulo.
+- **Motivo:** las tres pantallas del cliente (perfil, listado y seguimiento) debían leerse como una misma familia visual.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias en M08.
+
+
+---
 ## [v0.4.1.0] - 2026-10-01
 ### M08 - Orden de venta: sección de pedidos y seguimiento del cliente (Frontend)
 - **Alcance General:** Incremento **MINOR (v0.4.1.0)** con las dos vistas del cliente: «Mis pedidos» (HU-ORD-07) y «Seguimiento de pedido» (HU-ORD-02, HU-ORD-04, HU-ORD-06). Las vistas del personal quedan fuera: su diseño todavía no está aprobado.
