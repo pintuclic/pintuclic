@@ -138,42 +138,56 @@ roles **no pueden acceder a ninguna vista pública de la tienda**, incluida la s
 pedidos. No es un problema introducido por M08 y no se ha modificado nada al respecto.
 
 ---
-## 6. Estado a fecha de la entrega v0.4.1.0
+## 6. Estado a fecha de la entrega v0.4.2.0
 
-La entrega **v0.4.1.0 incluye únicamente las vistas del cliente**. Las del personal se
-maquetaron, pero no se entregan hasta que su diseño esté aprobado: sus rutas viven en
-`m08-ordenes-admin.routes.ts`, que queda fuera, de modo que nada de lo entregado
-depende de ellas.
+Con `v0.4.2.0` quedan entregadas **las cinco vistas de M08**: las dos del cliente
+(`v0.4.1.0`) y las tres del personal. Quedan **tres solicitudes vigentes** sobre archivos
+que no pertenecen al módulo.
 
-Eso reduce a **una sola** la solicitud vigente sobre archivos compartidos.
-
-### 6.1 Solicitud vigente — incrustar «Mis pedidos» en el perfil
+### 6.1 Incrustar «Mis pedidos» en el perfil
 
 **Archivo:** `frontend/src/modules/m04-cuentas/views/VistaPerfil.vue`
 **Cambio:** **11 líneas añadidas, 0 eliminadas.** Un `import` y el componente
 `SeccionMisPedidos` bajo la información personal.
 
-No se modifica nada de M04: ni el formulario de datos, ni la barra lateral, ni la
-tarjeta de soporte, ni la lógica de la vista. Solo se añade.
+No se modifica nada de M04: ni el formulario de datos, ni la barra lateral, ni la tarjeta
+de soporte, ni la lógica de la vista. Lo exige el diseño: en «Mi-Perfil_Usuario natural» y
+«Mi-Perfil_Usuario Empresa», «Mis pedidos» aparece justo debajo de la información personal.
 
-El cambio lo exige el propio diseño: en «Mi-Perfil_Usuario natural» y
-«Mi-Perfil_Usuario Empresa», «Mis pedidos» aparece debajo de la información personal.
-Sin esta inserción, la sección existe pero no está donde el diseño la coloca.
+### 6.2 Montar las rutas del personal
 
-### 6.2 En espera, para la entrega de las vistas del personal
+**Archivo:** `frontend/src/core/routes/index.ts`
 
-| # | Solicitud | Archivo |
-| :-- | :--- | :--- |
-| 1 | Montar `ordenesAdminRoutes` | `core/routes/index.ts` |
-| 2 | Entrada «Órdenes» en el menú del panel | `core/layouts/LayoutAdmin.vue` |
-| 3 | Registrar la ruta del carrito de M05, hoy sin montar | `core/routes/index.ts` — **no es de M08**; corresponde decidirlo a su responsable |
+```ts
+import { ordenesAdminRoutes } from '@/modules/m08-ordenes/m08-ordenes-admin.routes';
+// …dentro de children de '/admin':
+...ordenesAdminRoutes,
+```
 
-### 6.3 Sobre el token `danger`
+Sin esto las tres vistas del personal existen pero no tienen dirección.
+
+> En el mismo archivo se registra también la ruta del carrito de M05
+> (`m05CarritoRoutes`), que estaba en el repositorio **sin montar** y por tanto era
+> inalcanzable. **No es de M08**: se señala para que lo decida su responsable, y puede
+> retirarse sin afectar a esta entrega.
+
+### 6.3 Entrada «Órdenes» en el menú del panel
+
+**Archivo:** `frontend/src/core/layouts/LayoutAdmin.vue`
+**Cambio:** 5 líneas añadidas dentro del acordeón «Gestión Administrativa», más el import
+del icono. Ninguna línea existente modificada.
+
+Sin esta entrada, las vistas del personal solo son alcanzables escribiendo la URL a mano.
+Conviene señalar que **el diseño ya lo contempla**: los bocetos del panel en Figma
+(`Dashboard administracion`, `Gestión_Empleados_Admin` y el prototipo
+`pintuclic_empleados_figma`) incluyen un enlace **«Pedidos»** en la barra lateral.
+
+### 6.4 Sobre el token `danger`
 
 Verificado: `danger` **sí existe** en `core/theme/colors.ts` (línea 48), aunque
-`AGENTS.md` §8 no lo enumere. Se usa ese token del sistema, nunca un hexadecimal
-suelto. Queda la inconsistencia documental entre `AGENTS.md` y la Guía de Identidad,
-para que el líder técnico la resuelva.
+`AGENTS.md` §8 no lo enumere. Se usa ese token del sistema, nunca un hexadecimal suelto.
+Queda la inconsistencia documental entre `AGENTS.md` y la Guía de Identidad para que el
+líder técnico la resuelva.
 
 ---
 
@@ -182,6 +196,10 @@ para que el líder técnico la resuelva.
 | # | Solicitud | Archivo | Decisión |
 | :-- | :--- | :--- | :--- |
 | 1 | Incrustar «Mis pedidos» en el perfil (11 líneas añadidas) | `m04-cuentas/views/VistaPerfil.vue` | ☐ Aprobar ☐ Rechazar |
+| 2 | Montar `ordenesAdminRoutes` | `core/routes/index.ts` | ☐ Aprobar ☐ Rechazar |
+| 3 | Entrada «Órdenes» en el menú del panel | `core/layouts/LayoutAdmin.vue` | ☐ Aprobar ☐ Rechazar |
+| — | Conservar o retirar la ruta del carrito de M05 | `core/routes/index.ts` | ☐ Conservar ☐ Retirar |
 
-Sin ella, la sección de pedidos funciona en su propia página pero **no aparece dentro
-del perfil**, que es donde la sitúa el diseño aprobado.
+Sin la 1, la sección de pedidos funciona en su propia página pero no aparece dentro del
+perfil. Sin la 2 y la 3, las vistas del personal están construidas y probadas pero **no son
+alcanzables por el usuario**.

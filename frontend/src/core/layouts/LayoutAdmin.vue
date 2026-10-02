@@ -76,6 +76,11 @@
               <UsersIcon class="w-4 h-4 shrink-0" />
               Clientes
             </router-link>
+            <!-- M08 — Gestión de órdenes de venta (pendiente de aprobación, ver reporte de parada) -->
+            <router-link to="/admin/ordenes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+              <ClipboardListIcon class="w-4 h-4 shrink-0" />
+              Órdenes
+            </router-link>
             <router-link to="/admin/solicitudes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <BuildingIcon class="w-4 h-4 shrink-0" />
               Aprobación Empresas
@@ -282,6 +287,7 @@ import {
   ChevronDown as ChevronDownIcon,
   LayoutDashboard as LayoutDashboardIcon,
   Package as PackageIcon,
+  ClipboardList as ClipboardListIcon,
   Layers as LayersIcon,
   LayoutGrid as LayoutGridIcon,
   Tag as TagIcon,

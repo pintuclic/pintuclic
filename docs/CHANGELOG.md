@@ -7,6 +7,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.2.0] - 2026-10-01
+### M08 - Orden de venta: vistas de gestión del personal (Frontend)
+- **Alcance General:** Incremento **MINOR (v0.4.2.0)** con las tres vistas del personal: «Gestión de órdenes» (HU-ORD-05, HU-ORD-08), «Detalle de orden administrativa» (HU-ORD-09, HU-ORD-04) y «Cambiar estado de la orden» (HU-ORD-03). Con ellas quedan maquetadas las **cinco vistas de M08** del listado oficial.
+- **Hitos Clave:**
+  - **Bandeja del personal:** tarjetas de resumen por estado que además filtran, búsqueda por código, estado, periodo y por correo o teléfono del cliente (CA-ORD-08-02), y columna «Parada» con los días que cada orden lleva detenida (CA-ORD-05-07).
+  - **Detalle administrativo:** añade sobre la vista del cliente el contacto del titular (CA-ORD-09-01), el historial con autor y motivo (CA-ORD-09-02), las notas internas y los contactos registrados.
+  - **Cambio de estado:** ofrece exclusivamente las transiciones que devuelve el servidor en `transiciones_permitidas`; con el array vacío la orden se presenta como estado final y el botón no se renderiza.
+  - **Lenguaje visual de los paneles existentes:** tarjetas con icono en caja de color y un único panel que agrupa filtros y listado, como «Gestión de empleados» (M17) y «Productos» (M01). No se introduce ningún color ni tipografía fuera del sistema.
+  - **Separación de rutas:** las del personal viven en `m08-ordenes-admin.routes.ts`, independientes de las del cliente.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias; cambio de estado real ejecutado y registrado en `historial_estado_orden` con autor y fecha.
+- **Pendiente de aprobación (Directiva 3):** `core/routes/index.ts` y `core/layouts/LayoutAdmin.vue`. Sin ellos las vistas existen pero no son alcanzables desde el panel.
+- **Sin interfaz todavía:** tres endpoints del personal siguen sin pantalla (notas internas, registro de contactos e historial de compras del cliente), a la espera de decisión.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.2.0_M08_gestion_ordenes_personal_frontend.md`
+
+
+---
 ## [v0.4.1.1] - 2026-10-01
 ### M08 - Orden de venta: encabezado de «Seguimiento de pedido» (Frontend)
 - **Alcance General:** Incremento **PATCH (v0.4.1.1)**. Ajuste visual solicitado en revisión de diseño, sin cambios de funcionalidad ni de contrato.
