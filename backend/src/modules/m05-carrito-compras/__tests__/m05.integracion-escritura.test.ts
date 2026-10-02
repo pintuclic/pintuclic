@@ -1,4 +1,13 @@
-import { Kysely, sql } from 'kysely';
+import {
+  Kysely,
+  KyselyPlugin,
+  PluginTransformQueryArgs,
+  PluginTransformResultArgs,
+  QueryResult,
+  RootOperationNode,
+  UnknownRow,
+  sql,
+} from 'kysely';
 import { db } from '../../../core/db/connection';
 import { Database } from '../../../core/db/types';
 import { AppError } from '../../../core/middlewares/errorHandler';
@@ -11,13 +20,31 @@ import { CarritoService } from '../services/carrito.service';
 // Ejecuta las escrituras reales del carrito dentro de una transacción que termina
 // SIEMPRE con ROLLBACK: la base queda exactamente como estaba. Comprueba al final
 // que no quedó nada escrito.
+// Excepción: la sección D4 prueba la transacción PROPIA del repositorio, así que no
+// puede ir dentro de otra. Escribe de verdad y borra lo que creó en un `finally`.
 // Requiere la base creada con `npm run db` y sembrada con `npm run db:seed`.
-// Depende de las variantes 1 y 2 del seed, ambas en estado 'activo'.
+// Depende de las variantes 1 y 2 del seed (estado 'activo') y del usuario 4 sin carrito.
 // Ejecutar: npx tsx src/modules/m05-carrito-compras/__tests__/m05.integracion-escritura.test.ts
 // ==============================================================================
 
 const TOKEN_VISITANTE = '3f1c2b9a-6d4e-4f8a-9b7c-1a2b3c4d5e6f';
 const VARIANTE_INEXISTENTE = 2_000_000_000;
+const TOKEN_FUSION = '8a7b6c5d-4e3f-4a1b-8c2d-3e4f5a6b7c8d';
+const USUARIO_SIN_CARRITO = 4;
+
+/** Hace fallar cualquier DELETE: simula una caída justo antes de borrar el carrito de visitante. */
+class FallarAlBorrar implements KyselyPlugin {
+  transformQuery(args: PluginTransformQueryArgs): RootOperationNode {
+    if (args.node.kind === 'DeleteQueryNode') {
+      throw new Error('Fallo simulado al borrar el carrito de visitante');
+    }
+    return args.node;
+  }
+
+  async transformResult(args: PluginTransformResultArgs): Promise<QueryResult<UnknownRow>> {
+    return args.result;
+  }
+}
 
 /** Señal para terminar la transacción con ROLLBACK después de las comprobaciones. */
 class DeshacerCambios extends Error {}
@@ -140,6 +167,74 @@ async function ejecutarPruebasIntegracionEscrituraM05(): Promise<void> {
       });
     } catch (error) {
       if (!(error instanceof DeshacerCambios)) throw error;
+    }
+
+    // -------------------------------------------------------------------------
+    // D4: transferencia y borrado del carrito de visitante en una sola transacción
+    // -------------------------------------------------------------------------
+    console.log('\n--- D4: Fusión atómica (transacción propia del repositorio) ---');
+    const previo = await db
+      .selectFrom('carrito')
+      .select('id_carrito')
+      .where((eb) => eb.or([eb('id_usuario', '=', USUARIO_SIN_CARRITO), eb('token_visitante', '=', TOKEN_FUSION)]))
+      .execute();
+    if (previo.length > 0) {
+      assert(false, `D4-INT: el usuario ${USUARIO_SIN_CARRITO} o el token de prueba ya tienen carrito; se omite la sección`);
+    } else {
+      const creados: number[] = [];
+      try {
+        const servicio = servicioSobre(db);
+        const visitante = await servicio.obtenerOCrearCarritoVisitante(TOKEN_FUSION);
+        creados.push(visitante.id_carrito);
+        await servicio.agregarItemVisitante(TOKEN_FUSION, { id_variante: 1, cantidad: 2 });
+        await servicio.agregarItemVisitante(TOKEN_FUSION, { id_variante: 2, cantidad: 3 });
+        const cliente = await servicio.obtenerOCrearCarritoCliente(USUARIO_SIN_CARRITO);
+        creados.push(cliente.id_carrito);
+        await servicio.agregarItemCliente(USUARIO_SIN_CARRITO, { id_variante: 1, cantidad: 1 });
+
+        const conFallo = new CarritoService(
+          new CarritoRepository(db),
+          new LineaCarritoRepository(db.withPlugin(new FallarAlBorrar()))
+        );
+        let fallo = false;
+        try {
+          await conFallo.fusionarCarritoConCuenta(USUARIO_SIN_CARRITO, { token_visitante: TOKEN_FUSION });
+        } catch {
+          fallo = true;
+        }
+        const lineasCliente = await db
+          .selectFrom('linea_carrito')
+          .select(['id_variante', 'cantidad'])
+          .where('id_carrito', '=', cliente.id_carrito)
+          .execute();
+        const lineasVisitante = await db
+          .selectFrom('linea_carrito')
+          .select(({ fn }) => fn.countAll<string>().as('t'))
+          .where('id_carrito', '=', visitante.id_carrito)
+          .executeTakeFirstOrThrow();
+        assert(fallo, 'D4-INT-01: el fallo al borrar el carrito de visitante se propaga');
+        assert(
+          lineasCliente.length === 1 && lineasCliente[0]?.cantidad === 1,
+          'D4-INT-02: tras el fallo, el carrito del cliente no recibió líneas (la transferencia se deshizo)'
+        );
+        assert(lineasVisitante.t === '2', 'D4-INT-03: tras el fallo, el carrito de visitante conserva sus 2 líneas');
+
+        const resultado = await servicio.fusionarCarritoConCuenta(USUARIO_SIN_CARRITO, { token_visitante: TOKEN_FUSION });
+        const sigueVisitante = await db
+          .selectFrom('carrito')
+          .select('id_carrito')
+          .where('id_carrito', '=', visitante.id_carrito)
+          .executeTakeFirst();
+        const cantidades = Object.fromEntries(resultado.carrito.lineas.map((l) => [l.id_variante, l.cantidad]));
+        assert(
+          sigueVisitante === undefined && cantidades[1] === 3 && cantidades[2] === 3,
+          'D4-INT-04: sin fallo, el visitante desaparece y el cliente queda con 1+2=3 y 3 unidades'
+        );
+      } finally {
+        if (creados.length > 0) {
+          await db.deleteFrom('carrito').where('id_carrito', 'in', creados).execute();
+        }
+      }
     }
 
     // -------------------------------------------------------------------------

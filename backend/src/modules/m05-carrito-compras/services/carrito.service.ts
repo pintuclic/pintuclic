@@ -308,15 +308,12 @@ export class CarritoService {
       return { carrito: carritoVivo, lineas_acumuladas: 0, lineas_transferidas: carritoVivo.total_lineas };
     }
 
-    // Fusión inteligente: el cliente ya tiene su propio carrito
-    const { acumuladas, transferidas } = await this.lineaRepo.transferirLineas(
+    // Fusión: el cliente ya tiene su propio carrito. La transferencia de líneas y el
+    // borrado del carrito de visitante ocurren en una sola transacción.
+    const { acumuladas, transferidas } = await this.lineaRepo.transferirLineasYEliminarOrigen(
       carritoVisitante.id_carrito,
       carritoCliente.id_carrito
     );
-
-    // Eliminar el carrito de visitante ya transferido
-    await this.carritoRepo.eliminar(carritoVisitante.id_carrito);
-    await this.carritoRepo.refrescarActividad(carritoCliente.id_carrito);
 
     const carritoVivo = await this.construirCarritoVivo(carritoCliente.id_carrito, 'cliente');
     return { carrito: carritoVivo, lineas_acumuladas: acumuladas, lineas_transferidas: transferidas };

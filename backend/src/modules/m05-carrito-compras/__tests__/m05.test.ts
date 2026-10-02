@@ -130,7 +130,11 @@ class CarritoRepoFake extends CarritoRepository {
     // no-op en tests
   }
 
+  /** Cuántas veces el servicio pidió borrar un carrito por fuera de la fusión transaccional. */
+  public llamadasEliminar = 0;
+
   override async eliminar(idCarrito: number): Promise<void> {
+    this.llamadasEliminar++;
     this.tabla.delete(idCarrito);
   }
 }
@@ -138,13 +142,16 @@ class CarritoRepoFake extends CarritoRepository {
 class LineaRepoFake extends LineaCarritoRepository {
   public tabla: Map<number, LineaCarrito> = new Map();
   public lineasVivasOverride: LineaCarritoViva[] | null = null;
+  /** Si es true, la fusión falla después de calcular las líneas y no aplica nada (simula el ROLLBACK). */
+  public fallarFusion = false;
   /** Catálogo falso: id de variante → estado. Las pruebas usan las variantes 10 y 20. */
   public variantes: Map<number, EnumEstadoProducto> = new Map([
     [10, 'activo'],
     [20, 'activo'],
   ]);
 
-  constructor() {
+  /** La fusión borra el carrito origen, que vive en el fake de cabeceras. */
+  constructor(private readonly carritos?: CarritoRepoFake) {
     super(undefined as never);
   }
 
@@ -199,24 +206,31 @@ class LineaRepoFake extends LineaCarritoRepository {
     this.tabla.delete(id);
   }
 
-  override async transferirLineas(
+  /** Emula la transacción: calcula todo sobre una copia y solo la aplica si nada falla. */
+  override async transferirLineasYEliminarOrigen(
     idOrigen: number,
     idDestino: number
   ): Promise<{ acumuladas: number; transferidas: number }> {
+    const copia = new Map([...this.tabla].map(([id, l]) => [id, { ...l }]));
     let acumuladas = 0;
     let transferidas = 0;
-    for (const l of this.tabla.values()) {
-      if (l.id_carrito === idOrigen) {
-        const existe = await this.buscarPorVariante(idDestino, l.id_variante);
-        if (existe) {
-          await this.actualizarCantidad(existe.id_linea_carrito, { cantidad: existe.cantidad + l.cantidad });
-          acumuladas++;
-        } else {
-          await this.crear({ id_carrito: idDestino, id_variante: l.id_variante, cantidad: l.cantidad });
-          transferidas++;
-        }
+    for (const l of [...copia.values()].filter((linea) => linea.id_carrito === idOrigen)) {
+      const existe = [...copia.values()].find((d) => d.id_carrito === idDestino && d.id_variante === l.id_variante);
+      if (existe) {
+        existe.cantidad += l.cantidad;
+        acumuladas++;
+      } else {
+        const nueva = nuevaLinea({ id_carrito: idDestino, id_variante: l.id_variante, cantidad: l.cantidad });
+        copia.set(nueva.id_linea_carrito, nueva);
+        transferidas++;
       }
+      copia.delete(l.id_linea_carrito);
     }
+    if (this.fallarFusion) {
+      throw new Error('Fallo simulado durante la fusión');
+    }
+    this.tabla = copia;
+    this.carritos?.tabla.delete(idOrigen);
     return { acumuladas, transferidas };
   }
 }
@@ -494,6 +508,55 @@ async function ejecutarPruebasM05(): Promise<void> {
       rechazoCuerpo = error instanceof ZodError;
     }
     assert(rechazoCuerpo, 'D3-06: /fusionar rechaza con ZodError (400) un token_visitante que no es UUID');
+  }
+
+  // ---------------------------------------------------------------------------
+  // D4: la fusión con un carrito de cliente existente es una sola operación
+  // ---------------------------------------------------------------------------
+  console.log('\n--- D4: Fusión atómica con carrito de cliente existente ---');
+  {
+    const prepararFusion = async () => {
+      const carritoRepo = new CarritoRepoFake();
+      const lineaRepo = new LineaRepoFake(carritoRepo);
+      const service = new CarritoService(carritoRepo, lineaRepo);
+      await service.obtenerOCrearCarritoCliente(77);
+      await service.agregarItemCliente(77, { id_variante: 10, cantidad: 1 });
+      const visitante = await service.obtenerOCrearCarritoVisitante('tok-d4');
+      await service.agregarItemVisitante('tok-d4', { id_variante: 10, cantidad: 2 });
+      await service.agregarItemVisitante('tok-d4', { id_variante: 20, cantidad: 3 });
+      return { carritoRepo, lineaRepo, service, idVisitante: visitante.id_carrito };
+    };
+
+    const ok = await prepararFusion();
+    const resultado = await ok.service.fusionarCarritoConCuenta(77, { token_visitante: 'tok-d4' });
+    assert(
+      resultado.lineas_acumuladas === 1 && resultado.lineas_transferidas === 1,
+      'D4-01: una línea se acumula (variante 10) y otra se transfiere (variante 20)'
+    );
+    assert(
+      resultado.carrito.lineas.find((l) => l.id_variante === 10)?.cantidad === 3,
+      'D4-02: la variante repetida suma 1 + 2 = 3 en el carrito del cliente'
+    );
+    assert(!ok.carritoRepo.tabla.has(ok.idVisitante), 'D4-03: el carrito de visitante desaparece tras la fusión');
+    assert(
+      ok.carritoRepo.llamadasEliminar === 0,
+      'D4-04: el servicio ya no borra el carrito de visitante por fuera de la transacción'
+    );
+
+    const falla = await prepararFusion();
+    let propagoError = false;
+    falla.lineaRepo.fallarFusion = true;
+    try {
+      await falla.service.fusionarCarritoConCuenta(77, { token_visitante: 'tok-d4' });
+    } catch {
+      propagoError = true;
+    }
+    const cliente = await falla.service.obtenerOCrearCarritoCliente(77);
+    assert(propagoError, 'D4-05: un fallo en la fusión se propaga al llamador');
+    assert(
+      falla.carritoRepo.tabla.has(falla.idVisitante) && cliente.total_lineas === 1 && cliente.lineas[0]?.cantidad === 1,
+      'D4-06: tras el fallo, el carrito de visitante sigue y el del cliente no cambió'
+    );
   }
 
   // ---------------------------------------------------------------------------

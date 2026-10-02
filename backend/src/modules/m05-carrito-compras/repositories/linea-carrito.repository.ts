@@ -127,34 +127,33 @@ export class LineaCarritoRepository {
   }
 
   /**
-   * Transfiere todas las líneas de un carrito origen a un carrito destino (HU-CAR-04: fusión).
-   * Utiliza upsert (ON CONFLICT) para acumular si la variante ya existe en el destino.
-   * Operación atómica en transacción.
+   * Fusiona el carrito origen en el destino (HU-CAR-04) en UNA sola transacción:
+   * transfiere las líneas (acumulando si la variante ya existe en el destino), elimina el
+   * carrito origen y refresca la actividad del destino. Si cualquier paso falla no queda
+   * nada a medias: ni líneas duplicadas en ambos carritos ni un carrito de visitante huérfano.
    */
-  async transferirLineas(
+  async transferirLineasYEliminarOrigen(
     idCarritoOrigen: number,
     idCarritoDestino: number
   ): Promise<{ acumuladas: number; transferidas: number }> {
-    const lineasOrigen = await this.db
-      .selectFrom('linea_carrito')
-      .selectAll()
-      .where('id_carrito', '=', idCarritoOrigen)
-      .execute();
+    return this.enTransaccion(async (trx) => {
+      const lineasOrigen = await trx
+        .selectFrom('linea_carrito')
+        .selectAll()
+        .where('id_carrito', '=', idCarritoOrigen)
+        .forUpdate()
+        .execute();
 
-    if (lineasOrigen.length === 0) {
-      return { acumuladas: 0, transferidas: 0 };
-    }
+      let acumuladas = 0;
+      let transferidas = 0;
 
-    let acumuladas = 0;
-    let transferidas = 0;
-
-    await this.db.transaction().execute(async (trx) => {
       for (const linea of lineasOrigen) {
         const existente = await trx
           .selectFrom('linea_carrito')
           .select(['id_linea_carrito', 'cantidad'])
           .where('id_carrito', '=', idCarritoDestino)
           .where('id_variante', '=', linea.id_variante)
+          .forUpdate()
           .executeTakeFirst();
 
         if (existente) {
@@ -178,8 +177,24 @@ export class LineaCarritoRepository {
           transferidas++;
         }
       }
-    });
 
-    return { acumuladas, transferidas };
+      // Las líneas del origen se borran en cascada (ON DELETE CASCADE).
+      await trx.deleteFrom('carrito').where('id_carrito', '=', idCarritoOrigen).execute();
+      await trx
+        .updateTable('carrito')
+        .set({ fecha_ultima_actividad: new Date() })
+        .where('id_carrito', '=', idCarritoDestino)
+        .execute();
+
+      return { acumuladas, transferidas };
+    });
+  }
+
+  /**
+   * Ejecuta en una transacción nueva o, si el repositorio ya trabaja dentro de una, en
+   * esa misma (mismo criterio que M08). Así las pruebas de integración pueden deshacerlo todo.
+   */
+  private enTransaccion<T>(trabajo: (db: Kysely<Database>) => Promise<T>): Promise<T> {
+    return this.db.isTransaction ? trabajo(this.db) : this.db.transaction().execute(trabajo);
   }
 }
