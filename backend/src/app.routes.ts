@@ -8,7 +8,7 @@ import { cuentasRoutes } from './modules/m04-cuentas/cuentas.routes';
 import { catalogoRoutes } from './modules/m01-catalogo/m01.routes';
 import { busquedaRoutes } from './modules/m02-busqueda/m02.routes';
 import { ordenesRoutes } from './modules/m08-ordenes/m08.routes';
-import { carritoRoutes } from './modules/m05-carritodecompras/m05.routes';
+import { carritoRoutes } from './modules/m05-carrito-compras/m05.routes';
 
 const appRouter = Router();
 

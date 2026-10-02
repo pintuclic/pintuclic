@@ -8,7 +8,7 @@ import { LineaCarritoViva } from '../interfaces/m05.interfaces';
 // M05 - SUITE DE VALIDACIÓN DE CRITERIOS DE ACEPTACIÓN
 // (HU-CAR-01, HU-CAR-02, HU-CAR-04, HU-CAR-05)
 // Repositorios fake en memoria — sin conexión real a PostgreSQL
-// Ejecutar: npx tsx src/modules/m05-carritodecompras/__tests__/m05.test.ts
+// Ejecutar: npx tsx src/modules/m05-carrito-compras/__tests__/m05.test.ts
 // ==============================================================================
 
 // ---- Datos base de prueba ---------------------------------------------------
@@ -31,6 +31,7 @@ function nuevaLinea(overrides: Partial<LineaCarrito> = {}): LineaCarrito {
     id_linea_carrito: secuenciaLinea++,
     id_carrito: 1,
     id_variante: 10,
+    ref_viva: 1,
     cantidad: 1,
     ...overrides,
   };
