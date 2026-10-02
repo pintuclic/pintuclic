@@ -5,7 +5,7 @@ import {
   NewLineaCarrito,
   LineaCarritoUpdate,
 } from '../../../core/db/types';
-import { LineaCarritoViva } from '../interfaces/m05.interfaces';
+import { LineaCarritoViva, VarianteParaCarrito } from '../interfaces/m05.interfaces';
 
 // ==============================================================================
 // M05 - REPOSITORIO DE LÍNEAS DEL CARRITO (Kysely + PostgreSQL)
@@ -49,6 +49,18 @@ export class LineaCarritoRepository {
         estado_variante: fila.estado,
       };
     });
+  }
+
+  /**
+   * Identificador y estado de una variante del catálogo, o `undefined` si no existe.
+   * Se consulta antes de crear una línea para no llegar a la llave foránea (RF-CAR-01-01).
+   */
+  async buscarVariante(idVariante: number): Promise<VarianteParaCarrito | undefined> {
+    return this.db
+      .selectFrom('variante')
+      .select(['id_variante', 'estado'])
+      .where('id_variante', '=', idVariante)
+      .executeTakeFirst();
   }
 
   /**

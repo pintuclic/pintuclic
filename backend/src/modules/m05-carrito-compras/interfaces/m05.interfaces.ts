@@ -4,6 +4,8 @@
 // Conforme a AGENTS.md y backend/infraestructura.md
 // ==============================================================================
 
+import type { Variante } from '../../../core/db/types';
+
 /**
  * Identificador opaco del visitante anónimo.
  * Persiste en cookie o localStorage del dispositivo (ADR-01, RNF-CAR-01-01).
@@ -34,6 +36,12 @@ export interface LineaCarritoViva {
   /** Estado de la variante en el catálogo (activo/descontinuado). */
   estado_variante: string;
 }
+
+/**
+ * Datos mínimos de una variante para decidir si puede entrar al carrito.
+ * Solo una variante en estado 'activo' se vende.
+ */
+export type VarianteParaCarrito = Pick<Variante, 'id_variante' | 'estado'>;
 
 /**
  * Vista completa del carrito retornada en las respuestas de la API.

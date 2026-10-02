@@ -132,6 +132,16 @@ export class CarritoService {
     datos: AgregarItemDTO,
     origen: OrigenCarrito
   ): Promise<CarritoVivo> {
+    // Solo se agregan variantes que existen y están a la venta. Sin esta comprobación,
+    // un id inválido llegaba a la llave foránea y respondía 500.
+    const variante = await this.lineaRepo.buscarVariante(datos.id_variante);
+    if (!variante) {
+      throw new AppError('La variante solicitada no existe', 404, 'VARIANTE_NO_ENCONTRADA');
+    }
+    if (variante.estado !== 'activo') {
+      throw new AppError('La variante solicitada no está disponible para la venta', 422, 'VARIANTE_NO_DISPONIBLE');
+    }
+
     const lineaExistente = await this.lineaRepo.buscarPorVariante(idCarrito, datos.id_variante);
 
     if (lineaExistente) {

@@ -1,8 +1,9 @@
 import { CarritoService } from '../services/carrito.service';
 import { CarritoRepository } from '../repositories/carrito.repository';
 import { LineaCarritoRepository } from '../repositories/linea-carrito.repository';
-import { Carrito, LineaCarrito } from '../../../core/db/types';
-import { LineaCarritoViva } from '../interfaces/m05.interfaces';
+import { AppError } from '../../../core/middlewares/errorHandler';
+import { Carrito, EnumEstadoProducto, LineaCarrito } from '../../../core/db/types';
+import { LineaCarritoViva, VarianteParaCarrito } from '../interfaces/m05.interfaces';
 
 // ==============================================================================
 // M05 - SUITE DE VALIDACIÓN DE CRITERIOS DE ACEPTACIÓN
@@ -104,6 +105,11 @@ class CarritoRepoFake extends CarritoRepository {
 class LineaRepoFake extends LineaCarritoRepository {
   public tabla: Map<number, LineaCarrito> = new Map();
   public lineasVivasOverride: LineaCarritoViva[] | null = null;
+  /** Catálogo falso: id de variante → estado. Las pruebas usan las variantes 10 y 20. */
+  public variantes: Map<number, EnumEstadoProducto> = new Map([
+    [10, 'activo'],
+    [20, 'activo'],
+  ]);
 
   constructor() {
     super(undefined as never);
@@ -123,6 +129,11 @@ class LineaRepoFake extends LineaCarritoRepository {
       }
     }
     return result;
+  }
+
+  override async buscarVariante(idVariante: number): Promise<VarianteParaCarrito | undefined> {
+    const estado = this.variantes.get(idVariante);
+    return estado ? { id_variante: idVariante, estado } : undefined;
   }
 
   override async buscarPorVariante(idCarrito: number, idVariante: number): Promise<LineaCarrito | undefined> {
@@ -192,6 +203,23 @@ async function ejecutarPruebasM05(): Promise<void> {
     } else {
       console.error(`  ❌ [FAIL] ${descripcion}`);
       fallidas++;
+    }
+  }
+
+  /** Comprueba que la operación falle con un AppError del estado y código esperados. */
+  async function esperarError(
+    operacion: () => Promise<unknown>,
+    estado: number,
+    codigo: string,
+    descripcion: string
+  ): Promise<void> {
+    try {
+      await operacion();
+      assert(false, `${descripcion} (no lanzó error)`);
+    } catch (error) {
+      const coincide = error instanceof AppError && error.statusCode === estado && error.code === codigo;
+      const obtenido = error instanceof AppError ? `${error.statusCode} ${error.code}` : String(error);
+      assert(coincide, coincide ? descripcion : `${descripcion} (obtuvo ${obtenido})`);
     }
   }
 
@@ -323,6 +351,44 @@ async function ejecutarPruebasM05(): Promise<void> {
     assert(
       revalNoDisp.alertas.some((a) => a.tipo === 'variante_no_disponible'),
       'CA-CAR-05-06: alerta de variante_no_disponible generada correctamente'
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // D1: la variante debe existir y estar activa antes de entrar al carrito
+  // ---------------------------------------------------------------------------
+  console.log('\n--- D1: Validación de la variante al agregar ---');
+  {
+    const carritoRepo = new CarritoRepoFake();
+    const lineaRepo = new LineaRepoFake();
+    const service = new CarritoService(carritoRepo, lineaRepo);
+    const TOKEN = 'tok-variante';
+    await service.obtenerOCrearCarritoVisitante(TOKEN);
+
+    await esperarError(
+      () => service.agregarItemVisitante(TOKEN, { id_variante: 999, cantidad: 1 }),
+      404,
+      'VARIANTE_NO_ENCONTRADA',
+      'D1-01: una variante inexistente responde 404 VARIANTE_NO_ENCONTRADA'
+    );
+
+    for (const estado of ['inactivo', 'agotado', 'descontinuado'] as const) {
+      lineaRepo.variantes.set(30, estado);
+      await esperarError(
+        () => service.agregarItemVisitante(TOKEN, { id_variante: 30, cantidad: 1 }),
+        422,
+        'VARIANTE_NO_DISPONIBLE',
+        `D1-02: una variante en estado «${estado}» responde 422 VARIANTE_NO_DISPONIBLE`
+      );
+    }
+    assert(lineaRepo.tabla.size === 0, 'D1-03: ninguna variante rechazada deja una línea en el carrito');
+
+    await service.obtenerOCrearCarritoCliente(7);
+    await esperarError(
+      () => service.agregarItemCliente(7, { id_variante: 999, cantidad: 1 }),
+      404,
+      'VARIANTE_NO_ENCONTRADA',
+      'D1-04: la misma validación aplica al carrito del cliente'
     );
   }
 
