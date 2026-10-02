@@ -69,6 +69,33 @@ export class LineaCarritoRepository {
   }
 
   /**
+   * Agrega la variante al carrito o, si ya está, suma la cantidad a su línea (RF-CAR-02-0X),
+   * en UNA sola sentencia atómica apoyada en la restricción `uq_carrito_variante`.
+   * Dos peticiones simultáneas no pierden unidades ni chocan con el UNIQUE.
+   * Si la suma superaría `cantidadMaxima`, la línea no cambia y se retorna `undefined`.
+   */
+  async agregarOAcumular(
+    idCarrito: number,
+    idVariante: number,
+    cantidad: number,
+    cantidadMaxima: number
+  ): Promise<LineaCarrito | undefined> {
+    return this.db
+      .insertInto('linea_carrito')
+      .values({ id_carrito: idCarrito, id_variante: idVariante, cantidad })
+      .onConflict((oc) =>
+        oc
+          .columns(['id_carrito', 'id_variante'])
+          .doUpdateSet((eb) => ({
+            cantidad: eb('linea_carrito.cantidad', '+', eb.ref('excluded.cantidad')),
+          }))
+          .where((eb) => eb(eb('linea_carrito.cantidad', '+', eb.ref('excluded.cantidad')), '<=', cantidadMaxima))
+      )
+      .returningAll()
+      .executeTakeFirst();
+  }
+
+  /**
    * Busca una línea concreta dentro de un carrito por su variante (para acumulación HU-CAR-02).
    */
   async buscarPorVariante(

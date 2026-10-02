@@ -31,6 +31,7 @@ const TOKEN_VISITANTE = '3f1c2b9a-6d4e-4f8a-9b7c-1a2b3c4d5e6f';
 const VARIANTE_INEXISTENTE = 2_000_000_000;
 const TOKEN_FUSION = '8a7b6c5d-4e3f-4a1b-8c2d-3e4f5a6b7c8d';
 const USUARIO_SIN_CARRITO = 4;
+const TOKEN_CONCURRENCIA = 'c0ffee00-1234-4abc-8def-0123456789ab';
 
 /** Hace fallar cualquier DELETE: simula una caída justo antes de borrar el carrito de visitante. */
 class FallarAlBorrar implements KyselyPlugin {
@@ -262,6 +263,55 @@ async function ejecutarPruebasIntegracionEscrituraM05(): Promise<void> {
         if (creados.length > 0) {
           await db.deleteFrom('carrito').where('id_carrito', 'in', creados).execute();
         }
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // B2: agregados simultáneos sobre la misma variante (sin transacción externa,
+    // porque una sola conexión serializaría las peticiones; se limpia en `finally`)
+    // -------------------------------------------------------------------------
+    console.log('\n--- B2: Agregados concurrentes sobre la misma línea ---');
+    {
+      const servicio = servicioSobre(db);
+      const carrito = await servicio.obtenerOCrearCarritoVisitante(TOKEN_CONCURRENCIA);
+      try {
+        const simultaneos = await Promise.allSettled(
+          Array.from({ length: 8 }, () =>
+            servicio.agregarItemVisitante(TOKEN_CONCURRENCIA, { id_variante: 3, cantidad: 1 })
+          )
+        );
+        const fallidos = simultaneos.filter((r) => r.status === 'rejected');
+        let linea = await db
+          .selectFrom('linea_carrito')
+          .select('cantidad')
+          .where('id_carrito', '=', carrito.id_carrito)
+          .where('id_variante', '=', 3)
+          .executeTakeFirst();
+        assert(
+          fallidos.length === 0 && linea?.cantidad === 8,
+          `B2-INT-01: 8 agregados simultáneos de 1 unidad dejan una línea con 8 (fallidos: ${fallidos.length}, cantidad: ${linea?.cantidad})`
+        );
+
+        const conTope = await Promise.allSettled(
+          Array.from({ length: 5 }, () =>
+            servicio.agregarItemVisitante(TOKEN_CONCURRENCIA, { id_variante: 3, cantidad: 300 })
+          )
+        );
+        const rechazados = conTope.filter(
+          (r) => r.status === 'rejected' && r.reason instanceof AppError && r.reason.code === 'CANTIDAD_MAXIMA_EXCEDIDA'
+        );
+        linea = await db
+          .selectFrom('linea_carrito')
+          .select('cantidad')
+          .where('id_carrito', '=', carrito.id_carrito)
+          .where('id_variante', '=', 3)
+          .executeTakeFirst();
+        assert(
+          rechazados.length === 2 && linea?.cantidad === 908,
+          `B2-INT-02: con 5 agregados simultáneos de 300 sobre 8, entran 3 (908) y 2 se rechazan por tope (rechazados: ${rechazados.length}, cantidad: ${linea?.cantidad})`
+        );
+      } finally {
+        await db.deleteFrom('carrito').where('id_carrito', '=', carrito.id_carrito).execute();
       }
     }
 

@@ -176,6 +176,28 @@ class LineaRepoFake extends LineaCarritoRepository {
     return result;
   }
 
+  /** Llamadas al camino no atómico (crear / actualizar) desde el agregado de ítems. */
+  public llamadasNoAtomicas = 0;
+  public llamadasAgregarOAcumular = 0;
+
+  override async agregarOAcumular(
+    idCarrito: number,
+    idVariante: number,
+    cantidad: number,
+    cantidadMaxima: number
+  ): Promise<LineaCarrito | undefined> {
+    this.llamadasAgregarOAcumular++;
+    const existente = [...this.tabla.values()].find((l) => l.id_carrito === idCarrito && l.id_variante === idVariante);
+    if (!existente) {
+      const nueva = nuevaLinea({ id_carrito: idCarrito, id_variante: idVariante, cantidad });
+      this.tabla.set(nueva.id_linea_carrito, nueva);
+      return { ...nueva };
+    }
+    if (existente.cantidad + cantidad > cantidadMaxima) return undefined;
+    existente.cantidad += cantidad;
+    return { ...existente };
+  }
+
   override async buscarVariante(idVariante: number): Promise<VarianteParaCarrito | undefined> {
     const estado = this.variantes.get(idVariante);
     return estado ? { id_variante: idVariante, estado } : undefined;
@@ -194,6 +216,7 @@ class LineaRepoFake extends LineaCarritoRepository {
   }
 
   override async crear(datos: { id_carrito: number; id_variante: number; cantidad: number }): Promise<LineaCarrito> {
+    this.llamadasNoAtomicas++;
     const l = nuevaLinea({ ...datos });
     this.tabla.set(l.id_linea_carrito, l);
     return { ...l };
@@ -608,6 +631,34 @@ async function ejecutarPruebasM05(): Promise<void> {
     await service2.agregarItemVisitante('tok-b1-ok', { id_variante: 10, cantidad: 1 });
     const normal = await service2.fusionarCarritoConCuenta(89, { token_visitante: 'tok-b1-ok' });
     assert(!('avisos' in normal), 'B1-04: sin ajustes, la respuesta no incluye el campo avisos (forma intacta)');
+  }
+
+  // ---------------------------------------------------------------------------
+  // B2: agregar o acumular en una sola operación atómica
+  // ---------------------------------------------------------------------------
+  console.log('\n--- B2: Agregado atómico (ON CONFLICT ... DO UPDATE) ---');
+  {
+    const carritoRepo = new CarritoRepoFake();
+    const lineaRepo = new LineaRepoFake();
+    const service = new CarritoService(carritoRepo, lineaRepo);
+    await service.obtenerOCrearCarritoVisitante('tok-b2');
+    await service.agregarItemVisitante('tok-b2', { id_variante: 10, cantidad: 2 });
+    const acumulado = await service.agregarItemVisitante('tok-b2', { id_variante: 10, cantidad: 3 });
+    assert(
+      lineaRepo.llamadasAgregarOAcumular === 2 && lineaRepo.llamadasNoAtomicas === 0,
+      'B2-01: agregar usa solo la operación atómica, no la secuencia leer-crear-actualizar'
+    );
+    assert(acumulado.total_lineas === 1 && acumulado.lineas[0]?.cantidad === 5, 'B2-02: sigue acumulando 2 + 3 = 5 en una sola línea');
+
+    await service.agregarItemVisitante('tok-b2', { id_variante: 10, cantidad: 994 });
+    let detalle: unknown;
+    try {
+      await service.agregarItemVisitante('tok-b2', { id_variante: 10, cantidad: 1 });
+    } catch (error) {
+      detalle = error instanceof AppError ? error.details : undefined;
+    }
+    const d = detalle as { maximo?: number; cantidad_actual?: number } | undefined;
+    assert(d?.maximo === 999 && d?.cantidad_actual === 999, 'B2-03: el rechazo por tope informa el máximo y la cantidad actual');
   }
 
   // ---------------------------------------------------------------------------

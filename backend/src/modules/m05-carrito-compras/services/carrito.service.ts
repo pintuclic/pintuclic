@@ -143,29 +143,21 @@ export class CarritoService {
       throw new AppError('La variante solicitada no está disponible para la venta', 422, 'VARIANTE_NO_DISPONIBLE');
     }
 
-    const lineaExistente = await this.lineaRepo.buscarPorVariante(idCarrito, datos.id_variante);
-
-    if (lineaExistente) {
-      // Acumular cantidad en línea existente (RF-CAR-02-0X), sin superar el tope por línea.
-      const cantidadTotal = lineaExistente.cantidad + datos.cantidad;
-      if (cantidadTotal > CANTIDAD_MAXIMA_POR_LINEA) {
-        throw new AppError(
-          `La cantidad total de la línea no puede superar ${CANTIDAD_MAXIMA_POR_LINEA} unidades`,
-          422,
-          'CANTIDAD_MAXIMA_EXCEDIDA',
-          { maximo: CANTIDAD_MAXIMA_POR_LINEA, cantidad_actual: lineaExistente.cantidad }
-        );
-      }
-      await this.lineaRepo.actualizarCantidad(lineaExistente.id_linea_carrito, {
-        cantidad: cantidadTotal,
-      });
-    } else {
-      // Crear nueva línea en el carrito
-      await this.lineaRepo.crear({
-        id_carrito: idCarrito,
-        id_variante: datos.id_variante,
-        cantidad: datos.cantidad,
-      });
+    // Insertar o acumular en una sola sentencia atómica, sin superar el tope por línea.
+    const linea = await this.lineaRepo.agregarOAcumular(
+      idCarrito,
+      datos.id_variante,
+      datos.cantidad,
+      CANTIDAD_MAXIMA_POR_LINEA
+    );
+    if (!linea) {
+      const actual = await this.lineaRepo.buscarPorVariante(idCarrito, datos.id_variante);
+      throw new AppError(
+        `La cantidad total de la línea no puede superar ${CANTIDAD_MAXIMA_POR_LINEA} unidades`,
+        422,
+        'CANTIDAD_MAXIMA_EXCEDIDA',
+        { maximo: CANTIDAD_MAXIMA_POR_LINEA, cantidad_actual: actual?.cantidad ?? 0 }
+      );
     }
 
     await this.carritoRepo.refrescarActividad(idCarrito);
