@@ -7,6 +7,19 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.2.2] - 2026-10-01
+### M08 - Orden de venta: compras anteriores del cliente en el detalle (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.4.2.2)**. Da uso al último endpoint del personal que quedaba sin interfaz. **M08 pasa a consumir los 9 endpoints del módulo.**
+- **Hitos Clave:**
+  - **Compras anteriores (HU-ORD-11, CA-ORD-11-01):** bloque en la ficha del cliente, dentro del detalle administrativo. Lista los demás pedidos del titular con su fecha, total y estado, y cada uno enlaza a su propio detalle.
+  - Se consulta **bajo demanda**, no al abrir la orden: en la mayoría de consultas basta con el pedido que se está atendiendo, y así no se pide al servidor algo que nadie va a mirar.
+  - El endpoint **excluye la orden actual**, de modo que lo que se lista son estrictamente los demás pedidos. Botón «Ver más» cuando hay más de una página.
+  - Al cambiar de orden el bloque se reinicia, para no arrastrar el historial de un cliente al detalle de otro.
+- **Verificación:** `vue-tsc` y `eslint` sin errores; comprobado en pantalla con 4 compras anteriores y la orden consultada correctamente excluida.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.2.0_M08_gestion_ordenes_personal_frontend.md` (sección de ajustes posteriores)
+
+
+---
 ## [v0.4.2.1] - 2026-10-01
 ### M08 - Orden de venta: alta de notas internas y contactos desde el detalle (Frontend)
 - **Alcance General:** Incremento **PATCH (v0.4.2.1)**. Dos formularios que dan uso a endpoints que el backend ya exponía y la interfaz no consumía.

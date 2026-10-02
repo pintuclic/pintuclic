@@ -157,4 +157,22 @@ export const OrdenesService = {
     );
     return data.data;
   },
+
+  /**
+   * GET /api/ordenes/gestion/:codigo/historial-cliente
+   * Compras anteriores del titular de esta orden (HU-ORD-11, CA-ORD-11-01). Devuelve el
+   * mismo formato que la bandeja y **excluye la orden que se está consultando**, así que
+   * lo que llega son estrictamente sus demás pedidos.
+   */
+  async historialCliente(
+    codigo: string,
+    pagina = 1,
+    limite = 5
+  ): Promise<PaginaOrdenesGestion> {
+    const { data } = await apiClient.get<ApiResponse<PaginaOrdenesGestion>>(
+      `${BASE}/gestion/${encodeURIComponent(codigo)}/historial-cliente`,
+      { params: { pagina, limite } }
+    );
+    return data.data;
+  },
 };

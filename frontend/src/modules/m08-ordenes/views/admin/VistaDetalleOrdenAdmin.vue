@@ -248,6 +248,79 @@
             </p>
           </section>
 
+          <!--
+            Compras anteriores del titular (HU-ORD-11). Se carga bajo demanda: en la
+            mayoría de consultas basta con la orden que se está atendiendo, y así no se
+            pide al servidor algo que nadie va a mirar.
+          -->
+          <section class="bg-white border border-neutral-light rounded-2xl p-5">
+            <h2 class="flex items-center gap-2 font-bold text-corporate mb-4">
+              <HistoryIcon class="w-4 h-4 text-action" />
+              Compras anteriores
+            </h2>
+
+            <Button
+              v-if="historial === null"
+              variant="outline"
+              :disabled="cargandoHistorial"
+              @click="verHistorial(1)"
+            >
+              {{ cargandoHistorial ? 'Consultando…' : 'Ver compras anteriores' }}
+            </Button>
+
+            <p v-else-if="errorHistorial" class="text-neutral-medium text-sm">
+              {{ errorHistorial }}
+            </p>
+
+            <p v-else-if="!historial.items.length" class="text-neutral-medium text-sm">
+              Este cliente no tiene otros pedidos.
+            </p>
+
+            <div v-else class="flex flex-col gap-3">
+              <p class="text-neutral-medium text-xs">
+                {{ historial.total }}
+                {{ historial.total === 1 ? 'pedido más' : 'pedidos más' }} de este cliente,
+                sin contar el actual.
+              </p>
+              <ul class="flex flex-col gap-2">
+                <li v-for="o in historial.items" :key="o.codigo">
+                  <RouterLink
+                    :to="{ name: 'AdminDetalleOrden', params: { codigo: o.codigo } }"
+                    class="flex items-center justify-between gap-3 rounded-xl border border-neutral-light px-3.5 py-2.5 transition-colors hover:border-action"
+                  >
+                    <span class="min-w-0">
+                      <span class="block font-semibold text-action text-sm truncate">
+                        {{ o.codigo }}
+                      </span>
+                      <span class="block text-neutral-medium text-xs tabular-nums">
+                        {{ formatearFechaCorta(o.fecha) }}
+                      </span>
+                    </span>
+                    <span class="shrink-0 text-right">
+                      <span class="block font-semibold text-neutral-black text-sm tabular-nums">
+                        {{ formatearCOP(o.total) }}
+                      </span>
+                      <span
+                        class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold mt-0.5"
+                        :class="ESTADOS[o.estado].clases"
+                      >
+                        {{ ESTADOS[o.estado].etiqueta }}
+                      </span>
+                    </span>
+                  </RouterLink>
+                </li>
+              </ul>
+              <Button
+                v-if="historial.total_paginas > historial.pagina"
+                variant="outline"
+                :disabled="cargandoHistorial"
+                @click="verHistorial(historial.pagina + 1)"
+              >
+                {{ cargandoHistorial ? 'Consultando…' : 'Ver más' }}
+              </Button>
+            </div>
+          </section>
+
           <!-- Notas internas (HU-ORD-10) -->
           <section class="bg-white border border-neutral-light rounded-2xl p-5">
             <h2 class="flex items-center gap-2 font-bold text-corporate mb-4">
@@ -380,12 +453,14 @@ import {
   MODO_ENTREGA,
   formatearCOP,
   formatearFecha,
+  formatearFechaCorta,
   formatearFechaHora,
 } from '../../dtos/estado-pedido.dto';
 import { OrdenesService } from '../../services/ordenes.service';
 import type {
   DetalleOrdenGestion,
   MedioContacto,
+  PaginaOrdenesGestion,
   ResultadoCambioEstado,
 } from '../../interfaces/ordenes.interface';
 
@@ -398,6 +473,30 @@ const noEncontrado = ref(false);
 const sesionExpirada = ref(false);
 const modalAbierto = ref(false);
 const avisoExito = ref('');
+
+// --- Compras anteriores del cliente (HU-ORD-11) ---
+const historial = ref<PaginaOrdenesGestion | null>(null);
+const cargandoHistorial = ref(false);
+const errorHistorial = ref('');
+
+/**
+ * Se consulta solo cuando el personal lo pide. El endpoint excluye la orden actual, así
+ * que lo que llega son estrictamente los demás pedidos del titular.
+ */
+async function verHistorial(pagina: number = 1): Promise<void> {
+  // Un @click sin argumentos entregaría el evento del ratón; se descarta por si acaso.
+  const n = Number.isInteger(pagina) && pagina > 0 ? pagina : 1;
+  cargandoHistorial.value = true;
+  errorHistorial.value = '';
+  try {
+    historial.value = await OrdenesService.historialCliente(props.codigo, n);
+  } catch (e: unknown) {
+    historial.value = { items: [], total: 0, pagina: 1, limite: 5, total_paginas: 0 };
+    errorHistorial.value = mensajeDeError(e, 'No se pudieron consultar las compras anteriores.');
+  } finally {
+    cargandoHistorial.value = false;
+  }
+}
 
 // --- Nota interna (HU-ORD-10) ---
 const textoNota = ref('');
@@ -500,6 +599,10 @@ function onCambiado(resultado: ResultadoCambioEstado): void {
   void cargar();
 }
 
-watch(() => props.codigo, () => void cargar());
+watch(() => props.codigo, () => {
+  historial.value = null;
+  errorHistorial.value = '';
+  void cargar();
+});
 onMounted(() => void cargar());
 </script>
