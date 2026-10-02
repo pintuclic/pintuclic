@@ -171,6 +171,61 @@ async function ejecutarPruebasIntegracionEscrituraM05(): Promise<void> {
     }
 
     // -------------------------------------------------------------------------
+    // B2: si el WHERE del ON CONFLICT no se cumple, no se afecta ninguna fila y el
+    // servicio responde 422 (nunca un éxito silencioso)
+    // -------------------------------------------------------------------------
+    console.log('\n--- B2: Upsert con tope sin filas afectadas ---');
+    try {
+      await db.transaction().execute(async (trx) => {
+        const lineas = new LineaCarritoRepository(trx);
+        const servicio = servicioSobre(trx);
+        const carrito = await servicio.agregarItemVisitante(TOKEN_VISITANTE, { id_variante: 2, cantidad: 995 });
+        const cantidadEnBase = async (): Promise<number | undefined> =>
+          (
+            await trx
+              .selectFrom('linea_carrito')
+              .select('cantidad')
+              .where('id_carrito', '=', carrito.id_carrito)
+              .where('id_variante', '=', 2)
+              .executeTakeFirst()
+          )?.cantidad;
+
+        const sinFilas = await lineas.agregarOAcumular(carrito.id_carrito, 2, 5, 999);
+        assert(
+          sinFilas === undefined && (await cantidadEnBase()) === 995,
+          'B2-INT-03: 995 + 5 con tope 999 no afecta ninguna fila (RETURNING vacío) y la línea sigue en 995'
+        );
+
+        let error: unknown;
+        try {
+          await servicio.agregarItemVisitante(TOKEN_VISITANTE, { id_variante: 2, cantidad: 5 });
+        } catch (e) {
+          error = e;
+        }
+        const detalle = error instanceof AppError ? (error.details as { maximo?: number; cantidad_actual?: number }) : undefined;
+        assert(
+          error instanceof AppError &&
+            error.statusCode === 422 &&
+            error.code === 'CANTIDAD_MAXIMA_EXCEDIDA' &&
+            detalle?.maximo === 999 &&
+            detalle?.cantidad_actual === 995 &&
+            (await cantidadEnBase()) === 995,
+          'B2-INT-04: el servicio convierte las 0 filas en 422 CANTIDAD_MAXIMA_EXCEDIDA (cantidad_actual 995), no en un éxito'
+        );
+
+        const justo = await lineas.agregarOAcumular(carrito.id_carrito, 2, 4, 999);
+        assert(
+          justo?.cantidad === 999 && (await cantidadEnBase()) === 999,
+          'B2-INT-05: 995 + 4 cumple el WHERE, afecta la fila y RETURNING devuelve 999'
+        );
+
+        throw new DeshacerCambios();
+      });
+    } catch (error) {
+      if (!(error instanceof DeshacerCambios)) throw error;
+    }
+
+    // -------------------------------------------------------------------------
     // B3: agregar sin GET previo crea el carrito
     // -------------------------------------------------------------------------
     console.log('\n--- B3: Agregar sin inicializar el carrito ---');
