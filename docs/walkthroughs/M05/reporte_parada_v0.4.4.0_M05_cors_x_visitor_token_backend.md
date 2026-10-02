@@ -4,7 +4,7 @@
 
 ## 1. METADATOS
 
-* **Versión asociada:** `v0.4.1.0` (integración del backend de M05)
+* **Versión asociada:** `v0.4.4.0` (integración del backend de M05)
 * **Módulo solicitante:** `M05 - Carrito de compras`
 * **Archivo afectado (fuera del módulo):** `backend/src/core/middlewares/cors.middleware.ts`
 * **Rama:** `feature/m05-integracion-backend`
