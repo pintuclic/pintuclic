@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CANTIDAD_MAXIMA_POR_LINEA } from './agregar-item.dto';
 
 // ==============================================================================
 // M05 - DTO: Actualizar cantidad de una línea del carrito (HU-CAR-02)
@@ -15,7 +16,7 @@ export const actualizarItemSchema = z.object({
     .number({ error: 'La cantidad debe ser un número entero' })
     .int('La cantidad debe ser un número entero')
     .min(0, 'La cantidad no puede ser negativa')
-    .max(999, 'La cantidad máxima por línea es 999'),
+    .max(CANTIDAD_MAXIMA_POR_LINEA, `La cantidad máxima por línea es ${CANTIDAD_MAXIMA_POR_LINEA}`),
 });
 
 export type ActualizarItemDTO = z.infer<typeof actualizarItemSchema>;

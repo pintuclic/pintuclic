@@ -118,6 +118,31 @@ async function ejecutarPruebasIntegracionEscrituraM05(): Promise<void> {
     }
 
     // -------------------------------------------------------------------------
+    // D2: el tope de 999 por línea se respeta al acumular
+    // -------------------------------------------------------------------------
+    console.log('\n--- D2: Tope por línea al acumular ---');
+    try {
+      await db.transaction().execute(async (trx) => {
+        const servicio = servicioSobre(trx);
+        await servicio.obtenerOCrearCarritoVisitante(TOKEN_VISITANTE);
+        await servicio.agregarItemVisitante(TOKEN_VISITANTE, { id_variante: 2, cantidad: 995 });
+
+        await esperarError(
+          () => servicio.agregarItemVisitante(TOKEN_VISITANTE, { id_variante: 2, cantidad: 5 }),
+          422,
+          'CANTIDAD_MAXIMA_EXCEDIDA',
+          'D2-INT-01: 995 + 5 responde 422 y no escribe 1000 unidades'
+        );
+        const carrito = await servicio.agregarItemVisitante(TOKEN_VISITANTE, { id_variante: 2, cantidad: 4 });
+        assert(carrito.lineas[0]?.cantidad === 999, 'D2-INT-02: 995 + 4 = 999 queda guardado');
+
+        throw new DeshacerCambios();
+      });
+    } catch (error) {
+      if (!(error instanceof DeshacerCambios)) throw error;
+    }
+
+    // -------------------------------------------------------------------------
     // La base debe quedar exactamente como estaba
     // -------------------------------------------------------------------------
     console.log('\n--- Limpieza ---');

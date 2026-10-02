@@ -393,6 +393,31 @@ async function ejecutarPruebasM05(): Promise<void> {
   }
 
   // ---------------------------------------------------------------------------
+  // D2: al acumular sobre una línea existente no se supera el tope de 999
+  // ---------------------------------------------------------------------------
+  console.log('\n--- D2: Tope por línea al acumular ---');
+  {
+    const carritoRepo = new CarritoRepoFake();
+    const lineaRepo = new LineaRepoFake();
+    const service = new CarritoService(carritoRepo, lineaRepo);
+    const TOKEN = 'tok-tope';
+    await service.obtenerOCrearCarritoVisitante(TOKEN);
+
+    await service.agregarItemVisitante(TOKEN, { id_variante: 10, cantidad: 990 });
+    await esperarError(
+      () => service.agregarItemVisitante(TOKEN, { id_variante: 10, cantidad: 10 }),
+      422,
+      'CANTIDAD_MAXIMA_EXCEDIDA',
+      'D2-01: 990 + 10 supera 999 y responde 422 CANTIDAD_MAXIMA_EXCEDIDA'
+    );
+    const intacto = await service.obtenerOCrearCarritoVisitante(TOKEN);
+    assert(intacto.lineas[0]?.cantidad === 990, 'D2-02: la línea conserva su cantidad tras el rechazo');
+
+    const justo = await service.agregarItemVisitante(TOKEN, { id_variante: 10, cantidad: 9 });
+    assert(justo.lineas[0]?.cantidad === 999, 'D2-03: 990 + 9 = 999 se acepta (el tope es inclusivo)');
+  }
+
+  // ---------------------------------------------------------------------------
   // Resumen final
   // ---------------------------------------------------------------------------
   console.log(`\n${'='.repeat(60)}`);

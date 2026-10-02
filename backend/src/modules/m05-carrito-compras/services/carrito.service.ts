@@ -1,7 +1,7 @@
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { CarritoRepository } from '../repositories/carrito.repository';
 import { LineaCarritoRepository } from '../repositories/linea-carrito.repository';
-import { AgregarItemDTO, ActualizarItemDTO, FusionarCarritoDTO } from '../dtos';
+import { AgregarItemDTO, ActualizarItemDTO, FusionarCarritoDTO, CANTIDAD_MAXIMA_POR_LINEA } from '../dtos';
 import {
   CarritoVivo,
   ResultadoRevalidacion,
@@ -145,9 +145,18 @@ export class CarritoService {
     const lineaExistente = await this.lineaRepo.buscarPorVariante(idCarrito, datos.id_variante);
 
     if (lineaExistente) {
-      // Acumular cantidad en línea existente (RF-CAR-02-0X)
+      // Acumular cantidad en línea existente (RF-CAR-02-0X), sin superar el tope por línea.
+      const cantidadTotal = lineaExistente.cantidad + datos.cantidad;
+      if (cantidadTotal > CANTIDAD_MAXIMA_POR_LINEA) {
+        throw new AppError(
+          `La cantidad total de la línea no puede superar ${CANTIDAD_MAXIMA_POR_LINEA} unidades`,
+          422,
+          'CANTIDAD_MAXIMA_EXCEDIDA',
+          { maximo: CANTIDAD_MAXIMA_POR_LINEA, cantidad_actual: lineaExistente.cantidad }
+        );
+      }
       await this.lineaRepo.actualizarCantidad(lineaExistente.id_linea_carrito, {
-        cantidad: lineaExistente.cantidad + datos.cantidad,
+        cantidad: cantidadTotal,
       });
     } else {
       // Crear nueva línea en el carrito
