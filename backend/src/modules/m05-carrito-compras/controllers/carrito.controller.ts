@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import { sendSuccess } from '../../../core/utils/apiResponse';
 import { AppError } from '../../../core/middlewares/errorHandler';
+import { obtenerIdentidadVigente } from '../../m20-seguridad/middlewares/autorizacion.middleware';
 import { CarritoService } from '../services/carrito.service';
 import {
   agregarItemSchema,
   actualizarItemSchema,
   fusionarCarritoSchema,
+  idLineaParamSchema,
   tokenVisitanteSchema,
 } from '../dtos';
 
@@ -46,14 +48,24 @@ export class CarritoController {
   }
 
   /**
-   * Extrae el id del usuario autenticado desde req.user (poblado por la guarda de M20).
+   * Id del usuario según la identidad que la guarda `sesionVigente` de M20 resolvió en vivo
+   * contra la base de datos (mismo criterio que M08). No se confía en `req.user`.
    */
-  private extraerIdUsuario(req: Request): number {
-    const id = req.user?.id;
-    if (!id) {
-      throw new AppError('No se identificó el usuario autenticado', 401, 'UNAUTHORIZED');
+  private idUsuarioDe(req: Request): number {
+    const identidad = obtenerIdentidadVigente(req);
+    if (!identidad) {
+      throw new AppError('Se requiere una sesión activa', 401, 'UNAUTHORIZED');
     }
-    return Number(id);
+    return identidad.id_usuario;
+  }
+
+  /** Un id de línea ilegible responde como recurso inexistente, nunca como error de validación (RF-SEG-03-05). */
+  private idLineaDe(req: Request): number {
+    const resultado = idLineaParamSchema.safeParse(req.params);
+    if (!resultado.success) {
+      throw new AppError('Recurso no encontrado', 404, 'NOT_FOUND');
+    }
+    return resultado.data.idLinea;
   }
 
   // ============================================================================
@@ -88,10 +100,7 @@ export class CarritoController {
    */
   actualizarItemVisitante = async (req: Request, res: Response): Promise<Response> => {
     const token = this.extraerTokenVisitante(req);
-    const idLinea = Number(req.params['idLinea']);
-    if (!Number.isInteger(idLinea) || idLinea <= 0) {
-      throw new AppError('El identificador de línea debe ser un número entero positivo', 400, 'INVALID_PARAM');
-    }
+    const idLinea = this.idLineaDe(req);
     const datos = actualizarItemSchema.parse(req.body);
     const carrito = await this.carritoService.actualizarItemVisitante(token, idLinea, datos);
     return sendSuccess(res, carrito, 'Línea del carrito actualizada');
@@ -103,10 +112,7 @@ export class CarritoController {
    */
   eliminarItemVisitante = async (req: Request, res: Response): Promise<Response> => {
     const token = this.extraerTokenVisitante(req);
-    const idLinea = Number(req.params['idLinea']);
-    if (!Number.isInteger(idLinea) || idLinea <= 0) {
-      throw new AppError('El identificador de línea debe ser un número entero positivo', 400, 'INVALID_PARAM');
-    }
+    const idLinea = this.idLineaDe(req);
     const carrito = await this.carritoService.eliminarItemVisitante(token, idLinea);
     return sendSuccess(res, carrito, 'Ítem eliminado del carrito');
   };
@@ -120,7 +126,7 @@ export class CarritoController {
    * Obtiene o crea el carrito del cliente autenticado (HU-CAR-04 / RF-CAR-04-01).
    */
   obtenerCarritoCliente = async (req: Request, res: Response): Promise<Response> => {
-    const idUsuario = this.extraerIdUsuario(req);
+    const idUsuario = this.idUsuarioDe(req);
     const carrito = await this.carritoService.obtenerOCrearCarritoCliente(idUsuario);
     return sendSuccess(res, carrito, 'Carrito del cliente obtenido');
   };
@@ -130,7 +136,7 @@ export class CarritoController {
    * Agrega un ítem al carrito del cliente (acumula si ya existe) (HU-CAR-02 / RF-CAR-02-0X).
    */
   agregarItemCliente = async (req: Request, res: Response): Promise<Response> => {
-    const idUsuario = this.extraerIdUsuario(req);
+    const idUsuario = this.idUsuarioDe(req);
     const datos = agregarItemSchema.parse(req.body);
     const carrito = await this.carritoService.agregarItemCliente(idUsuario, datos);
     return sendSuccess(res, carrito, 'Ítem agregado al carrito', 200);
@@ -142,11 +148,8 @@ export class CarritoController {
    * Cantidad 0 elimina la línea (HU-CAR-02).
    */
   actualizarItemCliente = async (req: Request, res: Response): Promise<Response> => {
-    const idUsuario = this.extraerIdUsuario(req);
-    const idLinea = Number(req.params['idLinea']);
-    if (!Number.isInteger(idLinea) || idLinea <= 0) {
-      throw new AppError('El identificador de línea debe ser un número entero positivo', 400, 'INVALID_PARAM');
-    }
+    const idUsuario = this.idUsuarioDe(req);
+    const idLinea = this.idLineaDe(req);
     const datos = actualizarItemSchema.parse(req.body);
     const carrito = await this.carritoService.actualizarItemCliente(idUsuario, idLinea, datos);
     return sendSuccess(res, carrito, 'Línea del carrito actualizada');
@@ -157,11 +160,8 @@ export class CarritoController {
    * Elimina una línea específica del carrito del cliente (HU-CAR-02).
    */
   eliminarItemCliente = async (req: Request, res: Response): Promise<Response> => {
-    const idUsuario = this.extraerIdUsuario(req);
-    const idLinea = Number(req.params['idLinea']);
-    if (!Number.isInteger(idLinea) || idLinea <= 0) {
-      throw new AppError('El identificador de línea debe ser un número entero positivo', 400, 'INVALID_PARAM');
-    }
+    const idUsuario = this.idUsuarioDe(req);
+    const idLinea = this.idLineaDe(req);
     const carrito = await this.carritoService.eliminarItemCliente(idUsuario, idLinea);
     return sendSuccess(res, carrito, 'Ítem eliminado del carrito');
   };
@@ -171,7 +171,7 @@ export class CarritoController {
    * Fusiona el carrito anónimo del visitante con la cuenta del cliente al autenticarse (HU-CAR-04 / RF-CAR-04-01).
    */
   fusionarCarrito = async (req: Request, res: Response): Promise<Response> => {
-    const idUsuario = this.extraerIdUsuario(req);
+    const idUsuario = this.idUsuarioDe(req);
     const datos = fusionarCarritoSchema.parse(req.body);
     const resultado = await this.carritoService.fusionarCarritoConCuenta(idUsuario, datos);
     return sendSuccess(res, resultado, 'Carrito fusionado con la cuenta del cliente exitosamente');
@@ -187,7 +187,7 @@ export class CarritoController {
    * Retorna alertas si hubo cambios de precio o stock insuficiente (RF-CAR-05-05).
    */
   revalidarCarrito = async (req: Request, res: Response): Promise<Response> => {
-    const idUsuario = this.extraerIdUsuario(req);
+    const idUsuario = this.idUsuarioDe(req);
     const resultado = await this.carritoService.revalidarCarritoCliente(idUsuario);
     const mensaje = resultado.valido
       ? 'Carrito validado correctamente. Puede proceder al pago.'

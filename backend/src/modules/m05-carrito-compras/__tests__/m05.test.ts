@@ -2,6 +2,12 @@ import { Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { CarritoService } from '../services/carrito.service';
 import { CarritoController } from '../controllers/carrito.controller';
+import { generateAccessToken } from '../../../core/utils/jwt';
+import { GuardasSeguridad } from '../../m20-seguridad/middlewares/autorizacion.middleware';
+import { AutorizacionService } from '../../m20-seguridad/services/autorizacion.service';
+import { SesionService } from '../../m20-seguridad/services/sesion.service';
+import { RegistroSeguridadService } from '../../m20-seguridad/services/registro-seguridad.service';
+import { IdentidadVigente, ResultadoValidacionSesion } from '../../m20-seguridad/interfaces/seguridad.interfaces';
 import { CarritoRepository } from '../repositories/carrito.repository';
 import { LineaCarritoRepository } from '../repositories/linea-carrito.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
@@ -87,6 +93,58 @@ class RespuestaFalsa {
   comoResponse(): Response {
     return this as unknown as Response;
   }
+}
+
+// ---- Guarda real de M20 con servicios falsos (sin BD) -------------------------
+
+/** Resuelve cualquier usuario como cuenta activa de cliente, sin consultar la BD. */
+class AutorizacionFake extends AutorizacionService {
+  constructor() {
+    super(undefined as never);
+  }
+  override async resolverIdentidad(idUsuario: number): Promise<{ identidad: IdentidadVigente }> {
+    return { identidad: { id_usuario: idUsuario, estado: 'activo', id_rol: null, permisos: [] } };
+  }
+}
+
+/** Da por viva cualquier sesión, sin consultar la BD. */
+class SesionFake extends SesionService {
+  constructor() {
+    super(undefined as never);
+  }
+  override async validarYRenovar(idSesion: string): Promise<ResultadoValidacionSesion> {
+    const ahora = new Date();
+    return {
+      valida: true,
+      sesion: {
+        id_sesion: idSesion,
+        id_usuario: 0,
+        tipo_sesion: 'cliente',
+        fecha_inicio: ahora,
+        fecha_ultimo_acceso: ahora,
+        fecha_expiracion: new Date(ahora.getTime() + 60_000),
+        estado: 'activa',
+        motivo_cierre: null,
+      },
+    };
+  }
+}
+
+const guardasPrueba = new GuardasSeguridad(new AutorizacionFake(), new SesionFake(), new RegistroSeguridadService());
+
+/**
+ * Hace pasar la petición por `guardas.sesionVigente()` de M20 con un JWT firmado, como en
+ * producción, para que el controlador lea la identidad que la guarda adjunta.
+ */
+async function autenticar(req: Request, idUsuario: number): Promise<Request> {
+  const token = generateAccessToken({ id: idUsuario, correo: `cliente${idUsuario}@prueba.co`, sid: `sid-${idUsuario}` });
+  req.headers['authorization'] = `Bearer ${token}`;
+  let paso = false;
+  await guardasPrueba.sesionVigente()(req, new RespuestaFalsa().comoResponse(), () => {
+    paso = true;
+  });
+  if (!paso) throw new Error('La guarda de M20 no dejó pasar la petición de prueba');
+  return req;
 }
 
 // ---- Fakes de repositorios --------------------------------------------------
@@ -538,7 +596,8 @@ async function ejecutarPruebasM05(): Promise<void> {
 
     let rechazoCuerpo = false;
     try {
-      await ctrl.fusionarCarrito(peticion({ headers: {}, user: { id: 42 }, body: { token_visitante: 'tok-abc-123' } }), new RespuestaFalsa().comoResponse());
+      const req = await autenticar(peticion({ headers: {}, body: { token_visitante: 'tok-abc-123' } }), 42);
+      await ctrl.fusionarCarrito(req, new RespuestaFalsa().comoResponse());
     } catch (error) {
       rechazoCuerpo = error instanceof ZodError;
     }
@@ -701,6 +760,78 @@ async function ejecutarPruebasM05(): Promise<void> {
       'B3-05: una variante inválida se rechaza antes de crear el carrito'
     );
     assert(carritoRepo.tabla.size === antes, 'B3-06: la petición rechazada no deja un carrito vacío');
+  }
+
+  // ---------------------------------------------------------------------------
+  // B4: identidad desde la guarda de M20 y :idLinea validado con Zod (como M08)
+  // ---------------------------------------------------------------------------
+  console.log('\n--- B4: Identidad vigente de M20 y DTO de :idLinea ---');
+  {
+    const carritoRepo = new CarritoRepoFake();
+    const lineaRepo = new LineaRepoFake();
+    const service = new CarritoService(carritoRepo, lineaRepo);
+    const ctrl = new CarritoController(service);
+
+    await esperarError(
+      () => ctrl.obtenerCarritoCliente(peticion({ headers: {} }), new RespuestaFalsa().comoResponse()),
+      401,
+      'UNAUTHORIZED',
+      'B4-01: sin identidad vigente las rutas de cliente responden 401'
+    );
+    await esperarError(
+      () => ctrl.obtenerCarritoCliente(peticion({ headers: {}, user: { id: 7 } }), new RespuestaFalsa().comoResponse()),
+      401,
+      'UNAUTHORIZED',
+      'B4-02: un req.user puesto a mano no basta; solo cuenta la identidad que resolvió M20'
+    );
+
+    const res = new RespuestaFalsa();
+    await ctrl.obtenerCarritoCliente(await autenticar(peticion({ headers: {} }), 42), res.comoResponse());
+    const cuerpo = res.cuerpo as { data?: { id_usuario?: number } } | undefined;
+    assert(res.codigo === 200 && cuerpo?.data?.id_usuario === 42, 'B4-03: con la guarda real de M20 el carrito es el del usuario 42');
+
+    const UUID = '3f1c2b9a-6d4e-4f8a-9b7c-1a2b3c4d5e6f';
+    for (const ilegible of ['abc', '0', '-1', '1e3', '1.5', '007', '99999999999', '2147483648']) {
+      await esperarError(
+        () =>
+          ctrl.eliminarItemVisitante(
+            peticion({ headers: { 'x-visitor-token': UUID }, params: { idLinea: ilegible } }),
+            new RespuestaFalsa().comoResponse()
+          ),
+        404,
+        'NOT_FOUND',
+        `B4-04: :idLinea «${ilegible}» responde 404 NOT_FOUND (antes 400 INVALID_PARAM)`
+      );
+    }
+    const reqCliente = await autenticar(peticion({ headers: {}, params: { idLinea: 'x' }, body: { cantidad: 1 } }), 42);
+    await esperarError(
+      () => ctrl.actualizarItemCliente(reqCliente, new RespuestaFalsa().comoResponse()),
+      404,
+      'NOT_FOUND',
+      'B4-05: el mismo criterio aplica a las rutas de cliente'
+    );
+
+    await service.agregarItemCliente(42, { id_variante: 10, cantidad: 2 });
+    const linea = [...lineaRepo.tabla.values()][0];
+    const reqValido = await autenticar(
+      peticion({ headers: {}, params: { idLinea: String(linea?.id_linea_carrito) }, body: { cantidad: 4 } }),
+      42
+    );
+    const resValido = new RespuestaFalsa();
+    await ctrl.actualizarItemCliente(reqValido, resValido.comoResponse());
+    assert(resValido.codigo === 200 && lineaRepo.tabla.get(linea?.id_linea_carrito ?? 0)?.cantidad === 4, 'B4-06: un :idLinea válido sigue funcionando');
+
+    await service.obtenerOCrearCarritoCliente(43);
+    const reqAjeno = await autenticar(
+      peticion({ headers: {}, params: { idLinea: String(linea?.id_linea_carrito) }, body: { cantidad: 1 } }),
+      43
+    );
+    await esperarError(
+      () => ctrl.actualizarItemCliente(reqAjeno, new RespuestaFalsa().comoResponse()),
+      404,
+      'NOT_FOUND',
+      'B4-07: la línea de otro cliente responde 404, igual que una inexistente'
+    );
   }
 
   // ---------------------------------------------------------------------------
