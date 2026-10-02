@@ -7,6 +7,20 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.2.1] - 2026-10-01
+### M08 - Orden de venta: alta de notas internas y contactos desde el detalle (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.4.2.1)**. Dos formularios que dan uso a endpoints que el backend ya exponía y la interfaz no consumía.
+- **Hitos Clave:**
+  - **Nota interna (HU-ORD-10):** campo de texto y botón en el bloque «Notas internas» del detalle administrativo. El texto de ayuda advierte que la nota queda con el nombre del autor y **no se puede modificar después**, porque el backend rechaza editarla o borrarla (CA-ORD-10-03).
+  - **Registro de contacto (CA-ORD-09-03):** desplegable de medio (correo o teléfono) y detalle opcional, con su botón.
+  - Ambos refrescan el detalle al guardar, de modo que lo que se ve es lo que el servidor confirmó, no lo que se escribió.
+  - Validación en `dtos/nota-contacto.dto.ts`, espejando los DTO del backend (Directiva 12). Un 403 se identifica como falta del permiso `ventas.gestionar`.
+- **Efecto:** M08 pasa a consumir **seis de los siete endpoints** del personal. Queda sin interfaz el historial de compras del cliente (HU-ORD-11).
+- **Verificación:** `vue-tsc` y `eslint` sin errores; nota creada desde el formulario y confirmada en pantalla con su autor y fecha.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.2.0_M08_gestion_ordenes_personal_frontend.md` (sección de ajustes posteriores)
+
+
+---
 ## [v0.4.2.0] - 2026-10-01
 ### M08 - Orden de venta: vistas de gestión del personal (Frontend)
 - **Alcance General:** Incremento **MINOR (v0.4.2.0)** con las tres vistas del personal: «Gestión de órdenes» (HU-ORD-05, HU-ORD-08), «Detalle de orden administrativa» (HU-ORD-09, HU-ORD-04) y «Cambiar estado de la orden» (HU-ORD-03). Con ellas quedan maquetadas las **cinco vistas de M08** del listado oficial.

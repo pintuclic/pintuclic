@@ -254,21 +254,45 @@
               <StickyNoteIcon class="w-4 h-4 text-action" />
               Notas internas
             </h2>
-            <p v-if="!orden.notas.length" class="text-neutral-medium text-sm">
+
+            <p v-if="!orden.notas.length" class="text-neutral-medium text-sm mb-4">
               Sin notas registradas.
             </p>
-            <ul v-else class="flex flex-col gap-3">
+            <ul v-else class="flex flex-col gap-3 mb-4">
               <li
                 v-for="(nota, i) in orden.notas"
                 :key="i"
                 class="rounded-xl bg-neutral-lightest px-3.5 py-3"
               >
-                <p class="text-neutral-dark text-sm">{{ nota.texto }}</p>
+                <p class="text-neutral-dark text-sm whitespace-pre-line">{{ nota.texto }}</p>
                 <p class="text-neutral-medium text-xs mt-1.5">
                   {{ nota.autor }} · {{ formatearFechaHora(nota.fecha) }}
                 </p>
               </li>
             </ul>
+
+            <!--
+              Una nota no se puede editar ni borrar después (CA-ORD-10-03), así que el
+              texto de ayuda lo advierte antes de guardar.
+            -->
+            <div class="border-t border-neutral-lightest pt-4 flex flex-col gap-2">
+              <Textarea
+                v-model="textoNota"
+                label="Añadir una nota"
+                rows="3"
+                :maxlength="LIMITE_NOTA"
+                placeholder="Qué pasó con este pedido…"
+                :error="errorNota"
+              />
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <span class="text-xs text-neutral-medium">
+                  Queda registrada con tu nombre y no se puede modificar después.
+                </span>
+                <Button variant="primary" :disabled="guardandoNota" @click="guardarNota">
+                  {{ guardandoNota ? 'Guardando…' : 'Guardar nota' }}
+                </Button>
+              </div>
+            </div>
           </section>
 
           <!-- Contactos con el cliente (CA-ORD-09-03) -->
@@ -277,12 +301,15 @@
               <PhoneIcon class="w-4 h-4 text-action" />
               Contactos registrados
             </h2>
-            <p v-if="!orden.contactos.length" class="text-neutral-medium text-sm">
+
+            <p v-if="!orden.contactos.length" class="text-neutral-medium text-sm mb-4">
               Todavía no se ha contactado al cliente desde esta orden.
             </p>
-            <ul v-else class="flex flex-col gap-3">
+            <ul v-else class="flex flex-col gap-3 mb-4">
               <li v-for="(contacto, i) in orden.contactos" :key="i" class="text-sm">
-                <p class="font-semibold text-neutral-black capitalize">{{ contacto.medio }}</p>
+                <p class="font-semibold text-neutral-black">
+                  {{ ETIQUETA_MEDIO[contacto.medio as MedioContacto] ?? contacto.medio }}
+                </p>
                 <p v-if="contacto.detalle" class="text-neutral-dark text-xs mt-0.5">
                   {{ contacto.detalle }}
                 </p>
@@ -291,6 +318,26 @@
                 </p>
               </li>
             </ul>
+
+            <div class="border-t border-neutral-lightest pt-4 flex flex-col gap-3">
+              <Select v-model="medioContacto" label="Registrar un contacto">
+                <option v-for="m in MEDIOS_CONTACTO" :key="m" :value="m">
+                  {{ ETIQUETA_MEDIO[m] }}
+                </option>
+              </Select>
+              <Input
+                v-model="detalleContacto"
+                label="Detalle (opcional)"
+                :maxlength="LIMITE_DETALLE"
+                placeholder="Qué se le dijo al cliente…"
+                :error="errorContacto"
+              />
+              <div class="flex justify-end">
+                <Button variant="primary" :disabled="guardandoContacto" @click="guardarContacto">
+                  {{ guardandoContacto ? 'Registrando…' : 'Registrar contacto' }}
+                </Button>
+              </div>
+            </div>
           </section>
         </div>
       </div>
@@ -318,8 +365,16 @@ import {
   StickyNote as StickyNoteIcon,
   User as UserIcon,
 } from 'lucide-vue-next';
-import { Alert, Button, PageHeader } from '@/core/components';
+import { Alert, Button, Input, PageHeader, Select, Textarea } from '@/core/components';
 import ModalCambiarEstado from '../../components/admin/ModalCambiarEstado.vue';
+import {
+  ContactoDto,
+  ETIQUETA_MEDIO,
+  LIMITE_DETALLE,
+  LIMITE_NOTA,
+  MEDIOS_CONTACTO,
+  NotaInternaDto,
+} from '../../dtos/nota-contacto.dto';
 import {
   ESTADOS,
   MODO_ENTREGA,
@@ -330,6 +385,7 @@ import {
 import { OrdenesService } from '../../services/ordenes.service';
 import type {
   DetalleOrdenGestion,
+  MedioContacto,
   ResultadoCambioEstado,
 } from '../../interfaces/ordenes.interface';
 
@@ -342,6 +398,69 @@ const noEncontrado = ref(false);
 const sesionExpirada = ref(false);
 const modalAbierto = ref(false);
 const avisoExito = ref('');
+
+// --- Nota interna (HU-ORD-10) ---
+const textoNota = ref('');
+const errorNota = ref('');
+const guardandoNota = ref(false);
+
+// --- Contacto con el cliente (CA-ORD-09-03) ---
+const medioContacto = ref<MedioContacto>('telefono');
+const detalleContacto = ref('');
+const errorContacto = ref('');
+const guardandoContacto = ref(false);
+
+/** Mensaje del servidor si lo hay; si no, uno genérico con el contexto. */
+function mensajeDeError(e: unknown, porDefecto: string): string {
+  const err = e as { response?: { status?: number; data?: { error?: { message?: string } } } };
+  if (err.response?.status === 403) {
+    return 'Tu cuenta no tiene el permiso «ventas.gestionar» para esta acción.';
+  }
+  return err.response?.data?.error?.message ?? porDefecto;
+}
+
+async function guardarNota(): Promise<void> {
+  errorNota.value = '';
+  const validacion = NotaInternaDto.safeParse({ texto: textoNota.value });
+  if (!validacion.success) {
+    errorNota.value = validacion.error.issues[0]?.message ?? 'Revisa el texto.';
+    return;
+  }
+  guardandoNota.value = true;
+  try {
+    await OrdenesService.crearNota(props.codigo, textoNota.value);
+    textoNota.value = '';
+    avisoExito.value = 'Nota guardada.';
+    await cargar();
+  } catch (e: unknown) {
+    errorNota.value = mensajeDeError(e, 'No se pudo guardar la nota.');
+  } finally {
+    guardandoNota.value = false;
+  }
+}
+
+async function guardarContacto(): Promise<void> {
+  errorContacto.value = '';
+  const validacion = ContactoDto.safeParse({
+    medio: medioContacto.value,
+    detalle: detalleContacto.value,
+  });
+  if (!validacion.success) {
+    errorContacto.value = validacion.error.issues[0]?.message ?? 'Revisa los datos.';
+    return;
+  }
+  guardandoContacto.value = true;
+  try {
+    await OrdenesService.registrarContacto(props.codigo, medioContacto.value, detalleContacto.value);
+    detalleContacto.value = '';
+    avisoExito.value = 'Contacto registrado.';
+    await cargar();
+  } catch (e: unknown) {
+    errorContacto.value = mensajeDeError(e, 'No se pudo registrar el contacto.');
+  } finally {
+    guardandoContacto.value = false;
+  }
+}
 
 const descripcionCabecera = computed(() =>
   orden.value ? 'Realizada el ' + formatearFecha(orden.value.fecha) : ''

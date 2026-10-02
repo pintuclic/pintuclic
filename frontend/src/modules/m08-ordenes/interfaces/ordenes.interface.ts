@@ -214,3 +214,6 @@ export interface ResultadoCambioEstado {
   readonly fecha: string;
   readonly transiciones_permitidas: ReadonlyArray<EstadoOrden>;
 }
+
+/** Medios por los que el personal puede dejar constancia de un contacto (CA-ORD-09-03). */
+export type MedioContacto = 'correo' | 'telefono';

@@ -3,8 +3,11 @@ import type {
   ApiResponse,
   DetalleOrdenGestion,
   DetallePedido,
+  ContactoRegistrado,
   EstadoOrden,
   FiltrosGestion,
+  MedioContacto,
+  NotaInterna,
   PaginaOrdenesGestion,
   PedidosCliente,
   ResultadoCambioEstado,
@@ -117,6 +120,39 @@ export const OrdenesService = {
     if (motivo && motivo.trim() !== '') cuerpo.motivo = motivo.trim();
     const { data } = await apiClient.patch<ApiResponse<ResultadoCambioEstado>>(
       `${BASE}/gestion/${encodeURIComponent(codigo)}/estado`,
+      cuerpo
+    );
+    return data.data;
+  },
+
+  /**
+   * POST /api/ordenes/gestion/:codigo/notas
+   * Deja constancia interna de lo ocurrido con el pedido (HU-ORD-10). Una nota no se
+   * puede editar ni borrar después: el backend rechaza ambas operaciones
+   * (CA-ORD-10-03). Exige permiso `ventas.gestionar`.
+   */
+  async crearNota(codigo: string, texto: string): Promise<NotaInterna> {
+    const { data } = await apiClient.post<ApiResponse<NotaInterna>>(
+      `${BASE}/gestion/${encodeURIComponent(codigo)}/notas`,
+      { texto: texto.trim() }
+    );
+    return data.data;
+  },
+
+  /**
+   * POST /api/ordenes/gestion/:codigo/contactos
+   * Registra que se contactó al cliente desde esta orden (CA-ORD-09-03). El detalle es
+   * opcional; se omite del cuerpo cuando viene vacío para no enviar cadenas en blanco.
+   */
+  async registrarContacto(
+    codigo: string,
+    medio: MedioContacto,
+    detalle?: string
+  ): Promise<ContactoRegistrado> {
+    const cuerpo: { medio: MedioContacto; detalle?: string } = { medio };
+    if (detalle && detalle.trim() !== '') cuerpo.detalle = detalle.trim();
+    const { data } = await apiClient.post<ApiResponse<ContactoRegistrado>>(
+      `${BASE}/gestion/${encodeURIComponent(codigo)}/contactos`,
       cuerpo
     );
     return data.data;

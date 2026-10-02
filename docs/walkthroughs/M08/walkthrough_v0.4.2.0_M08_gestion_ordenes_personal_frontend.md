@@ -140,7 +140,15 @@ Ver `REPORTE_PARADA_v3.31.0_archivos_compartidos.md`.
 
 ---
 
-## 8. DICTAMEN
+## 8. AJUSTES POSTERIORES
+
+| Versión | Cambio |
+|---|---|
+| `v0.4.2.1` | Alta de **notas internas** (HU-ORD-10) y **registro de contactos** (CA-ORD-09-03) desde el detalle administrativo. Daban uso a dos endpoints que el backend ya exponía y la interfaz no consumía. Con ellos M08 pasa a usar seis de los siete endpoints del personal; queda pendiente el historial de compras del cliente (HU-ORD-11). |
+
+---
+
+## 9. DICTAMEN
 
 Las tres vistas del personal están implementadas y verificadas contra datos reales. Con
 ellas, M08 completa sus cinco vistas en el frontend.
