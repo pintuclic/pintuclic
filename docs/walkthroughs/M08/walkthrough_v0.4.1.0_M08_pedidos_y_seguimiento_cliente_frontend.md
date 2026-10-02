@@ -159,6 +159,7 @@ Verificado contra el backend y la base de datos reales.
 | Versión | Cambio |
 |---|---|
 | `v0.4.1.1` | El encabezado de «Seguimiento de pedido» pasa al tratamiento de «Mi Perfil» (fondo `subaction` con la ilustración a la derecha), en lugar de la fotografía del catálogo. Se conservan la ruta de navegación y los textos. Solicitado en revisión de diseño; sin cambios de funcionalidad ni de contrato. |
+| `v0.4.3.0` | Las líneas del pedido pasan a mostrar los **10 campos** que el backend entrega, no 4: descuentos desglosados con su origen y orden (CA-ORD-02-02), precio antes de descuentos, color solicitado, entonado, y aviso de producto retirado del catálogo sin enlace a su ficha (RF-ORD-04-03). |
 
 ---
 

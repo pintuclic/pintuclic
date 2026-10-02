@@ -7,6 +7,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.3.0] - 2026-10-02
+### M08 - Orden de venta: detalle completo de cada línea del pedido (Frontend)
+- **Alcance General:** Incremento **MINOR (v0.4.3.0)**. Las líneas del pedido mostraban 4 de los 10 campos que el backend entrega. Con esto pasan a mostrarlos todos y se cumplen dos criterios de aceptación que estaban pendientes.
+- **Hitos Clave:**
+  - **CA-ORD-02-02 — desglose de descuentos por línea:** cada descuento con su origen, el orden en que se aplicó, su porcentaje (o nada, si fue importe fijo) y cuánto descontó. Antes solo se veía el precio final.
+  - **RF-ORD-02-02 — precio antes de descuentos:** `precio_inicial` se muestra tachado junto al precio aplicado, cuando hubo descuentos.
+  - **RF-ORD-04-03 — producto retirado del catálogo:** la línea conserva los datos de la compra, el nombre deja de enlazar a la ficha (`id_producto` llega nulo) y se añade una nota de que ya no está disponible.
+  - **Color solicitado y entonado:** datos de la compra que en una pinturería no son accesorios. La **base consumida** solo se muestra al personal (RF-ORD-09-01).
+  - **Enlace a la ficha del producto** cuando sigue en catálogo.
+- **Correcciones:**
+  - **Motivo obligatorio al retroceder.** El backend responde `400 MOTIVO_REQUERIDO` al volver de «Preparada» a «En preparación» sin motivo (el «volver con motivo» del diagrama). El modal lo marcaba obligatorio para cancelar y devolver —hoy bloqueados— pero no para este retroceso, que es el único que puede darse. Ahora se avisa antes de enviar en lugar de dejar que el servidor rechace la operación.
+  - **`nota-contacto.dto.ts` usaba la sintaxis de Zod 4** (`{ error: ... }`), y el frontend va con Zod 3.25, donde la opción es `errorMap`. Rompía `vue-tsc` sin afectar al funcionamiento; entró en `v0.4.2.1` y queda corregido.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias en M08; comprobado contra `ORD-2026-0003`, que trae dos descuentos en una misma línea, un producto entonado y otro retirado.
+
+
+---
 ## [v0.4.2.2] - 2026-10-01
 ### M08 - Orden de venta: compras anteriores del cliente en el detalle (Frontend)
 - **Alcance General:** Incremento **PATCH (v0.4.2.2)**. Da uso al último endpoint del personal que quedaba sin interfaz. **M08 pasa a consumir los 9 endpoints del módulo.**

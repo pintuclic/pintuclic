@@ -145,6 +145,7 @@ Ver `REPORTE_PARADA_v3.31.0_archivos_compartidos.md`.
 | Versión | Cambio |
 |---|---|
 | `v0.4.2.1` | Alta de **notas internas** (HU-ORD-10) y **registro de contactos** (CA-ORD-09-03) desde el detalle administrativo. Daban uso a dos endpoints que el backend ya exponía y la interfaz no consumía. Con ellos M08 pasa a usar seis de los siete endpoints del personal; queda pendiente el historial de compras del cliente (HU-ORD-11). |
+| `v0.4.3.0` | Mismo detalle de línea que en la vista del cliente, más la **base consumida** del entonado (RF-ORD-09-01). Corrige además el motivo obligatorio al retroceder de «Preparada» a «En preparación», que el backend rechaza con `MOTIVO_REQUERIDO`. |
 | `v0.4.2.2` | **Compras anteriores del cliente** (HU-ORD-11) en la ficha del cliente del detalle administrativo, consultadas bajo demanda. Con ello **M08 consume los 9 endpoints del módulo**: ninguna función del backend queda sin interfaz. |
 
 ---

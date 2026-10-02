@@ -226,12 +226,70 @@
               <PackageIcon class="w-5 h-5 text-neutral-medium" />
             </span>
             <div class="flex-1 min-w-0">
-              <p class="font-semibold text-neutral-black text-sm">{{ linea.producto }}</p>
+              <!--
+                El nombre enlaza a la ficha solo si el producto sigue en el catálogo:
+                cuando está retirado, `id_producto` llega nulo (RF-ORD-04-03).
+              -->
+              <RouterLink
+                v-if="linea.id_producto"
+                :to="{ name: 'DetalleProductoPublico', params: { productoId: linea.id_producto } }"
+                class="font-semibold text-action text-sm hover:underline"
+              >
+                {{ linea.producto }}
+              </RouterLink>
+              <p v-else class="font-semibold text-neutral-black text-sm">{{ linea.producto }}</p>
+
               <p class="text-neutral-medium text-xs mt-0.5">
-                {{ linea.variante }} · {{ linea.cantidad }} und.
+                {{ linea.variante }}
+                <template v-if="linea.color_solicitado">
+                  · Color: {{ linea.color_solicitado }}
+                </template>
+                · {{ linea.cantidad }} und.
               </p>
+
+              <span
+                v-if="linea.es_entonado"
+                class="inline-flex items-center rounded-full bg-highlight/20 px-2 py-0.5 text-[11px] font-semibold text-corporate mt-1"
+              >
+                Entonado
+              </span>
+
+              <!-- Producto fuera del catálogo: se avisa sin ocultar lo comprado. -->
+              <p v-if="linea.retirado" class="text-danger text-xs mt-1">
+                Este producto ya no está disponible en el catálogo.
+              </p>
+
+              <!--
+                Desglose de descuentos de la línea (CA-ORD-02-02): cuáles fueron, en qué
+                orden se aplicaron y cuánto descontó cada uno.
+              -->
+              <ul
+                v-if="linea.descuentos.length"
+                class="mt-1.5 flex flex-col gap-0.5 border-l-2 border-conversion pl-2.5"
+              >
+                <li
+                  v-for="d in linea.descuentos"
+                  :key="d.orden"
+                  class="flex justify-between gap-3 text-[11px]"
+                >
+                  <span class="text-neutral-medium">
+                    {{ d.origen }}
+                    <template v-if="d.porcentaje"> · {{ Number(d.porcentaje) }} %</template>
+                  </span>
+                  <span class="text-conversion-hover tabular-nums shrink-0">
+                    − {{ formatearCOP(d.importe) }}
+                  </span>
+                </li>
+              </ul>
             </div>
             <div class="shrink-0 text-right">
+              <!-- Precio antes de los descuentos, cuando hubo alguno (RF-ORD-02-02). -->
+              <span
+                v-if="linea.precio_inicial && linea.descuentos.length"
+                class="block text-neutral-medium text-xs line-through tabular-nums"
+              >
+                {{ formatearCOP(Number(linea.precio_inicial) * linea.cantidad) }}
+              </span>
               <span class="block text-neutral-black text-sm font-semibold tabular-nums">
                 {{ formatearCOP(Number(linea.precio_aplicado) * linea.cantidad) }}
               </span>
@@ -331,6 +389,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { RouterLink } from 'vue-router';
 import {
   FileText as FileTextIcon,
   MapPin as MapPinIcon,

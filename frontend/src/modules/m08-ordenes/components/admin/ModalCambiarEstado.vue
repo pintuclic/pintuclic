@@ -135,7 +135,7 @@ const errorMotivo = ref('');
 const error = ref('');
 const guardando = ref(false);
 
-const motivoObligatorio = computed(() => exigeMotivo(seleccionado.value));
+const motivoObligatorio = computed(() => exigeMotivo(seleccionado.value, props.estadoActual));
 
 /** Cada apertura empieza limpia: un motivo de otra orden no debe arrastrarse. */
 watch(
@@ -162,6 +162,7 @@ async function confirmar(): Promise<void> {
   const validacion = CambioEstadoDto.safeParse({
     estado: seleccionado.value,
     motivo: motivo.value,
+    estadoActual: props.estadoActual,
   });
   if (!validacion.success) {
     errorMotivo.value = validacion.error.issues[0]?.message ?? 'Revisa los datos.';

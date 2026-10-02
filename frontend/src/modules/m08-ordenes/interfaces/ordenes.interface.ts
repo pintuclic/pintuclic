@@ -53,12 +53,35 @@ export interface PedidosCliente {
   readonly finalizados: ReadonlyArray<ResumenPedido>;
 }
 
-/** Línea del pedido: copia congelada de la compra, sin enlace al catálogo vivo. */
+/** Un descuento aplicado a una línea, con el orden en que entró (RF-ORD-02-02). */
+export interface DescuentoAplicado {
+  readonly orden: number;
+  readonly origen: string;
+  /** Nulo cuando el descuento fue un importe fijo en vez de un porcentaje. */
+  readonly porcentaje: string | null;
+  readonly importe: string;
+}
+
+/**
+ * Línea del pedido: copia congelada de la compra, sin depender del catálogo vivo
+ * (CA-ORD-02-01, CA-ORD-02-04).
+ *
+ * `precio_inicial` y `descuentos` reconstruyen cómo se llegó al precio aplicado
+ * (RF-ORD-02-02). `retirado` indica que el producto ya no está en el catálogo
+ * (RF-ORD-04-03); en ese caso `id_producto` llega nulo, para no enlazar a una ficha
+ * que ya no existe.
+ */
 export interface LineaPedido {
   readonly producto: string;
   readonly variante: string;
+  readonly color_solicitado: string | null;
+  readonly precio_inicial: string | null;
+  readonly descuentos: ReadonlyArray<DescuentoAplicado>;
   readonly precio_aplicado: string;
   readonly cantidad: number;
+  readonly es_entonado: boolean;
+  readonly retirado: boolean;
+  readonly id_producto: number | null;
 }
 
 /**
@@ -118,9 +141,9 @@ export interface ContactoCliente {
   readonly telefono: string | null;
 }
 
-/** Línea con los datos internos que el cliente no ve. */
+/** Línea del detalle del personal: añade la base que consume el entonado (RF-ORD-09-01). */
 export interface LineaPedidoPersonal extends LineaPedido {
-  readonly sku?: string | null;
+  readonly base_consumida: string | null;
 }
 
 /** Cambio de estado en el detalle del personal (CA-ORD-09-02). `autor` nulo = sistema. */

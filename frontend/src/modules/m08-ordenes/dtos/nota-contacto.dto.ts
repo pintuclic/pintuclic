@@ -27,7 +27,11 @@ export type NotaInternaDto = z.infer<typeof NotaInternaDto>;
 export const MEDIOS_CONTACTO = ['correo', 'telefono'] as const;
 
 export const ContactoDto = z.object({
-  medio: z.enum(MEDIOS_CONTACTO, { error: 'Elige el medio por el que contactaste al cliente.' }),
+  // El frontend usa Zod 3, donde el mensaje se personaliza con `errorMap`; el backend
+  // va por Zod 4 y allí la opción se llama `error`.
+  medio: z.enum(MEDIOS_CONTACTO, {
+    errorMap: () => ({ message: 'Elige el medio por el que contactaste al cliente.' }),
+  }),
   detalle: z
     .string()
     .trim()

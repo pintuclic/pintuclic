@@ -116,24 +116,71 @@
             </h2>
 
             <ul class="flex flex-col gap-3.5">
-              <li v-for="(linea, i) in orden.lineas" :key="i" class="flex items-start gap-3">
-                <span
-                  class="w-10 h-10 shrink-0 rounded-input bg-neutral-lightest grid place-items-center"
-                  aria-hidden="true"
-                >
-                  <PackageIcon class="w-4 h-4 text-neutral-medium" />
-                </span>
-                <div class="flex-1 min-w-0">
-                  <p class="font-semibold text-neutral-black text-sm">{{ linea.producto }}</p>
-                  <p class="text-neutral-medium text-xs mt-0.5">
-                    {{ linea.variante }} · {{ linea.cantidad }} und. ×
-                    {{ formatearCOP(linea.precio_aplicado) }}
-                  </p>
-                </div>
-                <span class="shrink-0 font-semibold text-neutral-black text-sm tabular-nums">
-                  {{ formatearCOP(Number(linea.precio_aplicado) * linea.cantidad) }}
-                </span>
-              </li>
+                <li v-for="(linea, i) in orden.lineas" :key="i" class="flex items-start gap-3">
+                  <span
+                    class="w-10 h-10 shrink-0 rounded-input bg-neutral-lightest grid place-items-center"
+                    aria-hidden="true"
+                  >
+                    <PackageIcon class="w-4 h-4 text-neutral-medium" />
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-neutral-black text-sm">{{ linea.producto }}</p>
+                    <p class="text-neutral-medium text-xs mt-0.5">
+                      {{ linea.variante }}
+                      <template v-if="linea.color_solicitado">
+                        · Color: {{ linea.color_solicitado }}
+                      </template>
+                      · {{ linea.cantidad }} und. × {{ formatearCOP(linea.precio_aplicado) }}
+                    </p>
+
+                    <!--
+                      El entonado y la base consumida son datos de taller: solo el personal
+                      los necesita (RF-ORD-09-01).
+                    -->
+                    <span
+                      v-if="linea.es_entonado"
+                      class="inline-flex items-center rounded-full bg-highlight/20 px-2 py-0.5 text-[11px] font-semibold text-corporate mt-1"
+                    >
+                      Entonado<template v-if="linea.base_consumida">
+                        · base {{ linea.base_consumida }}</template>
+                    </span>
+
+                    <p v-if="linea.retirado" class="text-danger text-xs mt-1">
+                      Retirado del catálogo.
+                    </p>
+
+                    <!-- Desglose de descuentos de la línea (RF-ORD-02-02). -->
+                    <ul
+                      v-if="linea.descuentos.length"
+                      class="mt-1.5 flex flex-col gap-0.5 border-l-2 border-conversion pl-2.5"
+                    >
+                      <li
+                        v-for="d in linea.descuentos"
+                        :key="d.orden"
+                        class="flex justify-between gap-3 text-[11px]"
+                      >
+                        <span class="text-neutral-medium">
+                          {{ d.origen }}
+                          <template v-if="d.porcentaje"> · {{ Number(d.porcentaje) }} %</template>
+                        </span>
+                        <span class="text-conversion-hover tabular-nums shrink-0">
+                          − {{ formatearCOP(d.importe) }}
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                  <span class="shrink-0 text-right">
+                    <span
+                      v-if="linea.precio_inicial && linea.descuentos.length"
+                      class="block text-neutral-medium text-xs line-through tabular-nums"
+                    >
+                      {{ formatearCOP(Number(linea.precio_inicial) * linea.cantidad) }}
+                    </span>
+                    <span class="block font-semibold text-neutral-black text-sm tabular-nums">
+                      {{ formatearCOP(Number(linea.precio_aplicado) * linea.cantidad) }}
+                    </span>
+                  </span>
+                </li>
             </ul>
 
             <dl class="border-t border-neutral-light mt-4 pt-4 grid gap-2 text-sm">

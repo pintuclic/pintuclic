@@ -44,8 +44,14 @@ export const DETALLE_MOCK: DetallePedido = {
     {
       producto: 'Viniltex Máxima Protección Antibacterial',
       variante: 'Galón - Blanco Puro',
+      color_solicitado: 'Blanco Puro',
+      precio_inicial: null,
+      descuentos: [],
       precio_aplicado: '85900.00',
       cantidad: 2,
+      es_entonado: false,
+      retirado: false,
+      id_producto: null,
     },
   ],
 };
