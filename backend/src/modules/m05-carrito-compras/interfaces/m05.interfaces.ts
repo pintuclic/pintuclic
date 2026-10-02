@@ -108,4 +108,41 @@ export interface ResultadoFusion {
   lineas_acumuladas: number;
   /** Número de líneas nuevas que se transfirieron desde el carrito visitante. */
   lineas_transferidas: number;
+  /**
+   * Líneas cuya suma superaba el tope por línea y quedaron en el máximo. OPCIONAL: solo
+   * aparece cuando hubo algún ajuste, para no alterar la respuesta que ya consume el frontend.
+   * Decisión provisional mientras se define RF-CAR-04-03.
+   */
+  avisos?: AvisoFusion[];
+}
+
+/**
+ * Ajuste aplicado a una línea durante la fusión porque la suma superaba el tope por línea.
+ */
+export interface AvisoFusion {
+  tipo: 'cantidad_ajustada_al_maximo';
+  id_variante: number;
+  /** Suma de la cantidad del cliente y la del visitante. */
+  cantidad_solicitada: number;
+  /** Cantidad que quedó en la línea (el tope). */
+  cantidad_aplicada: number;
+  descripcion: string;
+}
+
+/**
+ * Línea que la fusión tuvo que limitar al tope (resultado interno del repositorio).
+ */
+export interface LineaAjustadaEnFusion {
+  id_variante: number;
+  cantidad_solicitada: number;
+  cantidad_aplicada: number;
+}
+
+/**
+ * Resultado interno de transferir las líneas de un carrito a otro.
+ */
+export interface ResultadoTransferencia {
+  acumuladas: number;
+  transferidas: number;
+  ajustadas: LineaAjustadaEnFusion[];
 }

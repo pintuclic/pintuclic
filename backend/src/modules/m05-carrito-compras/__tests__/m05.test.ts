@@ -6,7 +6,12 @@ import { CarritoRepository } from '../repositories/carrito.repository';
 import { LineaCarritoRepository } from '../repositories/linea-carrito.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { Carrito, EnumEstadoProducto, LineaCarrito } from '../../../core/db/types';
-import { LineaCarritoViva, VarianteParaCarrito } from '../interfaces/m05.interfaces';
+import {
+  LineaAjustadaEnFusion,
+  LineaCarritoViva,
+  ResultadoTransferencia,
+  VarianteParaCarrito,
+} from '../interfaces/m05.interfaces';
 
 // ==============================================================================
 // M05 - SUITE DE VALIDACIÓN DE CRITERIOS DE ACEPTACIÓN
@@ -209,18 +214,25 @@ class LineaRepoFake extends LineaCarritoRepository {
   /** Emula la transacción: calcula todo sobre una copia y solo la aplica si nada falla. */
   override async transferirLineasYEliminarOrigen(
     idOrigen: number,
-    idDestino: number
-  ): Promise<{ acumuladas: number; transferidas: number }> {
+    idDestino: number,
+    cantidadMaxima: number
+  ): Promise<ResultadoTransferencia> {
     const copia = new Map([...this.tabla].map(([id, l]) => [id, { ...l }]));
     let acumuladas = 0;
     let transferidas = 0;
+    const ajustadas: LineaAjustadaEnFusion[] = [];
+    const limitar = (idVariante: number, solicitada: number): number => {
+      if (solicitada <= cantidadMaxima) return solicitada;
+      ajustadas.push({ id_variante: idVariante, cantidad_solicitada: solicitada, cantidad_aplicada: cantidadMaxima });
+      return cantidadMaxima;
+    };
     for (const l of [...copia.values()].filter((linea) => linea.id_carrito === idOrigen)) {
       const existe = [...copia.values()].find((d) => d.id_carrito === idDestino && d.id_variante === l.id_variante);
       if (existe) {
-        existe.cantidad += l.cantidad;
+        existe.cantidad = limitar(l.id_variante, existe.cantidad + l.cantidad);
         acumuladas++;
       } else {
-        const nueva = nuevaLinea({ id_carrito: idDestino, id_variante: l.id_variante, cantidad: l.cantidad });
+        const nueva = nuevaLinea({ id_carrito: idDestino, id_variante: l.id_variante, cantidad: limitar(l.id_variante, l.cantidad) });
         copia.set(nueva.id_linea_carrito, nueva);
         transferidas++;
       }
@@ -231,7 +243,7 @@ class LineaRepoFake extends LineaCarritoRepository {
     }
     this.tabla = copia;
     this.carritos?.tabla.delete(idOrigen);
-    return { acumuladas, transferidas };
+    return { acumuladas, transferidas, ajustadas };
   }
 }
 
@@ -557,6 +569,45 @@ async function ejecutarPruebasM05(): Promise<void> {
       falla.carritoRepo.tabla.has(falla.idVisitante) && cliente.total_lineas === 1 && cliente.lineas[0]?.cantidad === 1,
       'D4-06: tras el fallo, el carrito de visitante sigue y el del cliente no cambió'
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // B1: la fusión limita al tope de 999 y avisa en un campo opcional
+  // ---------------------------------------------------------------------------
+  console.log('\n--- B1: Tope de 999 en la fusión, con aviso ---');
+  {
+    const carritoRepo = new CarritoRepoFake();
+    const lineaRepo = new LineaRepoFake(carritoRepo);
+    const service = new CarritoService(carritoRepo, lineaRepo);
+    await service.obtenerOCrearCarritoCliente(88);
+    await service.agregarItemCliente(88, { id_variante: 10, cantidad: 600 });
+    await service.agregarItemCliente(88, { id_variante: 20, cantidad: 1 });
+    await service.obtenerOCrearCarritoVisitante('tok-b1');
+    await service.agregarItemVisitante('tok-b1', { id_variante: 10, cantidad: 500 });
+    await service.agregarItemVisitante('tok-b1', { id_variante: 20, cantidad: 2 });
+
+    const resultado = await service.fusionarCarritoConCuenta(88, { token_visitante: 'tok-b1' });
+    const cantidad = (idVariante: number) => resultado.carrito.lineas.find((l) => l.id_variante === idVariante)?.cantidad;
+    assert(cantidad(10) === 999, 'B1-01: 600 + 500 queda limitado a 999 (no rechaza la fusión)');
+    assert(cantidad(20) === 3, 'B1-02: las líneas que no pasan el tope suman normalmente (1 + 2 = 3)');
+    assert(
+      resultado.avisos?.length === 1 &&
+        resultado.avisos[0]?.tipo === 'cantidad_ajustada_al_maximo' &&
+        resultado.avisos[0]?.id_variante === 10 &&
+        resultado.avisos[0]?.cantidad_solicitada === 1100 &&
+        resultado.avisos[0]?.cantidad_aplicada === 999,
+      'B1-03: el aviso informa la variante, lo solicitado (1100) y lo aplicado (999)'
+    );
+
+    const sinAjuste = new CarritoRepoFake();
+    const lineasSinAjuste = new LineaRepoFake(sinAjuste);
+    const service2 = new CarritoService(sinAjuste, lineasSinAjuste);
+    await service2.obtenerOCrearCarritoCliente(89);
+    await service2.agregarItemCliente(89, { id_variante: 10, cantidad: 1 });
+    await service2.obtenerOCrearCarritoVisitante('tok-b1-ok');
+    await service2.agregarItemVisitante('tok-b1-ok', { id_variante: 10, cantidad: 1 });
+    const normal = await service2.fusionarCarritoConCuenta(89, { token_visitante: 'tok-b1-ok' });
+    assert(!('avisos' in normal), 'B1-04: sin ajustes, la respuesta no incluye el campo avisos (forma intacta)');
   }
 
   // ---------------------------------------------------------------------------

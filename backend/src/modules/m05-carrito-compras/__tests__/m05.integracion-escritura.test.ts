@@ -170,6 +170,34 @@ async function ejecutarPruebasIntegracionEscrituraM05(): Promise<void> {
     }
 
     // -------------------------------------------------------------------------
+    // B1: la fusión limita al tope de 999 y avisa
+    // -------------------------------------------------------------------------
+    console.log('\n--- B1: Tope de 999 en la fusión ---');
+    try {
+      await db.transaction().execute(async (trx) => {
+        const servicio = servicioSobre(trx);
+        await servicio.obtenerOCrearCarritoCliente(USUARIO_SIN_CARRITO);
+        await servicio.agregarItemCliente(USUARIO_SIN_CARRITO, { id_variante: 1, cantidad: 600 });
+        await servicio.obtenerOCrearCarritoVisitante(TOKEN_VISITANTE);
+        await servicio.agregarItemVisitante(TOKEN_VISITANTE, { id_variante: 1, cantidad: 500 });
+
+        const resultado = await servicio.fusionarCarritoConCuenta(USUARIO_SIN_CARRITO, { token_visitante: TOKEN_VISITANTE });
+        assert(
+          resultado.carrito.lineas[0]?.cantidad === 999,
+          'B1-INT-01: 600 + 500 queda guardado como 999 (respeta el CHECK y el tope)'
+        );
+        assert(
+          resultado.avisos?.[0]?.cantidad_solicitada === 1100 && resultado.avisos[0]?.cantidad_aplicada === 999,
+          'B1-INT-02: la respuesta avisa del ajuste'
+        );
+
+        throw new DeshacerCambios();
+      });
+    } catch (error) {
+      if (!(error instanceof DeshacerCambios)) throw error;
+    }
+
+    // -------------------------------------------------------------------------
     // D4: transferencia y borrado del carrito de visitante en una sola transacción
     // -------------------------------------------------------------------------
     console.log('\n--- D4: Fusión atómica (transacción propia del repositorio) ---');

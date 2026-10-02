@@ -7,6 +7,7 @@ import {
   ResultadoRevalidacion,
   ResultadoFusion,
   AlertaRevalidacion,
+  AvisoFusion,
   OrigenCarrito,
 } from '../interfaces/m05.interfaces';
 
@@ -309,14 +310,33 @@ export class CarritoService {
     }
 
     // Fusión: el cliente ya tiene su propio carrito. La transferencia de líneas y el
-    // borrado del carrito de visitante ocurren en una sola transacción.
-    const { acumuladas, transferidas } = await this.lineaRepo.transferirLineasYEliminarOrigen(
+    // borrado del carrito de visitante ocurren en una sola transacción. Si una suma
+    // supera el tope por línea, queda en el máximo y se avisa (decisión provisional
+    // mientras se define RF-CAR-04-03: no se bloquea el inicio de sesión).
+    const { acumuladas, transferidas, ajustadas } = await this.lineaRepo.transferirLineasYEliminarOrigen(
       carritoVisitante.id_carrito,
-      carritoCliente.id_carrito
+      carritoCliente.id_carrito,
+      CANTIDAD_MAXIMA_POR_LINEA
     );
 
     const carritoVivo = await this.construirCarritoVivo(carritoCliente.id_carrito, 'cliente');
-    return { carrito: carritoVivo, lineas_acumuladas: acumuladas, lineas_transferidas: transferidas };
+    const resultado: ResultadoFusion = {
+      carrito: carritoVivo,
+      lineas_acumuladas: acumuladas,
+      lineas_transferidas: transferidas,
+    };
+    if (ajustadas.length > 0) {
+      resultado.avisos = ajustadas.map(
+        (a): AvisoFusion => ({
+          tipo: 'cantidad_ajustada_al_maximo',
+          id_variante: a.id_variante,
+          cantidad_solicitada: a.cantidad_solicitada,
+          cantidad_aplicada: a.cantidad_aplicada,
+          descripcion: `La variante ${a.id_variante} sumaba ${a.cantidad_solicitada} unidades y quedó en el máximo de ${a.cantidad_aplicada} por línea.`,
+        })
+      );
+    }
+    return resultado;
   }
 
   // ============================================================================

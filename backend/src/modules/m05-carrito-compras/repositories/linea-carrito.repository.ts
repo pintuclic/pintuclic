@@ -5,7 +5,12 @@ import {
   NewLineaCarrito,
   LineaCarritoUpdate,
 } from '../../../core/db/types';
-import { LineaCarritoViva, VarianteParaCarrito } from '../interfaces/m05.interfaces';
+import {
+  LineaAjustadaEnFusion,
+  LineaCarritoViva,
+  ResultadoTransferencia,
+  VarianteParaCarrito,
+} from '../interfaces/m05.interfaces';
 
 // ==============================================================================
 // M05 - REPOSITORIO DE LÍNEAS DEL CARRITO (Kysely + PostgreSQL)
@@ -131,11 +136,14 @@ export class LineaCarritoRepository {
    * transfiere las líneas (acumulando si la variante ya existe en el destino), elimina el
    * carrito origen y refresca la actividad del destino. Si cualquier paso falla no queda
    * nada a medias: ni líneas duplicadas en ambos carritos ni un carrito de visitante huérfano.
+   * Ninguna línea supera `cantidadMaxima`: la que se pasaría queda en el máximo y se
+   * informa en `ajustadas`.
    */
   async transferirLineasYEliminarOrigen(
     idCarritoOrigen: number,
-    idCarritoDestino: number
-  ): Promise<{ acumuladas: number; transferidas: number }> {
+    idCarritoDestino: number,
+    cantidadMaxima: number
+  ): Promise<ResultadoTransferencia> {
     return this.enTransaccion(async (trx) => {
       const lineasOrigen = await trx
         .selectFrom('linea_carrito')
@@ -146,6 +154,14 @@ export class LineaCarritoRepository {
 
       let acumuladas = 0;
       let transferidas = 0;
+      const ajustadas: LineaAjustadaEnFusion[] = [];
+
+      /** Limita la cantidad al tope y anota el ajuste si lo hubo. */
+      const limitar = (idVariante: number, solicitada: number): number => {
+        if (solicitada <= cantidadMaxima) return solicitada;
+        ajustadas.push({ id_variante: idVariante, cantidad_solicitada: solicitada, cantidad_aplicada: cantidadMaxima });
+        return cantidadMaxima;
+      };
 
       for (const linea of lineasOrigen) {
         const existente = await trx
@@ -160,7 +176,7 @@ export class LineaCarritoRepository {
           // Acumular cantidad en la línea ya existente del carrito destino (RF-CAR-02-0X)
           await trx
             .updateTable('linea_carrito')
-            .set({ cantidad: existente.cantidad + linea.cantidad })
+            .set({ cantidad: limitar(linea.id_variante, existente.cantidad + linea.cantidad) })
             .where('id_linea_carrito', '=', existente.id_linea_carrito)
             .execute();
           acumuladas++;
@@ -171,7 +187,7 @@ export class LineaCarritoRepository {
             .values({
               id_carrito: idCarritoDestino,
               id_variante: linea.id_variante,
-              cantidad: linea.cantidad,
+              cantidad: limitar(linea.id_variante, linea.cantidad),
             })
             .execute();
           transferidas++;
@@ -186,7 +202,7 @@ export class LineaCarritoRepository {
         .where('id_carrito', '=', idCarritoDestino)
         .execute();
 
-      return { acumuladas, transferidas };
+      return { acumuladas, transferidas, ajustadas };
     });
   }
 
