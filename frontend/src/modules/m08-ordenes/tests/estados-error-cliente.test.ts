@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createMemoryHistory, createRouter } from 'vue-router';
-import { defineComponent } from 'vue';
+import { defineComponent, type Component } from 'vue';
 import SeccionMisPedidos from '../components/SeccionMisPedidos.vue';
 import PanelSeguimiento from '../components/PanelSeguimiento.vue';
 import { useMisPedidos } from '../composables/useMisPedidos';
@@ -88,10 +88,10 @@ function crearRouter() {
   });
 }
 
-async function montar<T>(componente: T, props: Record<string, unknown> = {}) {
+async function montar(componente: Component, props: Record<string, unknown> = {}) {
   const router = crearRouter();
   await router.push('/');
-  const envoltorio = mount(componente as never, { props, global: { plugins: [router] } });
+  const envoltorio = mount(componente, { props, global: { plugins: [router] } });
   await flushPromises();
   return envoltorio;
 }

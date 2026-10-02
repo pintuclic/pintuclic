@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createMemoryHistory, createRouter } from 'vue-router';
-import { defineComponent } from 'vue';
+import { defineComponent, type Component } from 'vue';
 import VistaGestionOrdenes from '../views/admin/VistaGestionOrdenes.vue';
 import VistaDetalleOrdenAdmin from '../views/admin/VistaDetalleOrdenAdmin.vue';
 import { OrdenesService } from '../services/ordenes.service';
@@ -109,12 +109,12 @@ function crearRouter() {
   });
 }
 
-async function montar<T>(componente: T, props: Record<string, unknown> = {}) {
+async function montar(componente: Component, props: Record<string, unknown> = {}) {
   const router = crearRouter();
   await router.push('/');
   // El modal de cambio de estado usa <dialog>.close(), que jsdom no implementa; no es
   // parte de lo que se prueba aquí.
-  const envoltorio = mount(componente as never, {
+  const envoltorio = mount(componente, {
     props,
     global: { plugins: [router], stubs: { ModalCambiarEstado: true } },
   });
