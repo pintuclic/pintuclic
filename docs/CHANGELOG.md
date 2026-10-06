@@ -7,6 +7,33 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.5.1] - 2026-10-06
+### M05 - Carrito de compras: integración de botones y enlaces de compra en storefront (Frontend)
+- **Alcance General:** Incremento **Patch (v0.4.5.1)**. Conexión de todos los botones de «Agregar al carrito» y navegación hacia el carrito en las pantallas públicas de catálogo, inicio, paleta de colores y el layout global.
+- **Hitos Clave:**
+  - **Header (`LayoutHome.vue`):** Se reemplaza el estado mock por el consumo reactivo de `useCartStore` (total de ítems e importe formateado en COP). El botón redirige directamente a `/carrito` y carga el carrito al montar la aplicación.
+  - **Catálogo (`VistaCatalogoPublico.vue`):** Conexión del evento `@agregar` de `TarjetaProductoPublico` con `cartStore.addToCart()`, deduciendo la variante activa con existencia y mostrando confirmación visual.
+  - **Ficha de Detalle (`VistaDetalleProductoPublico.vue`):** Conexión del botón principal «Comprar» a la variante y cantidad seleccionadas, productos complementarios a sus variantes correspondientes, y modal de calculadora (`CalculadoraPinturaPublica`) a la acción de agregar al carrito.
+  - **Inicio (`VistaInicioPublica.vue`):** Integración de las tarjetas de productos destacados con `cartStore.addToCart()`.
+  - **Paleta de Colores (`VistaPaletaColoresPublica.vue`):** Conexión de productos recomendados por color y herramientas complementarias con `cartStore.addToCart()`, respetando el color seleccionado.
+- **Verificación:** vitest 43/43 pasados al 100% · `vue-tsc` y `eslint` 0 errores · compatibilidad total con backend M05 `/api/carrito`.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.4.5.1_M05_integracion_botones_carrito_frontend.md](./walkthroughs/M05/walkthrough_v0.4.5.1_M05_integracion_botones_carrito_frontend.md)
+
+
+---
+## [v0.4.5.0] - 2026-10-02
+### M08 - Orden de venta: cierre de la integración y estados de error sin datos de ejemplo (Frontend)
+- **Alcance General:** Incremento **Minior-feat (v0.4.5.0)**. El backend y el frontend de M08 ya estaban en `develop`; se verificó la integración contra la API real (contrato campo a campo en los 9 endpoints, 30 pasos en el stack completo) y se corrigió cómo reaccionan las pantallas cuando la API falla. `v0.4.4.0` la ocupa el PR de M05.
+- **Correcciones:**
+  - **Sin datos de ejemplo:** se elimina `ordenes.mock.ts`. Ante un 5xx o un fallo de red, la lista mostraba pedidos de ejemplo y el detalle mostraba un pedido del seed **sin aviso**, como si fuera del cliente. Ahora las 4 pantallas muestran un error con **Reintentar** y ningún dato.
+  - **Personal:** un 5xx o una caída de red ya no se presenta como «Orden no encontrada»; la bandeja ofrece Reintentar solo ante fallos del servidor o de red.
+  - **`Alert` con `variant`:** los avisos de error y de éxito del personal usaban `tone`, que `Alert` no reconoce, y salían con el estilo de información.
+- **Pendientes:** M07 (ninguna compra genera órdenes), M09, M11, y la **firma del líder técnico al reporte de parada `REPORTE_PARADA_v3.31.0`**, cuyos cambios están en `develop` desde el #1045.
+- **Verificación:** vitest 43/43 (24 nuevas) · `vue-tsc` y `eslint` 0/0 en M08 · backend M08 117/117 y 36/36 · permisos verificados con empleados sin `ventas.ver` y solo lectura · aviso de M18 al despachar registrado en su bitácora.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.4.5.0_M08_cierre_integracion_frontend.md](./walkthroughs/M08/walkthrough_v0.4.5.0_M08_cierre_integracion_frontend.md)
+
+
+---
 ## [v0.4.4.0] - 2026-10-02
 ### M05 - Carrito de compras: integración del backend en `develop` (Backend)
 - **Alcance General:** Incremento **Minior-feat (v0.4.4.0)**. Integra el backend del carrito de `feature/m05-carrito-compras`: el frontend de M05 (`v0.3.39.0`) llamaba a 10 endpoints `/api/carrito/*` que no existían en `develop`. Se monta `/carrito`, se renombra el módulo a `m05-carrito-compras` y se corrigen 4 defectos y 4 mejoras, sin cambiar la forma de las respuestas que consume el frontend.

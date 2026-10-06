@@ -42,6 +42,14 @@
       </RouterLink>
     </div>
 
+    <!-- Falló el servidor o la red: no es lo mismo que «no existe» y se puede reintentar -->
+    <EstadoErrorCarga
+      v-else-if="errorCarga"
+      titulo="No pudimos cargar la orden"
+      mensaje="Hubo un problema con el servidor o la conexión. La orden no se ha perdido: inténtalo de nuevo."
+      @reintentar="cargar"
+    />
+
     <template v-else-if="orden">
       <RouterLink
         :to="{ name: 'AdminGestionOrdenes' }"
@@ -61,7 +69,7 @@
         </Button>
       </PageHeader>
 
-      <Alert v-if="avisoExito" tone="success" class="mb-5">{{ avisoExito }}</Alert>
+      <Alert v-if="avisoExito" variant="success" class="mb-5">{{ avisoExito }}</Alert>
 
       <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] items-start">
         <!-- ================= Columna principal ================= -->
@@ -487,6 +495,8 @@ import {
 } from 'lucide-vue-next';
 import { Alert, Button, Input, PageHeader, Select, Textarea } from '@/core/components';
 import ModalCambiarEstado from '../../components/admin/ModalCambiarEstado.vue';
+import EstadoErrorCarga from '../../components/EstadoErrorCarga.vue';
+import { clasificarErrorCarga } from '../../composables/clasificarErrorCarga';
 import {
   ContactoDto,
   ETIQUETA_MEDIO,
@@ -518,6 +528,8 @@ const orden = ref<DetalleOrdenGestion | null>(null);
 const cargando = ref(false);
 const noEncontrado = ref(false);
 const sesionExpirada = ref(false);
+/** Falló el servidor o la red: se muestra como error, nunca como «no encontrada». */
+const errorCarga = ref(false);
 const modalAbierto = ref(false);
 const avisoExito = ref('');
 
@@ -621,16 +633,19 @@ async function cargar(): Promise<void> {
   cargando.value = true;
   noEncontrado.value = false;
   sesionExpirada.value = false;
+  errorCarga.value = false;
   try {
     orden.value = await OrdenesService.detalleGestion(props.codigo);
   } catch (e: unknown) {
-    const err = e as { response?: { status?: number } };
     orden.value = null;
     // 401 es sesión caducada, NO un recurso inexistente: confundirlos haría creer
-    // al personal que la orden desapareció. En cambio 403 y 404 sí se muestran
-    // igual, para no confirmar la existencia del recurso (CA-SEG-03-06).
-    sesionExpirada.value = err.response?.status === 401;
-    noEncontrado.value = !sesionExpirada.value;
+    // al personal que la orden desapareció. 403 y 404 se muestran igual, para no
+    // confirmar la existencia del recurso (CA-SEG-03-06). Un 5xx o un fallo de red
+    // tampoco es «no encontrada»: es un error que se puede reintentar.
+    const tipo = clasificarErrorCarga(e);
+    sesionExpirada.value = tipo === 'sesion';
+    noEncontrado.value = tipo === 'no_encontrado';
+    errorCarga.value = tipo === 'servidor';
   } finally {
     cargando.value = false;
   }

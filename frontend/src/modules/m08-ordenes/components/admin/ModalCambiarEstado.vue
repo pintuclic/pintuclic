@@ -85,7 +85,7 @@
           :error="errorMotivo"
         />
 
-        <Alert v-if="error" tone="danger">{{ error }}</Alert>
+        <Alert v-if="error" variant="danger">{{ error }}</Alert>
       </template>
 
       <!--
