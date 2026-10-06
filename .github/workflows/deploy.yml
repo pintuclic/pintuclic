@@ -43,6 +43,7 @@ jobs:
           SMTP_SIMULACION: ${{ vars.SMTP_SIMULACION }}
           GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
           VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
         run: |
           set -euo pipefail
           faltantes=""
@@ -54,6 +55,11 @@ jobs:
           if [ -n "${faltantes}" ]; then
             echo "ERROR: faltan secretos requeridos:${faltantes}" >&2
             echo "Configuralos en Settings > Secrets and variables > Actions > Secrets" >&2
+            exit 1
+          fi
+          if [ -z "${ALLOWED_ORIGINS:-}" ]; then
+            echo "ERROR: falta la Variable ALLOWED_ORIGINS (ej: https://www.pintuclic.com,https://pintuclic.com)" >&2
+            echo "Configurala en Settings > Secrets and variables > Actions > Variables" >&2
             exit 1
           fi
           umask 077
@@ -77,6 +83,7 @@ jobs:
           SMTP_SIMULACION=${SMTP_SIMULACION}
           GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
           VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+          ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
           EOF
           chmod 600 .env
           echo "OK: .env generado con $(grep -c '=' .env) variables"

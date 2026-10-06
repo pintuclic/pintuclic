@@ -7,6 +7,129 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.4.0] - 2026-10-02
+### M05 - Carrito de compras: integración del backend en `develop` (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.4.4.0)**. Integra el backend del carrito de `feature/m05-carrito-compras`: el frontend de M05 (`v0.3.39.0`) llamaba a 10 endpoints `/api/carrito/*` que no existían en `develop`. Se monta `/carrito`, se renombra el módulo a `m05-carrito-compras` y se corrigen 4 defectos y 4 mejoras, sin cambiar la forma de las respuestas que consume el frontend.
+- **⚠️ Archivos compartidos (aprobados):** `backend/src/app.routes.ts` (+2 líneas) y `backend/src/core/middlewares/cors.middleware.ts` (`X-Visitor-Token` en `allowedHeaders`; ver [reporte de parada](./walkthroughs/M05/reporte_parada_v0.4.4.0_M05_cors_x_visitor_token_backend.md)).
+- **Correcciones:**
+  - **Variante inválida:** `404 VARIANTE_NO_ENCONTRADA` / `422 VARIANTE_NO_DISPONIBLE` en lugar de `500` por la llave foránea.
+  - **Tope de 999 por línea** también al acumular (`422 CANTIDAD_MAXIMA_EXCEDIDA`) y al fusionar (queda en 999 y se avisa en el campo opcional `avisos`).
+  - **Token de visitante** validado como UUID con Zod (header `x-visitor-token` y body de `/fusionar`).
+  - **Fusión en una sola transacción:** transferir líneas y borrar el carrito de visitante ya no pueden quedar a medias.
+  - **Agregado atómico** con `INSERT … ON CONFLICT DO UPDATE` y el tope en el `WHERE`: con el código anterior, 8 agregados simultáneos dejaban 4 unidades.
+  - **Agregar crea el carrito** si aún no existe (antes `404 "Inicialice el carrito primero"`).
+  - **Controlador alineado con M08:** identidad desde `obtenerIdentidadVigente(req)` y `:idLinea` validado con Zod (`404` si es ilegible).
+- **Decisiones provisionales:** tope de 999 (RF-CAR-02-07 PENDIENTE) y fusión sumando con límite y aviso (RF-CAR-04-03 PENDIENTE).
+- **Pendientes:** cambio de precio en la revalidación (RF-CAR-05-01/05), precios de empresa (RF-CAR-04-02 → M06), líneas de cotización (RF-CAR-05-06 → M21), `UNIQUE` en `carrito` (→ `bd/`), nombre e imagen del producto (→ M01) y token no UUID del seed (→ `bd/`).
+- **Verificación:** `tsc` 0 errores · `eslint --max-warnings=0` 0/0 · `m05.test.ts` 72/72 · `m05.integracion-escritura.test.ts` 19/19 contra PostgreSQL · flujo HTTP completo (visitante → login → fusión → revalidación).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.4.4.0_M05_integracion_carrito_backend.md](./walkthroughs/M05/walkthrough_v0.4.4.0_M05_integracion_carrito_backend.md)
+
+
+---
+## [v0.4.3.0] - 2026-10-02
+### M08 - Orden de venta: detalle completo de cada línea del pedido (Frontend)
+- **Alcance General:** Incremento **MINOR (v0.4.3.0)**. Las líneas del pedido mostraban 4 de los 10 campos que el backend entrega. Con esto pasan a mostrarlos todos y se cumplen dos criterios de aceptación que estaban pendientes.
+- **Hitos Clave:**
+  - **CA-ORD-02-02 — desglose de descuentos por línea:** cada descuento con su origen, el orden en que se aplicó, su porcentaje (o nada, si fue importe fijo) y cuánto descontó. Antes solo se veía el precio final.
+  - **RF-ORD-02-02 — precio antes de descuentos:** `precio_inicial` se muestra tachado junto al precio aplicado, cuando hubo descuentos.
+  - **RF-ORD-04-03 — producto retirado del catálogo:** la línea conserva los datos de la compra, el nombre deja de enlazar a la ficha (`id_producto` llega nulo) y se añade una nota de que ya no está disponible.
+  - **Color solicitado y entonado:** datos de la compra que en una pinturería no son accesorios. La **base consumida** solo se muestra al personal (RF-ORD-09-01).
+  - **Enlace a la ficha del producto** cuando sigue en catálogo.
+- **Correcciones:**
+  - **Motivo obligatorio al retroceder.** El backend responde `400 MOTIVO_REQUERIDO` al volver de «Preparada» a «En preparación» sin motivo (el «volver con motivo» del diagrama). El modal lo marcaba obligatorio para cancelar y devolver —hoy bloqueados— pero no para este retroceso, que es el único que puede darse. Ahora se avisa antes de enviar en lugar de dejar que el servidor rechace la operación.
+  - **`nota-contacto.dto.ts` usaba la sintaxis de Zod 4** (`{ error: ... }`), y el frontend va con Zod 3.25, donde la opción es `errorMap`. Rompía `vue-tsc` sin afectar al funcionamiento; entró en `v0.4.2.1` y queda corregido.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias en M08; comprobado contra `ORD-2026-0003`, que trae dos descuentos en una misma línea, un producto entonado y otro retirado.
+
+
+---
+## [v0.4.2.2] - 2026-10-01
+### M08 - Orden de venta: compras anteriores del cliente en el detalle (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.4.2.2)**. Da uso al último endpoint del personal que quedaba sin interfaz. **M08 pasa a consumir los 9 endpoints del módulo.**
+- **Hitos Clave:**
+  - **Compras anteriores (HU-ORD-11, CA-ORD-11-01):** bloque en la ficha del cliente, dentro del detalle administrativo. Lista los demás pedidos del titular con su fecha, total y estado, y cada uno enlaza a su propio detalle.
+  - Se consulta **bajo demanda**, no al abrir la orden: en la mayoría de consultas basta con el pedido que se está atendiendo, y así no se pide al servidor algo que nadie va a mirar.
+  - El endpoint **excluye la orden actual**, de modo que lo que se lista son estrictamente los demás pedidos. Botón «Ver más» cuando hay más de una página.
+  - Al cambiar de orden el bloque se reinicia, para no arrastrar el historial de un cliente al detalle de otro.
+- **Verificación:** `vue-tsc` y `eslint` sin errores; comprobado en pantalla con 4 compras anteriores y la orden consultada correctamente excluida.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.2.0_M08_gestion_ordenes_personal_frontend.md` (sección de ajustes posteriores)
+
+
+---
+## [v0.4.2.1] - 2026-10-01
+### M08 - Orden de venta: alta de notas internas y contactos desde el detalle (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.4.2.1)**. Dos formularios que dan uso a endpoints que el backend ya exponía y la interfaz no consumía.
+- **Hitos Clave:**
+  - **Nota interna (HU-ORD-10):** campo de texto y botón en el bloque «Notas internas» del detalle administrativo. El texto de ayuda advierte que la nota queda con el nombre del autor y **no se puede modificar después**, porque el backend rechaza editarla o borrarla (CA-ORD-10-03).
+  - **Registro de contacto (CA-ORD-09-03):** desplegable de medio (correo o teléfono) y detalle opcional, con su botón.
+  - Ambos refrescan el detalle al guardar, de modo que lo que se ve es lo que el servidor confirmó, no lo que se escribió.
+  - Validación en `dtos/nota-contacto.dto.ts`, espejando los DTO del backend (Directiva 12). Un 403 se identifica como falta del permiso `ventas.gestionar`.
+- **Efecto:** M08 pasa a consumir **seis de los siete endpoints** del personal. Queda sin interfaz el historial de compras del cliente (HU-ORD-11).
+- **Verificación:** `vue-tsc` y `eslint` sin errores; nota creada desde el formulario y confirmada en pantalla con su autor y fecha.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.2.0_M08_gestion_ordenes_personal_frontend.md` (sección de ajustes posteriores)
+
+
+---
+## [v0.4.2.0] - 2026-10-01
+### M08 - Orden de venta: vistas de gestión del personal (Frontend)
+- **Alcance General:** Incremento **MINOR (v0.4.2.0)** con las tres vistas del personal: «Gestión de órdenes» (HU-ORD-05, HU-ORD-08), «Detalle de orden administrativa» (HU-ORD-09, HU-ORD-04) y «Cambiar estado de la orden» (HU-ORD-03). Con ellas quedan maquetadas las **cinco vistas de M08** del listado oficial.
+- **Hitos Clave:**
+  - **Bandeja del personal:** tarjetas de resumen por estado que además filtran, búsqueda por código, estado, periodo y por correo o teléfono del cliente (CA-ORD-08-02), y columna «Parada» con los días que cada orden lleva detenida (CA-ORD-05-07).
+  - **Detalle administrativo:** añade sobre la vista del cliente el contacto del titular (CA-ORD-09-01), el historial con autor y motivo (CA-ORD-09-02), las notas internas y los contactos registrados.
+  - **Cambio de estado:** ofrece exclusivamente las transiciones que devuelve el servidor en `transiciones_permitidas`; con el array vacío la orden se presenta como estado final y el botón no se renderiza.
+  - **Lenguaje visual de los paneles existentes:** tarjetas con icono en caja de color y un único panel que agrupa filtros y listado, como «Gestión de empleados» (M17) y «Productos» (M01). No se introduce ningún color ni tipografía fuera del sistema.
+  - **Separación de rutas:** las del personal viven en `m08-ordenes-admin.routes.ts`, independientes de las del cliente.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias; cambio de estado real ejecutado y registrado en `historial_estado_orden` con autor y fecha.
+- **Pendiente de aprobación (Directiva 3):** `core/routes/index.ts` y `core/layouts/LayoutAdmin.vue`. Sin ellos las vistas existen pero no son alcanzables desde el panel.
+- **Sin interfaz todavía:** tres endpoints del personal siguen sin pantalla (notas internas, registro de contactos e historial de compras del cliente), a la espera de decisión.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.2.0_M08_gestion_ordenes_personal_frontend.md`
+
+
+---
+## [v0.4.1.1] - 2026-10-01
+### M08 - Orden de venta: encabezado de «Seguimiento de pedido» (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.4.1.1)**. Ajuste visual solicitado en revisión de diseño, sin cambios de funcionalidad ni de contrato.
+- **Hitos Clave:**
+  - El encabezado de «Seguimiento de pedido» adopta el mismo tratamiento que el de «Mi Perfil»: fondo `subaction` con la ilustración a la derecha y el título en `corporate`, en lugar de la fotografía del catálogo con velo oscuro que se había usado.
+  - Se conservan la ruta de navegación «Inicio › Mis Pedidos › Seguimiento de Pedido», el título y el texto de apoyo.
+  - Deja de importarse `hero-storefront.png` de M01: la pantalla ya no depende de recursos de otro módulo.
+- **Motivo:** las tres pantallas del cliente (perfil, listado y seguimiento) debían leerse como una misma familia visual.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias en M08.
+
+
+---
+## [v0.4.1.0] - 2026-10-01
+### M08 - Orden de venta: sección de pedidos y seguimiento del cliente (Frontend)
+- **Alcance General:** Incremento **MINOR (v0.4.1.0)** con las dos vistas del cliente: «Mis pedidos» (HU-ORD-07) y «Seguimiento de pedido» (HU-ORD-02, HU-ORD-04, HU-ORD-06). Las vistas del personal quedan fuera: su diseño todavía no está aprobado.
+- **Hitos Clave:**
+  - **«Mis pedidos» bajo la información personal del perfil**, como plantean los diseños «Mi-Perfil_Usuario natural» y «Mi-Perfil_Usuario Empresa». Filtros por estado, buscador, separación entre pedidos en curso y finalizados, y paginación.
+  - **«Seguimiento de pedido» como pantalla propia**, con su encabezado, su ruta de navegación y el contenido en dos columnas: línea de tiempo a la izquierda; datos de despacho y detalle de la compra a la derecha.
+  - **La línea de tiempo sigue el diagrama oficial:** desde «Preparada» el flujo bifurca según el modo de entrega, así que la recogida en tienda no muestra la etapa «Despachado», por la que su pedido nunca pasa.
+  - **Datos nuevos del backend ya en pantalla:** historial de estados con fecha y hora reales, forma de entrega, costo de entrega e IVA discriminado.
+  - **Aviso de cancelación al cliente:** cubre el pendiente que el informe final del backend asigna al frontend. La cancelación está bloqueada por la política de M11 y el backend responde 409 `OPERACION_NO_HABILITADA`.
+  - **Corrección en la presentación de errores:** un 401 se identifica como sesión expirada en lugar de «pedido no encontrado», y deja de caerse a los datos de ejemplo. 403 y 404 siguen siendo indistinguibles entre sí (CA-SEG-03-06).
+  - **Separación de rutas:** las del personal pasan a `m08-ordenes-admin.routes.ts`, de modo que cada parte del módulo pueda entregarse por separado.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias en M08; las tres pantallas abiertas contra el backend real.
+- **Pendiente de aprobación (Directiva 3):** 11 líneas añadidas en `m04-cuentas/views/VistaPerfil.vue` para incrustar la sección de pedidos. Ninguna línea existente fue modificada.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.1.0_M08_pedidos_y_seguimiento_cliente_frontend.md`
+
+---
+## [v0.4.0.0] - 2026-09-30
+### Versión estable
+- Solo un cambio de versión, la web funciona bastante bien.
+
+---
+
+## [v0.3.41.1] - 2026-09-30
+### Core / Infraestructura: Restauración de `ALLOWED_ORIGINS` en el despliegue (CORS)
+- **Alcance General:** Incremento **PATCH (v0.3.41.1)** que corrige el error 500 en todas las peticiones del navegador (login, registro, carrito, etc.). El `.env` generado por el deploy no incluía `ALLOWED_ORIGINS`, por lo que el backend usaba el default de `localhost` y el middleware CORS rechazaba el origen real `https://www.pintuclic.com`.
+- **Hitos Clave:**
+  - **`.env.example`:** nueva sección 5 con `ALLOWED_ORIGINS=https://www.pintuclic.com,https://pintuclic.com`.
+  - **`deploy.yml`:** la Variable `ALLOWED_ORIGINS` se mapea al `.env` generado y se valida que no venga vacía, fallando con mensaje claro antes de levantar contenedores.
+  - **Configuración:** la Variable `ALLOWED_ORIGINS` queda creada en GitHub Actions (Repository variables).
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.41.1_core_restauracion_allowed_origins.md](./walkthroughs/core/walkthrough_v0.3.41.1_core_restauracion_allowed_origins.md)
+
+---
+
 ## [v0.3.41.0] - 2026-09-30
 
 ### M01: Vista de Gestión de Bases y Unificación de Botones del Panel Administrativo
@@ -186,6 +309,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.33.1] - 2026-09-29
+### Core / Infraestructura: Carga del esquema y catálogo de la base de datos en el deploy
+- **Alcance General:** Incremento **PATCH (v0.3.33.1)** que agrega al workflow `Deploy` la carga idempotente del esquema y los datos iniciales desde `bd/sql/`, para que la base de datos del VPS quede operativa con el catálogo y las cuentas de prueba documentadas.
+- **Hitos Clave:**
+  - **Nuevo paso `Cargar esquema y catálogo en PostgreSQL`:** ejecuta `schema_pintuclic.sql` y `seed_pintuclic.sql` con `psql` dentro del contenedor `pintuclic-db`, usando las credenciales del propio contenedor (`POSTGRES_USER`/`POSTGRES_DB`) y `ON_ERROR_STOP=1`.
+  - **Idempotencia:** el DDL usa `IF NOT EXISTS` (el `DROP SCHEMA` está comentado) y el seed usa `ON CONFLICT DO NOTHING`, por lo que puede ejecutarse en cada despliegue sin borrar `pgdata` ni duplicar registros.
+  - **Credenciales de prueba:** quedan disponibles `admin@pintuclic.co` y los demás usuarios del seed con la contraseña `Pintuclic2026` (hash BCrypt costo 12 ya incluido en `bd/sql/seed_pintuclic.sql`); se recomienda cambiar la clave del admin tras la primera carga.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.33.1_core_carga_bd_en_deploy.md](./walkthroughs/core/walkthrough_v0.3.33.1_core_carga_bd_en_deploy.md)
+
+---
+
 ## [v0.3.33.0] - 2026-09-28
 ### M17: Integración del frontend de permisos y personal con develop
 - Incremento Minior-feat: incorpora las vistas y flujos existentes de M17 a la base actual de develop, conservando la estructura del módulo.
@@ -225,6 +359,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Separación config/credenciales:** credenciales en *Repository secrets*; configuración no sensible (`POSTGRES_USER`, puertos, `SMTP_HOST`, `ALLOWED_ORIGINS`, `GOOGLE_CLIENT_ID`, etc.) en *Repository variables*.
   - **Disparadores conservados:** automático en push a `develop` y manual vía `workflow_dispatch`.
   - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.3.32.0_core_generacion_env_desde_secrets_deploy.md](./walkthroughs/core/walkthrough_v0.3.32.0_core_generacion_env_desde_secrets_deploy.md)
+
+---
+
+## [v0.3.31.0] - 2026-09-28
+### Módulo: M08 Orden de Venta — Bandeja, Búsqueda e Historial del Personal (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.31.0)** que da al personal con «Revisar órdenes» (`ventas.ver`) una bandeja para atender pedidos (HU-ORD-05), un buscador por número, correo o teléfono del cliente (HU-ORD-08), el contacto del cliente en el detalle (HU-ORD-09) y el historial de compras del cliente (HU-ORD-11), según la épica #28 actualizada el 27/09. Sin cambios de esquema.
+- **Hitos Clave:**
+  - **Rutas nuevas:** `GET /api/ordenes/gestion` con filtros combinables, paginación y `orden=antiguedad`; `GET /api/ordenes/gestion/resumen` con contadores por estado; `GET /api/ordenes/gestion/:codigo/historial-cliente`.
+  - **Generador del código `PC-AAAA-NNNNN`** con año de Colombia (D04), a la espera del consecutivo. Mis pedidos trata `enviado` como finalizado (D02).
+  - **Propuesta de modelo de datos** para el líder técnico (`docs/walkthroughs/M08/PROPUESTA_MODELO_DATOS_M08.md`). Criterios: 13 cumplidos, 10 parciales y 26 bloqueados de 49.
+  - **Calidad y Verificación:** `npx tsc --noEmit` y `npm run lint` sin errores ni advertencias; 51/51 pruebas en memoria, 20/20 de integración contra PostgreSQL y 12 peticiones HTTP reales correctas.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.31.0_M08_bandeja_busqueda_historial_backend.md](./walkthroughs/M08/walkthrough_v0.3.31.0_M08_bandeja_busqueda_historial_backend.md)
 
 ---
 
@@ -486,6 +632,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Servicios y Tipado Centralizado (`cuentas.service.ts`, `admin.interface.ts`):** Nuevos métodos cliente `solicitarCambioCorreo`, `confirmarCambioCorreo`, `listarSolicitudesEmpresa` y `dictaminarSolicitudEmpresa`. Contratos de interfaz tipados sin `any`.
   - **Enrutamiento Administrativo Central (`src/core/routes/index.ts`):** Montaje formal de la ruta `/admin/empresas` bajo `LayoutAdmin`.
   - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M04/walkthrough_v3.29.0_M04_aprobacion_empresas_perfil_cambio_correo_frontend.md](./walkthroughs/M04/walkthrough_v3.29.0_M04_aprobacion_empresas_perfil_cambio_correo_frontend.md)
+
+---
+
+## [v3.31.0] - 2026-09-24
+### Módulo: M08 Orden de Venta (Frontend)
+- **Alcance:** Primera entrega del frontend de M08 sobre los endpoints de consulta de `v3.30.0`/`v3.30.1`. Cubre la sección de pedidos del cliente (HU-ORD-07) y el seguimiento del pedido (HU-ORD-02, HU-ORD-04, HU-ORD-06) en vista maestro-detalle sobre una misma pantalla. La parte administrativa (HU-ORD-01, HU-ORD-03, HU-ORD-05) queda fuera por ausencia de endpoints.
+- **Hitos Clave:** Módulo autónomo en `frontend/src/modules/m08-ordenes/` con listado, buscador servidor, filtros y paginación en cliente, panel de seguimiento y respaldo de mocks. Expone el componente `SeccionMisPedidos` para que otros módulos lo incrusten.
+- **Estado de Calidad:** ✅ `vue-tsc --noEmit` y `eslint` sin errores ni advertencias. Paleta verificada: 0 hexadecimales arbitrarios, 0 estilos inline, 0 clases ajenas a la marca.
+- ⚠️ **Dependencias bloqueantes:** requiere aprobación del Líder Técnico para dos archivos compartidos (enrutador central y tokens de tema). Ver reporte de parada.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v3.31.0_M08_seccion_pedidos_cliente_frontend.md](./walkthroughs/M08/walkthrough_v3.31.0_M08_seccion_pedidos_cliente_frontend.md)
 
 ---
 
