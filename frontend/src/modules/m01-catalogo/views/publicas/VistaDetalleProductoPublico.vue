@@ -202,7 +202,7 @@
               <button
                 type="button"
                 class="inline-flex min-h-11 items-center justify-center gap-2 rounded-button bg-conversion text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-conversion-hover hover:shadow-md active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion"
-                @click="mostrarMensaje('Agregar al carrito requiere la integración con M07.')"
+                @click="agregarAlCarrito"
               >
                 <ShoppingCart :size="17" /> Comprar
               </button>
@@ -225,7 +225,7 @@
               :key="item.id_producto"
               :producto="item"
               @ver="irProducto"
-              @agregar="mostrarMensaje('Agregar al carrito requiere M07.')"
+              @agregar="agregarComplementarioAlCarrito"
             />
           </div>
         </section>
@@ -266,7 +266,7 @@
       :abierta="calculadoraAbierta"
       :producto="producto"
       @cerrar="calculadoraAbierta = false"
-      @agregar="mostrarMensaje('Agregar al carrito requiere M07.')"
+      @agregar="agregarDesdeCalculadora"
     />
   </div>
 </template>
@@ -282,10 +282,13 @@ import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPint
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import VisualizadorAmbientesPublico from '../../components/publicas/VisualizadorAmbientesPublico.vue';
 import { useDetalleProductoPublico } from '../../composables/publicas/useDetalleProductoPublico';
+import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
+import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import { formatearCOP } from '@/core/utils/moneda';
 
 const props = defineProps<{ productoId: string }>();
 const router = useRouter();
+const cartStore = useCartStore();
 const route = useRoute();
 const idProducto = computed(() => Number(props.productoId));
 const {
@@ -385,6 +388,66 @@ const precioActual = computed(() =>
 
 function mostrarMensaje(texto: string): void {
   mensaje.value = texto;
+}
+
+async function agregarAlCarrito(): Promise<void> {
+  if (!varianteSeleccionada.value) {
+    mostrarMensaje('Por favor selecciona una variante del producto.');
+    return;
+  }
+  await cartStore.addToCart(
+    {
+      id: varianteSeleccionada.value.id_variante,
+      variantId: varianteSeleccionada.value.id_variante,
+      name: producto.value?.nombre ?? 'Producto',
+      price: varianteSeleccionada.value.precio_vigente,
+      image: imagenActiva.value ?? '',
+    },
+    cantidad.value
+  );
+  if (cartStore.error) {
+    mostrarMensaje(cartStore.error);
+  } else {
+    mostrarMensaje(`Se agregó "${producto.value?.nombre ?? 'el producto'}" al carrito.`);
+  }
+}
+
+async function agregarComplementarioAlCarrito(idProd: number): Promise<void> {
+  const prod = complementarios.value.find((p) => p.id_producto === idProd);
+  let variante = prod?.detalle?.variantes.find((v) => v.existencia_referencial > 0) ?? prod?.detalle?.variantes[0];
+
+  if (!variante) {
+    try {
+      const ficha = await CatalogoPublicoService.obtenerFicha(idProd);
+      variante = ficha.variantes.find((v) => v.existencia_referencial > 0) ?? ficha.variantes[0];
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!variante) {
+    mostrarMensaje('No hay variantes disponibles para este producto.');
+    return;
+  }
+
+  await cartStore.addToCart({
+    id: variante.id_variante,
+    variantId: variante.id_variante,
+    name: prod?.nombre ?? 'Producto',
+    price: variante.precio_vigente,
+    image: prod?.detalle?.imagenes[0]?.contenido_url ?? '',
+  });
+
+  if (cartStore.error) {
+    mostrarMensaje(cartStore.error);
+  } else {
+    mostrarMensaje(`Se agregó "${prod?.nombre ?? 'el producto'}" al carrito.`);
+  }
+}
+
+function agregarDesdeCalculadora(): void {
+  calculadoraAbierta.value = false;
+  void agregarAlCarrito();
 }
 
 function seleccionarPresentacion(idPresentacion: number): void {
