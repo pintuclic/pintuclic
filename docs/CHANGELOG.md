@@ -7,6 +7,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.6.0] - 2026-10-07
+### M17 / M01 / M08 / M04 - Estabilización de flujos de administración y reestructuración UX de catálogo (Fullstack)
+- **Alcance General:** Incremento **Minior-feat (v0.4.6.0)**. Corrección integral y estabilización de los flujos de administración, sincronización del esquema DDL v3.9 de base de datos en Docker (49 tablas), eliminación de fallos de creación de empleados, reactivación de clientes inactivos, restauración del Dashboard en `/admin` y rediseño jerárquico de Categorías en árbol acordeón.
+- **Hitos Clave:**
+  - **Base de Datos (Docker v3.9):** Regeneración limpia del volumen `pgdata` en Docker levantando las 49 tablas con columnas requeridas por el repositorio de órdenes (`codigo_solicitud`, `modo_entrega`, `historial_estado_orden`), erradicando el error 500 al consultar `/admin/ordenes`.
+  - **Creación de Empleados (M17):** Corrección en `empleados.service.ts` y `empleados.repository.ts`, sustituyendo `id_rol: 0` por `null`, erradicando la violación de clave foránea `fk_usuario_rol` en PostgreSQL.
+  - **Dashboard y Enrutador (Core / M17):** Eliminación de la redirección hardcodeada a catálogo en `index.ts`; `/admin` y el botón "Dashboard" cargan directamente `Dashboard.vue` con sus métricas.
+  - **Gestión de Clientes (M17):** Soporte en backend y modal frontend para reactivar clientes en estado `'inactivo'` (baja voluntaria de Habeas Data).
+  - **Aprobación de Empresas (M04):** Adición de notificación reactiva Alert/Toast de confirmación tras dictaminar empresas o solicitudes de actualización de NIT.
+  - **Catálogo y Categorías (M01 UX):** Rediseño de `VistaCategorias.vue` sustituyendo el patrón de 2 columnas por una vista jerárquica en árbol / acordeón que agrupa subcategorías anidadas con acciones contextuales. Clarificación en `FormularioProducto.vue` de Tipo de Resina Química (solvente) vs. Bases Tintométricas (máquina).
+  - **Tipado y Compilación:** Corrección de tipos en `useCatalogoPublico.ts` y variables no utilizadas en `VistaCatalogoPublico.vue`, logrando `npm run build` limpio y `npm run lint` 0/0.
+- 🔗 **Walkthroughs Técnicos Oficiales:**
+  - [walkthroughs/M17/walkthrough_v0.4.6.0_M17_estabilizacion_admin_backend.md](./walkthroughs/M17/walkthrough_v0.4.6.0_M17_estabilizacion_admin_backend.md)
+  - [walkthroughs/M01/walkthrough_v0.4.6.0_M01_reestructuracion_catalogo_ux_frontend.md](./walkthroughs/M01/walkthrough_v0.4.6.0_M01_reestructuracion_catalogo_ux_frontend.md)
+
+---
 ## [v0.4.5.1] - 2026-10-06
 ### M05 - Carrito de compras: integración de botones y enlaces de compra en storefront (Frontend)
 - **Alcance General:** Incremento **Patch (v0.4.5.1)**. Conexión de todos los botones de «Agregar al carrito» y navegación hacia el carrito en las pantallas públicas de catálogo, inicio, paleta de colores y el layout global.
