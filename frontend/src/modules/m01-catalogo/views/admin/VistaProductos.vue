@@ -1,6 +1,6 @@
 <template>
   <div class="font-sans">
-    <PageHeader title="Productos" description="Información común de cada producto, independiente de sus variantes (HU-CAT-02).">
+    <PageHeader title="Productos" description="Información común de cada producto, independiente de sus variantes.">
       <Button variant="neutral" icon="settings" :to="{ name: 'M01CatalogosBase' }">Resinas y presentaciones</Button>
       <Button variant="action" icon="plus" @click="formularioAbierto = true">Nuevo producto</Button>
     </PageHeader>

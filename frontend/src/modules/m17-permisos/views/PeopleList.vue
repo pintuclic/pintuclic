@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Table, Paginacion, Button, IconButton, Icon, Drawer, PageHeader, Badge, Input, Select, SinResultados, Tooltip } from "@/core/components";
+import { Table, Paginacion, Button, IconButton, Icon, Drawer, PageHeader, Badge, Input, Select, SinResultados } from "@/core/components";
 import { computed, defineAsyncComponent, ref, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { useM17 } from "../store/useM17";
@@ -223,74 +223,62 @@ function closeEmployeeDrawer() {
       <template #cell-acciones="{ row: p }">
               <div class="flex items-center justify-end gap-1.5">
                 <!-- Ver ficha cliente / Detalle -->
-                <Tooltip
+                <IconButton
                   v-if="!isEmployees"
-                  :content="`Ver ficha de ${p.nombre}`"
-                >
-                  <IconButton
-                    class="h-9 w-9 rounded-lg border border-neutral-light bg-neutral-white shadow-xs hover:border-action/40"
-                    has-popup="dialog"
-                    icon="eye"
-                    tone="action"
-                    :label="`Ver a ${p.nombre}`"
-                    @click="viewingClient = p.id_usuario"
-                  />
-                </Tooltip>
+                  class="h-9 w-9 rounded-lg border border-neutral-light bg-neutral-white shadow-xs hover:border-action/40"
+                  has-popup="dialog"
+                  icon="eye"
+                  tone="action"
+                  :label="`Ver ficha de ${p.nombre}`"
+                  :title="`Ver ficha de ${p.nombre}`"
+                  @click="viewingClient = p.id_usuario"
+                />
 
                 <!-- Editar empleado -->
-                <Tooltip
+                <IconButton
                   v-if="isEmployees"
-                  :content="`Editar a ${p.nombre}`"
-                >
-                  <IconButton
-                    class="h-9 w-9 rounded-lg border border-neutral-light bg-neutral-white shadow-xs hover:border-corporate/40"
-                    icon="edit"
-                    has-popup="dialog"
-                    :label="`Editar a ${p.nombre}`"
-                    @click="editingEmployee = p.id_usuario"
-                  />
-                </Tooltip>
+                  class="h-9 w-9 rounded-lg border border-neutral-light bg-neutral-white shadow-xs hover:border-corporate/40"
+                  icon="edit"
+                  has-popup="dialog"
+                  :label="`Editar a ${p.nombre}`"
+                  :title="`Editar a ${p.nombre}`"
+                  @click="editingEmployee = p.id_usuario"
+                />
 
                 <!-- Permisos de empleado -->
-                <Tooltip
+                <IconButton
                   v-if="isEmployees"
-                  :content="`Gestionar permisos de ${p.nombre}`"
-                >
-                  <IconButton
-                    class="h-9 w-9 rounded-lg border border-neutral-light bg-neutral-white shadow-xs hover:border-action/40"
-                    :to="{ path: '/admin/permisos', query: { empleado: p.id_usuario } }"
-                    icon="shield"
-                    tone="action"
-                    :label="`Permisos de ${p.nombre}`"
-                  />
-                </Tooltip>
+                  class="h-9 w-9 rounded-lg border border-neutral-light bg-neutral-white shadow-xs hover:border-action/40"
+                  :to="{ path: '/admin/permisos', query: { empleado: p.id_usuario } }"
+                  icon="shield"
+                  tone="action"
+                  :label="`Gestionar permisos de ${p.nombre}`"
+                  :title="`Gestionar permisos de ${p.nombre}`"
+                />
 
                 <!-- Bloquear / Desactivar / Reactivar -->
-                <Tooltip
+                <IconButton
                   v-if="isAdmin"
-                  :content="
+                  class="h-9 w-9 rounded-lg border shadow-xs transition-all"
+                  :class="
+                    p.estado === 'activo'
+                      ? 'border-danger/30 bg-danger/5 hover:bg-danger/15 hover:border-danger'
+                      : 'border-conversion/30 bg-conversion/5 hover:bg-conversion/15 hover:border-conversion'
+                  "
+                  icon="power"
+                  :label="
+                    isEmployees
+                      ? (p.estado === 'activo' ? `Desactivar a ${p.nombre}` : `Reactivar a ${p.nombre}`)
+                      : (p.estado === 'activo' ? `Bloquear a ${p.nombre}` : `Reactivar a ${p.nombre}`)
+                  "
+                  :title="
                     isEmployees
                       ? (p.estado === 'activo' ? 'Desactivar empleado' : 'Reactivar empleado')
                       : (p.estado === 'activo' ? 'Bloquear cliente' : 'Reactivar cliente')
                   "
-                >
-                  <IconButton
-                    class="h-9 w-9 rounded-lg border shadow-xs transition-all"
-                    :class="
-                      p.estado === 'activo'
-                        ? 'border-danger/30 bg-danger/5 hover:bg-danger/15 hover:border-danger'
-                        : 'border-conversion/30 bg-conversion/5 hover:bg-conversion/15 hover:border-conversion'
-                    "
-                    icon="power"
-                    :label="
-                      isEmployees
-                        ? (p.estado === 'activo' ? `Desactivar a ${p.nombre}` : `Reactivar a ${p.nombre}`)
-                        : (p.estado === 'activo' ? `Bloquear a ${p.nombre}` : `Reactivar a ${p.nombre}`)
-                    "
-                    :tone="p.estado === 'activo' ? 'danger' : 'success'"
-                    @click="selected = p"
-                  />
-                </Tooltip>
+                  :tone="p.estado === 'activo' ? 'danger' : 'success'"
+                  @click="selected = p"
+                />
               </div>
             </template>
       <template #empty>

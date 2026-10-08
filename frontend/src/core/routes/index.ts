@@ -49,12 +49,6 @@ export const routes: RouteRecordRaw[] = [
     ],
   },
 
-  // Redirección directa para búsquedas del catálogo administrativo
-  {
-    path: '/admin/catalogo/busquedas',
-    redirect: '/admin/catalogo/busquedas-sin-resultado',
-  },
-
   // 3. Layout de Acceso / Auth independiente (fullscreen si aplica)
   {
     path: '/acceso',

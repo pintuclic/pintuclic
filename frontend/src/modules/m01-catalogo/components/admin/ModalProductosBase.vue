@@ -1,9 +1,8 @@
 <template>
-  <Modal :model-value="modelValue" :title="base ? `Productos que ofrecen «${base.nombre}»` : ''" max-width="lg" @update:model-value="emit('update:modelValue', $event)">
+  <Drawer :model-value="modelValue" :title="base ? `Productos que ofrecen «${base.nombre}»` : 'Productos de la base'" @update:model-value="emit('update:modelValue', $event)">
     <div class="space-y-4 font-sans text-sm">
       <p class="text-neutral-medium">
-        Marca los productos entonables de la marca que se preparan sobre esta base (RF-CAT-12-02).
-        Solo se ofrecen productos de la misma marca (RF-CAT-12-03).
+        Marca los productos entonables de la marca que se preparan sobre esta base. Solo se ofrecen productos pertenecientes a la misma marca.
       </p>
 
       <Alert v-if="base && base.estado !== 'activo'" variant="warning">
@@ -11,7 +10,16 @@
       </Alert>
       <Alert v-if="error" variant="danger" dismissible @close="error = null">{{ error }}</Alert>
 
-      <p v-if="cargando" class="text-neutral-medium" role="status">Cargando productos entonables…</p>
+      <!-- Buscador de productos cuando la lista es amplia -->
+      <div v-if="filas.length > 4" class="relative">
+        <Input
+          v-model="filtro"
+          placeholder="Buscar producto por nombre…"
+          aria-label="Buscar producto entonable"
+        />
+      </div>
+
+      <p v-if="cargando" class="text-neutral-medium py-4 text-center" role="status">Cargando productos entonables…</p>
       <SinResultados
         v-else-if="!filas.length"
         icon="grid"
@@ -19,8 +27,15 @@
         description="Esta marca no tiene productos de clase entonable. Créalos en Productos."
         compact
       />
-      <ul v-else class="divide-y divide-neutral-light rounded-card border border-neutral-light">
-        <li v-for="fila in filas" :key="fila.producto.id_producto" class="flex items-center justify-between gap-3 px-4 py-3">
+      <SinResultados
+        v-else-if="!filasFiltradas.length"
+        icon="search"
+        title="No coincide con la búsqueda"
+        description="Intenta con otro término."
+        compact
+      />
+      <ul v-else class="divide-y divide-neutral-light rounded-card border border-neutral-light overflow-hidden">
+        <li v-for="fila in filasFiltradas" :key="fila.producto.id_producto" class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-neutral-lightest/40 transition-colors">
           <Checkbox
             :model-value="fila.asignada"
             :label="fila.producto.nombre"
@@ -38,28 +53,29 @@
           </div>
         </li>
       </ul>
+    </div>
 
-      <div class="flex justify-end pt-2">
+    <template #footer>
+      <div class="flex justify-end">
         <Button variant="neutral" @click="emit('update:modelValue', false)">Cerrar</Button>
       </div>
-    </div>
-  </Modal>
+    </template>
+  </Drawer>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
-import { Alert, Badge, Button, Checkbox, Modal, SinResultados } from '@/core/components';
+import { Alert, Badge, Button, Checkbox, Drawer, Input, SinResultados } from '@/core/components';
 import { CatalogoAdmin } from '../../services/catalogo-admin.service';
 import { mensajeError } from '../../services/http';
 import type { Base, Producto } from '../../interfaces';
 
 /**
- * M01 - Asignación base ↔ productos entonables (HU-CAT-12 flujo 2).
+ * M01 - Asignación base ↔ productos entonables.
  * El backend expone la relación por producto (`/productos/:id/bases`); aquí se
  * consulta para cada producto entonable de la marca y se alterna con
- * POST/DELETE. Las reglas (misma marca, base activa, base en uso por variantes)
- * las valida el servidor y su mensaje se muestra tal cual.
+ * POST/DELETE.
  */
 const props = defineProps<{ modelValue: boolean; base: Base | null }>();
 const emit = defineEmits<{ 'update:modelValue': [valor: boolean]; cambio: [] }>();
@@ -67,9 +83,16 @@ const emit = defineEmits<{ 'update:modelValue': [valor: boolean]; cambio: [] }>(
 interface FilaProducto { producto: Producto; asignada: boolean }
 
 const filas = ref<FilaProducto[]>([]);
+const filtro = ref('');
 const cargando = ref(false);
 const ocupado = ref<number | null>(null);
 const error = ref<string | null>(null);
+
+const filasFiltradas = computed(() => {
+  const q = filtro.value.trim().toLowerCase();
+  if (!q) return filas.value;
+  return filas.value.filter((f) => f.producto.nombre.toLowerCase().includes(q));
+});
 
 async function cargar(base: Base): Promise<void> {
   cargando.value = true;

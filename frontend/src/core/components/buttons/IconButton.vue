@@ -14,7 +14,7 @@
       }
     ]"
     :aria-label="label"
-    :title="label"
+    :title="title || label"
     :aria-haspopup="hasPopup"
     :disabled="disabled && tag === 'button'"
     @click="$emit('click', $event)"
@@ -51,6 +51,7 @@ const props = defineProps<{
   size?: number | string;
   strokeWidth?: number | string;
   hasPopup?: 'dialog';
+  title?: string;
 }>();
 
 defineEmits<{

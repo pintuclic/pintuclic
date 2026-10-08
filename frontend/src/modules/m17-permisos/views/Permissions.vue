@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Button, Icon, Modal, PageHeader, Input, Select, Checkbox } from "@/core/components";
+import { Button, Icon, Modal, PageHeader, Input, Checkbox, SearchableSelect } from "@/core/components";
 import { computed, ref, watch } from "vue";
 import { useRoute, onBeforeRouteLeave } from "vue-router";
 import type { Permiso } from "../interfaces";
@@ -84,17 +84,33 @@ watch(
     if (v) employeeId.value = Number(v);
   },
 );
-function choose(event: Event) {
-  const input = event.target as HTMLSelectElement;
-  const next = Number(input.value);
+const employeeOptions = computed(() => [
+  { value: 0, label: "Elige un empleado…" },
+  ...state.employees.map((p) => ({
+    value: p.id_usuario,
+    label: `${p.nombre}`,
+    description: `${p.correo}`,
+  })),
+]);
+
+const permissionOptions = computed(() => [
+  { value: "", label: "Seleccionar permiso…" },
+  ...state.catalog.map((p) => ({
+    value: p.nombre,
+    label: p.descripcion || p.nombre,
+    description: p.nombre,
+  })),
+]);
+
+function chooseEmployee(next: string | number) {
+  const nextId = Number(next);
   if (
     dirty.value &&
     !window.confirm("Hay cambios sin guardar. ¿Cambiar de empleado?")
   ) {
-    input.value = String(employeeId.value);
     return;
   }
-  employeeId.value = next;
+  employeeId.value = nextId;
 }
 function toggle(name: string, enabled: boolean) {
   if (!enabled && dependentPermissions(name, selected.value).length) {
@@ -186,21 +202,16 @@ onBeforeRouteLeave(
     ><section
       class="mb-6 rounded-xl border border-neutral-light bg-neutral-white p-4 sm:p-6"
     >
-      <Select label="Seleccionar empleado"
-          :model-value="employeeId"
-          :disabled="busy"
-          class="mt-3 max-w-xl"
-          @change="choose"
-        >
-          <option :value="0">Elige un empleado</option>
-          <option
-            v-for="p in state.employees"
-            :key="p.id_usuario"
-            :value="p.id_usuario"
-          >
-            {{ p.nombre }} · {{ p.correo }}
-          </option>
-        </Select>
+      <SearchableSelect
+        label="Seleccionar empleado"
+        placeholder="Elige un empleado…"
+        search-placeholder="Buscar por nombre o correo…"
+        :model-value="employeeId"
+        :options="employeeOptions"
+        :disabled="busy"
+        class="mt-3 max-w-xl"
+        @change="chooseEmployee"
+      />
     </section>
     <p
       v-if="error"
@@ -299,13 +310,17 @@ onBeforeRouteLeave(
             class="w-full"
             :disabled="busy || !dirty"
             @click="save"
-            >{{ busy ? "Guardando…" : "Guardar permisos" }}</Button
-          ><Button variant="outline"
+          >
+            {{ busy ? "Guardando…" : "Guardar permisos" }}
+          </Button>
+          <Button
+            variant="neutral"
             class="mt-3 w-full"
             :disabled="busy || !dirty"
             @click="selected = [...initial]"
-            >Descartar cambios</Button
           >
+            Descartar cambios
+          </Button>
         </div>
         <p class="px-2 text-xs leading-5 text-neutral-medium">
           Al quitar un permiso de consulta también se retirarán las operaciones
@@ -325,17 +340,14 @@ onBeforeRouteLeave(
       <p class="mt-1 text-sm text-neutral-medium">
         Herramienta de control interno para verificar qué miembros del equipo cuentan actualmente con un acceso específico en el sistema.
       </p>
-      <Select
+      <SearchableSelect
         v-model="inverse"
         label="Permiso para consultar empleados"
-        aria-label="Permiso para consultar empleados"
+        placeholder="Seleccionar permiso…"
+        search-placeholder="Buscar permiso…"
+        :options="permissionOptions"
         class="mt-4 max-w-xl"
-      >
-        <option value="">Seleccionar permiso…</option>
-        <option v-for="p in state.catalog" :key="p.nombre" :value="p.nombre">
-          {{ p.descripcion || p.nombre }}
-        </option>
-      </Select>
+      />
       <p v-if="inverseBusy" class="mt-4 text-sm text-neutral-medium" role="status">
         Consultando accesos…
       </p>

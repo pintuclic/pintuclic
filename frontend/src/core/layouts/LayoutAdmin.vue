@@ -120,13 +120,13 @@
                 <PackageIcon class="w-4 h-4 shrink-0" />
                 Productos
               </router-link>
-              <router-link to="/admin/catalogo/categorias" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-                <LayoutGridIcon class="w-4 h-4 shrink-0" />
-                Categorías
-              </router-link>
               <router-link to="/admin/catalogo/variantes" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
                 <LayersIcon class="w-4 h-4 shrink-0" />
                 Variantes
+              </router-link>
+              <router-link to="/admin/catalogo/categorias" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+                <LayoutGridIcon class="w-4 h-4 shrink-0" />
+                Categorías
               </router-link>
             </div>
 
@@ -151,9 +151,9 @@
                 <PaintBucketIcon class="w-4 h-4 shrink-0" />
                 Bases Tintométricas
               </router-link>
-              <router-link to="/admin/catalogo/busquedas-sin-resultado" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-                <SearchIcon class="w-4 h-4 shrink-0" />
-                Búsquedas
+              <router-link to="/admin/catalogo/configuracion" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+                <SlidersIcon class="w-4 h-4 shrink-0" />
+                Resinas y Presentaciones
               </router-link>
             </div>
           </div>
@@ -306,7 +306,7 @@ import {
   Tag as TagIcon,
   Droplet as DropletIcon,
   PaintBucket as PaintBucketIcon,
-  Search as SearchIcon,
+  Sliders as SlidersIcon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
   LogOut as LogOutIcon,

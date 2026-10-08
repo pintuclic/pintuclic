@@ -2,7 +2,7 @@
   <div class="font-sans space-y-6">
     <PageHeader
       title="Categorías y Subcategorías"
-      description="Estructura jerárquica a dos niveles (HU-CAT-01): Administra las categorías raíz y sus subcategorías directamente en contexto."
+      description="Estructura jerárquica a dos niveles: Administra las categorías raíz y sus subcategorías directamente en contexto."
     >
       <Button variant="action" icon="plus" @click="nuevaCategoria">Nueva categoría</Button>
     </PageHeader>
@@ -97,7 +97,7 @@
                 class="!py-1 !px-2.5 !text-xs font-medium"
                 @click="nuevaSubcategoria(cat)"
               >
-                + Subcategoría
+                Subcategoría
               </Button>
               <AccionesFila
                 :nombre="cat.nombre"
