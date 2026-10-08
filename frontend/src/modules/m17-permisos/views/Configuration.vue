@@ -142,7 +142,7 @@ onBeforeRouteLeave(
       <footer
         class="flex flex-col justify-end gap-3 sm:flex-row sm:flex-wrap border-t border-neutral-light p-4 sm:p-6"
       >
-        <Button variant="outline"
+        <Button variant="neutral"
           :disabled="busy || !changed.length"
           @click="rows = initial.map((p) => ({ ...p }))"
           >Descartar cambios</Button

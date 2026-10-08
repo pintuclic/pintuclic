@@ -29,7 +29,7 @@
       </div>
       <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
         <Checkbox v-model="nueva.es_principal" label="Usar como imagen principal (la que aparece en listados)" />
-        <Button type="submit" variant="conversion" size="sm" icon="plus" :disabled="subiendo || !nueva.imagen">
+        <Button type="submit" variant="action" size="sm" icon="plus" :disabled="subiendo">
           {{ subiendo ? 'Subiendo…' : 'Subir imagen' }}
         </Button>
       </div>
@@ -67,12 +67,12 @@
           </div>
           <div class="flex items-center justify-between">
             <div class="flex">
-              <IconButton icon="back" label="Mover antes" tone="neutral" class="p-1" :disabled="indice === 0 || ocupado" @click="mover(indice, -1)" />
-              <IconButton icon="arrow" label="Mover después" tone="neutral" class="p-1" :disabled="indice === imagenes.length - 1 || ocupado" @click="mover(indice, 1)" />
+              <IconButton icon="back" label="Mover antes" tone="neutral" variant="ghost" class="p-1" :disabled="indice === 0 || ocupado" @click="mover(indice, -1)" />
+              <IconButton icon="arrow" label="Mover después" tone="neutral" variant="ghost" class="p-1" :disabled="indice === imagenes.length - 1 || ocupado" @click="mover(indice, 1)" />
             </div>
             <div class="flex">
-              <IconButton v-if="!img.es_principal" icon="check" label="Marcar como principal" tone="action" class="p-1" :disabled="ocupado" @click="marcarPrincipal(img)" />
-              <IconButton icon="close" label="Eliminar imagen" tone="danger" has-popup="dialog" class="p-1" :disabled="ocupado" @click="porEliminar = img" />
+              <IconButton v-if="!img.es_principal" icon="check" label="Marcar como principal" tone="action" variant="ghost" class="p-1" :disabled="ocupado" @click="marcarPrincipal(img)" />
+              <IconButton icon="close" label="Eliminar imagen" tone="danger" variant="ghost" has-popup="dialog" class="p-1" :disabled="ocupado" @click="porEliminar = img" />
             </div>
           </div>
         </div>

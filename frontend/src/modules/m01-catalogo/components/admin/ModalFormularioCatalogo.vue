@@ -81,7 +81,7 @@
 
       <div class="flex justify-end gap-3 pt-2">
         <Button variant="neutral" :disabled="guardando" @click="cerrar">Cancelar</Button>
-        <Button type="submit" :variant="modo === 'crear' ? 'conversion' : 'action'" :disabled="guardando">
+        <Button type="submit" variant="action" :disabled="guardando">
           {{ guardando ? 'Guardando…' : modo === 'crear' ? 'Crear' : 'Guardar cambios' }}
         </Button>
       </div>

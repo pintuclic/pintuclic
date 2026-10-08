@@ -76,6 +76,11 @@
               <UsersIcon class="w-4 h-4 shrink-0" />
               Clientes
             </router-link>
+            <!-- M08 — Gestión de órdenes de venta (pendiente de aprobación, ver reporte de parada) -->
+            <router-link to="/admin/ordenes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+              <ClipboardListIcon class="w-4 h-4 shrink-0" />
+              Órdenes
+            </router-link>
             <router-link to="/admin/solicitudes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
               <BuildingIcon class="w-4 h-4 shrink-0" />
               Aprobación Empresas
@@ -105,35 +110,52 @@
             />
           </button>
 
-          <div v-show="catalogoAbierto && !isSidebarCollapsed" class="flex flex-col mt-1 mb-2 ml-4 pl-4 border-l border-subaction gap-1">
-            <router-link to="/admin/catalogo/productos" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <PackageIcon class="w-4 h-4 shrink-0" />
-              Productos
-            </router-link>
-            <router-link to="/admin/catalogo/variantes" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <LayersIcon class="w-4 h-4 shrink-0" />
-              Variantes
-            </router-link>
-            <router-link to="/admin/catalogo/categorias" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <LayoutGridIcon class="w-4 h-4 shrink-0" />
-              Categorías
-            </router-link>
-            <router-link to="/admin/catalogo/lineas" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <GitCommitIcon class="w-4 h-4 shrink-0" />
-              Líneas
-            </router-link>
-            <router-link to="/admin/catalogo/marcas" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <TagIcon class="w-4 h-4 shrink-0" />
-              Marcas
-            </router-link>
-            <router-link to="/admin/catalogo/colores" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <DropletIcon class="w-4 h-4 shrink-0" />
-              Colores
-            </router-link>
-            <router-link to="/admin/catalogo/busquedas-sin-resultado" class="flex items-center gap-3 rounded-button px-3 py-2 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
-              <SearchIcon class="w-4 h-4 shrink-0" />
-              Búsquedas
-            </router-link>
+          <div v-show="catalogoAbierto && !isSidebarCollapsed" class="flex flex-col mt-1 mb-2 ml-4 pl-3 border-l border-subaction gap-2">
+            <!-- Catálogo Central -->
+            <div class="flex flex-col gap-0.5">
+              <span class="px-3 pt-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-neutral-medium">
+                Catálogo Central
+              </span>
+              <router-link to="/admin/catalogo/productos" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+                <PackageIcon class="w-4 h-4 shrink-0" />
+                Productos
+              </router-link>
+              <router-link to="/admin/catalogo/variantes" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+                <LayersIcon class="w-4 h-4 shrink-0" />
+                Variantes
+              </router-link>
+              <router-link to="/admin/catalogo/categorias" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+                <LayoutGridIcon class="w-4 h-4 shrink-0" />
+                Categorías
+              </router-link>
+            </div>
+
+            <!-- Configuración y Tablas Maestras -->
+            <div class="flex flex-col gap-0.5 border-t border-subaction/60 pt-2">
+              <span class="px-3 pt-0.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-neutral-medium">
+                Configuración y Maestros
+              </span>
+              <router-link to="/admin/catalogo/marcas" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+                <TagIcon class="w-4 h-4 shrink-0" />
+                Marcas
+              </router-link>
+              <router-link to="/admin/catalogo/lineas" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+                <GitCommitIcon class="w-4 h-4 shrink-0" />
+                Líneas
+              </router-link>
+              <router-link to="/admin/catalogo/colores" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+                <DropletIcon class="w-4 h-4 shrink-0" />
+                Carta de Colores
+              </router-link>
+              <router-link to="/admin/catalogo/bases" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+                <PaintBucketIcon class="w-4 h-4 shrink-0" />
+                Bases Tintométricas
+              </router-link>
+              <router-link to="/admin/catalogo/configuracion" class="flex items-center gap-2.5 rounded-button px-3 py-1.5 text-sm font-medium text-corporate hover:bg-subaction hover:text-action transition-colors">
+                <SlidersIcon class="w-4 h-4 shrink-0" />
+                Resinas y Presentaciones
+              </router-link>
+            </div>
           </div>
         </div>
 
@@ -278,11 +300,13 @@ import {
   ChevronDown as ChevronDownIcon,
   LayoutDashboard as LayoutDashboardIcon,
   Package as PackageIcon,
+  ClipboardList as ClipboardListIcon,
   Layers as LayersIcon,
   LayoutGrid as LayoutGridIcon,
   Tag as TagIcon,
   Droplet as DropletIcon,
-  Search as SearchIcon,
+  PaintBucket as PaintBucketIcon,
+  Sliders as SlidersIcon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
   LogOut as LogOutIcon,

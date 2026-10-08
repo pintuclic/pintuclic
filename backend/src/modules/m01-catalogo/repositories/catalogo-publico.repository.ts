@@ -76,7 +76,9 @@ export class CatalogoPublicoRepository {
         's.id_subcategoria',
         's.nombre as subcategoria_nombre',
       ])
+      .orderBy('c.orden', 'asc')
       .orderBy('c.nombre', 'asc')
+      .orderBy('s.orden', 'asc')
       .orderBy('s.nombre', 'asc')
       .execute();
   }

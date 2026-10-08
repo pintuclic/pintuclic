@@ -80,13 +80,13 @@ export class EmpleadosService {
     const credencialTemporal = this.generarCredencialTemporal();
     const hashCredencial = await this.credencialesService.derivarContrasena(credencialTemporal);
 
-    // 3. Crear usuario (con id_rol nulo inicialmente)
+    // 3. Crear usuario (con id_rol nulo inicialmente para no violar fk_usuario_rol)
     const idUsuario = await this.empleadosRepo.crearEmpleado({
       nombre: datos.nombre,
       correo: datos.correo,
       ...(datos.telefono !== undefined && { telefono: datos.telefono }),
       contrasena_hash: hashCredencial,
-      id_rol: 0, // Se actualiza en el paso siguiente
+      id_rol: null,
     });
 
     // 4. Crear rol individual

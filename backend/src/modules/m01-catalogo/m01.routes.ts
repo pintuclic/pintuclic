@@ -263,7 +263,6 @@ catalogoRoutes.get(
 
 catalogoRoutes.get(
   '/marcas/:id/logotipo',
-  ...guardas.protegido('catalogo.ver'),
   (req, res, next) => { void marcasCtrl.obtenerLogotipo(req, res).catch(next); }
 );
 
@@ -596,7 +595,6 @@ catalogoRoutes.get(
 
 catalogoRoutes.get(
   '/imagenes/:id/contenido',
-  ...guardas.protegido('catalogo.ver'),
   (req, res, next) => { void imagenesCtrl.contenido(req, res).catch(next); }
 );
 

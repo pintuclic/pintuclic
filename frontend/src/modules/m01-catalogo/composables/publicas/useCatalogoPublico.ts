@@ -1,4 +1,4 @@
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, isRef, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { normalizarBusquedaCatalogoPublico } from '../../dtos/publicas/catalogo-publico.dto';
 import { CatalogoPublicoService, enriquecerProductosPublicos } from '../../services/publicas/catalogo-publico.service';
@@ -113,12 +113,13 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     void cargarProductos();
   }
 
-  function toggleFiltro(lista: typeof marcasSeleccionadas, id: number): void {
-    const idx = lista.value.indexOf(id);
+  function toggleFiltro(lista: Ref<number[]> | number[], id: number): void {
+    const arr = isRef(lista) ? lista.value : lista;
+    const idx = arr.indexOf(id);
     if (idx >= 0) {
-      lista.value.splice(idx, 1);
+      arr.splice(idx, 1);
     } else {
-      lista.value.push(id);
+      arr.push(id);
     }
     pagina.value = 1;
     actualizarUrlParams();

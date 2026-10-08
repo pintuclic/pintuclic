@@ -248,7 +248,7 @@ onMounted(load);
         v-if="compact"
         class="flex flex-col justify-end gap-3 border-t border-neutral-light pt-4 sm:flex-row"
       >
-        <Button variant="outline" @click="emit('close')">Cancelar</Button>
+        <Button variant="neutral" @click="emit('close')">Cancelar</Button>
         <Button
           v-if="isAdmin"
           :variant="person.estado === 'activo' ? 'danger' : 'conversion'"

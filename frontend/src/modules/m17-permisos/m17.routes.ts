@@ -4,7 +4,7 @@ export const m17Routes: RouteRecordRaw[] = [{
   path: '',
   component: () => import('./M17Shell.vue'),
   children: [
-        { path: "", component: () => import("./views/Dashboard.vue"), meta: { title: "Dashboard" } },
+        { path: "", alias: "dashboard", component: () => import("./views/Dashboard.vue"), meta: { title: "Dashboard" } },
         {
           path: "empleados", alias: "usuarios",
           component: () => import("./views/PeopleList.vue"),

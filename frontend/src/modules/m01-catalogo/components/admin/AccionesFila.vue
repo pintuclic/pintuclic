@@ -1,14 +1,13 @@
 <template>
-  <div class="flex items-center justify-end gap-1">
-    <IconButton v-if="ver" icon="eye" :label="`Ver ${nombre}`" tone="action" :to="ver" class="p-1.5" />
-    <IconButton v-if="editable" icon="edit" :label="`Editar ${nombre}`" tone="neutral" class="p-1.5" @click="emit('editar')" />
+  <div class="flex items-center justify-end gap-1.5">
+    <IconButton v-if="ver" icon="eye" :label="`Ver ${nombre}`" tone="action" :to="ver" />
+    <IconButton v-if="editable" icon="edit" :label="`Editar ${nombre}`" tone="neutral" @click="emit('editar')" />
     <IconButton
       v-if="activo"
       icon="power"
       :label="`Desactivar ${nombre}`"
       tone="danger"
       has-popup="dialog"
-      class="p-1.5"
       @click="emit('desactivar')"
     />
     <IconButton
@@ -17,7 +16,6 @@
       :label="`Reactivar ${nombre}`"
       tone="success"
       has-popup="dialog"
-      class="p-1.5"
       @click="emit('reactivar')"
     />
   </div>

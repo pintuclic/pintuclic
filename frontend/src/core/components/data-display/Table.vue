@@ -14,7 +14,7 @@
     <template v-else>
       <!-- Vista Desktop (Tabla real) -->
       <div class="hidden sm:block overflow-x-auto">
-        <table class="w-full text-left text-sm whitespace-nowrap">
+        <table class="w-full text-left text-sm">
           <thead class="text-xs uppercase bg-neutral-lightest text-corporate border-b border-neutral-light">
             <tr>
               <th
@@ -22,7 +22,7 @@
                 :key="col.key"
                 scope="col"
                 class="px-6 py-4 font-semibold"
-                :class="col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'"
+                :class="col.align === 'right' ? 'text-right whitespace-nowrap' : col.align === 'center' ? 'text-center' : 'text-left'"
               >
                 {{ col.label }}
               </th>
@@ -37,8 +37,8 @@
               <td
                 v-for="col in columns"
                 :key="col.key"
-                class="px-6 py-4 text-neutral-dark"
-                :class="col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'"
+                class="px-6 py-4 text-neutral-dark break-words"
+                :class="col.align === 'right' ? 'text-right whitespace-nowrap' : col.align === 'center' ? 'text-center' : 'text-left'"
               >
                 <slot :name="`cell-${col.key}`" :row="row">
                   {{ (row as any)[col.key] }}
@@ -69,7 +69,7 @@
 
       <div v-else class="sm:hidden overflow-x-auto">
         <!-- Fallback si no usan mobile-cards -->
-        <table class="w-full text-left text-sm whitespace-nowrap">
+        <table class="w-full text-left text-sm">
           <thead class="text-xs uppercase bg-neutral-lightest text-corporate border-b border-neutral-light">
             <tr>
               <th
@@ -77,7 +77,7 @@
                 :key="col.key"
                 scope="col"
                 class="px-4 py-3 font-semibold"
-                :class="col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'"
+                :class="col.align === 'right' ? 'text-right whitespace-nowrap' : col.align === 'center' ? 'text-center' : 'text-left'"
               >
                 {{ col.label }}
               </th>
@@ -92,8 +92,8 @@
               <td
                 v-for="col in columns"
                 :key="col.key"
-                class="px-4 py-3 text-neutral-dark"
-                :class="col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'"
+                class="px-4 py-3 text-neutral-dark break-words"
+                :class="col.align === 'right' ? 'text-right whitespace-nowrap' : col.align === 'center' ? 'text-center' : 'text-left'"
               >
                 <slot :name="`cell-${col.key}`" :row="row">
                   {{ (row as any)[col.key] }}

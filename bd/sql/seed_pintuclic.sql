@@ -252,7 +252,9 @@ INSERT INTO variante (id_variante, id_producto, id_presentacion, id_color, preci
     (28, 1, 1, 27, 95900.00, 20, 'activo'),
     (29, 1, 1, 28, 95900.00, 20, 'activo'),
     (30, 1, 1, 29, 95900.00, 20, 'activo'),
-    (31, 1, 1, 30, 95900.00, 20, 'activo')
+    (31, 1, 1, 30, 95900.00, 20, 'activo'),
+    (32, 1, 2, 1,  28900.00, 30, 'activo'),
+    (33, 1, 2, 2,  31900.00, 25, 'activo')
 ON CONFLICT (id_variante) DO NOTHING;
 
 -- 3.11 Características Técnicas

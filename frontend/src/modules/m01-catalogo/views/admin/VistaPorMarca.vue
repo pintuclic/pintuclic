@@ -1,12 +1,20 @@
 <template>
   <div class="font-sans">
+    <Button
+      v-if="marcaFija"
+      variant="text"
+      icon="back"
+      :to="{ name: 'M01Marcas' }"
+      class="mb-3 text-sm font-medium text-action hover:underline inline-flex items-center gap-1.5"
+    >
+      Volver a marcas
+    </Button>
+
     <PageHeader :title="titulo" :description="descripcion">
-      <Button v-if="marcaFija" variant="neutral" icon="back" :to="{ name: 'M01Marcas' }">Volver a marcas</Button>
       <Button
         v-if="recurso !== 'productos'"
-        variant="conversion"
+        variant="action"
         icon="plus"
-        :disabled="!idMarca"
         @click="crear"
       >
         {{ textoCrear }}
@@ -24,13 +32,20 @@
     />
 
     <div v-else class="mb-5 max-w-sm">
-      <Select v-model="marcaSeleccionada" label="Marca" :disabled="!taxonomias.cargado">
-        <option value="">Selecciona una marca…</option>
-        <option v-for="m in taxonomias.marcas" :key="m.id_marca" :value="m.id_marca">{{ m.nombre }}</option>
-      </Select>
+      <SearchableSelect
+        v-model="marcaSeleccionada"
+        label="Marca"
+        placeholder="Selecciona una marca…"
+        search-placeholder="Buscar marca…"
+        :options="opcionesMarcas"
+        :disabled="!taxonomias.cargado"
+      />
     </div>
 
     <Alert v-if="taxonomias.error" variant="danger" class="mb-5">{{ taxonomias.error }}</Alert>
+    <Alert v-if="avisoMarca && !idMarca" variant="warning" class="mb-5" dismissible @close="avisoMarca = false">
+      Selecciona primero la marca a la que pertenecerá el registro.
+    </Alert>
 
     <SinResultados
       v-if="!idMarca"
@@ -84,6 +99,9 @@
       @reintentar="bases.recargar"
     >
       <template #cell-nombre="{ row }"><span class="font-medium text-neutral-black">{{ row.nombre }}</span></template>
+      <template #cell-productos="{ row }">
+        <Button variant="action" size="sm" @click="baseProductos = row">Productos que la ofrecen</Button>
+      </template>
       <template #cell-estado="{ row }"><Badge :estado="row.estado" table /></template>
       <template #cell-acciones="{ row }">
         <AccionesFila
@@ -177,6 +195,8 @@
       :guardar="formulario.guardar"
       @guardado="recargarActual"
     />
+    <!-- HU-CAT-12 flujo 2: qué productos entonables se preparan sobre cada base. -->
+    <ModalProductosBase :model-value="baseProductos !== null" :base="baseProductos" @update:model-value="!$event && (baseProductos = null)" />
     <ModalDesactivar
       v-model="cicloVida.abierto"
       :nombre="cicloVida.nombre"
@@ -191,11 +211,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { Alert, Badge, Button, PageHeader, Select, SinResultados, Tabs } from '@/core/components';
+import { Alert, Badge, Button, PageHeader, SearchableSelect, Select, SinResultados, Tabs } from '@/core/components';
 import PanelListado from '../../components/admin/PanelListado.vue';
 import AccionesFila from '../../components/admin/AccionesFila.vue';
 import ModalFormularioCatalogo from '../../components/admin/ModalFormularioCatalogo.vue';
 import ModalDesactivar from '../../components/admin/ModalDesactivar.vue';
+import ModalProductosBase from '../../components/admin/ModalProductosBase.vue';
 import { useListado } from '../../composables/useListado';
 import { useEdicion } from '../../composables/useEdicion';
 import { FAMILIAS_CROMATICAS, familiaCromatica } from '../../composables/useColorCielab';
@@ -216,6 +237,14 @@ const marcaFija = computed(() => route.params.marcaId !== undefined);
 const recurso = ref<Recurso>((route.meta.recurso as Recurso | undefined) ?? 'lineas');
 const marcaSeleccionada = ref<number | string>(Number(route.query.marca) || '');
 
+const opcionesMarcas = computed(() => [
+  { value: '', label: 'Selecciona una marca…' },
+  ...taxonomias.marcas.map((m) => ({
+    value: m.id_marca,
+    label: m.nombre,
+  })),
+]);
+
 const idMarca = computed<number | null>(() => {
   const valor = marcaFija.value ? Number(route.params.marcaId) : Number(marcaSeleccionada.value);
   return Number.isInteger(valor) && valor > 0 ? valor : null;
@@ -223,6 +252,9 @@ const idMarca = computed<number | null>(() => {
 const nombreMarca = computed(() => (idMarca.value ? taxonomias.nombreMarca(idMarca.value) : ''));
 
 const familia = ref('');
+const baseProductos = ref<Base | null>(null);
+/** El botón «Nuevo…» siempre se ve activo; si falta la marca, se avisa en lugar de deshabilitarlo. */
+const avisoMarca = ref(false);
 const lineas = useListado(() => CatalogoAdmin.lineas.listarPorMarca(idMarca.value!), { texto: (l) => `${l.nombre} ${l.gama_comercial ?? ''}` });
 const bases = useListado(() => CatalogoAdmin.bases.listarPorMarca(idMarca.value!), { texto: (b) => b.nombre });
 const colores = useListado(() => CatalogoAdmin.colores.listarPorMarca(idMarca.value!), {
@@ -241,10 +273,10 @@ const pestanas = [
 ];
 
 const TEXTOS: Record<Recurso, { titulo: string; crear: string; descripcion: string }> = {
-  lineas: { titulo: 'Líneas comerciales', crear: 'Nueva línea', descripcion: 'Líneas de cada marca para agrupar productos y reglas comerciales (HU-CAT-11).' },
-  bases: { titulo: 'Bases', crear: 'Nueva base', descripcion: 'Bases sobre las que se preparan los colores entonados (HU-CAT-12).' },
-  colores: { titulo: 'Colores', crear: 'Nuevo color', descripcion: 'Carta de colores de cada marca con su valor CIELAB (HU-CAT-05).' },
-  productos: { titulo: 'Productos', crear: '', descripcion: 'Productos asociados a la marca (RF-CAT-04-01).' },
+  lineas: { titulo: 'Líneas comerciales', crear: 'Nueva línea', descripcion: 'Líneas de cada marca para agrupar productos y reglas comerciales.' },
+  bases: { titulo: 'Bases', crear: 'Nueva base', descripcion: 'Bases sobre las que se preparan los colores entonados.' },
+  colores: { titulo: 'Colores', crear: 'Nuevo color', descripcion: 'Carta de colores de cada marca con su valor CIELAB.' },
+  productos: { titulo: 'Productos', crear: '', descripcion: 'Productos asociados a la marca.' },
 };
 
 const titulo = computed(() => (marcaFija.value ? nombreMarca.value || 'Marca' : TEXTOS[recurso.value].titulo));
@@ -259,6 +291,7 @@ const columnasLineas = [
 ];
 const columnasBases = [
   { key: 'nombre', label: 'Base' },
+  { key: 'productos', label: 'Productos entonables' },
   { key: 'estado', label: 'Estado' },
   { key: 'acciones', label: 'Acciones', align: 'right' as const },
 ];
@@ -298,7 +331,11 @@ const esquemaActual = computed(() => {
 });
 
 function crear(): void {
-  if (!idMarca.value || recurso.value === 'productos') return;
+  if (recurso.value === 'productos') return;
+  if (!idMarca.value) {
+    avisoMarca.value = true;
+    return;
+  }
   const api = CatalogoAdmin[recurso.value];
   abrirFormulario({
     modo: 'crear',
