@@ -160,12 +160,25 @@
                   v-for="variante in presentaciones"
                   :key="variante.id_presentacion"
                   type="button"
-                  class="min-h-11 rounded-button border px-4 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:bg-action hover:text-white hover:shadow-sm active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-                  :class="varianteSeleccionada?.id_presentacion === variante.id_presentacion ? 'border-2 border-action bg-neutral-white text-action shadow-sm ring-1 ring-subaction' : 'border-neutral-light bg-neutral-white text-neutral-dark hover:border-action'"
+                  class="min-h-11 rounded-button border px-4 py-3 text-sm font-semibold transition-all active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action cursor-pointer"
+                  :class="varianteSeleccionada?.id_presentacion === variante.id_presentacion
+                    ? 'border-action bg-action text-white shadow-sm ring-2 ring-subaction'
+                    : 'border-neutral-light bg-neutral-white text-neutral-dark hover:border-action hover:bg-subaction/30 hover:text-action'"
                   @click="seleccionarPresentacion(variante.id_presentacion)"
                 >
                   {{ variante.presentacion }}
                 </button>
+              </div>
+
+              <!-- Rendimiento dinámico según la presentación seleccionada (RF-CAT-10-04, M01-16) -->
+              <div v-if="rendimientoEstimado" class="mt-3.5 rounded-card border border-neutral-light bg-neutral-lightest p-3 text-xs">
+                <div class="flex items-center gap-2 font-semibold text-corporate">
+                  <Sparkles :size="15" class="text-action shrink-0" />
+                  <span>Rendimiento estimado: {{ rendimientoEstimado.min }} a {{ rendimientoEstimado.max }} m²</span>
+                </div>
+                <p class="mt-1 text-[11px] leading-4 text-neutral-medium">
+                  Calculado a 2 manos para {{ rendimientoEstimado.presentacion }}. Puede variar según la porosidad y textura de la superficie.
+                </p>
               </div>
             </div>
 
@@ -367,6 +380,20 @@ const presentaciones = computed(() => {
     if (!unicas.has(variante.id_presentacion)) unicas.set(variante.id_presentacion, variante);
   }
   return Array.from(unicas.values());
+});
+
+const rendimientoEstimado = computed(() => {
+  if (!esPintura.value || !producto.value?.rendimiento_min || !producto.value?.rendimiento_max) return null;
+  const vol = Number(varianteSeleccionada.value?.volumen ?? 3.785);
+  // Un galón estándar en Pintu Clic equivale a 3.785 L (RF-CAT-10-04)
+  const factor = vol > 0 ? vol / 3.785 : 1.0;
+  const min = Math.round(producto.value.rendimiento_min * factor * 10) / 10;
+  const max = Math.round(producto.value.rendimiento_max * factor * 10) / 10;
+  return {
+    min,
+    max,
+    presentacion: varianteSeleccionada.value?.presentacion ?? 'esta presentación',
+  };
 });
 
 const galeria = computed(() => {

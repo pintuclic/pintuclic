@@ -29,8 +29,16 @@
           </div>
 
           <div class="mt-5 flex gap-5 overflow-x-auto border-b border-neutral-light text-xs font-semibold">
-            <button type="button" class="border-b-2 border-action px-1 pb-3 text-action">Todos</button>
-            <button v-for="familia in familiasPendientes" :key="familia" type="button" disabled class="cursor-not-allowed px-1 pb-3 text-neutral-medium opacity-50" title="Pendiente de clasificación en la API pública">{{ familia }}</button>
+            <button
+              v-for="familia in FAMILIAS_CROMATICAS"
+              :key="familia.id ?? 'todos'"
+              type="button"
+              class="border-b-2 px-1 pb-3 transition-colors cursor-pointer"
+              :class="familiaSeleccionada === familia.id ? 'border-action font-bold text-action' : 'border-transparent text-neutral-medium hover:text-corporate'"
+              @click="seleccionarFamilia(familia.id)"
+            >
+              {{ familia.etiqueta }}
+            </button>
           </div>
 
           <div class="mt-4 grid gap-4 lg:grid-cols-[1fr_220px]">
@@ -74,7 +82,7 @@
             </aside>
           </div>
 
-          <p class="mt-5 flex items-start gap-2 rounded-card bg-subaction px-4 py-3 text-xs text-corporate"><Info :size="15" class="mt-0.5 shrink-0" /> La navegación por familia, búsqueda por código y carga remota por página se activarán cuando el endpoint público de carta de colores esté disponible.</p>
+          <p class="mt-5 flex items-start gap-2 rounded-card bg-subaction/60 px-4 py-3 text-xs text-corporate"><Info :size="15" class="mt-0.5 shrink-0 text-action" /> Explora el abanico oficial navegando por familia cromática o usando el buscador para encontrar tonos exactos y combinaciones recomendadas.</p>
         </div>
       </section>
     </div>
@@ -99,7 +107,22 @@ const LIMITE_PAGINA = 36;
 const termino = ref('');
 const pagina = ref(1);
 const colorBorradorId = ref<number | null>(null);
-const familiasPendientes = ['Amarillos', 'Azules', 'Verdes', 'Rojos', 'Grises'] as const;
+
+const FAMILIAS_CROMATICAS = [
+  { id: null, etiqueta: 'Todos' },
+  { id: 'amarillos', etiqueta: 'Amarillos' },
+  { id: 'azules', etiqueta: 'Azules' },
+  { id: 'verdes', etiqueta: 'Verdes' },
+  { id: 'rojos', etiqueta: 'Rojos' },
+  { id: 'grises', etiqueta: 'Grises / Neutros' },
+] as const;
+
+const familiaSeleccionada = ref<string | null>(null);
+
+function seleccionarFamilia(id: string | null): void {
+  familiaSeleccionada.value = id;
+  pagina.value = 1;
+}
 
 const colores = computed(() => {
   const unicos = new Map<number, { idColor: number; nombre: string; codigo: string | null; muestraHex: string | null; familia: string | null; variantes: VariantePublica[] }>();
@@ -128,7 +151,13 @@ const colores = computed(() => {
 const coloresFiltrados = computed(() => {
   const { q } = normalizarBusquedaCatalogoPublico(termino.value);
   const consulta = normalizarTextoBusqueda(q);
-  return consulta ? colores.value.filter((color) => textoBusquedaColor(color).includes(consulta)) : colores.value;
+  let lista = colores.value;
+  if (familiaSeleccionada.value) {
+    lista = lista.filter(
+      (c) => c.familia?.toLowerCase() === familiaSeleccionada.value?.toLowerCase()
+    );
+  }
+  return consulta ? lista.filter((color) => textoBusquedaColor(color).includes(consulta)) : lista;
 });
 const totalPaginas = computed(() => Math.max(1, Math.ceil(coloresFiltrados.value.length / LIMITE_PAGINA)));
 const coloresPaginados = computed(() => coloresFiltrados.value.slice((pagina.value - 1) * LIMITE_PAGINA, pagina.value * LIMITE_PAGINA));
@@ -146,6 +175,7 @@ watch(() => props.abierta, (abierta) => {
   if (!abierta) return;
   termino.value = '';
   pagina.value = 1;
+  familiaSeleccionada.value = null;
   colorBorradorId.value = varianteActual.value?.id_color ?? colores.value[0]?.idColor ?? null;
 });
 watch(termino, () => { pagina.value = 1; });
