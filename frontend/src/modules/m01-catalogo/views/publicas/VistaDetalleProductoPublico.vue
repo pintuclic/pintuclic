@@ -77,7 +77,8 @@
             <!-- Vista 2: Galería Estándar de Envase / Producto -->
             <div v-else>
               <div class="grid aspect-[4/3] place-items-center overflow-hidden rounded-card bg-neutral-lightest p-5">
-                <img :src="imagenActiva" :alt="producto.nombre" class="h-full w-full object-contain" />
+                <img v-if="imagenActiva && !imagenConError" :src="imagenActiva" :alt="producto.nombre" class="h-full w-full object-contain" @error="imagenConError = true" />
+                <span v-else class="text-sm text-neutral-medium">Imagen no disponible</span>
               </div>
               <div class="mt-3 flex gap-3">
                 <button
@@ -109,7 +110,7 @@
                 <ChevronDown :size="17" class="text-neutral-medium transition-transform" :class="descripcionAbierta ? 'rotate-180' : ''" />
               </button>
               <p v-show="descripcionAbierta" class="mt-2 text-sm leading-6 text-neutral-medium">
-                {{ producto.descripcion || 'Producto de calidad para completar tu proyecto.' }}
+                {{ producto.descripcion || 'Descripción no disponible.' }}
               </p>
             </div>
 
@@ -276,7 +277,6 @@ import { computed, ref, toRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, Calculator, ChevronDown, CircleAlert, MapPin, PackageOpen, Palette, ShoppingCart, Sparkles, X } from 'lucide-vue-next';
 import { MuestraColor } from '@/core/components';
-import { GALERIA_PRODUCTO_DEMO, obtenerImagenPublicaRespaldo } from '../../assets/imagenes-catalogo';
 import CartaColoresProductoPublica from '../../components/publicas/CartaColoresProductoPublica.vue';
 import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPinturaPublica.vue';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
@@ -366,16 +366,10 @@ const presentaciones = computed(() => {
   return Array.from(unicas.values());
 });
 
-const galeria = computed(() => {
-  const remotas = producto.value?.imagenes.map((imagen) => imagen.contenido_url) ?? [];
-  if (remotas.length) return remotas;
-  if (producto.value?.clase_color === 'sin_color') {
-    return [obtenerImagenPublicaRespaldo(idProducto.value), GALERIA_PRODUCTO_DEMO.lateral, GALERIA_PRODUCTO_DEMO.ambiente];
-  }
-  return [GALERIA_PRODUCTO_DEMO.ambiente, obtenerImagenPublicaRespaldo(idProducto.value), GALERIA_PRODUCTO_DEMO.lateral];
-});
-
-const imagenActiva = computed(() => galeria.value[indiceGaleria.value] ?? obtenerImagenPublicaRespaldo(idProducto.value));
+const galeria = computed(() => producto.value?.imagenes.map((imagen) => imagen.contenido_url) ?? []);
+const imagenConError = ref(false);
+const imagenActiva = computed(() => galeria.value[indiceGaleria.value] ?? galeria.value[0] ?? null);
+watch(imagenActiva, () => { imagenConError.value = false; });
 
 const precioActual = computed(() =>
   varianteSeleccionada.value

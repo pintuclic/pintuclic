@@ -7,6 +7,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+
+## [v0.4.4.2] - 2026-10-06
+### M01 - Retiro de información de demostración del catálogo (Frontend)
+- Se eliminan 18 ilustraciones SVG de productos y marcas y el mapa de datos de demostración.
+- Tarjetas, ficha y calculadora muestran únicamente imágenes de la API o un estado de imagen no disponible.
+- Se retiran el descuento ficticio del 15 %, el precio anterior inventado y la muestra de color de respaldo.
+- Se corrige el tipado de los filtros desenvueltos por Vue y se elimina código sin uso de M01 para permitir la compilación.
+- Validación: build aprobado, lint de M01 sin errores/advertencias y 22/22 pruebas del módulo.
+- El lint global queda bloqueado por seis errores preexistentes en `m05-carrito-compras/preview/vite.config.mjs`; ese módulo no se modifica.
+- Walkthrough: [limpieza del catálogo](./walkthroughs/M01/walkthrough_v0.4.4.2_M01_eliminar_datos_prueba_frontend.md).
+
+---
 ## [v0.4.4.0] - 2026-10-02
 ### M05 - Carrito de compras: integración del backend en `develop` (Backend)
 - **Alcance General:** Incremento **Minior-feat (v0.4.4.0)**. Integra el backend del carrito de `feature/m05-carrito-compras`: el frontend de M05 (`v0.3.39.0`) llamaba a 10 endpoints `/api/carrito/*` que no existían en `develop`. Se monta `/carrito`, se renombra el módulo a `m05-carrito-compras` y se corrigen 4 defectos y 4 mejoras, sin cambiar la forma de las respuestas que consume el frontend.

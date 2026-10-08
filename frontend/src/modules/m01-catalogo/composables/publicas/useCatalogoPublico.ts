@@ -113,12 +113,12 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     void cargarProductos();
   }
 
-  function toggleFiltro(lista: typeof marcasSeleccionadas, id: number): void {
-    const idx = lista.value.indexOf(id);
+  function toggleFiltro(lista: number[], id: number): void {
+    const idx = lista.indexOf(id);
     if (idx >= 0) {
-      lista.value.splice(idx, 1);
+      lista.splice(idx, 1);
     } else {
-      lista.value.push(id);
+      lista.push(id);
     }
     pagina.value = 1;
     actualizarUrlParams();
