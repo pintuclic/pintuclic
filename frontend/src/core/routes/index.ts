@@ -34,9 +34,8 @@ export const routes: RouteRecordRaw[] = [
     name: 'Administracion',
     component: () => import('@/core/layouts/LayoutAdmin.vue'),
     children: [
-      { path: '', redirect: '/admin/catalogo' },
-      ...adminCatalogoRoutes,
       ...m17Routes,
+      ...adminCatalogoRoutes,
       // M08: gestión de órdenes del personal (pendiente de aprobación, ver reporte de parada)
       ...ordenesAdminRoutes,
       {
