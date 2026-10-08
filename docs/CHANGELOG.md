@@ -7,6 +7,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.6.2] - 2026-10-08
+### Core / M01 / M17 / M08 - Estandarización de botones de acción en recuadros y navegación de retorno textual (Frontend)
+- **Alcance General:** Incremento **Patch (v0.4.6.2)**. Estandarización global del componente `IconButton` con diseño en recuadro (`variant="boxed"` por defecto: 36x36px, bordes y tonos sutiles según estado) para acciones de tablas en clientes, empleados y catálogo, y reemplazo de botones de retorno por enlaces de texto nativos (`variant="text"` con flecha izquierda) en todas las vistas administrativas secundarias.
+- **Hitos Clave:**
+  - **Estandarización Global de `IconButton` (`src/core/components/buttons/IconButton.vue`):** Diseño unificado en recuadros de 36x36px con bordes suaves, fondo blanco, sombra ligera y colores semánticos por acción (`action` en azul suave para ver ficha/detalle, `neutral` en gris corporativo para edición, `danger` en rojo sutil para desactivar/bloquear, y `success` en verde para reactivar). Soporte de `variant="ghost"` para controles compactos en galerías.
+  - **Eliminación de Código Repetitivo en Tablas:** Limpieza de clases inline en `PeopleList.vue` y `AccionesFila.vue`; todas las tablas del panel administrativo consumen ahora el diseño uniforme de `IconButton` de forma centralizada sin duplicar Tailwind.
+  - **Navegación de Retorno Textual (`VistaCatalogosBase.vue` / `VistaPorMarca.vue` / `VistaDetalleOrdenAdmin.vue`):** Sustitución de botones de bloque gris por enlaces de texto elegantes con flecha (`← Volver a productos`, `← Volver a marcas`, `← Volver a la bandeja`) ubicados antes de la cabecera `PageHeader`, unificando el patrón de UX con `VistaProductoDetalle.vue` y `PersonDetail.vue`.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.6.2_M01_refinamiento_ux_admin_y_catalogo_frontend.md](./walkthroughs/M01/walkthrough_v0.4.6.2_M01_refinamiento_ux_admin_y_catalogo_frontend.md)
+
+---
 ## [v0.4.6.1] - 2026-10-08
 ### Core / M01 / M17 / M08 - Refinamiento de experiencia de usuario (UX), componentes globales con buscador y ergonomía de catálogo (Frontend)
 - **Alcance General:** Incremento **Patch (v0.4.6.1)**. Incorporación del componente global `SearchableSelect`, erradicación del doble tooltip flotante en favor de `title` nativo accesible, eliminación de barras de scroll horizontal espurias en `Table`, reorganización taxonómica de navegación en sidebar de administración, conversión de `ModalProductosBase` a `Drawer` con filtro en tiempo real, navegación de retorno en catálogos base y estandarización de variantes neutrales en botones de descarte/cancelación.

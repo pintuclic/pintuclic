@@ -225,7 +225,6 @@ function closeEmployeeDrawer() {
                 <!-- Ver ficha cliente / Detalle -->
                 <IconButton
                   v-if="!isEmployees"
-                  class="h-9 w-9 rounded-lg border border-neutral-light bg-neutral-white shadow-xs hover:border-action/40"
                   has-popup="dialog"
                   icon="eye"
                   tone="action"
@@ -237,8 +236,8 @@ function closeEmployeeDrawer() {
                 <!-- Editar empleado -->
                 <IconButton
                   v-if="isEmployees"
-                  class="h-9 w-9 rounded-lg border border-neutral-light bg-neutral-white shadow-xs hover:border-corporate/40"
                   icon="edit"
+                  tone="neutral"
                   has-popup="dialog"
                   :label="`Editar a ${p.nombre}`"
                   :title="`Editar a ${p.nombre}`"
@@ -248,7 +247,6 @@ function closeEmployeeDrawer() {
                 <!-- Permisos de empleado -->
                 <IconButton
                   v-if="isEmployees"
-                  class="h-9 w-9 rounded-lg border border-neutral-light bg-neutral-white shadow-xs hover:border-action/40"
                   :to="{ path: '/admin/permisos', query: { empleado: p.id_usuario } }"
                   icon="shield"
                   tone="action"
@@ -259,12 +257,6 @@ function closeEmployeeDrawer() {
                 <!-- Bloquear / Desactivar / Reactivar -->
                 <IconButton
                   v-if="isAdmin"
-                  class="h-9 w-9 rounded-lg border shadow-xs transition-all"
-                  :class="
-                    p.estado === 'activo'
-                      ? 'border-danger/30 bg-danger/5 hover:bg-danger/15 hover:border-danger'
-                      : 'border-conversion/30 bg-conversion/5 hover:bg-conversion/15 hover:border-conversion'
-                  "
                   icon="power"
                   :label="
                     isEmployees

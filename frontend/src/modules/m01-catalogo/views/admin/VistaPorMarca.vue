@@ -1,7 +1,16 @@
 <template>
   <div class="font-sans">
+    <Button
+      v-if="marcaFija"
+      variant="text"
+      icon="back"
+      :to="{ name: 'M01Marcas' }"
+      class="mb-3 text-sm font-medium text-action hover:underline inline-flex items-center gap-1.5"
+    >
+      Volver a marcas
+    </Button>
+
     <PageHeader :title="titulo" :description="descripcion">
-      <Button v-if="marcaFija" variant="neutral" icon="back" :to="{ name: 'M01Marcas' }">Volver a marcas</Button>
       <Button
         v-if="recurso !== 'productos'"
         variant="action"

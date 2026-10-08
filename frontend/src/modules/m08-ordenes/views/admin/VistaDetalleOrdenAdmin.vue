@@ -53,7 +53,7 @@
     <template v-else-if="orden">
       <RouterLink
         :to="{ name: 'AdminGestionOrdenes' }"
-        class="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-medium hover:text-action transition-colors mb-4"
+        class="inline-flex items-center gap-1.5 text-sm font-medium text-action hover:underline mb-3"
       >
         <ArrowLeftIcon class="w-4 h-4" />
         Volver a la bandeja

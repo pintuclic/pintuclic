@@ -1,10 +1,16 @@
 <template>
   <div class="font-sans">
+    <Button
+      variant="text"
+      icon="back"
+      to="/admin/catalogo/productos"
+      class="mb-3 text-sm font-medium text-action hover:underline inline-flex items-center gap-1.5"
+    >
+      Volver a productos
+    </Button>
+
     <PageHeader title="Resinas y presentaciones" description="Catálogos maestros administrables para tipos de resina y presentaciones de productos.">
-      <div class="flex items-center gap-3">
-        <Button variant="neutral" icon="back" to="/admin/catalogo/productos">Volver a Productos</Button>
-        <Button variant="action" icon="plus" @click="crear">{{ pestana === 'resinas' ? 'Nuevo tipo de resina' : 'Nueva presentación' }}</Button>
-      </div>
+      <Button variant="action" icon="plus" @click="crear">{{ pestana === 'resinas' ? 'Nuevo tipo de resina' : 'Nueva presentación' }}</Button>
     </PageHeader>
 
     <Tabs
