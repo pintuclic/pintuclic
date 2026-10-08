@@ -86,13 +86,18 @@ export class ColoresService {
     return this.aDetalle(actualizado);
   }
 
-  /** RF-CAT-05-01: cambio de estado. La cascada sobre variantes (RF-CAT-05-05) se difiere a HU-CAT-03. */
+  /**
+   * RF-CAT-05-05 / RF-CAT-09-02: desactiva el color y, en la misma transacción,
+   * las variantes activas de colores fijos que lo usan. En entonables el color
+   * solo sale de la carta (la consulta pública exige color activo) y las
+   * variantes de base no se tocan.
+   */
   async desactivar(id: number): Promise<ResultadoDesactivacion> {
     const color = await this.obtenerEntidad(id);
     if (color.estado === 'inactivo') {
       throw new AppError('El color ya está inactivo', 400, 'COLOR_YA_INACTIVO');
     }
-    await this.repo.cambiarEstado(id, 'inactivo');
+    await this.repo.desactivarConVariantesFijas(id);
     return { desactivado: true };
   }
 

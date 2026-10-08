@@ -1,4 +1,10 @@
-import { CatalogoPublicoRepository, FilaVariantePublica, FilaImagenPublica, FilaProductoResumenPublico } from '../repositories/catalogo-publico.repository';
+import {
+  CatalogoPublicoRepository,
+  FilaVariantePublica,
+  FilaImagenPublica,
+  FilaProductoResumenPublico,
+  ContenidoImagenPublica,
+} from '../repositories/catalogo-publico.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import {
   CategoriaPublica,
@@ -141,7 +147,21 @@ export class CatalogoPublicoService {
   }
 
   /**
-   * RF-CAT-08-02/03: hasta 4 productos complementarios, patrocinados primero.
+   * RF-CAT-06-01 / RF-CAT-07-03: contenido de una imagen para el visitante anónimo.
+   * Solo se entrega si su producto es públicamente elegible; la ruta
+   * administrativa /imagenes/:id/contenido sigue protegida por permiso.
+   */
+  async obtenerContenidoImagen(idImagen: number): Promise<ContenidoImagenPublica> {
+    const imagen = await this.repo.obtenerContenidoImagenPublica(idImagen);
+    if (!imagen) {
+      throw new AppError('Imagen no disponible', 404, 'IMAGEN_NO_DISPONIBLE');
+    }
+    return imagen;
+  }
+
+  /**
+   * RF-CAT-08-02/03 / CA-CAT-08-03: hasta 4 productos complementarios elegibles
+   * (con variante activa), patrocinados primero y el resto al azar.
    */
   async complementarios(idProducto: number): Promise<ProductoPublicoResumen[]> {
     const producto = await this.repo.obtenerProductoPublico(idProducto);
@@ -171,6 +191,11 @@ export class CatalogoPublicoService {
   }
 }
 
+/** Ruta pública (sin autenticación) del binario de una imagen de producto. */
+function urlImagenPublica(idImagen: number): string {
+  return `/api/catalogo/publico/imagenes/${idImagen}/contenido`;
+}
+
 function aProductoPublicoResumen(p: FilaProductoResumenPublico): ProductoPublicoResumen {
   return {
     id_producto: p.id_producto,
@@ -179,7 +204,7 @@ function aProductoPublicoResumen(p: FilaProductoResumenPublico): ProductoPublico
     marca: p.marca,
     clase_color: p.clase_color,
     precio_desde: p.precio_desde === null ? null : Number(p.precio_desde),
-    imagen_principal_url: p.id_imagen_principal ? `/api/catalogo/imagenes/${p.id_imagen_principal}/contenido` : null,
+    imagen_principal_url: p.id_imagen_principal ? urlImagenPublica(p.id_imagen_principal) : null,
     cantidad_colores: Number(p.cantidad_colores),
     patrocinado: p.patrocinado,
   };
@@ -222,6 +247,6 @@ function aImagenDetalle(i: FilaImagenPublica): ImagenDetalle {
     mime_type: i.mime_type,
     orden: i.orden,
     es_principal: i.es_principal,
-    contenido_url: `/api/catalogo/imagenes/${i.id_imagen}/contenido`,
+    contenido_url: urlImagenPublica(i.id_imagen),
   };
 }

@@ -128,6 +128,11 @@ catalogoRoutes.get(
   (req, res, next) => { void catalogoPublicoCtrl.complementarios(req, res).catch(next); }
 );
 
+catalogoRoutes.get(
+  '/publico/imagenes/:id/contenido',
+  (req, res, next) => { void catalogoPublicoCtrl.imagenContenido(req, res).catch(next); }
+);
+
 // -----------------------------------------------------------------------------
 // Rutas: Categorías (HU-CAT-01)
 // -----------------------------------------------------------------------------

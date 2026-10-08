@@ -104,7 +104,21 @@ export class ProductosRepository {
     return Number(fila?.total ?? 0);
   }
 
-  /** RF-CAT-09-03: imágenes del producto (aviso de impacto). */
+  /** RF-CAT-09-04: subcategorías activas del producto cuya categoría también está activa. */
+  async contarSubcategoriasActivas(idProducto: number): Promise<number> {
+    const fila = await this.db
+      .selectFrom('producto_subcategoria as ps')
+      .innerJoin('subcategorias as s', 's.id_subcategoria', 'ps.id_subcategoria')
+      .innerJoin('categoria as c', 'c.id_categoria', 's.id_categoria')
+      .select(({ fn }) => fn.countAll<string>().as('total'))
+      .where('ps.id_producto', '=', idProducto)
+      .where('s.estado', '=', 'activo')
+      .where('c.estado', '=', 'activo')
+      .executeTakeFirst();
+    return Number(fila?.total ?? 0);
+  }
+
+  /** RF-CAT-02-05 / RF-CAT-09-03: imágenes del producto (publicación y aviso de impacto). */
   async contarImagenes(idProducto: number): Promise<number> {
     const fila = await this.db
       .selectFrom('imagen')

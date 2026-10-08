@@ -211,6 +211,14 @@ async function ejecutarPruebasM01(): Promise<void> {
       const m = marcas.get(id);
       if (m) marcas.set(id, { ...m, estado });
     },
+    desactivarEnCascada: async (id: number) => {
+      const m = marcas.get(id);
+      if (m) marcas.set(id, { ...m, estado: 'inactivo' });
+      await mockLineasRepo.desactivarLineasDeMarca(id);
+      await mockBasesRepo.desactivarBasesDeMarca(id);
+      await mockColoresRepo.desactivarColoresDeMarca(id);
+      await mockProductosRepo.desactivarProductosDeMarca(id);
+    },
   };
 
   const mockLineasRepo = {
@@ -339,6 +347,15 @@ async function ejecutarPruebasM01(): Promise<void> {
       const c = colores.get(id);
       if (c) colores.set(id, { ...c, estado });
     },
+    desactivarConVariantesFijas: async (id: number) => {
+      const c = colores.get(id);
+      if (c) colores.set(id, { ...c, estado: 'inactivo' });
+      for (const v of variantes.values()) {
+        if (v.id_color === id && v.id_base === null && v.estado === 'activo') {
+          variantes.set(v.id_variante, { ...v, estado: 'inactivo' });
+        }
+      }
+    },
     desactivarColoresDeMarca: async (idMarca: number) => {
       for (const c of colores.values()) {
         if (c.id_marca === idMarca) colores.set(c.id_color, { ...c, estado: 'inactivo' });
@@ -427,6 +444,11 @@ async function ejecutarPruebasM01(): Promise<void> {
       const p = productos.get(id);
       if (p) productos.set(id, { ...p, publicado });
     },
+    contarSubcategoriasActivas: async (id: number) =>
+      (productoSubcats.get(id) ?? []).filter((subId) => {
+        const sub = subcategorias.get(subId);
+        return sub?.estado === 'activo' && categorias.get(sub.id_categoria)?.estado === 'activo';
+      }).length,
     contarVariantes: async (id: number) => varianteStats.get(id)?.total ?? 0,
     contarVariantesActivas: async (id: number) => varianteStats.get(id)?.activas ?? 0,
     contarImagenes: async (idProducto: number) =>
@@ -623,6 +645,9 @@ async function ejecutarPruebasM01(): Promise<void> {
     },
   };
 
+  const agregarImagenDePrueba = async (idProducto: number) =>
+    mockImagenesRepo.crear({ id_producto: idProducto, datos: Buffer.from('img'), mime_type: 'image/png' });
+
   // ----------------------------------------------------------------------------
   // Mock del repositorio de consulta pública (HU-CAT-06), calculado sobre los
   // mapas en memoria de las demás entidades.
@@ -686,6 +711,10 @@ async function ejecutarPruebasM01(): Promise<void> {
     },
     contarProductos: async (filtros: { idSubcategoria?: number; busqueda?: string }) => filtrarProductosPublicos(filtros).length,
     obtenerProductoPublico: async (id: number) => (esPublico(id) ? productos.get(id) : undefined),
+    obtenerContenidoImagenPublica: async (idImagen: number) => {
+      const i = imagenes.get(idImagen);
+      return i && esPublico(i.id_producto) ? { datos: i.datos, mime_type: i.mime_type } : undefined;
+    },
     complementariosPorCategoria: async (idCategoria: number, excluirId: number, limite: number) =>
       Array.from(productos.values())
         .filter((p) => esPublico(p.id_producto) && p.id_producto !== excluirId)
@@ -1225,14 +1254,28 @@ async function ejecutarPruebasM01(): Promise<void> {
       'RF-CAT-02-05: no publica un producto sin variante activa'
     );
 
+    await assertLanza(
+      () => productosService.publicar(vinilo.id_producto),
+      'RF-CAT-02-05: no publica un producto con variante activa pero sin imagen'
+    );
+
+    await agregarImagenDePrueba(vinilo.id_producto);
     const publicado = await productosService.publicar(vinilo.id_producto);
-    assert(publicado.publicado === true, 'RF-CAT-02-05: publica cuando hay variante activa (imagen diferida a HU-CAT-07)');
+    assert(publicado.publicado === true, 'RF-CAT-02-05: publica cuando hay variante activa e imagen');
 
     const desactivacionProducto = await productosService.desactivar(brocha.id_producto);
     assert('desactivado' in desactivacionProducto, 'RF-CAT-02-01: desactiva el producto');
 
+    const subcatsBrocha = productoSubcats.get(brocha.id_producto) ?? [];
+    productoSubcats.set(brocha.id_producto, []);
+    await assertLanza(
+      () => productosService.reactivar(brocha.id_producto),
+      'RF-CAT-09-04: no reactiva un producto sin subcategoría activa bajo categoría activa'
+    );
+    productoSubcats.set(brocha.id_producto, subcatsBrocha);
+
     const reactivacionProducto = await productosService.reactivar(brocha.id_producto);
-    assert('reactivado' in reactivacionProducto, 'RF-CAT-09-04: reactiva el producto con su marca activa');
+    assert('reactivado' in reactivacionProducto, 'RF-CAT-09-04: reactiva el producto con su marca y clasificación activas');
 
     const encontrados = await productosService.listar({ idMarca: comex.id_marca, busqueda: 'premium' });
     assert(
@@ -1618,6 +1661,8 @@ async function ejecutarPruebasM01(): Promise<void> {
     });
     varianteStats.set(prodComp1.id_producto, { total: 1, activas: 1 });
     varianteStats.set(prodComp2.id_producto, { total: 1, activas: 1 });
+    await agregarImagenDePrueba(prodComp1.id_producto);
+    await agregarImagenDePrueba(prodComp2.id_producto);
     await productosService.publicar(prodComp1.id_producto);
     await productosService.publicar(prodComp2.id_producto);
     await productosService.actualizar(prodComp2.id_producto, { patrocinado: true });
@@ -1655,11 +1700,48 @@ async function ejecutarPruebasM01(): Promise<void> {
       id_subcategorias: [interioresEsmaltes.id_subcategoria],
     });
     varianteStats.set(prodSinCat.id_producto, { total: 1, activas: 1 });
+    await agregarImagenDePrueba(prodSinCat.id_producto);
     await productosService.publicar(prodSinCat.id_producto);
     const compFallback = await catalogoPublicoService.complementarios(prodSinCat.id_producto);
     assert(
       compFallback.some((p) => p.id_producto === prodComp2.id_producto),
       'RF-CAT-08-02: sin categoría configurada, cae a productos patrocinados'
+    );
+
+    // --------------------------------------------------------------------------
+    // Correcciones del informe M01 (imágenes públicas y cascada de color)
+    // --------------------------------------------------------------------------
+    const imgPublica = await agregarImagenDePrueba(prodSinCat.id_producto);
+    const contenidoPublico = await catalogoPublicoService.obtenerContenidoImagen(imgPublica.id_imagen);
+    assert(
+      contenidoPublico.mime_type === 'image/png',
+      'RF-CAT-07-03: el visitante obtiene la imagen de un producto público sin autenticación'
+    );
+    const fichaConImagen = await catalogoPublicoService.obtenerFicha(prodSinCat.id_producto);
+    assert(
+      fichaConImagen.imagenes.every((i) => i.contenido_url.startsWith('/api/catalogo/publico/imagenes/')),
+      'RF-CAT-06-01: la ficha pública entrega URLs de imagen accesibles al visitante'
+    );
+    await productosService.despublicar(prodSinCat.id_producto);
+    await assertLanza(
+      () => catalogoPublicoService.obtenerContenidoImagen(imgPublica.id_imagen),
+      'RF-CAT-07-03: no entrega la imagen de un producto que dejó de ser público'
+    );
+
+    const colorCascada = await coloresService.crear(
+      { id_marca: comex.id_marca, nombre: 'Rojo Cascada', cielab: { l: 40, a: 60, b: 40 } }
+    );
+    const varFijaCascada = await mockVariantesRepo.crear({
+      id_producto: prodFijo.id_producto,
+      id_presentacion: 1,
+      id_color: colorCascada.id_color,
+      id_base: null,
+      precio_vigente: 1000,
+    });
+    await coloresService.desactivar(colorCascada.id_color);
+    assert(
+      variantes.get(varFijaCascada.id_variante)?.estado === 'inactivo',
+      'RF-CAT-05-05: desactivar un color desactiva sus variantes de colores fijos'
     );
 
     console.log(`\n======================================================`);

@@ -48,6 +48,23 @@ export class ColoresRepository {
     await this.db.updateTable('color').set({ estado }).where('id_color', '=', id).execute();
   }
 
+  /**
+   * RF-CAT-05-05: desactiva el color y sus variantes activas de colores fijos
+   * (variante con id_color y sin base) en una sola transacción.
+   */
+  async desactivarConVariantesFijas(id: number): Promise<void> {
+    await this.db.transaction().execute(async (trx) => {
+      await trx.updateTable('color').set({ estado: 'inactivo' }).where('id_color', '=', id).execute();
+      await trx
+        .updateTable('variante')
+        .set({ estado: 'inactivo' })
+        .where('id_color', '=', id)
+        .where('id_base', 'is', null)
+        .where('estado', '=', 'activo')
+        .execute();
+    });
+  }
+
   /** RF-CAT-04-03: desactiva en cascada todos los colores de una marca. */
   async desactivarColoresDeMarca(idMarca: number): Promise<void> {
     await this.db.updateTable('color').set({ estado: 'inactivo' }).where('id_marca', '=', idMarca).execute();

@@ -4,6 +4,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.35.11] - 2026-10-07
+### Módulo: M01 Catálogo de productos — correcciones backend del informe de faltantes
+- **Corregido:** publicar exige imagen (RF-CAT-02-05); impacto de categorías/subcategorías vía `producto_subcategoria` (RF-CAT-01-04); desactivar color desactiva sus variantes de colores fijos (RF-CAT-05-05); reactivar producto exige clasificación activa (RF-CAT-09-04).
+- **Corregido:** elegibilidad pública única con marca, línea, clasificación y variantes activas (RF-CAT-09-02); menú público con el orden administrado (RF-CAT-01-01); complementarios con variantes activas y selección al azar (CA-CAT-08-03).
+- **Añadido:** `GET /api/catalogo/publico/imagenes/:id/contenido` sin autenticación para productos públicos (RF-CAT-07-03); la ruta administrativa sigue protegida.
+- **Cambiado:** cascada de marca en una única transacción (RF-CAT-04-03); la advertencia de línea indica `reglas_integradas: false` (RF-CAT-11-03).
+- **Calidad:** 129 pruebas unitarias y 22 de integración contra PostgreSQL 15 (`m01.integracion.test.ts`, base aislada de pruebas) superadas; `tsc` y `eslint` limpios.
+- **Pendiente (requiere aprobación por tocar archivos compartidos):** permisos separados (M17/seed), reglas M06, campañas, combos, miniaturas, herencia de complementarios por categoría.
+- **Walkthrough:** [Correcciones backend del informe M01](./walkthroughs/M01/walkthrough_v3.35.11_M01_correcciones_informe_backend.md).
+
+---
+
 ## [v3.35.10] - 2026-09-23
 ### Integración: M01 Backend Catálogo Público con vistas públicas
 - **Alcance:** Resolución de conflictos de `feature/m01-backend-catalogo-publico` al incorporar `feature/m01-vistas-publicas`, preservando la estructura frontend pública y manteniendo el contrato backend de catálogo público.

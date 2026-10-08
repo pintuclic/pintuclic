@@ -1,9 +1,9 @@
-import { Kysely } from 'kysely';
-import { Database, Producto, Color, EnumClaseColor } from '../../../core/db/types';
+import { Kysely, ExpressionBuilder, Expression, SqlBool, sql } from 'kysely';
+import { Database, Producto, ProductoTable, Color, EnumClaseColor } from '../../../core/db/types';
 
 // ==============================================================================
 // M01 - REPOSITORIO DE CONSULTA PÚBLICA (HU-CAT-06)
-// Solo expone elementos activos y publicados (RF-CAT-09-02). Consultas de solo
+// Solo expone productos públicamente elegibles (productoElegible, RF-CAT-09-02). Consultas de solo
 // lectura con joins; el listado se pagina (RNF-CAT-06-01).
 // ==============================================================================
 
@@ -61,10 +61,80 @@ export interface FilaProductoResumenPublico {
   cantidad_colores: string | number;
   patrocinado: boolean;
 }
+export interface ContenidoImagenPublica {
+  datos: Buffer;
+  mime_type: string;
+}
+
+type EbProducto = ExpressionBuilder<Database & { p: ProductoTable }, 'p'>;
+
+/**
+ * RF-CAT-01-04 / RF-CAT-09-02: elegibilidad pública única de un producto. Además
+ * de estar activo y publicado, su marca y su línea (si tiene) deben estar
+ * activas, debe conservar al menos una subcategoría activa bajo una categoría
+ * activa y al menos una variante activa vendible. Se aplica igual en listado,
+ * ficha, categorías, carta, imágenes y complementarios.
+ */
+function productoElegible(eb: EbProducto): Expression<SqlBool> {
+  return eb.and([
+    eb('p.estado', '=', 'activo'),
+    eb('p.publicado', '=', true),
+    eb.exists(
+      eb
+        .selectFrom('marca as m')
+        .whereRef('m.id_marca', '=', 'p.id_marca')
+        .where('m.estado', '=', 'activo')
+        .select('m.id_marca')
+    ),
+    eb.or([
+      eb('p.id_linea', 'is', null),
+      eb.exists(
+        eb
+          .selectFrom('linea as l')
+          .whereRef('l.id_linea', '=', 'p.id_linea')
+          .where('l.estado', '=', 'activo')
+          .select('l.id_linea')
+      ),
+    ]),
+    eb.exists(
+      eb
+        .selectFrom('producto_subcategoria as pse')
+        .innerJoin('subcategorias as se', 'se.id_subcategoria', 'pse.id_subcategoria')
+        .innerJoin('categoria as ce', 'ce.id_categoria', 'se.id_categoria')
+        .whereRef('pse.id_producto', '=', 'p.id_producto')
+        .where('se.estado', '=', 'activo')
+        .where('ce.estado', '=', 'activo')
+        .select('pse.id_producto')
+    ),
+    eb.exists(
+      eb
+        .selectFrom('variante as ve')
+        .innerJoin('presentacion as pre', 'pre.id_presentacion', 've.id_presentacion')
+        .leftJoin('color as coe', 'coe.id_color', 've.id_color')
+        .leftJoin('base as bae', 'bae.id_base', 've.id_base')
+        .whereRef('ve.id_producto', '=', 'p.id_producto')
+        .where('ve.estado', '=', 'activo')
+        .where('pre.estado', '=', 'activo')
+        .where((e) => e.or([e('ve.id_color', 'is', null), e('coe.estado', '=', 'activo')]))
+        .where((e) => e.or([e('ve.id_base', 'is', null), e('bae.estado', '=', 'activo')]))
+        .select('ve.id_variante')
+    ),
+  ]);
+}
+
 export class CatalogoPublicoRepository {
   constructor(private readonly db: Kysely<Database>) {}
 
-  /** RF-CAT-06-02 / CA-CAT-06-04: categorías/subcategorías activas con al menos un producto activo+publicado. */
+  /** Subconsulta con los ids de productos públicamente elegibles. */
+  private idsElegibles() {
+    return this.db.selectFrom('producto as p').where(productoElegible).select('p.id_producto');
+  }
+
+  /**
+   * RF-CAT-06-02 / CA-CAT-06-04: categorías/subcategorías activas con al menos un
+   * producto elegible, en el orden administrado desde el panel (RF-CAT-01-01) con
+   * desempate estable por nombre e id.
+   */
   async listarCategoriasConProductos(): Promise<FilaCategoriaSubcategoria[]> {
     return this.db
       .selectFrom('subcategorias as s')
@@ -75,10 +145,8 @@ export class CatalogoPublicoRepository {
         eb.exists(
           eb
             .selectFrom('producto_subcategoria as ps')
-            .innerJoin('producto as p', 'p.id_producto', 'ps.id_producto')
             .whereRef('ps.id_subcategoria', '=', 's.id_subcategoria')
-            .where('p.estado', '=', 'activo')
-            .where('p.publicado', '=', true)
+            .where('ps.id_producto', 'in', this.idsElegibles())
             .select('ps.id_producto')
         )
       )
@@ -88,8 +156,12 @@ export class CatalogoPublicoRepository {
         's.id_subcategoria',
         's.nombre as subcategoria_nombre',
       ])
+      .orderBy('c.orden', 'asc')
       .orderBy('c.nombre', 'asc')
+      .orderBy('c.id_categoria', 'asc')
+      .orderBy('s.orden', 'asc')
       .orderBy('s.nombre', 'asc')
+      .orderBy('s.id_subcategoria', 'asc')
       .execute();
   }
 
@@ -172,17 +244,20 @@ export class CatalogoPublicoRepository {
     return Number(fila?.total ?? 0);
   }
 
-  /** CA-CAT-06-03: la ficha solo existe si el producto está activo y publicado. */
+  /** CA-CAT-06-03 / RF-CAT-09-02: la ficha solo existe si el producto es públicamente elegible. */
   async obtenerProductoPublico(id: number): Promise<Producto | undefined> {
     return this.db
-      .selectFrom('producto')
-      .selectAll()
-      .where('id_producto', '=', id)
-      .where('estado', '=', 'activo')
-      .where('publicado', '=', true)
+      .selectFrom('producto as p')
+      .selectAll('p')
+      .where('p.id_producto', '=', id)
+      .where(productoElegible)
       .executeTakeFirst();
   }
 
+  /**
+   * RF-CAT-09-02: variantes vendibles. Además de su propio estado, exige la
+   * presentación activa y, si la tienen, el color y la base activos.
+   */
   async listarVariantesPublicas(idProducto: number): Promise<FilaVariantePublica[]> {
     return this.db
       .selectFrom('variante as v')
@@ -191,6 +266,9 @@ export class CatalogoPublicoRepository {
       .leftJoin('base as ba', 'ba.id_base', 'v.id_base')
       .where('v.id_producto', '=', idProducto)
       .where('v.estado', '=', 'activo')
+      .where('pr.estado', '=', 'activo')
+      .where((eb) => eb.or([eb('v.id_color', 'is', null), eb('co.estado', '=', 'activo')]))
+      .where((eb) => eb.or([eb('v.id_base', 'is', null), eb('ba.estado', '=', 'activo')]))
       .select([
         'v.id_variante',
         'v.id_presentacion',
@@ -223,9 +301,12 @@ export class CatalogoPublicoRepository {
       query = query.where((eb) =>
         eb.exists(
           eb.selectFrom('variante as v')
+            .innerJoin('presentacion as pr', 'pr.id_presentacion', 'v.id_presentacion')
             .whereRef('v.id_color', '=', 'c.id_color')
             .where('v.id_producto', '=', idProducto)
             .where('v.estado', '=', 'activo')
+            .where('pr.estado', '=', 'activo')
+            .select('v.id_variante')
         )
       );
     } else if (claseColor === 'entonable') {
@@ -233,9 +314,12 @@ export class CatalogoPublicoRepository {
         eb.exists(
           eb.selectFrom('variante as v')
             .innerJoin('base as b', 'b.id_base', 'v.id_base')
+            .innerJoin('presentacion as pr', 'pr.id_presentacion', 'v.id_presentacion')
             .where('v.id_producto', '=', idProducto)
             .where('v.estado', '=', 'activo')
             .where('b.estado', '=', 'activo')
+            .where('pr.estado', '=', 'activo')
+            .select('v.id_variante')
         )
       );
     }
@@ -243,13 +327,15 @@ export class CatalogoPublicoRepository {
     return query.execute();
   }
 
-  /** RF-CAT-08-02: productos activos+publicados de una categoría, patrocinados primero, excluyendo uno. */
+  /**
+   * RF-CAT-08-02 / CA-CAT-08-03: productos elegibles de una categoría (bajo una
+   * subcategoría activa), patrocinados primero y el resto al azar, excluyendo uno.
+   */
   async complementariosPorCategoria(idCategoria: number, excluirId: number, limite: number): Promise<Producto[]> {
     return this.db
       .selectFrom('producto as p')
       .selectAll('p')
-      .where('p.estado', '=', 'activo')
-      .where('p.publicado', '=', true)
+      .where(productoElegible)
       .where('p.id_producto', '!=', excluirId)
       .where((eb) =>
         eb.exists(
@@ -258,25 +344,25 @@ export class CatalogoPublicoRepository {
             .innerJoin('subcategorias as s', 's.id_subcategoria', 'ps.id_subcategoria')
             .whereRef('ps.id_producto', '=', 'p.id_producto')
             .where('s.id_categoria', '=', idCategoria)
+            .where('s.estado', '=', 'activo')
             .select('ps.id_producto')
         )
       )
       .orderBy('p.patrocinado', 'desc')
-      .orderBy('p.nombre', 'asc')
+      .orderBy(sql`random()`)
       .limit(limite)
       .execute();
   }
 
-  /** RF-CAT-08-02 (fallback): productos patrocinados activos+publicados, excluyendo uno. */
+  /** RF-CAT-08-02 (fallback): productos patrocinados elegibles, al azar, excluyendo uno. */
   async patrocinados(excluirId: number, limite: number): Promise<Producto[]> {
     return this.db
-      .selectFrom('producto')
-      .selectAll()
-      .where('estado', '=', 'activo')
-      .where('publicado', '=', true)
-      .where('patrocinado', '=', true)
-      .where('id_producto', '!=', excluirId)
-      .orderBy('nombre', 'asc')
+      .selectFrom('producto as p')
+      .selectAll('p')
+      .where(productoElegible)
+      .where('p.patrocinado', '=', true)
+      .where('p.id_producto', '!=', excluirId)
+      .orderBy(sql`random()`)
       .limit(limite)
       .execute();
   }
@@ -291,11 +377,23 @@ export class CatalogoPublicoRepository {
       .execute();
   }
 
+  /**
+   * RF-CAT-06-01 / RF-CAT-07-03: binario de una imagen accesible al visitante
+   * solo si su producto es públicamente elegible.
+   */
+  async obtenerContenidoImagenPublica(idImagen: number): Promise<ContenidoImagenPublica | undefined> {
+    return this.db
+      .selectFrom('imagen as i')
+      .select(['i.datos', 'i.mime_type'])
+      .where('i.id_imagen', '=', idImagen)
+      .where('i.id_producto', 'in', this.idsElegibles())
+      .executeTakeFirst();
+  }
+
   private aplicarFiltros(filtros: FiltrosProductosPublicos) {
     let query = this.db
       .selectFrom('producto as p')
-      .where('p.estado', '=', 'activo')
-      .where('p.publicado', '=', true);
+      .where(productoElegible);
     if (filtros.ids && filtros.ids.length > 0) {
       query = query.where('p.id_producto', 'in', filtros.ids);
     }
@@ -305,8 +403,12 @@ export class CatalogoPublicoRepository {
         eb.exists(
           eb
             .selectFrom('producto_subcategoria as ps')
+            .innerJoin('subcategorias as s', 's.id_subcategoria', 'ps.id_subcategoria')
+            .innerJoin('categoria as c', 'c.id_categoria', 's.id_categoria')
             .whereRef('ps.id_producto', '=', 'p.id_producto')
             .where('ps.id_subcategoria', '=', idSub)
+            .where('s.estado', '=', 'activo')
+            .where('c.estado', '=', 'activo')
             .select('ps.id_producto')
         )
       );

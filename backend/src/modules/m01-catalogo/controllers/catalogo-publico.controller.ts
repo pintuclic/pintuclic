@@ -73,6 +73,18 @@ export class CatalogoPublicoController {
     sendSuccess(res, await this.service.obtenerColoresPaginados(validacionId.data.id, opciones));
   };
 
+  /** GET /catalogo/publico/imagenes/:id/contenido — binario, fuera del sobre JSON estándar. */
+  imagenContenido = async (req: Request, res: Response): Promise<void> => {
+    const validacionId = IdParamSchema.safeParse(req.params);
+    if (!validacionId.success) {
+      throw new AppError('Identificador inválido', 400, 'VALIDATION_ERROR', validacionId.error.issues);
+    }
+    const { datos, mime_type } = await this.service.obtenerContenidoImagen(validacionId.data.id);
+    res.setHeader('Content-Type', mime_type);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.send(datos);
+  };
+
   complementarios = async (req: Request, res: Response): Promise<void> => {
     const validacionId = IdParamSchema.safeParse(req.params);
     if (!validacionId.success) {

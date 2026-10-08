@@ -91,8 +91,9 @@ export class MarcasService {
    *
    * RF-CAT-04-03 / HU-CAT-09: la desactivación cascada a `linea`, `base`,
    * `color` y `producto` (esta última se cerró en HU-CAT-09, al existir ya
-   * `producto.id_marca` desde HU-CAT-02). El módulo de campañas aún no existe;
-   * su cascada queda pendiente de ese módulo.
+   * `producto.id_marca` desde HU-CAT-02). Todas las escrituras se ejecutan en
+   * una única transacción: si una falla no quedan cambios parciales. El módulo
+   * de campañas aún no existe; su cascada queda pendiente de ese módulo.
    */
   async desactivar(id: number): Promise<ResultadoDesactivacion> {
     const marca = await this.obtenerPorId(id);
@@ -100,11 +101,7 @@ export class MarcasService {
       throw new AppError('La marca ya está inactiva', 400, 'MARCA_YA_INACTIVA');
     }
 
-    await this.repo.cambiarEstado(id, 'inactivo');
-    await this.lineasRepo.desactivarLineasDeMarca(id);
-    await this.basesRepo.desactivarBasesDeMarca(id);
-    await this.coloresRepo.desactivarColoresDeMarca(id);
-    await this.productosRepo.desactivarProductosDeMarca(id);
+    await this.repo.desactivarEnCascada(id);
     return { desactivado: true };
   }
 

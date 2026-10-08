@@ -37,6 +37,8 @@ export interface ImpactoDesactivacion {
   readonly subcategorias_afectadas?: number;
   /** Reglas comerciales vigentes de M06 que dependen del elemento (RF-CAT-11-03). */
   readonly reglas_afectadas?: number;
+  /** false mientras M06 no exista: `reglas_afectadas` no es un conteo confirmado. */
+  readonly reglas_integradas?: boolean;
 }
 
 /** Confirmación de que la desactivación (o reactivación) se aplicó. */

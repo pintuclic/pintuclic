@@ -21,8 +21,6 @@ import {
 // la marca del producto; la clase no puede cambiarse si ya hay variantes.
 //
 // FUERA DE ALCANCE (documentado):
-// - Publicar exige, además de variante activa, al menos una imagen (RF-CAT-02-05):
-//   la validación de imagen depende de HU-CAT-07 (aún no existe) y queda diferida.
 // - La marca de un producto no es editable tras crearlo (evita romper la
 //   integridad línea/color de la marca); si el negocio lo requiere, se abordará
 //   como cambio aparte.
@@ -126,20 +124,22 @@ export class ProductosService {
     return this.aDetalle(actualizado);
   }
 
-  /**
-   * RF-CAT-02-05: publicar exige al menos una variante activa y una imagen.
-   * La exigencia de imagen queda diferida a HU-CAT-07 (aún no existe); aquí se
-   * valida la variante activa, que sí es construible hoy.
-   */
+  /** RF-CAT-02-05: publicar exige al menos una variante activa y al menos una imagen (HU-CAT-07). */
   async publicar(id: number): Promise<ProductoDetalle> {
     await this.obtenerEntidad(id);
-    const variantesActivas = await this.repo.contarVariantesActivas(id);
+    const [variantesActivas, imagenes] = await Promise.all([
+      this.repo.contarVariantesActivas(id),
+      this.repo.contarImagenes(id),
+    ]);
     if (variantesActivas < 1) {
       throw new AppError(
         'No se puede publicar: el producto no tiene ninguna variante activa',
         422,
         'PRODUCTO_SIN_VARIANTE_ACTIVA'
       );
+    }
+    if (imagenes < 1) {
+      throw new AppError('No se puede publicar: el producto no tiene ninguna imagen', 422, 'PRODUCTO_SIN_IMAGEN');
     }
     await this.repo.cambiarPublicado(id, true);
     return this.obtenerPorId(id);
@@ -170,7 +170,12 @@ export class ProductosService {
     return { requiere_confirmacion: true, variantes_afectadas: variantes, imagenes_afectadas: imagenes };
   }
 
-  /** RF-CAT-09-04: al reactivar, sus dependencias (marca, línea) deben estar activas. */
+  /**
+   * RF-CAT-09-04 / RF-CAT-01-04: al reactivar, sus dependencias (marca, línea) deben
+   * estar activas y debe conservar al menos una subcategoría activa bajo una
+   * categoría activa. Reactivar no publica: la visibilidad pública la decide la
+   * elegibilidad del catálogo público (publicado + dependencias activas).
+   */
   async reactivar(id: number): Promise<ResultadoReactivacion> {
     const producto = await this.obtenerEntidad(id);
     if (producto.estado === 'activo') {
@@ -186,6 +191,14 @@ export class ProductosService {
       if (linea?.estado !== 'activo') {
         throw new AppError('No se puede reactivar: la línea está inactiva', 400, 'LINEA_INACTIVA');
       }
+    }
+    const clasificacionesActivas = await this.repo.contarSubcategoriasActivas(id);
+    if (clasificacionesActivas < 1) {
+      throw new AppError(
+        'No se puede reactivar: el producto no tiene ninguna subcategoría activa bajo una categoría activa',
+        400,
+        'PRODUCTO_SIN_CLASIFICACION_ACTIVA'
+      );
     }
 
     await this.repo.cambiarEstado(id, 'activo');

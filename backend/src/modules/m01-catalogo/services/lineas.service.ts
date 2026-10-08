@@ -78,8 +78,9 @@ export class LineasService {
    * la desactiva (sin cascada: la desactivación de productos es responsabilidad
    * de HU-CAT-02/09, no de esta HU).
    *
-   * NOTA: el módulo M06 (Reglas y Descuentos) todavía no existe en el sistema,
-   * por lo que `reglas_afectadas` siempre reporta 0 hasta que se implemente.
+   * NOTA: el módulo M06 (Reglas y Descuentos) todavía no existe en el sistema.
+   * `reglas_afectadas` reporta 0 y `reglas_integradas: false` deja explícito
+   * que ese 0 no es un conteo confirmado sino una dependencia no integrada.
    */
   async solicitarDesactivacion(
     id: number,
@@ -92,7 +93,7 @@ export class LineasService {
 
     if (!confirmar) {
       const productos_afectados = await this.repo.contarProductosAfectados(id);
-      return { requiere_confirmacion: true, productos_afectados, reglas_afectadas: 0 };
+      return { requiere_confirmacion: true, productos_afectados, reglas_afectadas: 0, reglas_integradas: false };
     }
 
     await this.repo.cambiarEstado(id, 'inactivo');
