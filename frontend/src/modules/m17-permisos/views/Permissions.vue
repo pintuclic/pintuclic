@@ -314,35 +314,46 @@ onBeforeRouteLeave(
       </aside>
     </div>
     <section
-      class="mt-6 rounded-xl border border-neutral-light bg-neutral-white p-4 sm:p-6"
+      class="mt-8 rounded-xl border border-neutral-light bg-neutral-white p-5 sm:p-6 shadow-xs"
     >
-      <h2 class="font-title font-bold text-corporate">¿Quién tiene este permiso?</h2>
-      <p class="mt-2 text-sm text-neutral-medium">
-        Consulta los empleados con un acceso específico.
+      <div class="flex items-center gap-2.5 mb-1">
+        <span class="inline-flex items-center rounded-md bg-subaction/60 px-2 py-0.5 text-xs font-semibold text-action">
+          Auditoría de Accesos
+        </span>
+      </div>
+      <h2 class="font-title font-bold text-corporate text-lg">Búsqueda inversa: ¿Quién tiene este permiso?</h2>
+      <p class="mt-1 text-sm text-neutral-medium">
+        Herramienta de control interno para verificar qué miembros del equipo cuentan actualmente con un acceso específico en el sistema.
       </p>
       <Select
         v-model="inverse"
+        label="Permiso para consultar empleados"
         aria-label="Permiso para consultar empleados"
         class="mt-4 max-w-xl"
       >
-        <option value="">Seleccionar permiso</option>
+        <option value="">Seleccionar permiso…</option>
         <option v-for="p in state.catalog" :key="p.nombre" :value="p.nombre">
           {{ p.descripcion || p.nombre }}
         </option>
       </Select>
-      <p v-if="inverseBusy" class="mt-4 text-sm" role="status">
+      <p v-if="inverseBusy" class="mt-4 text-sm text-neutral-medium" role="status">
         Consultando accesos…
       </p>
-      <div v-else-if="inverse" class="mt-4 flex flex-wrap gap-2">
-        <span
-          v-for="name in holders"
-          :key="name"
-          class="rounded-lg bg-subaction/50 px-3 py-2 text-sm text-corporate"
-          >{{ name }}</span
-        >
-        <p v-if="!holders.length" class="text-sm text-neutral-medium">
-          Ningún empleado tiene este permiso asignado.
+      <div v-else-if="inverse" class="mt-4">
+        <p class="text-xs font-semibold uppercase tracking-wider text-neutral-medium mb-2">
+          Empleados con este acceso:
         </p>
+        <div class="flex flex-wrap gap-2">
+          <span
+            v-for="name in holders"
+            :key="name"
+            class="rounded-lg bg-subaction/50 px-3 py-2 text-sm font-medium text-corporate border border-subaction"
+            >{{ name }}</span
+          >
+          <p v-if="!holders.length" class="text-sm text-neutral-medium">
+            Ningún empleado tiene este permiso asignado.
+          </p>
+        </div>
       </div>
     </section></template
   ><Modal

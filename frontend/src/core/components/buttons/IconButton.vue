@@ -14,6 +14,7 @@
       }
     ]"
     :aria-label="label"
+    :title="label"
     :aria-haspopup="hasPopup"
     :disabled="disabled && tag === 'button'"
     @click="$emit('click', $event)"
