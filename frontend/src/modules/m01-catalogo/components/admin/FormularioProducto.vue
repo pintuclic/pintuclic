@@ -20,10 +20,15 @@
           <option value="">{{ valores.id_marca ? 'Sin línea' : 'Elige la marca primero' }}</option>
           <option v-for="l in lineas" :key="l.id_linea" :value="l.id_linea">{{ l.nombre }}</option>
         </Select>
-        <Select v-model="valores.id_tipo_resina" :label="esPintura ? 'Tipo de resina' : 'Tipo de resina (opcional)'" :error="errores.id_tipo_resina">
-          <option value="">Sin resina</option>
-          <option v-for="r in resinasActivas" :key="r.id_tipo_resina" :value="r.id_tipo_resina">{{ r.nombre }}</option>
-        </Select>
+        <div>
+          <Select v-model="valores.id_tipo_resina" :label="esPintura ? 'Tipo de resina química' : 'Tipo de resina química (opcional)'" :error="errores.id_tipo_resina">
+            <option value="">Sin resina</option>
+            <option v-for="r in resinasActivas" :key="r.id_tipo_resina" :value="r.id_tipo_resina">{{ r.nombre }}</option>
+          </Select>
+          <p class="mt-1 text-xs text-neutral-medium">
+            Vehículo químico (Base Agua / Aceite). No confundir con las bases de entonado.
+          </p>
+        </div>
       </div>
 
       <fieldset>

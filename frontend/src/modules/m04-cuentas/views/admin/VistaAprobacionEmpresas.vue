@@ -16,6 +16,10 @@
       </Button>
     </PageHeader>
 
+    <Alert v-if="toastMensaje" variant="success" class="mb-2" dismissible @close="toastMensaje = ''">
+      {{ toastMensaje }}
+    </Alert>
+
     <!-- Pestañas de Navegación del Panel (HU-CUE-09 / RF-CUE-09-07) -->
     <div class="flex border-b border-neutral-light gap-2">
       <button
@@ -411,6 +415,7 @@ import {
   FileText as FileTextIcon,
 } from 'lucide-vue-next';
 import {
+  Alert,
   PageHeader,
   Table,
   Badge,
@@ -424,6 +429,7 @@ import type {
   SolicitudActualizacionNit,
 } from '@/modules/m04-cuentas/interfaces/admin.interface';
 
+const toastMensaje = ref<string>('');
 const tabActiva = ref<'empresas' | 'nit'>('empresas');
 const loading = ref(false);
 const solicitudes = ref<SolicitudEmpresa[]>([]);
@@ -542,7 +548,12 @@ const dictaminarEmpresa = async (decision: 'aprobar' | 'rechazar') => {
       }
     );
     if (res.success) {
+      const nombreEmp = solEmpresaSeleccionada.value.nombre_empresa || 'Empresa';
       modalEmpresaAbierto.value = false;
+      toastMensaje.value = decision === 'aprobar'
+        ? `Solicitud de "${nombreEmp}" aprobada exitosamente. Se habilitaron las condiciones comerciales corporativas.`
+        : `Solicitud de "${nombreEmp}" rechazada. Se notificó la decisión al solicitante.`;
+      setTimeout(() => { toastMensaje.value = ''; }, 6000);
       await refrescarDatos();
     }
   } catch (error: unknown) {
@@ -609,7 +620,12 @@ const dictaminarNit = async (decision: 'aprobar' | 'rechazar') => {
       }
     );
     if (res.success) {
+      const nuevoNit = solNitSeleccionada.value.nit_nuevo;
       modalNitAbierto.value = false;
+      toastMensaje.value = decision === 'aprobar'
+        ? `Nuevo NIT "${nuevoNit}" aprobado exitosamente para la cuenta.`
+        : `Actualización de NIT "${nuevoNit}" rechazada.`;
+      setTimeout(() => { toastMensaje.value = ''; }, 6000);
       await refrescarDatos();
     }
   } catch (error: unknown) {

@@ -11,7 +11,7 @@
   <div>
     <PageHeader
       title="Gestión de órdenes"
-      description="Consulte y haga avanzar las órdenes de venta por su ciclo de estados (HU-ORD-05)."
+      description="Consulte y haga avanzar las órdenes de venta por su ciclo de estados."
     >
       <Button variant="outline" :disabled="cargando" @click="refrescar">
         <RefreshIcon class="w-4 h-4 mr-2" />

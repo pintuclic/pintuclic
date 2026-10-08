@@ -11,6 +11,7 @@ export { default as IconButton } from './buttons/IconButton.vue';
 export { default as Input } from './forms/Input.vue';
 export { default as Textarea } from './forms/Textarea.vue';
 export { default as Select } from './forms/Select.vue';
+export { default as SearchableSelect } from './forms/SearchableSelect.vue';
 export { default as Checkbox } from './forms/Checkbox.vue';
 export { default as Switch } from './forms/Switch.vue';
 export { default as GrupoOpciones } from './forms/GrupoOpciones.vue';

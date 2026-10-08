@@ -221,33 +221,53 @@ function closeEmployeeDrawer() {
             </template>
       <template #cell-estado="{ row: p }"><Badge :estado="p.estado" table /></template>
       <template #cell-acciones="{ row: p }">
-              <div class="flex justify-end gap-2">
-                <IconButton class="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
-                  v-if="isEmployees"
-                  icon="edit"
-                  has-popup="dialog"
-                  :label="`Editar a ${p.nombre}`"
-                  @click="editingEmployee = p.id_usuario"
-                />
-                <IconButton class="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
-                  v-else
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- Ver ficha cliente / Detalle -->
+                <IconButton
+                  v-if="!isEmployees"
                   has-popup="dialog"
                   icon="eye"
                   tone="action"
-                  :label="`Ver a ${p.nombre}`"
+                  :label="`Ver ficha de ${p.nombre}`"
+                  :title="`Ver ficha de ${p.nombre}`"
                   @click="viewingClient = p.id_usuario"
                 />
-                <IconButton class="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
+
+                <!-- Editar empleado -->
+                <IconButton
+                  v-if="isEmployees"
+                  icon="edit"
+                  tone="neutral"
+                  has-popup="dialog"
+                  :label="`Editar a ${p.nombre}`"
+                  :title="`Editar a ${p.nombre}`"
+                  @click="editingEmployee = p.id_usuario"
+                />
+
+                <!-- Permisos de empleado -->
+                <IconButton
                   v-if="isEmployees"
                   :to="{ path: '/admin/permisos', query: { empleado: p.id_usuario } }"
                   icon="shield"
                   tone="action"
-                  :label="`Permisos de ${p.nombre}`"
+                  :label="`Gestionar permisos de ${p.nombre}`"
+                  :title="`Gestionar permisos de ${p.nombre}`"
                 />
-                <IconButton class="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
+
+                <!-- Bloquear / Desactivar / Reactivar -->
+                <IconButton
                   v-if="isAdmin"
                   icon="power"
-                  :label="`${p.estado === 'activo' ? 'Desactivar' : 'Activar'} a ${p.nombre}`"
+                  :label="
+                    isEmployees
+                      ? (p.estado === 'activo' ? `Desactivar a ${p.nombre}` : `Reactivar a ${p.nombre}`)
+                      : (p.estado === 'activo' ? `Bloquear a ${p.nombre}` : `Reactivar a ${p.nombre}`)
+                  "
+                  :title="
+                    isEmployees
+                      ? (p.estado === 'activo' ? 'Desactivar empleado' : 'Reactivar empleado')
+                      : (p.estado === 'activo' ? 'Bloquear cliente' : 'Reactivar cliente')
+                  "
                   :tone="p.estado === 'activo' ? 'danger' : 'success'"
                   @click="selected = p"
                 />

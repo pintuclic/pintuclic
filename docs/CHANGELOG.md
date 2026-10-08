@@ -7,6 +7,60 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.6.3] - 2026-10-08
+### M01 - Estabilización de selección de presentaciones, rendimiento dinámico, familias del abanico y catálogo público (Fullstack)
+- **Alcance General:** Incremento **Patch (v0.4.6.3)**. Corrección de la persistencia visual de selección de tamaños/presentaciones en la ficha pública de producto, cálculo dinámico de rendimiento por presentación (`RF-CAT-10-04`), activación interactiva de familias cromáticas en la carta de colores/abanico (`M01-13`), orden administrado de categorías públicas en base de datos (`M01-14`) y apertura de streaming público de imágenes de producto y logotipos de marca (`M01-10`).
+- **Hitos Clave:**
+  - **Persistencia Visual en Selección de Presentación (`VistaDetalleProductoPublico.vue`):** Corrección del estado seleccionado del botón de tamaño (`Elige un tamaño`). Al hacer clic, el botón ahora mantiene permanentemente el fondo de acción azul corporativo (`bg-action`), texto blanco nítido (`text-white`) y anillo activo (`ring-2 ring-subaction`), eliminando la ambigüedad que existía al retirar el cursor tras el hover.
+  - **Rendimiento Dinámico por Presentación (`RF-CAT-10-04` / `M01-16`):** Incorporación de tarjeta informativa calculada en tiempo real según el volumen de la presentación seleccionada (`[min, max] * (volumen / 3.785)`) con nota visible de aproximación sobre rugosidad y porosidad de la superficie a 2 manos.
+  - **Familias Cromáticas en el Abanico / Carta de Colores (`CartaColoresProductoPublica.vue`):** Transformación de las pestañas cromáticas a controles plenamente interactivos. El usuario puede filtrar instantáneamente entre "Todos", "Amarillos", "Azules", "Verdes", "Rojos" y "Grises / Neutros", combinando el filtrado por familia con el buscador en tiempo real sobre los 30 tonos CIELAB reales sembrados en el sistema.
+  - **Orden de Categorías en Storefront Público (`catalogo-publico.repository.ts` / `M01-14`):** Ajuste en la consulta `listarCategoriasConProductos` para respetar el orden administrativo configurado (`c.orden ASC`, `c.nombre ASC`, `s.orden ASC`, `s.nombre ASC`) en lugar del orden alfabético simple.
+  - **Acceso Público a Contenido de Imágenes y Logotipos (`m01.routes.ts` / `M01-10`):** Desprotección de las rutas binarias `GET /marcas/:id/logotipo` y `GET /imagenes/:id/contenido` para permitir que visitantes y clientes anónimos carguen fluidamente los logotipos y las fotos de productos en la tienda pública sin requerir privilegios de empleado.
+  - **Identidad Visual y Favicon Oficial (`index.html` / `public/favicon.png` / `public/favicon.svg`):** Integración del favicon oficial a partir de `Pintu_Blanco.png` para máximo contraste y legibilidad, con depuración de archivos de plantilla obsoletos (`icons.svg` y `hero.png`).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.6.3_M01_estabilizacion_ficha_publica_y_carta_colores_frontend.md](./walkthroughs/M01/walkthrough_v0.4.6.3_M01_estabilizacion_ficha_publica_y_carta_colores_frontend.md)
+
+---
+## [v0.4.6.2] - 2026-10-08
+### Core / M01 / M17 / M08 - Estandarización de botones de acción en recuadros y navegación de retorno textual (Frontend)
+- **Alcance General:** Incremento **Patch (v0.4.6.2)**. Estandarización global del componente `IconButton` con diseño en recuadro (`variant="boxed"` por defecto: 36x36px, bordes y tonos sutiles según estado) para acciones de tablas en clientes, empleados y catálogo, y reemplazo de botones de retorno por enlaces de texto nativos (`variant="text"` con flecha izquierda) en todas las vistas administrativas secundarias.
+- **Hitos Clave:**
+  - **Estandarización Global de `IconButton` (`src/core/components/buttons/IconButton.vue`):** Diseño unificado en recuadros de 36x36px con bordes suaves, fondo blanco, sombra ligera y colores semánticos por acción (`action` en azul suave para ver ficha/detalle, `neutral` en gris corporativo para edición, `danger` en rojo sutil para desactivar/bloquear, y `success` en verde para reactivar). Soporte de `variant="ghost"` para controles compactos en galerías.
+  - **Eliminación de Código Repetitivo en Tablas:** Limpieza de clases inline en `PeopleList.vue` y `AccionesFila.vue`; todas las tablas del panel administrativo consumen ahora el diseño uniforme de `IconButton` de forma centralizada sin duplicar Tailwind.
+  - **Navegación de Retorno Textual (`VistaCatalogosBase.vue` / `VistaPorMarca.vue` / `VistaDetalleOrdenAdmin.vue`):** Sustitución de botones de bloque gris por enlaces de texto elegantes con flecha (`← Volver a productos`, `← Volver a marcas`, `← Volver a la bandeja`) ubicados antes de la cabecera `PageHeader`, unificando el patrón de UX con `VistaProductoDetalle.vue` y `PersonDetail.vue`.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.6.2_M01_refinamiento_ux_admin_y_catalogo_frontend.md](./walkthroughs/M01/walkthrough_v0.4.6.2_M01_refinamiento_ux_admin_y_catalogo_frontend.md)
+
+---
+## [v0.4.6.1] - 2026-10-08
+### Core / M01 / M17 / M08 - Refinamiento de experiencia de usuario (UX), componentes globales con buscador y ergonomía de catálogo (Frontend)
+- **Alcance General:** Incremento **Patch (v0.4.6.1)**. Incorporación del componente global `SearchableSelect`, erradicación del doble tooltip flotante en favor de `title` nativo accesible, eliminación de barras de scroll horizontal espurias en `Table`, reorganización taxonómica de navegación en sidebar de administración, conversión de `ModalProductosBase` a `Drawer` con filtro en tiempo real, navegación de retorno en catálogos base y estandarización de variantes neutrales en botones de descarte/cancelación.
+- **Hitos Clave:**
+  - **Componente Global `SearchableSelect` (`src/core/components/forms/SearchableSelect.vue`):** Selector reutilizable con buscador reactivo integrado, navegación de teclado, búsqueda insensible a tildes/mayúsculas y resaltado del ítem seleccionado. Integrado en `Permissions.vue` (selección de empleado y consulta inversa de permisos), `VistaVariantes.vue` (selección de producto) y `VistaPorMarca.vue` (selección de marca).
+  - **Accesibilidad y Tooltips (`IconButton.vue` / `PeopleList.vue`):** Eliminación del componente `<Tooltip>` visual flotante que provocaba duplicidad de letreros y desbordamiento horizontal en pantallas estrechas. Sustituido por el atributo HTML nativo `title` para señalización precisa y limpia en hover (`Bloquear acceso`, `Reactivar cliente`, `Ver ficha`, `Editar`).
+  - **Ajuste Ergonómico de Tablas (`Table.vue`):** Eliminación de `whitespace-nowrap` a nivel de elemento `<table>` para permitir wrap adaptativo (`break-words`) en celdas de texto extenso, reservando `whitespace-nowrap` exclusivamente para columnas de acciones alineadas a la derecha (`align="right"`).
+  - **Arquitectura de Navegación (`LayoutAdmin.vue` / `core/routes/index.ts`):** Reordenamiento de enlaces en el Catálogo Central a la secuencia natural de negocio: **Productos $\rightarrow$ Variantes $\rightarrow$ Categorías**. Adición de acceso directo a *Resinas y Presentaciones* en Maestros. Depuración de rutas y enlaces huérfanos a vistas no implementadas de búsquedas.
+  - **Drawer de Productos por Base (`ModalProductosBase.vue`):** Transformación de modal estático a `Drawer` lateral completo con filtro de búsqueda instantáneo en tiempo real, permitiendo gestionar catálogos amplios de productos entonables cómodamente sin restricciones de altura.
+  - **Navegación y Ergonomía de Catálogos Base (`VistaCatalogosBase.vue` / `VistaCategorias.vue`):** Inclusión de botón de retorno `← Volver a Productos`. Eliminación del prefijo redundante `+` en el botón de subcategoría (`[+] Subcategoría`).
+  - **Estandarización de Botones de Cancelar/Descartar:** Unificación del estilo visual en `variant="neutral"` (gris suave corporativo) en diálogos y formularios (`Configuration.vue`, `PersonDetail.vue`, `ModalCambiarEstado.vue`, `Permissions.vue`), garantizando que ningún botón de cancelación se muestre azul (`outline`).
+  - **Limpieza de Subtítulos Técnicos:** Retirada de identificadores de requisitos de desarrollo (`HU-CAT-01`, `HU-CAT-02`, `HU-CAT-03`, `HU-CAT-04`, `HU-ORD-05`) en `PageHeader` para presentar una interfaz 100% pulida y orientada al usuario final.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.6.1_M01_refinamiento_ux_admin_y_catalogo_frontend.md](./walkthroughs/M01/walkthrough_v0.4.6.1_M01_refinamiento_ux_admin_y_catalogo_frontend.md)
+
+---
+## [v0.4.6.0] - 2026-10-07
+### M17 / M01 / M08 / M04 - Estabilización de flujos de administración y reestructuración UX de catálogo (Fullstack)
+- **Alcance General:** Incremento **Minior-feat (v0.4.6.0)**. Corrección integral y estabilización de los flujos de administración, sincronización del esquema DDL v3.9 de base de datos en Docker (49 tablas), eliminación de fallos de creación de empleados, reactivación de clientes inactivos, restauración del Dashboard en `/admin` y rediseño jerárquico de Categorías en árbol acordeón.
+- **Hitos Clave:**
+  - **Base de Datos (Docker v3.9):** Regeneración limpia del volumen `pgdata` en Docker levantando las 49 tablas con columnas requeridas por el repositorio de órdenes (`codigo_solicitud`, `modo_entrega`, `historial_estado_orden`), erradicando el error 500 al consultar `/admin/ordenes`.
+  - **Creación de Empleados (M17):** Corrección en `empleados.service.ts` y `empleados.repository.ts`, sustituyendo `id_rol: 0` por `null`, erradicando la violación de clave foránea `fk_usuario_rol` en PostgreSQL.
+  - **Dashboard y Enrutador (Core / M17):** Eliminación de la redirección hardcodeada a catálogo en `index.ts`; `/admin` y el botón "Dashboard" cargan directamente `Dashboard.vue` con sus métricas.
+  - **Gestión de Clientes (M17):** Soporte en backend y modal frontend para reactivar clientes en estado `'inactivo'` (baja voluntaria de Habeas Data).
+  - **Aprobación de Empresas (M04):** Adición de notificación reactiva Alert/Toast de confirmación tras dictaminar empresas o solicitudes de actualización de NIT.
+  - **Catálogo y Categorías (M01 UX):** Rediseño de `VistaCategorias.vue` sustituyendo el patrón de 2 columnas por una vista jerárquica en árbol / acordeón que agrupa subcategorías anidadas con acciones contextuales. Clarificación en `FormularioProducto.vue` de Tipo de Resina Química (solvente) vs. Bases Tintométricas (máquina).
+  - **Tipado y Compilación:** Corrección de tipos en `useCatalogoPublico.ts` y variables no utilizadas en `VistaCatalogoPublico.vue`, logrando `npm run build` limpio y `npm run lint` 0/0.
+- 🔗 **Walkthroughs Técnicos Oficiales:**
+  - [walkthroughs/M17/walkthrough_v0.4.6.0_M17_estabilizacion_admin_backend.md](./walkthroughs/M17/walkthrough_v0.4.6.0_M17_estabilizacion_admin_backend.md)
+  - [walkthroughs/M01/walkthrough_v0.4.6.0_M01_reestructuracion_catalogo_ux_frontend.md](./walkthroughs/M01/walkthrough_v0.4.6.0_M01_reestructuracion_catalogo_ux_frontend.md)
+
+---
 ## [v0.4.5.1] - 2026-10-06
 ### M05 - Carrito de compras: integración de botones y enlaces de compra en storefront (Frontend)
 - **Alcance General:** Incremento **Patch (v0.4.5.1)**. Conexión de todos los botones de «Agregar al carrito» y navegación hacia el carrito en las pantallas públicas de catálogo, inicio, paleta de colores y el layout global.
