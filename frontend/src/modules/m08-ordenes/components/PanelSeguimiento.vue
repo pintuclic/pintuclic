@@ -19,6 +19,13 @@
       </p>
     </div>
 
+    <!-- Falló el servidor o la red: nunca un pedido de ejemplo, siempre reintentar -->
+    <EstadoErrorCarga
+      v-else-if="errorCarga"
+      titulo="No pudimos cargar tu pedido"
+      @reintentar="cargar"
+    />
+
     <div v-else-if="pedido" class="flex flex-col gap-4">
       <!--
         Dos columnas, como en el diseño «Seguimiento de Pedido»:
@@ -403,7 +410,8 @@ import {
   MessageCircle as MessageCircleIcon,
 } from 'lucide-vue-next';
 import { OrdenesService } from '../services/ordenes.service';
-import { DETALLE_MOCK } from '../services/ordenes.mock';
+import EstadoErrorCarga from './EstadoErrorCarga.vue';
+import { clasificarErrorCarga } from '../composables/clasificarErrorCarga';
 import {
   ESTADOS,
   secuenciaSegunEntrega,
@@ -429,6 +437,8 @@ const props = defineProps<{ codigo: string }>();
 const pedido = ref<DetallePedido | null>(null);
 const cargando = ref(false);
 const noEncontrado = ref(false);
+/** La consulta falló por el servidor o la red: se ofrece reintentar. */
+const errorCarga = ref(false);
 
 const presentacion = computed(() =>
   pedido.value ? ESTADOS[pedido.value.estado] : ESTADOS.orden_confirmada
@@ -502,18 +512,18 @@ const avisoEstado = computed(() => (pedido.value ? AVISOS[pedido.value.estado] :
 async function cargar(): Promise<void> {
   cargando.value = true;
   noEncontrado.value = false;
+  errorCarga.value = false;
   try {
     pedido.value = await OrdenesService.detalle(props.codigo);
   } catch (e: unknown) {
-    const err = e as { response?: { status?: number } };
-    const estado = err.response?.status;
-    // Con 401/403/404 NO se cae al mock: mostrar datos de ejemplo a quien perdió la
-    // sesión es peor que no mostrar nada. El mock solo cubre la caída del servidor.
-    if (estado === 404 || estado === 403 || estado === 401) {
-      noEncontrado.value = true;
-      pedido.value = null;
+    // Nunca se muestra un pedido de ejemplo: el cliente lo tomaría por suyo.
+    // 401/403/404 → «no encontrado», como hasta ahora (CA-SEG-03-06); servidor o red →
+    // error con opción de reintentar.
+    pedido.value = null;
+    if (clasificarErrorCarga(e) === 'servidor') {
+      errorCarga.value = true;
     } else {
-      pedido.value = DETALLE_MOCK;
+      noEncontrado.value = true;
     }
   } finally {
     cargando.value = false;

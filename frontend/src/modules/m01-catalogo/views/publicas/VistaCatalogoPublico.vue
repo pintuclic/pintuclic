@@ -312,7 +312,7 @@
               :producto="producto"
               :modo="vista"
               @ver="verProducto"
-              @agregar="mostrarMensaje('Agregar al carrito requiere M07.')"
+              @agregar="agregarAlCarrito"
             />
           </div>
           <div v-else class="rounded-card border border-neutral-light bg-neutral-white p-12 text-center shadow-sm">
@@ -390,6 +390,8 @@ import { Paginacion } from '@/core/components';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import { useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
+import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
+import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import fondoProyectoCalculadora from '../../assets/storefront/fondo-proyecto-calculadora.jpeg';
 
 type VistaCatalogo = 'grid' | 'lista';
@@ -398,6 +400,7 @@ const fondoCompletaProyecto = {
   backgroundImage: `url(${fondoProyectoCalculadora})`,
 };
 const router = useRouter();
+const cartStore = useCartStore();
 const menuCategoriasAbierto = ref(false);
 const filtrosMovilAbiertos = ref(false);
 const mensaje = ref<string | null>(null);
@@ -453,6 +456,39 @@ const seleccionActual = computed(() => {
 
 function mostrarMensaje(texto: string): void {
   mensaje.value = texto;
+}
+
+async function agregarAlCarrito(idProducto: number): Promise<void> {
+  const prod = productos.value.find((p) => p.id_producto === idProducto);
+  let variante = prod?.detalle?.variantes.find((v) => v.existencia_referencial > 0) ?? prod?.detalle?.variantes[0];
+
+  if (!variante) {
+    try {
+      const ficha = await CatalogoPublicoService.obtenerFicha(idProducto);
+      variante = ficha.variantes.find((v) => v.existencia_referencial > 0) ?? ficha.variantes[0];
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!variante) {
+    mostrarMensaje('No hay variantes disponibles para este producto.');
+    return;
+  }
+
+  await cartStore.addToCart({
+    id: variante.id_variante,
+    variantId: variante.id_variante,
+    name: prod?.nombre ?? 'Producto',
+    price: variante.precio_vigente,
+    image: prod?.detalle?.imagenes[0]?.contenido_url ?? '',
+  });
+
+  if (cartStore.error) {
+    mostrarMensaje(cartStore.error);
+  } else {
+    mostrarMensaje(`Se agregó "${prod?.nombre ?? 'el producto'}" al carrito.`);
+  }
 }
 
 function limpiarFiltros(): void {

@@ -42,10 +42,18 @@
       </RouterLink>
     </div>
 
+    <!-- Falló el servidor o la red: no es lo mismo que «no existe» y se puede reintentar -->
+    <EstadoErrorCarga
+      v-else-if="errorCarga"
+      titulo="No pudimos cargar la orden"
+      mensaje="Hubo un problema con el servidor o la conexión. La orden no se ha perdido: inténtalo de nuevo."
+      @reintentar="cargar"
+    />
+
     <template v-else-if="orden">
       <RouterLink
         :to="{ name: 'AdminGestionOrdenes' }"
-        class="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-medium hover:text-action transition-colors mb-4"
+        class="inline-flex items-center gap-1.5 text-sm font-medium text-action hover:underline mb-3"
       >
         <ArrowLeftIcon class="w-4 h-4" />
         Volver a la bandeja
@@ -61,7 +69,7 @@
         </Button>
       </PageHeader>
 
-      <Alert v-if="avisoExito" tone="success" class="mb-5">{{ avisoExito }}</Alert>
+      <Alert v-if="avisoExito" variant="success" class="mb-5">{{ avisoExito }}</Alert>
 
       <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] items-start">
         <!-- ================= Columna principal ================= -->
@@ -295,166 +303,192 @@
             </p>
           </section>
 
-          <!--
-            Compras anteriores del titular (HU-ORD-11). Se carga bajo demanda: en la
-            mayoría de consultas basta con la orden que se está atendiendo, y así no se
-            pide al servidor algo que nadie va a mirar.
-          -->
-          <section class="bg-white border border-neutral-light rounded-2xl p-5">
-            <h2 class="flex items-center gap-2 font-bold text-corporate mb-4">
-              <HistoryIcon class="w-4 h-4 text-action" />
-              Compras anteriores
-            </h2>
+          <!-- Bitácora y Gestión Operativa del Pedido (HU-ORD-10, HU-ORD-09, HU-ORD-11) agrupada en pestañas limpias -->
+          <section class="bg-white border border-neutral-light rounded-2xl p-5 shadow-xs">
+            <div class="border-b border-neutral-light pb-3 mb-4">
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  @click="tabOperativo = 'notas'"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  :class="tabOperativo === 'notas' ? 'bg-subaction text-action' : 'text-neutral-medium hover:text-corporate hover:bg-neutral-lightest'"
+                >
+                  <StickyNoteIcon class="w-3.5 h-3.5" />
+                  <span>Notas internas</span>
+                  <span v-if="orden.notas.length" class="ml-0.5 rounded-full bg-action/15 px-1.5 py-0.2 text-[10px] text-action font-bold">
+                    {{ orden.notas.length }}
+                  </span>
+                </button>
 
-            <Button
-              v-if="historial === null"
-              variant="outline"
-              :disabled="cargandoHistorial"
-              @click="verHistorial(1)"
-            >
-              {{ cargandoHistorial ? 'Consultando…' : 'Ver compras anteriores' }}
-            </Button>
+                <button
+                  type="button"
+                  @click="tabOperativo = 'contactos'"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  :class="tabOperativo === 'contactos' ? 'bg-subaction text-action' : 'text-neutral-medium hover:text-corporate hover:bg-neutral-lightest'"
+                >
+                  <PhoneIcon class="w-3.5 h-3.5" />
+                  <span>Contactos</span>
+                  <span v-if="orden.contactos.length" class="ml-0.5 rounded-full bg-action/15 px-1.5 py-0.2 text-[10px] text-action font-bold">
+                    {{ orden.contactos.length }}
+                  </span>
+                </button>
 
-            <p v-else-if="errorHistorial" class="text-neutral-medium text-sm">
-              {{ errorHistorial }}
-            </p>
-
-            <p v-else-if="!historial.items.length" class="text-neutral-medium text-sm">
-              Este cliente no tiene otros pedidos.
-            </p>
-
-            <div v-else class="flex flex-col gap-3">
-              <p class="text-neutral-medium text-xs">
-                {{ historial.total }}
-                {{ historial.total === 1 ? 'pedido más' : 'pedidos más' }} de este cliente,
-                sin contar el actual.
-              </p>
-              <ul class="flex flex-col gap-2">
-                <li v-for="o in historial.items" :key="o.codigo">
-                  <RouterLink
-                    :to="{ name: 'AdminDetalleOrden', params: { codigo: o.codigo } }"
-                    class="flex items-center justify-between gap-3 rounded-xl border border-neutral-light px-3.5 py-2.5 transition-colors hover:border-action"
-                  >
-                    <span class="min-w-0">
-                      <span class="block font-semibold text-action text-sm truncate">
-                        {{ o.codigo }}
-                      </span>
-                      <span class="block text-neutral-medium text-xs tabular-nums">
-                        {{ formatearFechaCorta(o.fecha) }}
-                      </span>
-                    </span>
-                    <span class="shrink-0 text-right">
-                      <span class="block font-semibold text-neutral-black text-sm tabular-nums">
-                        {{ formatearCOP(o.total) }}
-                      </span>
-                      <span
-                        class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold mt-0.5"
-                        :class="ESTADOS[o.estado].clases"
-                      >
-                        {{ ESTADOS[o.estado].etiqueta }}
-                      </span>
-                    </span>
-                  </RouterLink>
-                </li>
-              </ul>
-              <Button
-                v-if="historial.total_paginas > historial.pagina"
-                variant="outline"
-                :disabled="cargandoHistorial"
-                @click="verHistorial(historial.pagina + 1)"
-              >
-                {{ cargandoHistorial ? 'Consultando…' : 'Ver más' }}
-              </Button>
-            </div>
-          </section>
-
-          <!-- Notas internas (HU-ORD-10) -->
-          <section class="bg-white border border-neutral-light rounded-2xl p-5">
-            <h2 class="flex items-center gap-2 font-bold text-corporate mb-4">
-              <StickyNoteIcon class="w-4 h-4 text-action" />
-              Notas internas
-            </h2>
-
-            <p v-if="!orden.notas.length" class="text-neutral-medium text-sm mb-4">
-              Sin notas registradas.
-            </p>
-            <ul v-else class="flex flex-col gap-3 mb-4">
-              <li
-                v-for="(nota, i) in orden.notas"
-                :key="i"
-                class="rounded-xl bg-neutral-lightest px-3.5 py-3"
-              >
-                <p class="text-neutral-dark text-sm whitespace-pre-line">{{ nota.texto }}</p>
-                <p class="text-neutral-medium text-xs mt-1.5">
-                  {{ nota.autor }} · {{ formatearFechaHora(nota.fecha) }}
-                </p>
-              </li>
-            </ul>
-
-            <!--
-              Una nota no se puede editar ni borrar después (CA-ORD-10-03), así que el
-              texto de ayuda lo advierte antes de guardar.
-            -->
-            <div class="border-t border-neutral-lightest pt-4 flex flex-col gap-2">
-              <Textarea
-                v-model="textoNota"
-                label="Añadir una nota"
-                rows="3"
-                :maxlength="LIMITE_NOTA"
-                placeholder="Qué pasó con este pedido…"
-                :error="errorNota"
-              />
-              <div class="flex items-center justify-between gap-3 flex-wrap">
-                <span class="text-xs text-neutral-medium">
-                  Queda registrada con tu nombre y no se puede modificar después.
-                </span>
-                <Button variant="primary" :disabled="guardandoNota" @click="guardarNota">
-                  {{ guardandoNota ? 'Guardando…' : 'Guardar nota' }}
-                </Button>
+                <button
+                  type="button"
+                  @click="tabOperativo = 'compras'"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  :class="tabOperativo === 'compras' ? 'bg-subaction text-action' : 'text-neutral-medium hover:text-corporate hover:bg-neutral-lightest'"
+                >
+                  <HistoryIcon class="w-3.5 h-3.5" />
+                  <span>Historial de compras</span>
+                </button>
               </div>
             </div>
-          </section>
 
-          <!-- Contactos con el cliente (CA-ORD-09-03) -->
-          <section class="bg-white border border-neutral-light rounded-2xl p-5">
-            <h2 class="flex items-center gap-2 font-bold text-corporate mb-4">
-              <PhoneIcon class="w-4 h-4 text-action" />
-              Contactos registrados
-            </h2>
+            <!-- Panel Notas internas (HU-ORD-10) -->
+            <div v-show="tabOperativo === 'notas'">
+              <p v-if="!orden.notas.length" class="text-neutral-medium text-xs mb-4">
+                Sin notas internas registradas para esta orden.
+              </p>
+              <ul v-else class="flex flex-col gap-2.5 mb-4 max-h-60 overflow-y-auto pr-1">
+                <li
+                  v-for="(nota, i) in orden.notas"
+                  :key="i"
+                  class="rounded-xl bg-neutral-lightest px-3 py-2.5 border border-neutral-light/50"
+                >
+                  <p class="text-neutral-dark text-xs whitespace-pre-line leading-relaxed">{{ nota.texto }}</p>
+                  <p class="text-neutral-medium text-[11px] mt-1.5">
+                    {{ nota.autor }} · {{ formatearFechaHora(nota.fecha) }}
+                  </p>
+                </li>
+              </ul>
 
-            <p v-if="!orden.contactos.length" class="text-neutral-medium text-sm mb-4">
-              Todavía no se ha contactado al cliente desde esta orden.
-            </p>
-            <ul v-else class="flex flex-col gap-3 mb-4">
-              <li v-for="(contacto, i) in orden.contactos" :key="i" class="text-sm">
-                <p class="font-semibold text-neutral-black">
-                  {{ ETIQUETA_MEDIO[contacto.medio as MedioContacto] ?? contacto.medio }}
-                </p>
-                <p v-if="contacto.detalle" class="text-neutral-dark text-xs mt-0.5">
-                  {{ contacto.detalle }}
-                </p>
-                <p class="text-neutral-medium text-xs mt-0.5">
-                  {{ contacto.autor }} · {{ formatearFechaHora(contacto.fecha) }}
-                </p>
-              </li>
-            </ul>
+              <div class="border-t border-neutral-lightest pt-3.5 flex flex-col gap-2">
+                <Textarea
+                  v-model="textoNota"
+                  label="Añadir nota interna"
+                  rows="2"
+                  :maxlength="LIMITE_NOTA"
+                  placeholder="Observaciones de taller o preparación…"
+                  :error="errorNota"
+                />
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                  <span class="text-[11px] text-neutral-medium">
+                    Inmutable tras guardar.
+                  </span>
+                  <Button variant="primary" :disabled="guardandoNota" @click="guardarNota">
+                    {{ guardandoNota ? 'Guardando…' : 'Guardar nota' }}
+                  </Button>
+                </div>
+              </div>
+            </div>
 
-            <div class="border-t border-neutral-lightest pt-4 flex flex-col gap-3">
-              <Select v-model="medioContacto" label="Registrar un contacto">
-                <option v-for="m in MEDIOS_CONTACTO" :key="m" :value="m">
-                  {{ ETIQUETA_MEDIO[m] }}
-                </option>
-              </Select>
-              <Input
-                v-model="detalleContacto"
-                label="Detalle (opcional)"
-                :maxlength="LIMITE_DETALLE"
-                placeholder="Qué se le dijo al cliente…"
-                :error="errorContacto"
-              />
-              <div class="flex justify-end">
-                <Button variant="primary" :disabled="guardandoContacto" @click="guardarContacto">
-                  {{ guardandoContacto ? 'Registrando…' : 'Registrar contacto' }}
+            <!-- Panel Contactos registrados (CA-ORD-09-03) -->
+            <div v-show="tabOperativo === 'contactos'">
+              <p v-if="!orden.contactos.length" class="text-neutral-medium text-xs mb-4">
+                No se ha registrado contacto previo con el cliente desde esta orden.
+              </p>
+              <ul v-else class="flex flex-col gap-2.5 mb-4 max-h-60 overflow-y-auto pr-1">
+                <li
+                  v-for="(contacto, i) in orden.contactos"
+                  :key="i"
+                  class="rounded-xl bg-neutral-lightest px-3 py-2.5 border border-neutral-light/50 text-xs"
+                >
+                  <p class="font-semibold text-neutral-black">
+                    {{ ETIQUETA_MEDIO[contacto.medio as MedioContacto] ?? contacto.medio }}
+                  </p>
+                  <p v-if="contacto.detalle" class="text-neutral-dark text-xs mt-0.5">
+                    {{ contacto.detalle }}
+                  </p>
+                  <p class="text-neutral-medium text-[11px] mt-1">
+                    {{ contacto.autor }} · {{ formatearFechaHora(contacto.fecha) }}
+                  </p>
+                </li>
+              </ul>
+
+              <div class="border-t border-neutral-lightest pt-3.5 flex flex-col gap-2.5">
+                <Select v-model="medioContacto" label="Medio de contacto">
+                  <option v-for="m in MEDIOS_CONTACTO" :key="m" :value="m">
+                    {{ ETIQUETA_MEDIO[m] }}
+                  </option>
+                </Select>
+                <Input
+                  v-model="detalleContacto"
+                  label="Detalle del contacto (opcional)"
+                  :maxlength="LIMITE_DETALLE"
+                  placeholder="Acuerdo o novedad conversada…"
+                  :error="errorContacto"
+                />
+                <div class="flex justify-end">
+                  <Button variant="primary" :disabled="guardandoContacto" @click="guardarContacto">
+                    {{ guardandoContacto ? 'Registrando…' : 'Registrar contacto' }}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel Compras anteriores (HU-ORD-11) -->
+            <div v-show="tabOperativo === 'compras'">
+              <div v-if="historial === null" class="py-2 text-center">
+                <p class="text-xs text-neutral-medium mb-3">
+                  Consulta otros pedidos que este cliente haya realizado previamente.
+                </p>
+                <Button
+                  variant="outline"
+                  :disabled="cargandoHistorial"
+                  @click="verHistorial(1)"
+                >
+                  {{ cargandoHistorial ? 'Consultando…' : 'Cargar compras anteriores' }}
+                </Button>
+              </div>
+
+              <p v-else-if="errorHistorial" class="text-neutral-medium text-xs">
+                {{ errorHistorial }}
+              </p>
+
+              <p v-else-if="!historial.items.length" class="text-neutral-medium text-xs py-2">
+                Este cliente no tiene otras órdenes registradas en el sistema.
+              </p>
+
+              <div v-else class="flex flex-col gap-2.5">
+                <p class="text-neutral-medium text-[11px]">
+                  {{ historial.total }} {{ historial.total === 1 ? 'pedido previo' : 'pedidos previos' }} encontrados:
+                </p>
+                <ul class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+                  <li v-for="o in historial.items" :key="o.codigo">
+                    <RouterLink
+                      :to="{ name: 'AdminDetalleOrden', params: { codigo: o.codigo } }"
+                      class="flex items-center justify-between gap-2.5 rounded-lg border border-neutral-light px-3 py-2 text-xs transition-colors hover:border-action bg-neutral-white hover:bg-neutral-lightest"
+                    >
+                      <span class="min-w-0">
+                        <span class="block font-semibold text-action truncate">
+                          {{ o.codigo }}
+                        </span>
+                        <span class="block text-neutral-medium text-[11px] tabular-nums">
+                          {{ formatearFechaCorta(o.fecha) }}
+                        </span>
+                      </span>
+                      <span class="shrink-0 text-right">
+                        <span class="block font-semibold text-neutral-black tabular-nums">
+                          {{ formatearCOP(o.total) }}
+                        </span>
+                        <span
+                          class="inline-flex items-center rounded-full px-1.5 py-0.2 text-[10px] font-semibold mt-0.5"
+                          :class="ESTADOS[o.estado].clases"
+                        >
+                          {{ ESTADOS[o.estado].etiqueta }}
+                        </span>
+                      </span>
+                    </RouterLink>
+                  </li>
+                </ul>
+                <Button
+                  v-if="historial.total_paginas > historial.pagina"
+                  variant="outline"
+                  :disabled="cargandoHistorial"
+                  @click="verHistorial(historial.pagina + 1)"
+                >
+                  {{ cargandoHistorial ? 'Consultando…' : 'Ver más pedidos' }}
                 </Button>
               </div>
             </div>
@@ -487,6 +521,8 @@ import {
 } from 'lucide-vue-next';
 import { Alert, Button, Input, PageHeader, Select, Textarea } from '@/core/components';
 import ModalCambiarEstado from '../../components/admin/ModalCambiarEstado.vue';
+import EstadoErrorCarga from '../../components/EstadoErrorCarga.vue';
+import { clasificarErrorCarga } from '../../composables/clasificarErrorCarga';
 import {
   ContactoDto,
   ETIQUETA_MEDIO,
@@ -518,8 +554,11 @@ const orden = ref<DetalleOrdenGestion | null>(null);
 const cargando = ref(false);
 const noEncontrado = ref(false);
 const sesionExpirada = ref(false);
+/** Falló el servidor o la red: se muestra como error, nunca como «no encontrada». */
+const errorCarga = ref(false);
 const modalAbierto = ref(false);
 const avisoExito = ref('');
+const tabOperativo = ref<'notas' | 'contactos' | 'compras'>('notas');
 
 // --- Compras anteriores del cliente (HU-ORD-11) ---
 const historial = ref<PaginaOrdenesGestion | null>(null);
@@ -621,16 +660,19 @@ async function cargar(): Promise<void> {
   cargando.value = true;
   noEncontrado.value = false;
   sesionExpirada.value = false;
+  errorCarga.value = false;
   try {
     orden.value = await OrdenesService.detalleGestion(props.codigo);
   } catch (e: unknown) {
-    const err = e as { response?: { status?: number } };
     orden.value = null;
     // 401 es sesión caducada, NO un recurso inexistente: confundirlos haría creer
-    // al personal que la orden desapareció. En cambio 403 y 404 sí se muestran
-    // igual, para no confirmar la existencia del recurso (CA-SEG-03-06).
-    sesionExpirada.value = err.response?.status === 401;
-    noEncontrado.value = !sesionExpirada.value;
+    // al personal que la orden desapareció. 403 y 404 se muestran igual, para no
+    // confirmar la existencia del recurso (CA-SEG-03-06). Un 5xx o un fallo de red
+    // tampoco es «no encontrada»: es un error que se puede reintentar.
+    const tipo = clasificarErrorCarga(e);
+    sesionExpirada.value = tipo === 'sesion';
+    noEncontrado.value = tipo === 'no_encontrado';
+    errorCarga.value = tipo === 'servidor';
   } finally {
     cargando.value = false;
   }

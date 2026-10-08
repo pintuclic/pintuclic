@@ -85,7 +85,7 @@
           :error="errorMotivo"
         />
 
-        <Alert v-if="error" tone="danger">{{ error }}</Alert>
+        <Alert v-if="error" variant="danger">{{ error }}</Alert>
       </template>
 
       <!--
@@ -93,7 +93,7 @@
         slot por defecto, no tiene uno de pie.
       -->
       <div class="flex flex-wrap justify-end gap-3 border-t border-neutral-lightest pt-5">
-        <Button variant="outline" :disabled="guardando" @click="cerrar">Cancelar</Button>
+        <Button variant="neutral" :disabled="guardando" @click="cerrar">Cancelar</Button>
         <Button
           v-if="transiciones.length"
           variant="primary"

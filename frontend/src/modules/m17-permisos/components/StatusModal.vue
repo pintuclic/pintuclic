@@ -15,15 +15,15 @@ const reason = ref("");
 const busy = ref(false);
 const error = ref("");
 const active = computed(() => props.person.estado === "activo");
-const action = computed(() =>
-  props.kind === "empleados"
-    ? active.value
-      ? "Desactivar"
-      : "Reactivar"
-    : active.value
-      ? "Bloquear"
-      : "Desbloquear",
-);
+const action = computed(() => {
+  if (props.kind === "empleados") {
+    return active.value ? "Desactivar" : "Reactivar";
+  }
+  if (props.person.estado === "inactivo") {
+    return "Reactivar";
+  }
+  return active.value ? "Bloquear" : "Desbloquear";
+});
 async function save() {
   busy.value = true;
   error.value = "";
@@ -55,7 +55,9 @@ async function save() {
         {{
           active
             ? "Se impedirá el acceso a la cuenta. Su información e historial se conservan."
-            : "La cuenta volverá a estar activa."
+            : person.estado === "inactivo"
+              ? "La cuenta dada de baja volverá a estar activa y habilitada para operar."
+              : "La cuenta volverá a estar activa."
         }}
       </p>
       <Textarea v-if="active" label="Motivo *"

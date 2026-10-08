@@ -11,7 +11,7 @@
   <div>
     <PageHeader
       title="Gestión de órdenes"
-      description="Consulte y haga avanzar las órdenes de venta por su ciclo de estados (HU-ORD-05)."
+      description="Consulte y haga avanzar las órdenes de venta por su ciclo de estados."
     >
       <Button variant="outline" :disabled="cargando" @click="refrescar">
         <RefreshIcon class="w-4 h-4 mr-2" />
@@ -52,7 +52,15 @@
       </button>
     </div>
 
-    <Alert v-if="error" tone="danger" class="mb-5">{{ error }}</Alert>
+    <Alert v-if="error" variant="danger" class="mb-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span>{{ error }}</span>
+        <!-- 401 y 403 no se arreglan reintentando; un fallo del servidor o de red, sí. -->
+        <Button v-if="errorReintentable" variant="outline" size="sm" :disabled="cargando" @click="refrescar">
+          Reintentar
+        </Button>
+      </div>
+    </Alert>
 
     <!-- Un solo panel: filtros arriba, listado debajo, separados por una línea. -->
     <div class="bg-white border border-neutral-light rounded-2xl overflow-hidden">
@@ -207,6 +215,7 @@ import { Alert, Button, Input, Paginacion, PageHeader, Select, Table } from '@/c
 import type { TableColumn } from '@/core/components';
 import { ESTADOS, MODO_ENTREGA, formatearCOP, formatearFechaCorta } from '../../dtos/estado-pedido.dto';
 import { OrdenesService } from '../../services/ordenes.service';
+import { clasificarErrorCarga } from '../../composables/clasificarErrorCarga';
 import type {
   EstadoOrden,
   FiltrosGestion,
@@ -260,6 +269,8 @@ const pagina = ref(1);
 const limite = ref(LIMITE);
 const cargando = ref(false);
 const error = ref('');
+/** Solo un fallo del servidor o de red se resuelve reintentando (no un 401/403). */
+const errorReintentable = ref(false);
 
 /**
  * Campo único para el contacto del cliente. Si contiene «@» se envía como correo;
@@ -278,6 +289,7 @@ const filtros = reactive<FiltrosGestion>({
 async function cargar(): Promise<void> {
   cargando.value = true;
   error.value = '';
+  errorReintentable.value = false;
   try {
     const texto = contacto.value.trim();
     const resultado = await OrdenesService.listarGestion({
@@ -292,6 +304,7 @@ async function cargar(): Promise<void> {
     limite.value = resultado.limite;
   } catch (e: unknown) {
     const err = e as { response?: { status?: number; data?: { error?: { message?: string } } } };
+    errorReintentable.value = clasificarErrorCarga(e) === 'servidor';
     error.value =
       err.response?.status === 401
         ? 'Tu sesión expiró. Vuelve a iniciar sesión para consultar las órdenes.'

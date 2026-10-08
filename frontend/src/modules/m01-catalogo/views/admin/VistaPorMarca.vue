@@ -1,7 +1,16 @@
 <template>
   <div class="font-sans">
+    <Button
+      v-if="marcaFija"
+      variant="text"
+      icon="back"
+      :to="{ name: 'M01Marcas' }"
+      class="mb-3 text-sm font-medium text-action hover:underline inline-flex items-center gap-1.5"
+    >
+      Volver a marcas
+    </Button>
+
     <PageHeader :title="titulo" :description="descripcion">
-      <Button v-if="marcaFija" variant="neutral" icon="back" :to="{ name: 'M01Marcas' }">Volver a marcas</Button>
       <Button
         v-if="recurso !== 'productos'"
         variant="action"
@@ -23,10 +32,14 @@
     />
 
     <div v-else class="mb-5 max-w-sm">
-      <Select v-model="marcaSeleccionada" label="Marca" :disabled="!taxonomias.cargado">
-        <option value="">Selecciona una marca…</option>
-        <option v-for="m in taxonomias.marcas" :key="m.id_marca" :value="m.id_marca">{{ m.nombre }}</option>
-      </Select>
+      <SearchableSelect
+        v-model="marcaSeleccionada"
+        label="Marca"
+        placeholder="Selecciona una marca…"
+        search-placeholder="Buscar marca…"
+        :options="opcionesMarcas"
+        :disabled="!taxonomias.cargado"
+      />
     </div>
 
     <Alert v-if="taxonomias.error" variant="danger" class="mb-5">{{ taxonomias.error }}</Alert>
@@ -198,7 +211,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
-import { Alert, Badge, Button, PageHeader, Select, SinResultados, Tabs } from '@/core/components';
+import { Alert, Badge, Button, PageHeader, SearchableSelect, Select, SinResultados, Tabs } from '@/core/components';
 import PanelListado from '../../components/admin/PanelListado.vue';
 import AccionesFila from '../../components/admin/AccionesFila.vue';
 import ModalFormularioCatalogo from '../../components/admin/ModalFormularioCatalogo.vue';
@@ -223,6 +236,14 @@ const { formulario, cicloVida, abrirFormulario, abrirDesactivar, abrirReactivar 
 const marcaFija = computed(() => route.params.marcaId !== undefined);
 const recurso = ref<Recurso>((route.meta.recurso as Recurso | undefined) ?? 'lineas');
 const marcaSeleccionada = ref<number | string>(Number(route.query.marca) || '');
+
+const opcionesMarcas = computed(() => [
+  { value: '', label: 'Selecciona una marca…' },
+  ...taxonomias.marcas.map((m) => ({
+    value: m.id_marca,
+    label: m.nombre,
+  })),
+]);
 
 const idMarca = computed<number | null>(() => {
   const valor = marcaFija.value ? Number(route.params.marcaId) : Number(marcaSeleccionada.value);
@@ -252,10 +273,10 @@ const pestanas = [
 ];
 
 const TEXTOS: Record<Recurso, { titulo: string; crear: string; descripcion: string }> = {
-  lineas: { titulo: 'Líneas comerciales', crear: 'Nueva línea', descripcion: 'Líneas de cada marca para agrupar productos y reglas comerciales (HU-CAT-11).' },
-  bases: { titulo: 'Bases', crear: 'Nueva base', descripcion: 'Bases sobre las que se preparan los colores entonados (HU-CAT-12).' },
-  colores: { titulo: 'Colores', crear: 'Nuevo color', descripcion: 'Carta de colores de cada marca con su valor CIELAB (HU-CAT-05).' },
-  productos: { titulo: 'Productos', crear: '', descripcion: 'Productos asociados a la marca (RF-CAT-04-01).' },
+  lineas: { titulo: 'Líneas comerciales', crear: 'Nueva línea', descripcion: 'Líneas de cada marca para agrupar productos y reglas comerciales.' },
+  bases: { titulo: 'Bases', crear: 'Nueva base', descripcion: 'Bases sobre las que se preparan los colores entonados.' },
+  colores: { titulo: 'Colores', crear: 'Nuevo color', descripcion: 'Carta de colores de cada marca con su valor CIELAB.' },
+  productos: { titulo: 'Productos', crear: '', descripcion: 'Productos asociados a la marca.' },
 };
 
 const titulo = computed(() => (marcaFija.value ? nombreMarca.value || 'Marca' : TEXTOS[recurso.value].titulo));

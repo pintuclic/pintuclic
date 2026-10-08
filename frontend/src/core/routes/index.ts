@@ -34,9 +34,8 @@ export const routes: RouteRecordRaw[] = [
     name: 'Administracion',
     component: () => import('@/core/layouts/LayoutAdmin.vue'),
     children: [
-      { path: '', redirect: '/admin/catalogo' },
-      ...adminCatalogoRoutes,
       ...m17Routes,
+      ...adminCatalogoRoutes,
       // M08: gestión de órdenes del personal (pendiente de aprobación, ver reporte de parada)
       ...ordenesAdminRoutes,
       {
@@ -48,12 +47,6 @@ export const routes: RouteRecordRaw[] = [
           ),
       },
     ],
-  },
-
-  // Redirección directa para búsquedas del catálogo administrativo
-  {
-    path: '/admin/catalogo/busquedas',
-    redirect: '/admin/catalogo/busquedas-sin-resultado',
   },
 
   // 3. Layout de Acceso / Auth independiente (fullscreen si aplica)

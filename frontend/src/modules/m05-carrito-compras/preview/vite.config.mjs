@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, URL } from 'node:url'
 
 const frontendDirectory = fileURLToPath(new URL('../../../../', import.meta.url))
 const sourceDirectory = fileURLToPath(new URL('../../../', import.meta.url))

@@ -42,22 +42,6 @@
 
         <FiltrosPedidos v-model="filtro" />
 
-        <!-- Avisos -->
-        <div
-          v-if="usandoMock"
-          class="flex items-start gap-2 rounded-xl bg-highlight/15 px-4 py-3 text-sm text-corporate"
-        >
-          <AlertIcon class="w-4 h-4 shrink-0 mt-0.5" />
-          <span>No se pudo conectar con el servidor. Estás viendo datos de ejemplo.</span>
-        </div>
-        <div
-          v-else-if="error"
-          class="flex items-start gap-2 rounded-xl bg-neutral-lightest px-4 py-3 text-sm text-neutral-dark"
-        >
-          <AlertIcon class="w-4 h-4 shrink-0 mt-0.5" />
-          <span>{{ error }}</span>
-        </div>
-
         <!-- Cargando -->
         <div v-if="cargando" class="flex flex-col gap-3" aria-busy="true">
           <div
@@ -65,6 +49,24 @@
             :key="n"
             class="h-[136px] rounded-2xl bg-white border border-neutral-light animate-pulse"
           />
+        </div>
+
+        <!-- Falló la consulta: nunca datos de ejemplo, siempre la opción de reintentar -->
+        <EstadoErrorCarga
+          v-else-if="tipoError && tipoError !== 'sesion'"
+          titulo="No pudimos cargar tus pedidos"
+          :mensaje="error ?? undefined"
+          @reintentar="cargar"
+        />
+
+        <!-- Sesión caducada -->
+        <div
+          v-else-if="tipoError"
+          role="alert"
+          class="flex items-start gap-2 rounded-xl bg-neutral-lightest px-4 py-3 text-sm text-neutral-dark"
+        >
+          <AlertIcon class="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{{ error }}</span>
         </div>
 
         <template v-else>
@@ -163,6 +165,7 @@ import {
 import FiltrosPedidos from './FiltrosPedidos.vue';
 import TarjetaPedido from './TarjetaPedido.vue';
 import PaginacionPedidos from './PaginacionPedidos.vue';
+import EstadoErrorCarga from './EstadoErrorCarga.vue';
 import { useMisPedidos } from '../composables/useMisPedidos';
 
 /**
@@ -212,7 +215,7 @@ const {
   pagina,
   cargando,
   error,
-  usandoMock,
+  tipoError,
   busqueda,
   filtro,
   sinPedidos,
