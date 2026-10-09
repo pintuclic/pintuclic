@@ -10,6 +10,7 @@ import {
   FileText,
   Mail,
   Phone,
+  ShieldCheck,
   User,
 } from "lucide-vue-next";
 import { computed, onMounted, ref } from "vue";
@@ -17,6 +18,7 @@ import { RouterLink, useRoute } from "vue-router";
 import StatusModal from "../components/StatusModal.vue";
 import type { Persona } from "../interfaces";
 import { service } from "../services/m17.service";
+import { areaNames } from "../services/permission-rules";
 import { message, useM17 } from "../store/useM17";
 
 const props = defineProps<{
@@ -26,12 +28,44 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ close: [] }>();
 const route = useRoute();
-const { isAdmin } = useM17();
+const { isAdmin, state, permissions } = useM17();
 const person = ref<Persona | null>(null);
 const error = ref("");
 const loading = ref(true);
 const changing = ref(false);
 const employee = computed(() => props.kind === "empleados");
+const assigned = ref<string[]>([]);
+const permissionsLoading = ref(false);
+const permissionsError = ref("");
+// Permisos asignados agrupados por área, con la descripción del catálogo.
+const assignedGroups = computed(() => {
+  const byName = new Map(state.catalog.map((p) => [p.nombre, p]));
+  const groups = new Map<string, { nombre: string; label: string }[]>();
+  for (const nombre of assigned.value) {
+    const p = byName.get(nombre);
+    const area = p?.area ?? nombre.split(".")[0];
+    if (!groups.has(area)) groups.set(area, []);
+    groups.get(area)?.push({ nombre, label: p?.descripcion || nombre });
+  }
+  return [...groups].map(([area, items]) => ({
+    area,
+    title: areaNames[area] || area,
+    items,
+  }));
+});
+async function loadPermissions(id: number) {
+  if (!employee.value || !isAdmin.value) return;
+  permissionsLoading.value = true;
+  permissionsError.value = "";
+  try {
+    assigned.value = await permissions(id, true);
+  } catch (requestError) {
+    assigned.value = [];
+    permissionsError.value = message(requestError);
+  } finally {
+    permissionsLoading.value = false;
+  }
+}
 const actionLabel = computed(() => {
   if (!person.value) return "";
   if (person.value.estado === "activo")
@@ -47,6 +81,7 @@ async function load() {
     person.value = await (employee.value
       ? service.employee(id)
       : service.client(id));
+    void loadPermissions(id);
   } catch (requestError) {
     person.value = null;
     error.value = message(requestError);
@@ -201,17 +236,83 @@ onMounted(load);
                 : "La cuenta tiene el acceso restringido. Su historial se conserva."
             }}
           </p>
-          <RouterLink
-            v-if="employee"
-            :to="{
-              path: '/admin/permisos',
-              query: { empleado: person.id_usuario },
-            }"
-            class="mt-5 flex items-center gap-2 border-t border-neutral-light pt-5 text-sm font-semibold text-action"
-          >
-            Administrar permisos
-          </RouterLink>
         </aside>
+
+        <section
+          v-if="employee && isAdmin"
+          class="rounded-xl border border-neutral-light bg-neutral-white xl:col-span-2"
+          aria-labelledby="permisos-asignados"
+        >
+          <div
+            class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-light p-4 sm:p-5"
+          >
+            <div class="flex items-center gap-3">
+              <span
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-subaction/60 text-action"
+              >
+                <ShieldCheck class="h-4 w-4" aria-hidden="true" />
+              </span>
+              <h2 id="permisos-asignados" class="font-title font-bold text-corporate">
+                Permisos asignados
+              </h2>
+              <span
+                v-if="!permissionsLoading && !permissionsError"
+                class="rounded-full bg-subaction px-2.5 py-0.5 text-xs font-semibold text-action"
+              >
+                {{ assigned.length }}
+              </span>
+            </div>
+            <RouterLink
+              :to="{ path: '/admin/permisos', query: { empleado: person.id_usuario } }"
+              class="text-sm font-semibold text-action hover:underline"
+            >
+              {{ assigned.length ? "Modificar permisos" : "Asignar permisos" }}
+            </RouterLink>
+          </div>
+          <p
+            v-if="permissionsLoading"
+            role="status"
+            class="p-4 text-sm text-neutral-medium sm:p-5"
+          >
+            Cargando permisos…
+          </p>
+          <div v-else-if="permissionsError" role="alert" class="p-4 sm:p-5">
+            <p class="text-sm">{{ permissionsError }}</p>
+            <Button variant="outline" class="mt-3" @click="loadPermissions(person.id_usuario)">
+              Volver a intentar
+            </Button>
+          </div>
+          <p
+            v-else-if="!assigned.length"
+            class="p-4 text-sm leading-6 text-neutral-medium sm:p-5"
+          >
+            Este empleado aún no tiene permisos asignados, por lo que no puede
+            realizar operaciones en el panel.
+          </p>
+          <div
+            v-else
+            class="grid min-w-0 grid-cols-1 gap-5 p-4 sm:grid-cols-2 sm:p-5"
+          >
+            <div v-for="group in assignedGroups" :key="group.area" class="min-w-0">
+              <h3 class="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-medium">
+                {{ group.title }}
+              </h3>
+              <ul class="space-y-2">
+                <li
+                  v-for="item in group.items"
+                  :key="item.nombre"
+                  class="flex min-w-0 items-start gap-2 text-sm"
+                >
+                  <Check class="mt-0.5 h-4 w-4 shrink-0 text-conversion" aria-hidden="true" />
+                  <span class="min-w-0 [overflow-wrap:anywhere]">
+                    <span class="block font-medium text-corporate">{{ item.label }}</span>
+                    <span class="block text-xs text-neutral-medium">{{ item.nombre }}</span>
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
 
         <section
           v-if="!employee"

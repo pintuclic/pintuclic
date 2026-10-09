@@ -7,6 +7,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.7.0] - 2026-10-08
+### Módulo: M17 Permisos y Roles — Validación de empleados, selección masiva y permisos en la ficha (Fullstack)
+- **Alcance General:** Incremento **Minior-feat (v0.4.7.0)**. Tres mejoras al panel de administración de empleados y permisos (`HU-ADM-01`, `HU-ADM-02`).
+- **Validación por campo en el formulario de empleado:** cada error se muestra debajo de su campo en lugar de un único mensaje genérico o la ayuda nativa del navegador. El nombre solo admite letras y espacios; el documento, de 5 a 10 dígitos; el teléfono, exactamente 10 dígitos. Teléfono y documento descartan letras al escribir o pegar. Los errores del backend (`400` con `details` y correo duplicado `409`) se muestran en el campo correspondiente.
+- **Validación en servidor (`HU-ADM-03`):** `CrearEmpleadoDto` y `ActualizarContactoEmpleadoDto` aplican las mismas reglas de nombre, documento y teléfono.
+- **"Seleccionar todos" en Roles y permisos:** casilla con contador `N de M asignados` que marca o desmarca de una vez los permisos asignables; omite los exclusivos del administrador, respeta las dependencias `.ver` y, con búsqueda activa, solo afecta a los resultados visibles.
+- **Permisos asignados en la ficha del empleado:** nueva sección en `/admin/empleados/:id` con el total y los permisos agrupados por área, y enlace para asignarlos o modificarlos.
+- **Verificación:** `vue-tsc -b`, ESLint, `npx tsc --noEmit` y `npm run lint` del backend sin errores ni advertencias; pruebas manuales en navegador contra backend local.
+- 🔗 **Walkthroughs Técnicos Oficiales:** [frontend](./walkthroughs/M17/walkthrough_v0.4.7.0_M17_empleados_y_permisos_frontend.md) · [backend](./walkthroughs/M17/walkthrough_v0.4.7.0_M17_empleados_y_permisos_backend.md)
+
+---
 ## [v0.4.6.4] - 2026-10-08
 ### Módulo: M05 Carrito de compras — Carrito dentro del layout de la tienda (Frontend)
 - **Alcance General:** Incremento **Patch (v0.4.6.4)**. En `v0.4.6.3`, `m05CarritoRoutes` estaba registrado en el nivel raíz del router, fuera de `LayoutHome`, por lo que `/carrito` se mostraba sin header ni footer. Esta entrega lo monta como hija de `LayoutHome`.
