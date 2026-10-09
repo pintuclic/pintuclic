@@ -14,7 +14,8 @@ export const corsOptions: CorsOptions = {
     }
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  // X-Visitor-Token: token opaco del carrito de visitante de M05 (ADR-01, RNF-CAR-01-01).
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Visitor-Token'],
   credentials: true,
   maxAge: 86400, // 24 horas de cache preflight
 };

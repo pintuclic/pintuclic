@@ -62,6 +62,12 @@ export const adminCatalogoRoutes: RouteRecordRaw[] = [
     meta: { titulo: 'Colores · Catálogo', recurso: 'colores' },
   },
   {
+    path: '/admin/catalogo/bases',
+    name: 'M01Bases',
+    component: () => import('./views/admin/VistaPorMarca.vue'),
+    meta: { titulo: 'Bases · Catálogo', recurso: 'bases' },
+  },
+  {
     path: '/admin/catalogo/configuracion',
     name: 'M01CatalogosBase',
     component: () => import('./views/admin/VistaCatalogosBase.vue'),

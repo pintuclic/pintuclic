@@ -75,7 +75,7 @@
           <button
             type="button"
             class="inline-flex h-11 items-center justify-center gap-2 rounded-button bg-conversion px-7 text-sm font-semibold text-white transition-colors hover:bg-conversion-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion"
-            @click="calculadoraAbierta = true"
+            @click="irCalculadora"
           >
             Calculadora <Calculator :size="18" />
           </button>
@@ -108,7 +108,7 @@
           </router-link>
         </div>
 
-        <div v-if="cargando" class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" aria-live="polite">
+        <div v-if="cargando" class="grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5" aria-live="polite">
           <div v-for="indice in 5" :key="indice" class="h-80 animate-pulse rounded-card bg-neutral-white" />
         </div>
         <div v-else-if="error" class="rounded-card border border-neutral-light bg-neutral-white px-6 py-10 text-center">
@@ -118,7 +118,7 @@
             Reintentar
           </button>
         </div>
-        <div v-else-if="productos.length" class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div v-else-if="productos.length" class="grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           <TarjetaProductoPublico
             v-for="(producto, indice) in productos"
             :key="producto.id_producto"
@@ -171,12 +171,6 @@
       @cerrar="menuCategoriasAbierto = false"
       @seleccionar="seleccionarSubcategoria"
     />
-    <CalculadoraPinturaPublica
-      :abierta="calculadoraAbierta"
-      :producto="productos[0]?.detalle"
-      @cerrar="calculadoraAbierta = false"
-      @agregar="agregarProducto"
-    />
   </div>
 </template>
 
@@ -199,13 +193,14 @@ import {
   X,
 } from 'lucide-vue-next';
 import heroStorefront from '../../assets/storefront/hero-storefront.png';
-import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPinturaPublica.vue';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import { useInicioPublico } from '../../composables/publicas/useInicioPublico';
+import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
+import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 
+const cartStore = useCartStore();
 const menuCategoriasAbierto = ref(false);
-const calculadoraAbierta = ref(false);
 const terminoBusqueda = ref('');
 const mensaje = ref<string | null>(null);
 const router = useRouter();
@@ -263,7 +258,40 @@ function verProducto(idProducto: number): void {
   void router.push({ name: 'DetalleProductoPublico', params: { productoId: idProducto } });
 }
 
-function agregarProducto(): void {
-  informarPendiente('Agregar al carrito requiere la integración con M07.');
+function irCalculadora(): void {
+  void router.push({ name: 'CalculadoraPinturaPublica', query: { volver: '/' } });
+}
+
+async function agregarProducto(idProducto: number): Promise<void> {
+  const prod = productos.value.find((p) => p.id_producto === idProducto);
+  let variante = prod?.detalle?.variantes.find((v) => v.existencia_referencial > 0) ?? prod?.detalle?.variantes[0];
+
+  if (!variante) {
+    try {
+      const ficha = await CatalogoPublicoService.obtenerFicha(idProducto);
+      variante = ficha.variantes.find((v) => v.existencia_referencial > 0) ?? ficha.variantes[0];
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!variante) {
+    informarPendiente('No hay variantes disponibles para este producto.');
+    return;
+  }
+
+  await cartStore.addToCart({
+    id: variante.id_variante,
+    variantId: variante.id_variante,
+    name: prod?.nombre ?? 'Producto',
+    price: variante.precio_vigente,
+    image: prod?.detalle?.imagenes[0]?.contenido_url ?? '',
+  });
+
+  if (cartStore.error) {
+    informarPendiente(cartStore.error);
+  } else {
+    informarPendiente(`Se agregó "${prod?.nombre ?? 'el producto'}" al carrito.`);
+  }
 }
 </script>

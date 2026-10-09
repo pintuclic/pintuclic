@@ -10,10 +10,8 @@
         aria-hidden="true"
       />
 
-      <div
-        class="relative z-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between"
-      >
-        <div class="flex items-start gap-4">
+      <div class="relative z-10 w-full">
+        <div class="flex w-full items-start gap-4">
           <span
             class="grid h-12 w-12 shrink-0 place-items-center rounded-card bg-neutral-white/15 text-white"
           >
@@ -33,27 +31,27 @@
               Calculadora de pintura
             </h1>
 
-            <p
-              class="mt-2 max-w-2xl text-sm leading-6 text-neutral-white/85"
-            >
+            <p class="mt-2 text-sm leading-6 text-neutral-white/85">
               Calcula aproximadamente cuánta pintura necesitas para tu proyecto.
             </p>
           </div>
         </div>
 
-        <button
-          v-if="mostrarVolver && producto"
-          type="button"
-          class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-button border border-neutral-white/40 px-4 text-sm font-semibold text-white transition-colors hover:bg-neutral-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-          @click="emit('verProducto')"
-        >
-          Volver al producto
-        </button>
       </div>
     </header>
 
+    <div v-if="mostrarVolver && producto" class="flex justify-end">
+      <button
+        type="button"
+        class="inline-flex min-h-10 items-center justify-center rounded-button border border-action px-4 text-sm font-semibold text-action transition-colors hover:bg-subaction focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+        @click="emit('verProducto')"
+      >
+        Volver al producto
+      </button>
+    </div>
+
     <!-- Configuración -->
-    <div class="grid gap-5 lg:grid-cols-[1fr_310px]">
+    <div class="grid gap-5" :class="compacto ? 'lg:grid-cols-[minmax(0,500px)_240px] lg:justify-center' : 'lg:grid-cols-[minmax(0,1fr)_310px]'">
       <section
         class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm sm:p-6"
       >
@@ -210,7 +208,7 @@
           <div
             class="mt-4 flex items-center justify-between gap-4 rounded-card border border-action/20 bg-subaction px-4 py-3"
           >
-            <div>
+            <div class="min-w-0">
               <p
                 class="text-xs font-semibold uppercase tracking-wide text-corporate"
               >
@@ -223,7 +221,7 @@
             </div>
 
             <p
-              class="font-title text-2xl font-extrabold text-action"
+              class="font-title shrink-0 whitespace-nowrap text-2xl font-extrabold text-action"
             >
               {{ area.toFixed(1) }} m²
             </p>
@@ -238,10 +236,10 @@
         <p
           class="text-xs font-semibold uppercase tracking-wide text-neutral-medium"
         >
-          Producto seleccionado
+          {{ producto ? 'Producto seleccionado' : 'Cálculo general' }}
         </p>
 
-        <div class="mt-3 text-center">
+        <div v-if="producto" class="mt-3 text-center">
           <div
             class="mx-auto grid h-28 w-full place-items-center rounded-card bg-neutral-lightest p-3"
           >
@@ -271,6 +269,10 @@
             </span>
           </div>
         </div>
+
+        <p v-else class="mt-3 text-sm leading-6 text-neutral-dark">
+          Estimación con un rendimiento de referencia de {{ rendimiento.toFixed(1) }} m² por galón y mano. Al elegir una pintura podrás calcular con el rendimiento de ese producto.
+        </p>
 
         <button
           v-if="producto"
@@ -354,12 +356,21 @@
         </div>
 
         <button
+          v-if="producto"
           type="button"
           class="mx-auto mt-6 inline-flex min-h-12 w-full max-w-sm items-center justify-center gap-2 rounded-button bg-conversion px-6 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-conversion-hover hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion"
           @click="emit('agregar')"
         >
           <ShoppingCart :size="18" />
           Agregar al carrito
+        </button>
+        <button
+          v-else
+          type="button"
+          class="mx-auto mt-6 inline-flex min-h-12 w-full max-w-sm items-center justify-center rounded-button bg-action px-6 text-sm font-bold text-white shadow-sm transition-colors hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+          @click="emit('verProductos')"
+        >
+          Ver productos
         </button>
       </div>
 
@@ -424,16 +435,19 @@ const props = withDefaults(
   defineProps<{
     producto?: FichaProductoPublico | null;
     mostrarVolver?: boolean;
+    compacto?: boolean;
   }>(),
   {
     producto: null,
     mostrarVolver: false,
+    compacto: false,
   },
 );
 
 const emit = defineEmits<{
   agregar: [];
   verProducto: [];
+  verProductos: [];
 }>();
 
 const superficie =
