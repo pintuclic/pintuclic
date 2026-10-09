@@ -24,6 +24,14 @@ export type OrigenCarrito = 'visitante' | 'cliente';
  * El carrito no almacena precio histórico congelado.
  */
 export interface LineaCarritoViva {
+  id_producto: number;
+  nombre_producto: string;
+  descripcion_producto: string | null;
+  presentacion: string;
+  color: string | null;
+  base: string | null;
+  imagen_url: string | null;
+
   id_linea_carrito: number;
   id_variante: number;
   cantidad: number;

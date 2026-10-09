@@ -54,6 +54,8 @@ function nuevaLinea(overrides: Partial<LineaCarrito> = {}): LineaCarrito {
 
 function lineaViva(overrides: Partial<LineaCarritoViva> = {}): LineaCarritoViva {
   return {
+    id_producto: 1, nombre_producto: 'Producto de prueba', descripcion_producto: null,
+    presentacion: 'Litro', color: null, base: null, imagen_url: null,
     id_linea_carrito: 1,
     id_variante: 10,
     cantidad: 2,

@@ -77,9 +77,13 @@
             <!-- Vista 2: Galería Estándar de Envase / Producto -->
             <div v-else>
               <div class="grid aspect-[4/3] place-items-center overflow-hidden rounded-card bg-neutral-lightest p-5">
-                <img :src="imagenActiva" :alt="producto.nombre" class="h-full w-full object-contain" />
+                <img v-if="imagenActiva && !imagenConError" :src="imagenActiva" :alt="producto.nombre" class="h-full w-full object-contain" @error="imagenConError = true" />
+                <div v-else class="flex flex-col items-center justify-center text-neutral-medium">
+                  <PackageOpen :size="54" class="text-neutral-light mb-2" aria-hidden="true" />
+                  <span class="text-sm">Imagen no disponible</span>
+                </div>
               </div>
-              <div class="mt-3 flex gap-3">
+              <div v-if="galeria.length > 1" class="mt-3 flex gap-3">
                 <button
                   v-for="(imagen, indice) in galeria"
                   :key="imagen"
@@ -109,7 +113,7 @@
                 <ChevronDown :size="17" class="text-neutral-medium transition-transform" :class="descripcionAbierta ? 'rotate-180' : ''" />
               </button>
               <p v-show="descripcionAbierta" class="mt-2 text-sm leading-6 text-neutral-medium">
-                {{ producto.descripcion || 'Producto de calidad para completar tu proyecto.' }}
+                {{ producto.descripcion || 'Descripción no disponible.' }}
               </p>
             </div>
 
@@ -289,12 +293,12 @@ import { computed, ref, toRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, Calculator, ChevronDown, CircleAlert, MapPin, PackageOpen, Palette, ShoppingCart, Sparkles, X } from 'lucide-vue-next';
 import { MuestraColor } from '@/core/components';
-import { GALERIA_PRODUCTO_DEMO, obtenerImagenPublicaRespaldo } from '../../assets/imagenes-catalogo';
 import CartaColoresProductoPublica from '../../components/publicas/CartaColoresProductoPublica.vue';
 import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPinturaPublica.vue';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import VisualizadorAmbientesPublico from '../../components/publicas/VisualizadorAmbientesPublico.vue';
 import { useDetalleProductoPublico } from '../../composables/publicas/useDetalleProductoPublico';
+import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
 import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import { formatearCOP } from '@/core/utils/moneda';
@@ -396,16 +400,12 @@ const rendimientoEstimado = computed(() => {
   };
 });
 
-const galeria = computed(() => {
-  const remotas = producto.value?.imagenes.map((imagen) => imagen.contenido_url) ?? [];
-  if (remotas.length) return remotas;
-  if (producto.value?.clase_color === 'sin_color') {
-    return [obtenerImagenPublicaRespaldo(idProducto.value), GALERIA_PRODUCTO_DEMO.lateral, GALERIA_PRODUCTO_DEMO.ambiente];
-  }
-  return [GALERIA_PRODUCTO_DEMO.ambiente, obtenerImagenPublicaRespaldo(idProducto.value), GALERIA_PRODUCTO_DEMO.lateral];
+const imagenConError = ref(false);
+const galeria = computed(() => producto.value?.imagenes.map((imagen) => imagen.contenido_url) ?? []);
+const imagenActiva = computed(() => galeria.value[indiceGaleria.value] ?? galeria.value[0] ?? null);
+watch(imagenActiva, () => {
+  imagenConError.value = false;
 });
-
-const imagenActiva = computed(() => galeria.value[indiceGaleria.value] ?? obtenerImagenPublicaRespaldo(idProducto.value));
 
 const precioActual = computed(() =>
   varianteSeleccionada.value
@@ -441,12 +441,12 @@ async function agregarAlCarrito(): Promise<void> {
 
 async function agregarComplementarioAlCarrito(idProd: number): Promise<void> {
   const prod = complementarios.value.find((p) => p.id_producto === idProd);
-  let variante = prod?.detalle?.variantes.find((v) => v.existencia_referencial > 0) ?? prod?.detalle?.variantes[0];
+  let variante = seleccionarVarianteCompraRapida(prod?.detalle?.variantes ?? []);
 
   if (!variante) {
     try {
       const ficha = await CatalogoPublicoService.obtenerFicha(idProd);
-      variante = ficha.variantes.find((v) => v.existencia_referencial > 0) ?? ficha.variantes[0];
+      variante = seleccionarVarianteCompraRapida(ficha.variantes);
     } catch {
       // ignore
     }

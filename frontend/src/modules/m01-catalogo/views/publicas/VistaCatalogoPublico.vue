@@ -390,6 +390,7 @@ import { Paginacion } from '@/core/components';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import { useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
+import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
 import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import fondoProyectoCalculadora from '../../assets/storefront/fondo-proyecto-calculadora.jpeg';
@@ -460,12 +461,12 @@ function mostrarMensaje(texto: string): void {
 
 async function agregarAlCarrito(idProducto: number): Promise<void> {
   const prod = productos.value.find((p) => p.id_producto === idProducto);
-  let variante = prod?.detalle?.variantes.find((v) => v.existencia_referencial > 0) ?? prod?.detalle?.variantes[0];
+  let variante = seleccionarVarianteCompraRapida(prod?.detalle?.variantes ?? []);
 
   if (!variante) {
     try {
       const ficha = await CatalogoPublicoService.obtenerFicha(idProducto);
-      variante = ficha.variantes.find((v) => v.existencia_referencial > 0) ?? ficha.variantes[0];
+      variante = seleccionarVarianteCompraRapida(ficha.variantes);
     } catch {
       // ignore
     }
