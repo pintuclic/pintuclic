@@ -120,10 +120,9 @@
         </div>
         <div v-else-if="productos.length" class="grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           <TarjetaProductoPublico
-            v-for="(producto, indice) in productos"
+            v-for="producto in productos"
             :key="producto.id_producto"
             :producto="producto"
-            :destacado="indice === 0"
             @ver="verProducto"
             @agregar="agregarProducto"
           />
@@ -196,7 +195,11 @@ import heroStorefront from '../../assets/storefront/hero-storefront.png';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import { useInicioPublico } from '../../composables/publicas/useInicioPublico';
+import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
+import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
+import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 
+const cartStore = useCartStore();
 const menuCategoriasAbierto = ref(false);
 const terminoBusqueda = ref('');
 const mensaje = ref<string | null>(null);
@@ -259,7 +262,36 @@ function irCalculadora(): void {
   void router.push({ name: 'CalculadoraPinturaPublica', query: { volver: '/' } });
 }
 
-function agregarProducto(): void {
-  informarPendiente('Agregar al carrito requiere la integración con M07.');
+async function agregarProducto(idProducto: number): Promise<void> {
+  const prod = productos.value.find((p) => p.id_producto === idProducto);
+  let variante = seleccionarVarianteCompraRapida(prod?.detalle?.variantes ?? []);
+
+  if (!variante) {
+    try {
+      const ficha = await CatalogoPublicoService.obtenerFicha(idProducto);
+      variante = seleccionarVarianteCompraRapida(ficha.variantes);
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!variante) {
+    informarPendiente('No hay variantes disponibles para este producto.');
+    return;
+  }
+
+  await cartStore.addToCart({
+    id: variante.id_variante,
+    variantId: variante.id_variante,
+    name: prod?.nombre ?? 'Producto',
+    price: variante.precio_vigente,
+    image: prod?.detalle?.imagenes[0]?.contenido_url ?? '',
+  });
+
+  if (cartStore.error) {
+    informarPendiente(cartStore.error);
+  } else {
+    informarPendiente(`Se agregó "${prod?.nombre ?? 'el producto'}" al carrito.`);
+  }
 }
 </script>

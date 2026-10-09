@@ -1,6 +1,6 @@
 <template>
   <div class="font-sans">
-    <PageHeader title="Marcas" description="Marcas del catálogo y sus líneas, bases y colores (HU-CAT-04).">
+    <PageHeader title="Marcas" description="Marcas del catálogo y sus líneas, bases y colores.">
       <Button variant="action" icon="plus" @click="nuevaMarca">Nueva marca</Button>
     </PageHeader>
 

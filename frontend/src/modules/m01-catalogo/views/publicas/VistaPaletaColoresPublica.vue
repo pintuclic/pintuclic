@@ -235,10 +235,9 @@
             :key="producto.id_producto"
             :producto="producto"
             :muestra-color="colorSeleccionado?.muestra_hex"
+            :id-color="colorSeleccionado?.id_color"
             @ver="verProducto"
-            @agregar="
-              mostrarMensaje('Agregar al carrito requiere la integración con M07.')
-            "
+            @agregar="agregarAlCarrito"
           />
         </div>
       </section>
@@ -259,9 +258,7 @@
             :key="producto.id_producto"
             :producto="producto"
             @ver="verProducto"
-            @agregar="
-              mostrarMensaje('Agregar al carrito requiere la integración con M07.')
-            "
+            @agregar="agregarAlCarrito"
           />
         </div>
       </section>
@@ -348,8 +345,13 @@ import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPub
 import TarjetaCombinacionColoresPublica from '../../components/publicas/TarjetaCombinacionColoresPublica.vue';
 import { usePaletaColoresPublica } from '../../composables/publicas/usePaletaColoresPublica';
 import { useCombinacionesPaleta } from '../../composables/publicas/useCombinacionesPaleta';
+import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
+import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
+import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
+import type { VariantePublica } from '../../interfaces/publicas/catalogo-publico.interface';
 
 const router = useRouter();
+const cartStore = useCartStore();
 
 const menuCategoriasAbierto = ref(false);
 const mensaje = ref<string | null>(null);
@@ -408,6 +410,43 @@ const { esquemas } = useCombinacionesPaleta(
 
 function mostrarMensaje(texto: string): void {
   mensaje.value = texto;
+}
+
+async function agregarAlCarrito(idProducto: number): Promise<void> {
+  const prod =
+    productosRecomendados.value.find((p) => p.id_producto === idProducto) ??
+    productosComplementarios.value.find((p) => p.id_producto === idProducto);
+  let variante: VariantePublica | undefined = seleccionarVarianteCompraRapida(
+    prod?.detalle?.variantes ?? [], colorSeleccionado.value?.id_color
+  );
+
+  if (!variante) {
+    try {
+      const ficha = await CatalogoPublicoService.obtenerFicha(idProducto);
+      variante = seleccionarVarianteCompraRapida(ficha.variantes, colorSeleccionado.value?.id_color);
+    } catch {
+      // El mensaje de indisponibilidad se muestra más abajo.
+    }
+  }
+
+  if (!variante) {
+    mostrarMensaje('No hay variantes disponibles para este producto.');
+    return;
+  }
+
+  await cartStore.addToCart({
+    id: variante.id_variante,
+    variantId: variante.id_variante,
+    name: prod?.nombre ?? 'Producto',
+    price: variante.precio_vigente,
+    image: prod?.detalle?.imagenes[0]?.contenido_url ?? '',
+  });
+
+  if (cartStore.error) {
+    mostrarMensaje(cartStore.error);
+  } else {
+    mostrarMensaje(`Se agregó "${prod?.nombre ?? 'el producto'}" al carrito.`);
+  }
 }
 
 function verProducto(idProducto: number): void {

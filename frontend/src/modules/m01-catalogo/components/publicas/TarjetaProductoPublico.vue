@@ -8,15 +8,6 @@
       class="relative grid place-items-center overflow-hidden rounded-xl bg-neutral-lightest p-3 sm:p-3.5"
       :class="modo === 'lista' ? 'aspect-square sm:aspect-auto sm:min-h-48' : 'aspect-square'"
     >
-      <!-- Badge de Descuento Rojo (-15%) -->
-      <Badge
-        v-if="descuentoTexto"
-        estado="descuento"
-        class="absolute left-2.5 top-2.5 z-10 shadow-sm"
-      >
-        {{ descuentoTexto }}
-      </Badge>
-
       <img
         v-if="imagenVisible"
         :src="imagenVisible"
@@ -49,12 +40,6 @@
         <span class="font-title text-base sm:text-[17px] font-bold text-neutral-black whitespace-nowrap">
           {{ precioMinimo === null ? 'Consultar precio' : formatearPrecioConSufijo(precioMinimo) }}
         </span>
-        <span 
-          v-if="precioAnterior" 
-          class="text-xs text-neutral-medium line-through whitespace-nowrap"
-        >
-          {{ formatearPrecio(precioAnterior) }}
-        </span>
       </div>
 
       <!-- Fila de Acciones -->
@@ -80,64 +65,48 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
 import { PackageOpen, ShoppingCart } from 'lucide-vue-next';
-import { Badge } from '@/core/components';
-import { formatearPrecio, formatearPrecioConSufijo } from '@/core/utils/moneda';
+import { formatearPrecioConSufijo } from '@/core/utils/moneda';
 import type { ProductoDestacadoPublico } from '../../interfaces/publicas/catalogo-publico.interface';
-import { obtenerImagenPublicaRespaldo } from '../../assets/imagenes-catalogo';
 
 const props = withDefaults(
   defineProps<{
     producto: ProductoDestacadoPublico;
-    destacado?: boolean;
     modo?: 'grid' | 'lista';
     muestraColor?: string | null;
+    idColor?: number | null;
   }>(),
   { modo: 'grid', muestraColor: null }
 );
 const emit = defineEmits<{ ver: [idProducto: number]; agregar: [idProducto: number] }>();
 const imagenConError = ref(false);
+watch(() => props.producto, () => { imagenConError.value = false; });
 
 const imagenVisible = computed(() => {
   const imagenes = props.producto.detalle?.imagenes ?? [];
   const principal = imagenes.find((imagen) => imagen.es_principal) ?? imagenes[0];
   if (principal?.contenido_url && !imagenConError.value) return principal.contenido_url;
-  return obtenerImagenPublicaRespaldo(props.producto.id_producto);
+  return null;
 });
 
 const muestraColorEfectiva = computed(() => {
   if (props.muestraColor) return props.muestraColor;
   if (props.producto.clase_color !== 'sin_color') {
     const primeraConMuestra = props.producto.detalle?.variantes.find((v) => v.muestra_hex);
-    return primeraConMuestra?.muestra_hex ?? '#E5E7EB';
+    return primeraConMuestra?.muestra_hex ?? null;
   }
   return null;
 });
 
-const precioMinimo = computed(() => {
-  const precios = (props.producto.detalle?.variantes ?? [])
-    .map((variante) => variante.precio_vigente)
-    .filter((precio) => Number.isFinite(precio));
-  return precios.length ? Math.min(...precios) : null;
-});
-
-const descuentoTexto = computed(() => {
-  if (props.destacado) return '-15%';
-  return null;
-});
-
-const precioAnterior = computed(() => {
-  if (!precioMinimo.value) return null;
-  if (props.destacado) {
-    return Math.round((precioMinimo.value * 1.167) / 100) * 100;
-  }
-  return null;
-});
+const precioMinimo = computed(() =>
+  seleccionarVarianteCompraRapida(props.producto.detalle?.variantes ?? [], props.idColor)?.precio_vigente ?? null
+);
 
 const descripcionClaseColor = computed(() => {
   if (props.producto.clase_color === 'entonable') return 'Disponible en múltiples colores y presentaciones.';
   if (props.producto.clase_color === 'colores_fijos') return 'Consulta los colores y presentaciones disponibles.';
-  return 'Producto de calidad para completar tu proyecto.';
+  return 'Consulta la información del producto.';
 });
 </script>

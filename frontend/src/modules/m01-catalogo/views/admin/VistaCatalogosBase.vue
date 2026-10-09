@@ -1,6 +1,15 @@
 <template>
   <div class="font-sans">
-    <PageHeader title="Resinas y presentaciones" description="Catálogos administrables que usan productos y variantes (RF-CAT-02-04, RF-CAT-03-05).">
+    <Button
+      variant="text"
+      icon="back"
+      to="/admin/catalogo/productos"
+      class="mb-3 text-sm font-medium text-action hover:underline inline-flex items-center gap-1.5"
+    >
+      Volver a productos
+    </Button>
+
+    <PageHeader title="Resinas y presentaciones" description="Catálogos maestros administrables para tipos de resina y presentaciones de productos.">
       <Button variant="action" icon="plus" @click="crear">{{ pestana === 'resinas' ? 'Nuevo tipo de resina' : 'Nueva presentación' }}</Button>
     </PageHeader>
 

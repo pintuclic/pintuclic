@@ -7,6 +7,231 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.7.0] - 2026-10-09
+### Módulo: M05 Carrito de compras — Panel lateral "Tu carrito" (Frontend)
+- **Alcance General:** Incremento **Minior-feat (v0.4.7.0)**. Nuevo panel lateral del carrito que se abre al agregar un producto desde la tienda y desde el botón "Mi Carrito" del header.
+- **CartDrawer (`components/CartDrawer.vue`):** encabezado con logo, líneas con imagen, nombre, variante, cantidad (+/−), subtotal y eliminación; pie con total, "Continuar compra" (navega a `/carrito`), "Seguir comprando" y franja de colores corporativos. Cierra con Esc, clic fuera o "Seguir comprando"; bloquea el scroll mientras está abierto y mantiene el foco dentro del panel.
+- **Store (`cart.store.ts`):** estado `isDrawerOpen` con `openDrawer()`/`closeDrawer()`; `addToCart` abre el panel tras una respuesta exitosa, por lo que aplica a todas las vistas que ya lo usan (inicio, catálogo, detalle y paleta) sin modificar M01. Conserva en memoria el nombre e imagen enviados por la vista para mostrarlos en lugar del fallback visual.
+- **LayoutHome (archivo compartido, con aprobación explícita del equipo):** monta `<CartDrawer />` y el botón "Mi Carrito" abre el panel.
+- **Verificación:** E2E en `localhost:5173` con backend de la rama y base sembrada con `seed_pintuclic.sql`: "Agregar" en Productos destacados abrió el panel con el producto real; cantidades, eliminación, contador del header, "Seguir comprando" y "Continuar compra" funcionaron. ESLint y `vue-tsc --noEmit` sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.4.7.0_M05_panel_lateral_carrito_frontend.md](./walkthroughs/M05/walkthrough_v0.4.7.0_M05_panel_lateral_carrito_frontend.md)
+---
+## [v0.4.6.6] - 2026-10-09
+### M01 Inclusión de ajustes visuales de ficha y evidencia del análisis
+- Se incorporan los ajustes locales previamente excluidos: icono neutral junto al mensaje de imagen no disponible y miniaturas visibles únicamente cuando hay más de una imagen.
+- Se incorpora `informes/informe_flujo_tarjeta_producto_2026-10-09.docx` como evidencia del análisis anterior a las correcciones; no representa una nueva auditoría del código corregido.
+- Validación: TypeScript frontend y ESLint del archivo sin errores ni advertencias; backend lint y TypeScript superados. Se mantiene documentada la limitación previa del lint global frontend en componentes compartidos. Commit local solicitado por el usuario; sin push ni despliegue.
+- Walkthrough: [M01 frontend](walkthroughs/M01/walkthrough_v0.4.6.5_M01_ajustes_visuales_ficha_frontend.md).
+
+---
+## [v0.4.6.5] - 2026-10-09
+### M01 y M05 Corrección del flujo de tarjeta pública y carrito
+- M01 backend: bloqueo de publicación sin imagen, conforme a RF-CAT-02-05 y CA-CAT-02-06.
+- M01 frontend: selección compartida de variante y precio para inicio, catálogo, paleta y complementarios, respetando el color seleccionado.
+- M05 backend: metadatos reales de producto, presentación, color, base e imagen en las líneas, sin alterar el precio vivo ni duplicar resultados.
+- M05 frontend: retirada del mapeo de catálogo de prueba y conservación de identidad al agregar y recargar; icono neutral si no hay imagen o falla.
+- Validación: 125 comprobaciones backend M01, 72 backend M05, integración de identidad con PostgreSQL y rollback, 27 pruebas frontend; backend lint/TypeScript y frontend build/lint de módulos superados. Lint global frontend pendiente por errores previos de core; no se modificaron esos archivos.
+- M01 ficha pública: retirada de referencias a imágenes de demostración inexistentes; la galería usa las imágenes reales del catálogo. Los ajustes visuales locales previos se mantienen fuera del commit.
+- Estado: commit local solicitado explícitamente con el lint global frontend pendiente; sin push ni despliegue.
+- Walkthroughs: [M01 backend](walkthroughs/M01/walkthrough_v0.4.6.4_M01_publicacion_con_imagen_backend.md), [M01 frontend](walkthroughs/M01/walkthrough_v0.4.6.4_M01_precio_y_variante_compra_rapida_frontend.md), [M05 backend](walkthroughs/M05/walkthrough_v0.4.6.4_M05_identidad_real_lineas_carrito_backend.md) y [M05 frontend](walkthroughs/M05/walkthrough_v0.4.6.4_M05_identidad_real_y_sin_mocks_frontend.md).
+
+---
+## [v0.4.6.4] - 2026-10-08
+### Módulo: M05 Carrito de compras — Carrito dentro del layout de la tienda (Frontend)
+- **Alcance General:** Incremento **Patch (v0.4.6.4)**. En `v0.4.6.3`, `m05CarritoRoutes` estaba registrado en el nivel raíz del router, fuera de `LayoutHome`, por lo que `/carrito` se mostraba sin header ni footer. Esta entrega lo monta como hija de `LayoutHome`.
+- **Router global (`core/routes/index.ts`):** `m05CarritoRoutes` pasa del nivel raíz a los `children` de `LayoutHome`; la ruta del módulo pasa de `/carrito` a `carrito` (relativa) y conserva la URL `/carrito`. Archivo compartido modificado con aprobación explícita del equipo.
+- **CartView:** el contenedor raíz pasa de `<main class="min-h-screen">` a `<div>` para no anidar `<main>` dentro del layout.
+- **Verificación:** E2E en `localhost:5173` contra los contenedores `pintuclic-m05-test-*`: header y footer visibles en `/carrito`, navegación desde "Mi Carrito" y actualización en vivo del contador del header al cambiar cantidades.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.4.6.4_M05_integracion_layout_carrito_frontend.md](./walkthroughs/M05/walkthrough_v0.4.6.4_M05_integracion_layout_carrito_frontend.md)
+
+---
+## [v0.4.6.3] - 2026-10-08
+### M01 - Estabilización de selección de presentaciones, rendimiento dinámico, familias del abanico y catálogo público (Fullstack)
+- **Alcance General:** Incremento **Patch (v0.4.6.3)**. Corrección de la persistencia visual de selección de tamaños/presentaciones en la ficha pública de producto, cálculo dinámico de rendimiento por presentación (`RF-CAT-10-04`), activación interactiva de familias cromáticas en la carta de colores/abanico (`M01-13`), orden administrado de categorías públicas en base de datos (`M01-14`) y apertura de streaming público de imágenes de producto y logotipos de marca (`M01-10`).
+- **Hitos Clave:**
+  - **Persistencia Visual en Selección de Presentación (`VistaDetalleProductoPublico.vue`):** Corrección del estado seleccionado del botón de tamaño (`Elige un tamaño`). Al hacer clic, el botón ahora mantiene permanentemente el fondo de acción azul corporativo (`bg-action`), texto blanco nítido (`text-white`) y anillo activo (`ring-2 ring-subaction`), eliminando la ambigüedad que existía al retirar el cursor tras el hover.
+  - **Rendimiento Dinámico por Presentación (`RF-CAT-10-04` / `M01-16`):** Incorporación de tarjeta informativa calculada en tiempo real según el volumen de la presentación seleccionada (`[min, max] * (volumen / 3.785)`) con nota visible de aproximación sobre rugosidad y porosidad de la superficie a 2 manos.
+  - **Familias Cromáticas en el Abanico / Carta de Colores (`CartaColoresProductoPublica.vue`):** Transformación de las pestañas cromáticas a controles plenamente interactivos. El usuario puede filtrar instantáneamente entre "Todos", "Amarillos", "Azules", "Verdes", "Rojos" y "Grises / Neutros", combinando el filtrado por familia con el buscador en tiempo real sobre los 30 tonos CIELAB reales sembrados en el sistema.
+  - **Orden de Categorías en Storefront Público (`catalogo-publico.repository.ts` / `M01-14`):** Ajuste en la consulta `listarCategoriasConProductos` para respetar el orden administrativo configurado (`c.orden ASC`, `c.nombre ASC`, `s.orden ASC`, `s.nombre ASC`) en lugar del orden alfabético simple.
+  - **Acceso Público a Contenido de Imágenes y Logotipos (`m01.routes.ts` / `M01-10`):** Desprotección de las rutas binarias `GET /marcas/:id/logotipo` y `GET /imagenes/:id/contenido` para permitir que visitantes y clientes anónimos carguen fluidamente los logotipos y las fotos de productos en la tienda pública sin requerir privilegios de empleado.
+  - **Identidad Visual y Favicon Oficial (`index.html` / `public/favicon.png` / `public/favicon.svg`):** Integración del favicon oficial a partir de `Pintu_Blanco.png` para máximo contraste y legibilidad, con depuración de archivos de plantilla obsoletos (`icons.svg` y `hero.png`).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.6.3_M01_estabilizacion_ficha_publica_y_carta_colores_frontend.md](./walkthroughs/M01/walkthrough_v0.4.6.3_M01_estabilizacion_ficha_publica_y_carta_colores_frontend.md)
+
+---
+## [v0.4.6.2] - 2026-10-08
+### Core / M01 / M17 / M08 - Estandarización de botones de acción en recuadros y navegación de retorno textual (Frontend)
+- **Alcance General:** Incremento **Patch (v0.4.6.2)**. Estandarización global del componente `IconButton` con diseño en recuadro (`variant="boxed"` por defecto: 36x36px, bordes y tonos sutiles según estado) para acciones de tablas en clientes, empleados y catálogo, y reemplazo de botones de retorno por enlaces de texto nativos (`variant="text"` con flecha izquierda) en todas las vistas administrativas secundarias.
+- **Hitos Clave:**
+  - **Estandarización Global de `IconButton` (`src/core/components/buttons/IconButton.vue`):** Diseño unificado en recuadros de 36x36px con bordes suaves, fondo blanco, sombra ligera y colores semánticos por acción (`action` en azul suave para ver ficha/detalle, `neutral` en gris corporativo para edición, `danger` en rojo sutil para desactivar/bloquear, y `success` en verde para reactivar). Soporte de `variant="ghost"` para controles compactos en galerías.
+  - **Eliminación de Código Repetitivo en Tablas:** Limpieza de clases inline en `PeopleList.vue` y `AccionesFila.vue`; todas las tablas del panel administrativo consumen ahora el diseño uniforme de `IconButton` de forma centralizada sin duplicar Tailwind.
+  - **Navegación de Retorno Textual (`VistaCatalogosBase.vue` / `VistaPorMarca.vue` / `VistaDetalleOrdenAdmin.vue`):** Sustitución de botones de bloque gris por enlaces de texto elegantes con flecha (`← Volver a productos`, `← Volver a marcas`, `← Volver a la bandeja`) ubicados antes de la cabecera `PageHeader`, unificando el patrón de UX con `VistaProductoDetalle.vue` y `PersonDetail.vue`.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.6.2_M01_refinamiento_ux_admin_y_catalogo_frontend.md](./walkthroughs/M01/walkthrough_v0.4.6.2_M01_refinamiento_ux_admin_y_catalogo_frontend.md)
+
+---
+## [v0.4.6.1] - 2026-10-08
+### Core / M01 / M17 / M08 - Refinamiento de experiencia de usuario (UX), componentes globales con buscador y ergonomía de catálogo (Frontend)
+- **Alcance General:** Incremento **Patch (v0.4.6.1)**. Incorporación del componente global `SearchableSelect`, erradicación del doble tooltip flotante en favor de `title` nativo accesible, eliminación de barras de scroll horizontal espurias en `Table`, reorganización taxonómica de navegación en sidebar de administración, conversión de `ModalProductosBase` a `Drawer` con filtro en tiempo real, navegación de retorno en catálogos base y estandarización de variantes neutrales en botones de descarte/cancelación.
+- **Hitos Clave:**
+  - **Componente Global `SearchableSelect` (`src/core/components/forms/SearchableSelect.vue`):** Selector reutilizable con buscador reactivo integrado, navegación de teclado, búsqueda insensible a tildes/mayúsculas y resaltado del ítem seleccionado. Integrado en `Permissions.vue` (selección de empleado y consulta inversa de permisos), `VistaVariantes.vue` (selección de producto) y `VistaPorMarca.vue` (selección de marca).
+  - **Accesibilidad y Tooltips (`IconButton.vue` / `PeopleList.vue`):** Eliminación del componente `<Tooltip>` visual flotante que provocaba duplicidad de letreros y desbordamiento horizontal en pantallas estrechas. Sustituido por el atributo HTML nativo `title` para señalización precisa y limpia en hover (`Bloquear acceso`, `Reactivar cliente`, `Ver ficha`, `Editar`).
+  - **Ajuste Ergonómico de Tablas (`Table.vue`):** Eliminación de `whitespace-nowrap` a nivel de elemento `<table>` para permitir wrap adaptativo (`break-words`) en celdas de texto extenso, reservando `whitespace-nowrap` exclusivamente para columnas de acciones alineadas a la derecha (`align="right"`).
+  - **Arquitectura de Navegación (`LayoutAdmin.vue` / `core/routes/index.ts`):** Reordenamiento de enlaces en el Catálogo Central a la secuencia natural de negocio: **Productos $\rightarrow$ Variantes $\rightarrow$ Categorías**. Adición de acceso directo a *Resinas y Presentaciones* en Maestros. Depuración de rutas y enlaces huérfanos a vistas no implementadas de búsquedas.
+  - **Drawer de Productos por Base (`ModalProductosBase.vue`):** Transformación de modal estático a `Drawer` lateral completo con filtro de búsqueda instantáneo en tiempo real, permitiendo gestionar catálogos amplios de productos entonables cómodamente sin restricciones de altura.
+  - **Navegación y Ergonomía de Catálogos Base (`VistaCatalogosBase.vue` / `VistaCategorias.vue`):** Inclusión de botón de retorno `← Volver a Productos`. Eliminación del prefijo redundante `+` en el botón de subcategoría (`[+] Subcategoría`).
+  - **Estandarización de Botones de Cancelar/Descartar:** Unificación del estilo visual en `variant="neutral"` (gris suave corporativo) en diálogos y formularios (`Configuration.vue`, `PersonDetail.vue`, `ModalCambiarEstado.vue`, `Permissions.vue`), garantizando que ningún botón de cancelación se muestre azul (`outline`).
+  - **Limpieza de Subtítulos Técnicos:** Retirada de identificadores de requisitos de desarrollo (`HU-CAT-01`, `HU-CAT-02`, `HU-CAT-03`, `HU-CAT-04`, `HU-ORD-05`) en `PageHeader` para presentar una interfaz 100% pulida y orientada al usuario final.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.6.1_M01_refinamiento_ux_admin_y_catalogo_frontend.md](./walkthroughs/M01/walkthrough_v0.4.6.1_M01_refinamiento_ux_admin_y_catalogo_frontend.md)
+
+---
+## [v0.4.6.0] - 2026-10-07
+### M17 / M01 / M08 / M04 - Estabilización de flujos de administración y reestructuración UX de catálogo (Fullstack)
+- **Alcance General:** Incremento **Minior-feat (v0.4.6.0)**. Corrección integral y estabilización de los flujos de administración, sincronización del esquema DDL v3.9 de base de datos en Docker (49 tablas), eliminación de fallos de creación de empleados, reactivación de clientes inactivos, restauración del Dashboard en `/admin` y rediseño jerárquico de Categorías en árbol acordeón.
+- **Hitos Clave:**
+  - **Base de Datos (Docker v3.9):** Regeneración limpia del volumen `pgdata` en Docker levantando las 49 tablas con columnas requeridas por el repositorio de órdenes (`codigo_solicitud`, `modo_entrega`, `historial_estado_orden`), erradicando el error 500 al consultar `/admin/ordenes`.
+  - **Creación de Empleados (M17):** Corrección en `empleados.service.ts` y `empleados.repository.ts`, sustituyendo `id_rol: 0` por `null`, erradicando la violación de clave foránea `fk_usuario_rol` en PostgreSQL.
+  - **Dashboard y Enrutador (Core / M17):** Eliminación de la redirección hardcodeada a catálogo en `index.ts`; `/admin` y el botón "Dashboard" cargan directamente `Dashboard.vue` con sus métricas.
+  - **Gestión de Clientes (M17):** Soporte en backend y modal frontend para reactivar clientes en estado `'inactivo'` (baja voluntaria de Habeas Data).
+  - **Aprobación de Empresas (M04):** Adición de notificación reactiva Alert/Toast de confirmación tras dictaminar empresas o solicitudes de actualización de NIT.
+  - **Catálogo y Categorías (M01 UX):** Rediseño de `VistaCategorias.vue` sustituyendo el patrón de 2 columnas por una vista jerárquica en árbol / acordeón que agrupa subcategorías anidadas con acciones contextuales. Clarificación en `FormularioProducto.vue` de Tipo de Resina Química (solvente) vs. Bases Tintométricas (máquina).
+  - **Tipado y Compilación:** Corrección de tipos en `useCatalogoPublico.ts` y variables no utilizadas en `VistaCatalogoPublico.vue`, logrando `npm run build` limpio y `npm run lint` 0/0.
+- 🔗 **Walkthroughs Técnicos Oficiales:**
+  - [walkthroughs/M17/walkthrough_v0.4.6.0_M17_estabilizacion_admin_backend.md](./walkthroughs/M17/walkthrough_v0.4.6.0_M17_estabilizacion_admin_backend.md)
+  - [walkthroughs/M01/walkthrough_v0.4.6.0_M01_reestructuracion_catalogo_ux_frontend.md](./walkthroughs/M01/walkthrough_v0.4.6.0_M01_reestructuracion_catalogo_ux_frontend.md)
+
+---
+## [v0.4.5.1] - 2026-10-06
+### M05 - Carrito de compras: integración de botones y enlaces de compra en storefront (Frontend)
+- **Alcance General:** Incremento **Patch (v0.4.5.1)**. Conexión de todos los botones de «Agregar al carrito» y navegación hacia el carrito en las pantallas públicas de catálogo, inicio, paleta de colores y el layout global.
+- **Hitos Clave:**
+  - **Header (`LayoutHome.vue`):** Se reemplaza el estado mock por el consumo reactivo de `useCartStore` (total de ítems e importe formateado en COP). El botón redirige directamente a `/carrito` y carga el carrito al montar la aplicación.
+  - **Catálogo (`VistaCatalogoPublico.vue`):** Conexión del evento `@agregar` de `TarjetaProductoPublico` con `cartStore.addToCart()`, deduciendo la variante activa con existencia y mostrando confirmación visual.
+  - **Ficha de Detalle (`VistaDetalleProductoPublico.vue`):** Conexión del botón principal «Comprar» a la variante y cantidad seleccionadas, productos complementarios a sus variantes correspondientes, y modal de calculadora (`CalculadoraPinturaPublica`) a la acción de agregar al carrito.
+  - **Inicio (`VistaInicioPublica.vue`):** Integración de las tarjetas de productos destacados con `cartStore.addToCart()`.
+  - **Paleta de Colores (`VistaPaletaColoresPublica.vue`):** Conexión de productos recomendados por color y herramientas complementarias con `cartStore.addToCart()`, respetando el color seleccionado.
+- **Verificación:** vitest 43/43 pasados al 100% · `vue-tsc` y `eslint` 0 errores · compatibilidad total con backend M05 `/api/carrito`.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.4.5.1_M05_integracion_botones_carrito_frontend.md](./walkthroughs/M05/walkthrough_v0.4.5.1_M05_integracion_botones_carrito_frontend.md)
+
+
+---
+## [v0.4.5.0] - 2026-10-02
+### M08 - Orden de venta: cierre de la integración y estados de error sin datos de ejemplo (Frontend)
+- **Alcance General:** Incremento **Minior-feat (v0.4.5.0)**. El backend y el frontend de M08 ya estaban en `develop`; se verificó la integración contra la API real (contrato campo a campo en los 9 endpoints, 30 pasos en el stack completo) y se corrigió cómo reaccionan las pantallas cuando la API falla. `v0.4.4.0` la ocupa el PR de M05.
+- **Correcciones:**
+  - **Sin datos de ejemplo:** se elimina `ordenes.mock.ts`. Ante un 5xx o un fallo de red, la lista mostraba pedidos de ejemplo y el detalle mostraba un pedido del seed **sin aviso**, como si fuera del cliente. Ahora las 4 pantallas muestran un error con **Reintentar** y ningún dato.
+  - **Personal:** un 5xx o una caída de red ya no se presenta como «Orden no encontrada»; la bandeja ofrece Reintentar solo ante fallos del servidor o de red.
+  - **`Alert` con `variant`:** los avisos de error y de éxito del personal usaban `tone`, que `Alert` no reconoce, y salían con el estilo de información.
+- **Pendientes:** M07 (ninguna compra genera órdenes), M09, M11, y la **firma del líder técnico al reporte de parada `REPORTE_PARADA_v3.31.0`**, cuyos cambios están en `develop` desde el #1045.
+- **Verificación:** vitest 43/43 (24 nuevas) · `vue-tsc` y `eslint` 0/0 en M08 · backend M08 117/117 y 36/36 · permisos verificados con empleados sin `ventas.ver` y solo lectura · aviso de M18 al despachar registrado en su bitácora.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.4.5.0_M08_cierre_integracion_frontend.md](./walkthroughs/M08/walkthrough_v0.4.5.0_M08_cierre_integracion_frontend.md)
+
+
+---
+## [v0.4.4.0] - 2026-10-02
+### M05 - Carrito de compras: integración del backend en `develop` (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.4.4.0)**. Integra el backend del carrito de `feature/m05-carrito-compras`: el frontend de M05 (`v0.3.39.0`) llamaba a 10 endpoints `/api/carrito/*` que no existían en `develop`. Se monta `/carrito`, se renombra el módulo a `m05-carrito-compras` y se corrigen 4 defectos y 4 mejoras, sin cambiar la forma de las respuestas que consume el frontend.
+- **⚠️ Archivos compartidos (aprobados):** `backend/src/app.routes.ts` (+2 líneas) y `backend/src/core/middlewares/cors.middleware.ts` (`X-Visitor-Token` en `allowedHeaders`; ver [reporte de parada](./walkthroughs/M05/reporte_parada_v0.4.4.0_M05_cors_x_visitor_token_backend.md)).
+- **Correcciones:**
+  - **Variante inválida:** `404 VARIANTE_NO_ENCONTRADA` / `422 VARIANTE_NO_DISPONIBLE` en lugar de `500` por la llave foránea.
+  - **Tope de 999 por línea** también al acumular (`422 CANTIDAD_MAXIMA_EXCEDIDA`) y al fusionar (queda en 999 y se avisa en el campo opcional `avisos`).
+  - **Token de visitante** validado como UUID con Zod (header `x-visitor-token` y body de `/fusionar`).
+  - **Fusión en una sola transacción:** transferir líneas y borrar el carrito de visitante ya no pueden quedar a medias.
+  - **Agregado atómico** con `INSERT … ON CONFLICT DO UPDATE` y el tope en el `WHERE`: con el código anterior, 8 agregados simultáneos dejaban 4 unidades.
+  - **Agregar crea el carrito** si aún no existe (antes `404 "Inicialice el carrito primero"`).
+  - **Controlador alineado con M08:** identidad desde `obtenerIdentidadVigente(req)` y `:idLinea` validado con Zod (`404` si es ilegible).
+- **Decisiones provisionales:** tope de 999 (RF-CAR-02-07 PENDIENTE) y fusión sumando con límite y aviso (RF-CAR-04-03 PENDIENTE).
+- **Pendientes:** cambio de precio en la revalidación (RF-CAR-05-01/05), precios de empresa (RF-CAR-04-02 → M06), líneas de cotización (RF-CAR-05-06 → M21), `UNIQUE` en `carrito` (→ `bd/`), nombre e imagen del producto (→ M01) y token no UUID del seed (→ `bd/`).
+- **Verificación:** `tsc` 0 errores · `eslint --max-warnings=0` 0/0 · `m05.test.ts` 72/72 · `m05.integracion-escritura.test.ts` 19/19 contra PostgreSQL · flujo HTTP completo (visitante → login → fusión → revalidación).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.4.4.0_M05_integracion_carrito_backend.md](./walkthroughs/M05/walkthrough_v0.4.4.0_M05_integracion_carrito_backend.md)
+
+
+---
+## [v0.4.3.0] - 2026-10-02
+### M08 - Orden de venta: detalle completo de cada línea del pedido (Frontend)
+- **Alcance General:** Incremento **MINOR (v0.4.3.0)**. Las líneas del pedido mostraban 4 de los 10 campos que el backend entrega. Con esto pasan a mostrarlos todos y se cumplen dos criterios de aceptación que estaban pendientes.
+- **Hitos Clave:**
+  - **CA-ORD-02-02 — desglose de descuentos por línea:** cada descuento con su origen, el orden en que se aplicó, su porcentaje (o nada, si fue importe fijo) y cuánto descontó. Antes solo se veía el precio final.
+  - **RF-ORD-02-02 — precio antes de descuentos:** `precio_inicial` se muestra tachado junto al precio aplicado, cuando hubo descuentos.
+  - **RF-ORD-04-03 — producto retirado del catálogo:** la línea conserva los datos de la compra, el nombre deja de enlazar a la ficha (`id_producto` llega nulo) y se añade una nota de que ya no está disponible.
+  - **Color solicitado y entonado:** datos de la compra que en una pinturería no son accesorios. La **base consumida** solo se muestra al personal (RF-ORD-09-01).
+  - **Enlace a la ficha del producto** cuando sigue en catálogo.
+- **Correcciones:**
+  - **Motivo obligatorio al retroceder.** El backend responde `400 MOTIVO_REQUERIDO` al volver de «Preparada» a «En preparación» sin motivo (el «volver con motivo» del diagrama). El modal lo marcaba obligatorio para cancelar y devolver —hoy bloqueados— pero no para este retroceso, que es el único que puede darse. Ahora se avisa antes de enviar en lugar de dejar que el servidor rechace la operación.
+  - **`nota-contacto.dto.ts` usaba la sintaxis de Zod 4** (`{ error: ... }`), y el frontend va con Zod 3.25, donde la opción es `errorMap`. Rompía `vue-tsc` sin afectar al funcionamiento; entró en `v0.4.2.1` y queda corregido.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias en M08; comprobado contra `ORD-2026-0003`, que trae dos descuentos en una misma línea, un producto entonado y otro retirado.
+
+
+---
+## [v0.4.2.2] - 2026-10-01
+### M08 - Orden de venta: compras anteriores del cliente en el detalle (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.4.2.2)**. Da uso al último endpoint del personal que quedaba sin interfaz. **M08 pasa a consumir los 9 endpoints del módulo.**
+- **Hitos Clave:**
+  - **Compras anteriores (HU-ORD-11, CA-ORD-11-01):** bloque en la ficha del cliente, dentro del detalle administrativo. Lista los demás pedidos del titular con su fecha, total y estado, y cada uno enlaza a su propio detalle.
+  - Se consulta **bajo demanda**, no al abrir la orden: en la mayoría de consultas basta con el pedido que se está atendiendo, y así no se pide al servidor algo que nadie va a mirar.
+  - El endpoint **excluye la orden actual**, de modo que lo que se lista son estrictamente los demás pedidos. Botón «Ver más» cuando hay más de una página.
+  - Al cambiar de orden el bloque se reinicia, para no arrastrar el historial de un cliente al detalle de otro.
+- **Verificación:** `vue-tsc` y `eslint` sin errores; comprobado en pantalla con 4 compras anteriores y la orden consultada correctamente excluida.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.2.0_M08_gestion_ordenes_personal_frontend.md` (sección de ajustes posteriores)
+
+
+---
+## [v0.4.2.1] - 2026-10-01
+### M08 - Orden de venta: alta de notas internas y contactos desde el detalle (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.4.2.1)**. Dos formularios que dan uso a endpoints que el backend ya exponía y la interfaz no consumía.
+- **Hitos Clave:**
+  - **Nota interna (HU-ORD-10):** campo de texto y botón en el bloque «Notas internas» del detalle administrativo. El texto de ayuda advierte que la nota queda con el nombre del autor y **no se puede modificar después**, porque el backend rechaza editarla o borrarla (CA-ORD-10-03).
+  - **Registro de contacto (CA-ORD-09-03):** desplegable de medio (correo o teléfono) y detalle opcional, con su botón.
+  - Ambos refrescan el detalle al guardar, de modo que lo que se ve es lo que el servidor confirmó, no lo que se escribió.
+  - Validación en `dtos/nota-contacto.dto.ts`, espejando los DTO del backend (Directiva 12). Un 403 se identifica como falta del permiso `ventas.gestionar`.
+- **Efecto:** M08 pasa a consumir **seis de los siete endpoints** del personal. Queda sin interfaz el historial de compras del cliente (HU-ORD-11).
+- **Verificación:** `vue-tsc` y `eslint` sin errores; nota creada desde el formulario y confirmada en pantalla con su autor y fecha.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.2.0_M08_gestion_ordenes_personal_frontend.md` (sección de ajustes posteriores)
+
+
+---
+## [v0.4.2.0] - 2026-10-01
+### M08 - Orden de venta: vistas de gestión del personal (Frontend)
+- **Alcance General:** Incremento **MINOR (v0.4.2.0)** con las tres vistas del personal: «Gestión de órdenes» (HU-ORD-05, HU-ORD-08), «Detalle de orden administrativa» (HU-ORD-09, HU-ORD-04) y «Cambiar estado de la orden» (HU-ORD-03). Con ellas quedan maquetadas las **cinco vistas de M08** del listado oficial.
+- **Hitos Clave:**
+  - **Bandeja del personal:** tarjetas de resumen por estado que además filtran, búsqueda por código, estado, periodo y por correo o teléfono del cliente (CA-ORD-08-02), y columna «Parada» con los días que cada orden lleva detenida (CA-ORD-05-07).
+  - **Detalle administrativo:** añade sobre la vista del cliente el contacto del titular (CA-ORD-09-01), el historial con autor y motivo (CA-ORD-09-02), las notas internas y los contactos registrados.
+  - **Cambio de estado:** ofrece exclusivamente las transiciones que devuelve el servidor en `transiciones_permitidas`; con el array vacío la orden se presenta como estado final y el botón no se renderiza.
+  - **Lenguaje visual de los paneles existentes:** tarjetas con icono en caja de color y un único panel que agrupa filtros y listado, como «Gestión de empleados» (M17) y «Productos» (M01). No se introduce ningún color ni tipografía fuera del sistema.
+  - **Separación de rutas:** las del personal viven en `m08-ordenes-admin.routes.ts`, independientes de las del cliente.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias; cambio de estado real ejecutado y registrado en `historial_estado_orden` con autor y fecha.
+- **Pendiente de aprobación (Directiva 3):** `core/routes/index.ts` y `core/layouts/LayoutAdmin.vue`. Sin ellos las vistas existen pero no son alcanzables desde el panel.
+- **Sin interfaz todavía:** tres endpoints del personal siguen sin pantalla (notas internas, registro de contactos e historial de compras del cliente), a la espera de decisión.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.2.0_M08_gestion_ordenes_personal_frontend.md`
+
+
+---
+## [v0.4.1.1] - 2026-10-01
+### M08 - Orden de venta: encabezado de «Seguimiento de pedido» (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.4.1.1)**. Ajuste visual solicitado en revisión de diseño, sin cambios de funcionalidad ni de contrato.
+- **Hitos Clave:**
+  - El encabezado de «Seguimiento de pedido» adopta el mismo tratamiento que el de «Mi Perfil»: fondo `subaction` con la ilustración a la derecha y el título en `corporate`, en lugar de la fotografía del catálogo con velo oscuro que se había usado.
+  - Se conservan la ruta de navegación «Inicio › Mis Pedidos › Seguimiento de Pedido», el título y el texto de apoyo.
+  - Deja de importarse `hero-storefront.png` de M01: la pantalla ya no depende de recursos de otro módulo.
+- **Motivo:** las tres pantallas del cliente (perfil, listado y seguimiento) debían leerse como una misma familia visual.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias en M08.
+
+
+---
+## [v0.4.1.0] - 2026-10-01
+### M08 - Orden de venta: sección de pedidos y seguimiento del cliente (Frontend)
+- **Alcance General:** Incremento **MINOR (v0.4.1.0)** con las dos vistas del cliente: «Mis pedidos» (HU-ORD-07) y «Seguimiento de pedido» (HU-ORD-02, HU-ORD-04, HU-ORD-06). Las vistas del personal quedan fuera: su diseño todavía no está aprobado.
+- **Hitos Clave:**
+  - **«Mis pedidos» bajo la información personal del perfil**, como plantean los diseños «Mi-Perfil_Usuario natural» y «Mi-Perfil_Usuario Empresa». Filtros por estado, buscador, separación entre pedidos en curso y finalizados, y paginación.
+  - **«Seguimiento de pedido» como pantalla propia**, con su encabezado, su ruta de navegación y el contenido en dos columnas: línea de tiempo a la izquierda; datos de despacho y detalle de la compra a la derecha.
+  - **La línea de tiempo sigue el diagrama oficial:** desde «Preparada» el flujo bifurca según el modo de entrega, así que la recogida en tienda no muestra la etapa «Despachado», por la que su pedido nunca pasa.
+  - **Datos nuevos del backend ya en pantalla:** historial de estados con fecha y hora reales, forma de entrega, costo de entrega e IVA discriminado.
+  - **Aviso de cancelación al cliente:** cubre el pendiente que el informe final del backend asigna al frontend. La cancelación está bloqueada por la política de M11 y el backend responde 409 `OPERACION_NO_HABILITADA`.
+  - **Corrección en la presentación de errores:** un 401 se identifica como sesión expirada en lugar de «pedido no encontrado», y deja de caerse a los datos de ejemplo. 403 y 404 siguen siendo indistinguibles entre sí (CA-SEG-03-06).
+  - **Separación de rutas:** las del personal pasan a `m08-ordenes-admin.routes.ts`, de modo que cada parte del módulo pueda entregarse por separado.
+- **Verificación:** `vue-tsc` y `eslint` sin errores ni advertencias en M08; las tres pantallas abiertas contra el backend real.
+- **Pendiente de aprobación (Directiva 3):** 11 líneas añadidas en `m04-cuentas/views/VistaPerfil.vue` para incrustar la sección de pedidos. Ninguna línea existente fue modificada.
+- **Walkthrough:** `docs/walkthroughs/M08/walkthrough_v0.4.1.0_M08_pedidos_y_seguimiento_cliente_frontend.md`
+
+---
 ## [v0.4.0.0] - 2026-09-30
 ### Versión estable
 - Solo un cambio de versión, la web funciona bastante bien.
@@ -268,6 +493,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.31.0] - 2026-09-28
+### Módulo: M08 Orden de Venta — Bandeja, Búsqueda e Historial del Personal (Backend)
+- **Alcance General:** Incremento **Minior-feat (v0.3.31.0)** que da al personal con «Revisar órdenes» (`ventas.ver`) una bandeja para atender pedidos (HU-ORD-05), un buscador por número, correo o teléfono del cliente (HU-ORD-08), el contacto del cliente en el detalle (HU-ORD-09) y el historial de compras del cliente (HU-ORD-11), según la épica #28 actualizada el 27/09. Sin cambios de esquema.
+- **Hitos Clave:**
+  - **Rutas nuevas:** `GET /api/ordenes/gestion` con filtros combinables, paginación y `orden=antiguedad`; `GET /api/ordenes/gestion/resumen` con contadores por estado; `GET /api/ordenes/gestion/:codigo/historial-cliente`.
+  - **Generador del código `PC-AAAA-NNNNN`** con año de Colombia (D04), a la espera del consecutivo. Mis pedidos trata `enviado` como finalizado (D02).
+  - **Propuesta de modelo de datos** para el líder técnico (`docs/walkthroughs/M08/PROPUESTA_MODELO_DATOS_M08.md`). Criterios: 13 cumplidos, 10 parciales y 26 bloqueados de 49.
+  - **Calidad y Verificación:** `npx tsc --noEmit` y `npm run lint` sin errores ni advertencias; 51/51 pruebas en memoria, 20/20 de integración contra PostgreSQL y 12 peticiones HTTP reales correctas.
+  - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v0.3.31.0_M08_bandeja_busqueda_historial_backend.md](./walkthroughs/M08/walkthrough_v0.3.31.0_M08_bandeja_busqueda_historial_backend.md)
+
+---
+
 ## [v0.3.30.1] - 2026-09-27
 ### Core / M01 / M04: Resolución de Conflictos, Corrección de Linter y Restauración de Rutas (Frontend)
 - **Alcance General:** Incremento **PATCH (v0.3.30.1)** que resuelve los conflictos de merge en componentes de registro, restaura las rutas del perfil y administración en el router central, elimina la advertencia de ESLint en tarjetas de catálogo y corrige la etiqueta duplicada en `App.vue`.
@@ -514,6 +751,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - **Servicios y Tipado Centralizado (`cuentas.service.ts`, `admin.interface.ts`):** Nuevos métodos cliente `solicitarCambioCorreo`, `confirmarCambioCorreo`, `listarSolicitudesEmpresa` y `dictaminarSolicitudEmpresa`. Contratos de interfaz tipados sin `any`.
   - **Enrutamiento Administrativo Central (`src/core/routes/index.ts`):** Montaje formal de la ruta `/admin/empresas` bajo `LayoutAdmin`.
   - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M04/walkthrough_v3.29.0_M04_aprobacion_empresas_perfil_cambio_correo_frontend.md](./walkthroughs/M04/walkthrough_v3.29.0_M04_aprobacion_empresas_perfil_cambio_correo_frontend.md)
+
+---
+
+## [v3.31.0] - 2026-09-24
+### Módulo: M08 Orden de Venta (Frontend)
+- **Alcance:** Primera entrega del frontend de M08 sobre los endpoints de consulta de `v3.30.0`/`v3.30.1`. Cubre la sección de pedidos del cliente (HU-ORD-07) y el seguimiento del pedido (HU-ORD-02, HU-ORD-04, HU-ORD-06) en vista maestro-detalle sobre una misma pantalla. La parte administrativa (HU-ORD-01, HU-ORD-03, HU-ORD-05) queda fuera por ausencia de endpoints.
+- **Hitos Clave:** Módulo autónomo en `frontend/src/modules/m08-ordenes/` con listado, buscador servidor, filtros y paginación en cliente, panel de seguimiento y respaldo de mocks. Expone el componente `SeccionMisPedidos` para que otros módulos lo incrusten.
+- **Estado de Calidad:** ✅ `vue-tsc --noEmit` y `eslint` sin errores ni advertencias. Paleta verificada: 0 hexadecimales arbitrarios, 0 estilos inline, 0 clases ajenas a la marca.
+- ⚠️ **Dependencias bloqueantes:** requiere aprobación del Líder Técnico para dos archivos compartidos (enrutador central y tokens de tema). Ver reporte de parada.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M08/walkthrough_v3.31.0_M08_seccion_pedidos_cliente_frontend.md](./walkthroughs/M08/walkthrough_v3.31.0_M08_seccion_pedidos_cliente_frontend.md)
 
 ---
 

@@ -312,7 +312,7 @@
               :producto="producto"
               :modo="vista"
               @ver="verProducto"
-              @agregar="mostrarMensaje('Agregar al carrito requiere M07.')"
+              @agregar="agregarAlCarrito"
             />
           </div>
           <div v-else class="rounded-card border border-neutral-light bg-neutral-white p-12 text-center shadow-sm">
@@ -390,16 +390,18 @@ import { Paginacion } from '@/core/components';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import { useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
-import type { ProductoDestacadoPublico } from '../../interfaces/publicas/catalogo-publico.interface';
+import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
+import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
+import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import fondoProyectoCalculadora from '../../assets/storefront/fondo-proyecto-calculadora.jpeg';
 
-type OrdenCatalogo = 'relevancia' | 'nombre' | 'precio_asc' | 'precio_desc';
 type VistaCatalogo = 'grid' | 'lista';
 
 const fondoCompletaProyecto = {
   backgroundImage: `url(${fondoProyectoCalculadora})`,
 };
 const router = useRouter();
+const cartStore = useCartStore();
 const menuCategoriasAbierto = ref(false);
 const filtrosMovilAbiertos = ref(false);
 const mensaje = ref<string | null>(null);
@@ -443,38 +445,6 @@ const productosVisibles = computed(() => {
 });
 
 
-const cantidadMarcasDisponibles = computed(() => new Set(productos.value.map((producto) => producto.id_marca)).size);
-const muestrasColorDisponibles = computed(() => {
-  const colores = new Map<number, { id: number; nombre: string; hex: string }>();
-  productos.value.forEach((producto) =>
-    producto.detalle?.variantes.forEach((variante) => {
-      if (variante.id_color !== null && variante.color && variante.muestra_hex && !colores.has(variante.id_color)) {
-        colores.set(variante.id_color, { id: variante.id_color, nombre: variante.color, hex: variante.muestra_hex });
-      }
-    })
-  );
-  return [...colores.values()].slice(0, 5);
-});
-
-const familiasDisponibles = computed(() => [
-  ...new Set(
-    productos.value.flatMap(
-      (producto) =>
-        producto.detalle?.variantes
-          .map((variante) => variante.familia_color)
-          .filter((familia): familia is string => Boolean(familia)) ?? []
-    )
-  ),
-].slice(0, 5));
-
-const presentacionesDisponibles = computed(() => [
-  ...new Set(
-    productos.value.flatMap(
-      (producto) => producto.detalle?.variantes.map((variante) => variante.presentacion) ?? []
-    )
-  ),
-].slice(0, 5));
-
 const rangoInicio = computed(() => (total.value === 0 ? 0 : (pagina.value - 1) * 8 + 1));
 const rangoFin = computed(() => Math.min(pagina.value * 8, total.value));
 const seleccionActual = computed(() => {
@@ -485,13 +455,41 @@ const seleccionActual = computed(() => {
   return null;
 });
 
-function precioMinimo(producto: ProductoDestacadoPublico): number {
-  const precios = producto.detalle?.variantes.map((variante) => variante.precio_vigente) ?? [];
-  return precios.length ? Math.min(...precios) : Number.MAX_SAFE_INTEGER;
-}
-
 function mostrarMensaje(texto: string): void {
   mensaje.value = texto;
+}
+
+async function agregarAlCarrito(idProducto: number): Promise<void> {
+  const prod = productos.value.find((p) => p.id_producto === idProducto);
+  let variante = seleccionarVarianteCompraRapida(prod?.detalle?.variantes ?? []);
+
+  if (!variante) {
+    try {
+      const ficha = await CatalogoPublicoService.obtenerFicha(idProducto);
+      variante = seleccionarVarianteCompraRapida(ficha.variantes);
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!variante) {
+    mostrarMensaje('No hay variantes disponibles para este producto.');
+    return;
+  }
+
+  await cartStore.addToCart({
+    id: variante.id_variante,
+    variantId: variante.id_variante,
+    name: prod?.nombre ?? 'Producto',
+    price: variante.precio_vigente,
+    image: prod?.detalle?.imagenes[0]?.contenido_url ?? '',
+  });
+
+  if (cartStore.error) {
+    mostrarMensaje(cartStore.error);
+  } else {
+    mostrarMensaje(`Se agregó "${prod?.nombre ?? 'el producto'}" al carrito.`);
+  }
 }
 
 function limpiarFiltros(): void {

@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { LoaderCircle, Minus, Plus, Trash2 } from 'lucide-vue-next'
+import { ref, watch } from 'vue'
+import { LoaderCircle, Minus, Plus, Trash2, PackageOpen } from 'lucide-vue-next'
 import type { CartItem } from '../interfaces/cart.interface'
 
 const props = defineProps<{ product: CartItem; updating: boolean }>()
+const imagenConError = ref(false)
+watch(() => props.product.image, () => { imagenConError.value = false })
 
 defineEmits<{
   (event: 'increase', productId: number): void
@@ -21,7 +24,8 @@ const currencyFormatter = new Intl.NumberFormat('es-CO', {
   <article class="relative flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-3">
     <div class="flex min-w-0 flex-1 items-start gap-3 pr-9 sm:pr-0">
       <div class="flex h-[5.5rem] w-[5.5rem] shrink-0 items-center justify-center overflow-hidden rounded-md border border-neutral-light bg-neutral-white p-1.5 sm:h-24 sm:w-24">
-        <img :src="product.image" :alt="product.name" class="h-full w-full object-contain" loading="lazy" />
+        <img v-if="product.image && !imagenConError" @error="imagenConError = true" :src="product.image" :alt="product.name" class="h-full w-full object-contain" loading="lazy" />
+        <PackageOpen v-else class="h-10 w-10 text-neutral-light" aria-hidden="true" />
       </div>
       <div class="min-w-0">
         <h3 class="text-sm font-bold leading-tight text-neutral-black">{{ product.name }}</h3>
