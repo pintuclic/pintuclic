@@ -8,6 +8,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 
+## [v0.3.39.1] - 2026-10-08
+### Módulo: M05 Carrito de compras — Integración con el layout de la tienda (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.3.39.1)** que enlaza la vista del carrito con el header y el footer de la tienda pública. Toca dos archivos compartidos (`core/routes/index.ts` y `core/layouts/LayoutHome.vue`) con aprobación explícita del equipo.
+- **Router global:** `m05CarritoRoutes` se registra como hija de `LayoutHome`; la ruta pasa de `/carrito` a `carrito` (relativa) y conserva la URL `/carrito`.
+- **Header:** el botón "Mi Carrito" navega a `/carrito` y muestra cantidad y total reales desde `useCartStore()` (formato COP), reemplazando el estado mock.
+- **CartView:** el contenedor raíz pasa de `<main>` a `<div>` para no anidar `<main>` dentro del layout.
+- **Verificación:** E2E en `localhost:5173` contra los contenedores `pintuclic-m05-test-*`: header/footer visibles en `/carrito`, navegación desde el header y actualización en vivo del contador al cambiar cantidades. ESLint limpio en los archivos modificados.
+- **Pendiente detectado (backend core):** `cors.middleware.ts` no incluye `x-visitor-token` en `allowedHeaders`; sin proxy `/api`, el navegador bloquea el carrito de visitante en desarrollo local.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.3.39.1_M05_integracion_layout_carrito_frontend.md](./walkthroughs/M05/walkthrough_v0.3.39.1_M05_integracion_layout_carrito_frontend.md)
+
+---
+
 ## [v0.3.39.0] - 2026-09-30
 ### Módulo: M05 Carrito de compras (Frontend)
 - **Alcance General:** Incremento **Minior-feat (v0.3.39.0)** para la interfaz e integración frontend del carrito de visitantes y clientes autenticados. No incluye el registro de rutas globales, el checkout/pago ni el despliegue.

@@ -3,6 +3,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import { publicStorefrontRoutes } from '@/modules/m01-catalogo/publico.routes';
 import { adminCatalogoRoutes } from '@/modules/m01-catalogo/catalogo.routes';
 import { m17Routes } from '@/modules/m17-permisos/m17.routes';
+import { m05CarritoRoutes } from '@/modules/m05-carrito-compras/m05-carrito-compras.routes';
 
 export const routes: RouteRecordRaw[] = [
   // 1. Tienda Pública / Storefront (LayoutHome maestro permanente)
@@ -12,6 +13,7 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/core/layouts/LayoutHome.vue'),
     children: [
       ...publicStorefrontRoutes,
+      ...m05CarritoRoutes,
       {
         path: 'perfil',
         name: 'Perfil',

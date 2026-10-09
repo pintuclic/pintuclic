@@ -143,7 +143,7 @@
           <div class="w-px h-8 bg-neutral-light hidden md:block"></div>
 
           <!-- Acciones: Carrito -->
-          <button class="relative flex items-center gap-2 text-neutral-dark hover:text-action transition-all duration-300 text-left cursor-pointer" :class="{ '-translate-y-1': cartTotalItems > 0 }">
+          <router-link to="/carrito" aria-label="Ir al carrito de compras" class="relative flex items-center gap-2 text-neutral-dark hover:text-action transition-all duration-300 text-left cursor-pointer" :class="{ '-translate-y-1': cartTotalItems > 0 }">
             <div class="relative">
               <ShoppingCartIcon class="w-7 h-7" />
               <span v-if="cartTotalItems > 0" class="absolute -top-1.5 -right-1.5 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
@@ -156,7 +156,7 @@
                 {{ cartTotalItems > 0 ? cartTotalValue : '' }}
               </span>
             </div>
-          </button>
+          </router-link>
         </div>
       </div>
     </header>
@@ -212,7 +212,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import {
   MapPin as MapPinIcon,
   ShieldCheck as ShieldCheckIcon,
@@ -235,6 +235,7 @@ import type { CategoriaPublica } from '@/modules/m01-catalogo/interfaces/publica
 import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/registro.interface';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
+import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import { watchEffect } from 'vue';
 
 // Categorías predefinidas de respaldo (garantiza UI funcional incluso si el backend está iniciando)
@@ -367,8 +368,15 @@ const handleWizardSuccess = (_tipoCuenta?: TipoCuentaRegistro) => {
   closeAllModals();
 };
 
-// Mock state for Shopping Cart UI. When backend/Pinia is ready, replace these with useCartStore()
-const cartTotalItems = ref(0);
-const cartTotalValue = ref('');
+// Resumen del carrito M05 para el botón "Mi Carrito" del header
+const cartStore = useCartStore();
+const cartTotalItems = computed(() => cartStore.totalItems);
+const cartTotalValue = computed(() =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(cartStore.total)
+);
+
+onMounted(() => {
+  void cartStore.loadCart();
+});
 
 </script>
