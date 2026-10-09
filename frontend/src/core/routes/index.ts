@@ -15,6 +15,7 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/core/layouts/LayoutHome.vue'),
     children: [
       ...publicStorefrontRoutes,
+      ...m05CarritoRoutes,
       {
         path: 'perfil',
         name: 'Perfil',
@@ -24,9 +25,6 @@ export const routes: RouteRecordRaw[] = [
       ...ordenesRoutes,
     ],
   },
-
-  // M05: carrito de compras (ya estaba en el repo sin ruta registrada)
-  ...m05CarritoRoutes,
 
   // 2. Panel Administrativo (LayoutAdmin maestro permanente con sidebar + acordeón)
   {

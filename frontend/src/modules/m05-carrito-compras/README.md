@@ -61,7 +61,7 @@ La configuración de preview usa un proxy local `/api` hacia `http://localhost:3
 
 - **Catálogo/M02:** debe proporcionar información completa de producto, imágenes y variantes para sustituir los fallbacks visuales actuales.
 - **M07:** debe conectar el checkout y pago después de la revalidación exitosa.
-- **Router global:** debe registrar explícitamente `m05CarritoRoutes`; este módulo solo exporta la definición.
+- **Router global:** `m05CarritoRoutes` ya está registrado como hija de `LayoutHome` (v0.4.6.4); `/carrito` muestra el header y el footer de la tienda.
 - **Backend/header:** el backend debe permitir `x-visitor-token` en `Access-Control-Allow-Headers` si se consume directamente desde otro origen, sin proxy.
 
 ## Recursos Docker de prueba
