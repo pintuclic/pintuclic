@@ -47,7 +47,7 @@ export class EmpleadosRepository {
     correo: string;
     telefono?: string | undefined;
     contrasena_hash: string;
-    id_rol: number;
+    id_rol?: number | null | undefined;
   }): Promise<number> {
     const resultado = await this.db
       .insertInto('usuario')
@@ -56,7 +56,7 @@ export class EmpleadosRepository {
         correo: datos.correo.toLowerCase(),
         telefono: datos.telefono ?? null,
         contrasena: datos.contrasena_hash,
-        id_rol: datos.id_rol,
+        id_rol: datos.id_rol ?? null,
         estado: 'activo',
         tipo: 'normal',
       })

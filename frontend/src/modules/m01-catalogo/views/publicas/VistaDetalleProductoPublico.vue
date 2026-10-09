@@ -160,12 +160,25 @@
                   v-for="variante in presentaciones"
                   :key="variante.id_presentacion"
                   type="button"
-                  class="min-h-11 rounded-button border px-4 py-3 text-sm font-semibold transition-all hover:-translate-y-0.5 hover:bg-action hover:text-white hover:shadow-sm active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-                  :class="varianteSeleccionada?.id_presentacion === variante.id_presentacion ? 'border-2 border-action bg-neutral-white text-action shadow-sm ring-1 ring-subaction' : 'border-neutral-light bg-neutral-white text-neutral-dark hover:border-action'"
+                  class="min-h-11 rounded-button border px-4 py-3 text-sm font-semibold transition-all active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action cursor-pointer"
+                  :class="varianteSeleccionada?.id_presentacion === variante.id_presentacion
+                    ? 'border-action bg-action text-white shadow-sm ring-2 ring-subaction'
+                    : 'border-neutral-light bg-neutral-white text-neutral-dark hover:border-action hover:bg-subaction/30 hover:text-action'"
                   @click="seleccionarPresentacion(variante.id_presentacion)"
                 >
                   {{ variante.presentacion }}
                 </button>
+              </div>
+
+              <!-- Rendimiento dinámico según la presentación seleccionada (RF-CAT-10-04, M01-16) -->
+              <div v-if="rendimientoEstimado" class="mt-3.5 rounded-card border border-neutral-light bg-neutral-lightest p-3 text-xs">
+                <div class="flex items-center gap-2 font-semibold text-corporate">
+                  <Sparkles :size="15" class="text-action shrink-0" />
+                  <span>Rendimiento estimado: {{ rendimientoEstimado.min }} a {{ rendimientoEstimado.max }} m²</span>
+                </div>
+                <p class="mt-1 text-[11px] leading-4 text-neutral-medium">
+                  Calculado a 2 manos para {{ rendimientoEstimado.presentacion }}. Puede variar según la porosidad y textura de la superficie.
+                </p>
               </div>
             </div>
 
@@ -202,7 +215,7 @@
               <button
                 type="button"
                 class="inline-flex min-h-11 items-center justify-center gap-2 rounded-button bg-conversion text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-conversion-hover hover:shadow-md active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion"
-                @click="mostrarMensaje('Agregar al carrito requiere la integración con M07.')"
+                @click="agregarAlCarrito"
               >
                 <ShoppingCart :size="17" /> Comprar
               </button>
@@ -219,13 +232,13 @@
         <!-- Productos complementarios -->
         <section v-if="complementarios.length" class="mt-16">
           <h2 class="font-title text-xl font-bold text-corporate">Productos que te pueden interesar</h2>
-          <div class="mt-5 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <div class="mt-5 grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             <TarjetaProductoPublico
               v-for="item in complementarios"
               :key="item.id_producto"
               :producto="item"
               @ver="irProducto"
-              @agregar="mostrarMensaje('Agregar al carrito requiere M07.')"
+              @agregar="agregarComplementarioAlCarrito"
             />
           </div>
         </section>
@@ -261,6 +274,13 @@
       @cerrar="cartaColoresAbierta = false"
       @seleccionar="seleccionarDesdeCarta"
     />
+    <CalculadoraPinturaPublica
+      v-if="producto"
+      :abierta="calculadoraAbierta"
+      :producto="producto"
+      @cerrar="calculadoraAbierta = false"
+      @agregar="agregarDesdeCalculadora"
+    />
   </div>
 </template>
 
@@ -271,13 +291,17 @@ import { ArrowLeft, Calculator, ChevronDown, CircleAlert, MapPin, PackageOpen, P
 import { MuestraColor } from '@/core/components';
 import { GALERIA_PRODUCTO_DEMO, obtenerImagenPublicaRespaldo } from '../../assets/imagenes-catalogo';
 import CartaColoresProductoPublica from '../../components/publicas/CartaColoresProductoPublica.vue';
+import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPinturaPublica.vue';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import VisualizadorAmbientesPublico from '../../components/publicas/VisualizadorAmbientesPublico.vue';
 import { useDetalleProductoPublico } from '../../composables/publicas/useDetalleProductoPublico';
+import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
+import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import { formatearCOP } from '@/core/utils/moneda';
 
 const props = defineProps<{ productoId: string }>();
 const router = useRouter();
+const cartStore = useCartStore();
 const route = useRoute();
 const idProducto = computed(() => Number(props.productoId));
 const {
@@ -307,6 +331,7 @@ watch(
 );
 const menuCategoriasAbierto = ref(false);
 const cartaColoresAbierta = ref(false);
+const calculadoraAbierta = ref(false);
 const descripcionAbierta = ref(true);
 const mensaje = ref<string | null>(null);
 const cantidad = ref(1);
@@ -315,6 +340,7 @@ const modoVista = ref<'ambientes' | 'envase'>('ambientes');
 
 const esPintura = computed(() => {
   if (!producto.value) return false;
+  if (!producto.value.rendimiento_min || !producto.value.rendimiento_max) return false;
   // En Pintu Clic (RF-CAT-02-02, HU-CAT-10), las herramientas y accesorios tienen clase 'sin_color'
   if (producto.value.clase_color === 'sin_color') return false;
   const texto = `${producto.value.nombre} ${producto.value.descripcion ?? ''}`.toLowerCase();
@@ -356,6 +382,20 @@ const presentaciones = computed(() => {
   return Array.from(unicas.values());
 });
 
+const rendimientoEstimado = computed(() => {
+  if (!esPintura.value || !producto.value?.rendimiento_min || !producto.value?.rendimiento_max) return null;
+  const vol = Number(varianteSeleccionada.value?.volumen ?? 3.785);
+  // Un galón estándar en Pintu Clic equivale a 3.785 L (RF-CAT-10-04)
+  const factor = vol > 0 ? vol / 3.785 : 1.0;
+  const min = Math.round(producto.value.rendimiento_min * factor * 10) / 10;
+  const max = Math.round(producto.value.rendimiento_max * factor * 10) / 10;
+  return {
+    min,
+    max,
+    presentacion: varianteSeleccionada.value?.presentacion ?? 'esta presentación',
+  };
+});
+
 const galeria = computed(() => {
   const remotas = producto.value?.imagenes.map((imagen) => imagen.contenido_url) ?? [];
   if (remotas.length) return remotas;
@@ -375,6 +415,66 @@ const precioActual = computed(() =>
 
 function mostrarMensaje(texto: string): void {
   mensaje.value = texto;
+}
+
+async function agregarAlCarrito(): Promise<void> {
+  if (!varianteSeleccionada.value) {
+    mostrarMensaje('Por favor selecciona una variante del producto.');
+    return;
+  }
+  await cartStore.addToCart(
+    {
+      id: varianteSeleccionada.value.id_variante,
+      variantId: varianteSeleccionada.value.id_variante,
+      name: producto.value?.nombre ?? 'Producto',
+      price: varianteSeleccionada.value.precio_vigente,
+      image: imagenActiva.value ?? '',
+    },
+    cantidad.value
+  );
+  if (cartStore.error) {
+    mostrarMensaje(cartStore.error);
+  } else {
+    mostrarMensaje(`Se agregó "${producto.value?.nombre ?? 'el producto'}" al carrito.`);
+  }
+}
+
+async function agregarComplementarioAlCarrito(idProd: number): Promise<void> {
+  const prod = complementarios.value.find((p) => p.id_producto === idProd);
+  let variante = prod?.detalle?.variantes.find((v) => v.existencia_referencial > 0) ?? prod?.detalle?.variantes[0];
+
+  if (!variante) {
+    try {
+      const ficha = await CatalogoPublicoService.obtenerFicha(idProd);
+      variante = ficha.variantes.find((v) => v.existencia_referencial > 0) ?? ficha.variantes[0];
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!variante) {
+    mostrarMensaje('No hay variantes disponibles para este producto.');
+    return;
+  }
+
+  await cartStore.addToCart({
+    id: variante.id_variante,
+    variantId: variante.id_variante,
+    name: prod?.nombre ?? 'Producto',
+    price: variante.precio_vigente,
+    image: prod?.detalle?.imagenes[0]?.contenido_url ?? '',
+  });
+
+  if (cartStore.error) {
+    mostrarMensaje(cartStore.error);
+  } else {
+    mostrarMensaje(`Se agregó "${prod?.nombre ?? 'el producto'}" al carrito.`);
+  }
+}
+
+function agregarDesdeCalculadora(): void {
+  calculadoraAbierta.value = false;
+  void agregarAlCarrito();
 }
 
 function seleccionarPresentacion(idPresentacion: number): void {
@@ -411,7 +511,6 @@ function seleccionarDesdeCarta(idVariante: number): void {
 }
 
 function volverCatalogo(): void {
-  console.log('VOLVER CATALOGO EJECUTADO');
   void router.push({ name: 'CatalogoPublico' });
 }
 
@@ -433,9 +532,6 @@ function irSubcategoria(id: number): void {
 }
 
 function irCalculadora(): void {
-  void router.push({
-    name: 'CalculadoraPinturaProductoPublica',
-    params: { productoId: props.productoId },
-  });
+  calculadoraAbierta.value = true;
 }
 </script>

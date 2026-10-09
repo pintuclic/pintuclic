@@ -1,4 +1,4 @@
-﻿import { ClientesRepository } from '../repositories/clientes.repository';
+import { ClientesRepository } from '../repositories/clientes.repository';
 import { ClienteResumen } from '../interfaces/m17.interfaces';
 
 // ==============================================================================
@@ -74,8 +74,8 @@ export class ClientesService {
       return { ok: false, error: 'Cliente no encontrado' };
     }
 
-    if (cliente.estado !== 'bloqueado') {
-      return { ok: false, error: 'El cliente no está bloqueado' };
+    if (cliente.estado !== 'bloqueado' && cliente.estado !== 'inactivo') {
+      return { ok: false, error: 'El cliente no está bloqueado ni inactivo' };
     }
 
     await this.clientesRepo.actualizarEstado(idUsuario, 'activo');

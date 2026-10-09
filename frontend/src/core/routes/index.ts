@@ -3,6 +3,9 @@ import type { RouteRecordRaw } from 'vue-router';
 import { publicStorefrontRoutes } from '@/modules/m01-catalogo/publico.routes';
 import { adminCatalogoRoutes } from '@/modules/m01-catalogo/catalogo.routes';
 import { m17Routes } from '@/modules/m17-permisos/m17.routes';
+import { ordenesRoutes } from '@/modules/m08-ordenes/m08-ordenes.routes';
+import { ordenesAdminRoutes } from '@/modules/m08-ordenes/m08-ordenes-admin.routes';
+import { m05CarritoRoutes } from '@/modules/m05-carrito-compras/m05-carrito-compras.routes';
 
 export const routes: RouteRecordRaw[] = [
   // 1. Tienda Pública / Storefront (LayoutHome maestro permanente)
@@ -12,11 +15,14 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/core/layouts/LayoutHome.vue'),
     children: [
       ...publicStorefrontRoutes,
+      ...m05CarritoRoutes,
       {
         path: 'perfil',
         name: 'Perfil',
         component: () => import('@/modules/m04-cuentas/views/VistaPerfil.vue'),
       },
+      // M08: sección de pedidos del cliente (pendiente de aprobación, ver reporte de parada)
+      ...ordenesRoutes,
     ],
   },
 
@@ -26,9 +32,10 @@ export const routes: RouteRecordRaw[] = [
     name: 'Administracion',
     component: () => import('@/core/layouts/LayoutAdmin.vue'),
     children: [
-      { path: '', redirect: '/admin/catalogo' },
-      ...adminCatalogoRoutes,
       ...m17Routes,
+      ...adminCatalogoRoutes,
+      // M08: gestión de órdenes del personal (pendiente de aprobación, ver reporte de parada)
+      ...ordenesAdminRoutes,
       {
         path: 'solicitudes',
         name: 'AdminSolicitudesEmpresa',
@@ -45,14 +52,14 @@ export const routes: RouteRecordRaw[] = [
     path: '/acceso',
     name: 'Acceso',
     component: () => import('@/core/layouts/LayoutAcceso.vue'),
-    children: []
+    children: [],
   },
-  
+
   // 4. Fallback: Cualquier ruta no reconocida redirige al inicio
   {
     path: '/:pathMatch(.*)*',
     redirect: '/',
-  }
+  },
 ];
 
 const router = createRouter({

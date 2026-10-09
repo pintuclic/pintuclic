@@ -5,6 +5,8 @@ Este documento registra la evolución histórica del modelo de base de datos de 
 ---
 
 ## 📑 Índice de Versiones
+- [Versión 2.7 / v0.3.37.0 (M08: copia histórica de la orden, descuentos por línea y consecutivo - 2026-09-29)](#-versión-27--v03370-2026-09-29)
+- [Versión 2.6 / v0.3.34.0 (M08: estados, historial, notas internas y contactos de la orden - 2026-09-29)](#-versión-26--v03340-2026-09-29)
 - [Versión 2.5 / v3.29.0 (Sincronización de Modelo ER de Base de Datos - 2026-09-22)](#-versión-25--v3290-2026-09-22)
 - [Versión 2.4 (Módulo de Cuentas, Autenticación y Perfil - M04)](#-versión-24-2026-09-05)
 - [Versión 2.3 (Módulo de Privacidad, Consentimiento y Habeas Data - HU-SEG-05)](#-versión-23-2026-09-05)
@@ -12,6 +14,168 @@ Este documento registra la evolución histórica del modelo de base de datos de 
 - [Versión 2.1 (E-Commerce Inmutable, Cotizaciones y Carrito con Variantes)](#-versión-21-2026-09-04)
 - [Versión 2.0 (Página FINAL del ER) - Reestructuración de Catálogo, Variantes y Combos](#-versión-20-2026-09-03)
 - [Versión 1.0 (Esquema Inicial Pre-Final) - Base de 21 Tablas](#-versión-10-2026-09-02)
+
+---
+
+## 📦 Versión 2.7 / v0.3.37.0 (2026-09-29)
+
+### 🎯 Resumen Ejecutivo
+Segunda tanda del modelo de datos de **M08 Orden de venta**, con visto bueno del líder técnico. Cubre las secciones 3, 4, 5 y 8 de `docs/walkthroughs/M08/PROPUESTA_MODELO_DATOS_M08.md`, lo que el analista confirmó como definido el 29/09. La orden conserva ahora una **copia histórica completa**: modo y costo de entrega, IVA, solicitud de origen y, por línea, color, precio inicial, descuentos, entonado y producto de referencia. Además hay un **consecutivo sin huecos** para el código `PC-AAAA-NNNNN`. La cabecera del script pasa a **esquema 3.9**.
+- **Total Tablas:** Pasa de 47 a 49 tablas.
+- **Foco de la versión:** Ventas (M08). Cambio aditivo: las órdenes existentes conservan sus datos y los campos nuevos quedan vacíos (`NULL`), sin inventar valores pasados.
+
+---
+
+### 🛑 1. Tablas Deprecadas / Eliminadas
+Ninguna en esta versión.
+
+---
+
+### ✨ 2. Tablas Nuevas Creadas
+| Nueva Tabla | Clave Primaria (PK) | Claves Foráneas (FK) | Propósito Funcional |
+| :--- | :--- | :--- | :--- |
+| `linea_orden_descuento` | `id_linea_orden_descuento SERIAL` | `id_linea_orden -> linea_orden` (RESTRICT) | Cada descuento aplicado a una línea con su origen, porcentaje (NULL si es importe fijo), importe y orden de aplicación (RF-ORD-02-02, CA-ORD-02-02). |
+| `consecutivo` | `id_consecutivo SERIAL` | Ninguna | Numeración corrida sin huecos por tipo de documento (`orden` → `PC-AAAA-NNNNN`; reutilizable por M07 para `SOL-AAAA-NNNNN`). Se incrementa en la misma transacción que crea el documento (RF-ORD-06-04). |
+
+---
+
+### 🔄 3. Tablas Modificadas y Nuevas Relaciones
+- **`orden`:**
+  - `codigo_solicitud VARCHAR(20) UNIQUE`: código SOL de M07; sin FK hasta que exista su tabla.
+  - `modo_entrega enum_modo_entrega` y `costo_entrega NUMERIC(12,2) DEFAULT 0` (Tanda 12: costo 0 mientras no haya tarifa).
+  - `base_sin_impuesto`, `importe_iva` y `tasa_iva`: congelados de la solicitud (D07, CA-ORD-02-05).
+  - `direccion` pasa a admitir `NULL` para la recogida en almacén.
+- **`linea_orden`:**
+  - `color_solicitado` y `precio_inicial`.
+  - `id_variante_ref INT`: sin FK a propósito (ADR-05).
+  - `es_entonado BOOLEAN DEFAULT false` y `base_consumida` (RF-CUM-01-09).
+- **Relación cambiada:** `linea_orden.id_orden -> orden.id_orden` pasa de `ON DELETE CASCADE` a `ON DELETE RESTRICT` (RF-ORD-02-04: los datos de una orden no se eliminan físicamente). Ningún módulo borra órdenes (verificado en `backend/src`).
+- **Nueva relación:** `linea_orden_descuento.id_linea_orden -> linea_orden.id_linea_orden` (`ON DELETE RESTRICT`).
+
+---
+
+### 🔒 4. Restricciones (CONSTRAINTS) y Tipos ENUM Agregados
+- **Nuevo ENUM:** `enum_modo_entrega ('domicilio', 'recogida')`.
+- **Nuevos UNIQUE:** `uq_orden_codigo_solicitud` (una solicitud genera una sola orden) y `uq_lod_orden_aplicacion (id_linea_orden, orden_aplicacion)`.
+- **Nuevos CHECK:**
+  - `chk_orden_costo_entrega`, `chk_orden_iva` (importes ≥ 0 y tasa entre 0 y 100) y `chk_orden_direccion_domicilio` (a domicilio exige dirección).
+  - `chk_lineaorden_precio_inicial`.
+  - En `linea_orden_descuento`: `chk_lod_orden_aplicacion`, `chk_lod_origen`, `chk_lod_importe` y `chk_lod_porcentaje`.
+  - En `consecutivo`: `chk_consecutivo_valor` y `chk_consecutivo_nombre`.
+- **Migración para bases anteriores a v3.9:**
+  - `ADD COLUMN IF NOT EXISTS` para cada columna.
+  - Restricciones creadas en bloques `DO` que comprueban `pg_constraint`.
+  - La FK de `linea_orden` se recrea solo si seguía en `CASCADE`.
+  - Los `COMMENT ON COLUMN` van **después** de la migración, para que las columnas ya existan en bases antiguas.
+- **Sin redondeo en la base de datos:** la orden guarda los importes congelados de la solicitud. La regla de redondeo (RF-PRE-05-04 frente a D07) sigue pendiente del analista principal y no se fija aquí.
+
+---
+
+### ⚡ 5. Nuevos Índices de Rendimiento
+- Los índices únicos de `uq_orden_codigo_solicitud` y `uq_lod_orden_aplicacion` cubren la búsqueda por solicitud y por línea. `consecutivo.nombre` es `UNIQUE`. No se añaden índices adicionales.
+
+---
+
+### 💻 6. Impacto y Acciones Requeridas en Backend y Frontend
+#### Backend (Kysely / Express):
+- `src/core/db/types.ts`:
+  - `EnumModoEntrega`;
+  - columnas nuevas en `OrdenTable` y `LineaOrdenTable` (`direccion` pasa a `string | null`);
+  - nuevas `LineaOrdenDescuentoTable` y `ConsecutivoTable`.
+- Módulos afectados: solo **M08**, que muestra la copia histórica en el detalle y el modo de entrega en la bandeja. Ningún otro módulo lee `orden.direccion`.
+- **Servidor desplegado:** el workflow `Deploy` aplica la migración y el seed con `psql -v ON_ERROR_STOP=1`. Las órdenes `ORD-2026-0001` y `0002` quedan con los campos nuevos vacíos, y se añade `ORD-2026-0003` completa.
+
+#### Frontend (Vistas / UI):
+- El detalle muestra:
+  - el modo de entrega y su costo;
+  - el IVA;
+  - la solicitud de origen;
+  - por línea, el color, el precio inicial, sus descuentos en orden y la marca de producto retirado (sin enlace).
+
+#### Verificación (PostgreSQL 15.19 local, 2026-09-29):
+| Prueba | Resultado |
+| :--- | :--- |
+| Simulación del deploy: base temporal con esquema y seed de `develop` (esquema 3.8), luego esquema y seed nuevos con `psql -v ON_ERROR_STOP=1` | ✅ Código 0; 47 → 49 tablas; órdenes antiguas intactas con campos nuevos en NULL; `ORD-2026-0003` completa; FK de líneas en RESTRICT; 6 restricciones nuevas |
+| Segundo deploy seguido | ✅ Código 0, sin duplicados |
+| Base nueva desde cero | ✅ 49 tablas; las tres órdenes con copia completa; 3 descuentos; 5 cambios de estado |
+| Pruebas de integración de M08 en ambas bases | ✅ Lectura 36/36; escritura con ROLLBACK 17/17 (incluye 6 restricciones nuevas) |
+
+---
+
+## 📦 Versión 2.6 / v0.3.34.0 (2026-09-29)
+
+### 🎯 Resumen Ejecutivo
+Primera tanda del modelo de datos de **M08 Orden de venta** (épica #28, propuesta `docs/walkthroughs/M08/PROPUESTA_MODELO_DATOS_M08.md`, secciones 1, 2 y 8), aprobada por el líder técnico. El ciclo de estados de la orden se alinea con HU-ORD-03 y se añaden el historial de transiciones, las notas internas y el registro de contactos. La cabecera del script pasa a **esquema 3.8**.
+- **Total Tablas:** Pasa de 44 a 47 tablas.
+- **Foco de la versión:** Ventas (M08). Cambio aditivo salvo el renombrado de dos valores del ENUM de estados, que se migra sin pérdida de datos.
+
+---
+
+### 🛑 1. Tablas Deprecadas / Eliminadas
+Ninguna en esta versión.
+
+---
+
+### ✨ 2. Tablas Nuevas Creadas
+| Nueva Tabla | Clave Primaria (PK) | Claves Foráneas (FK) | Propósito Funcional |
+| :--- | :--- | :--- | :--- |
+| `historial_estado_orden` | `id_historial_estado_orden SERIAL` | `id_orden -> orden`, `id_usuario_autor -> usuario` (NULL = sistema) | Cada cambio de estado con estado anterior y nuevo, autor, motivo, referencia externa y fecha (HU-ORD-03, CA-ORD-03-03 / 03-04). Solo inserción. |
+| `nota_orden` | `id_nota_orden SERIAL` | `id_orden -> orden`, `id_usuario_autor -> usuario` | Notas internas del personal, nunca visibles al cliente y sin borrado (HU-ORD-10). |
+| `contacto_orden` | `id_contacto_orden SERIAL` | `id_orden -> orden`, `id_usuario_autor -> usuario` | Constancia de cada contacto con el cliente iniciado desde la orden: medio, detalle, autor y fecha (HU-ORD-09, CA-ORD-09-03). |
+
+---
+
+### 🔄 3. Tablas Modificadas y Nuevas Relaciones
+- **`orden`**: `estado` pasa a nacer en `orden_confirmada` (antes `pendiente`, que contradecía RF-ORD-01-01: no existe orden sin pago). Se aplica también a bases existentes con `ALTER TABLE orden ALTER COLUMN estado SET DEFAULT 'orden_confirmada'`.
+- **Nuevas Relaciones** (todas `ON UPDATE CASCADE ON DELETE RESTRICT`, porque la orden y su rastro se conservan por obligación legal):
+  - `historial_estado_orden.id_orden -> orden.id_orden`
+  - `historial_estado_orden.id_usuario_autor -> usuario.id_usuario`
+  - `nota_orden.id_orden -> orden.id_orden` y `nota_orden.id_usuario_autor -> usuario.id_usuario`
+  - `contacto_orden.id_orden -> orden.id_orden` y `contacto_orden.id_usuario_autor -> usuario.id_usuario`
+- Ningún módulo borra usuarios (verificado en `backend/src`), por lo que `RESTRICT` sobre el autor no bloquea flujos existentes.
+
+---
+
+### 🔒 4. Restricciones (CONSTRAINTS) y Tipos ENUM Agregados
+- **ENUM modificado:** `enum_estado_orden ('orden_confirmada', 'revision_disponibilidad', 'en_preparacion', 'preparada', 'despachado', 'entregado', 'cancelado', 'devuelto')`.
+- **Migración para bases creadas antes de v3.8** (sección 0.1 del script, idempotente):
+  - `RENAME VALUE 'pagado' TO 'orden_confirmada'` y `RENAME VALUE 'enviado' TO 'despachado'`, cada uno protegido con `IF EXISTS` / `NOT EXISTS` sobre `pg_enum`.
+  - `ADD VALUE IF NOT EXISTS` para `revision_disponibilidad`, `preparada` y `devuelto`.
+  - `pendiente` queda sin uso en esas bases: PostgreSQL no permite quitar un valor de un ENUM sin recrear el tipo. `EnumEstadoOrden` en `types.ts` no lo incluye para que ningún módulo lo escriba.
+- **Nuevos CHECK:** `chk_historial_estado_cambio CHECK (estado_anterior IS DISTINCT FROM estado_nuevo)`, `chk_nota_orden_texto CHECK (length(trim(texto)) > 0)`, `chk_contacto_orden_medio CHECK (length(trim(medio)) > 0)`.
+- Las reglas que dependen de valores del ENUM (motivo obligatorio al volver de `preparada` a `en_preparacion` y al cancelar) las exige el servicio de M08, no un `CHECK`: un `CHECK` con un valor añadido por `ADD VALUE` en la misma transacción falla en bases existentes.
+
+---
+
+### ⚡ 5. Nuevos Índices de Rendimiento
+- `CREATE INDEX IF NOT EXISTS idx_historial_estado_orden_fecha ON historial_estado_orden(id_orden, fecha);`
+- `CREATE INDEX IF NOT EXISTS idx_historial_estado_autor ON historial_estado_orden(id_usuario_autor);`
+- `CREATE INDEX IF NOT EXISTS idx_nota_orden_orden_fecha ON nota_orden(id_orden, fecha);`
+- `CREATE INDEX IF NOT EXISTS idx_nota_orden_autor ON nota_orden(id_usuario_autor);`
+- `CREATE INDEX IF NOT EXISTS idx_contacto_orden_orden_fecha ON contacto_orden(id_orden, fecha);`
+- `CREATE INDEX IF NOT EXISTS idx_contacto_orden_autor ON contacto_orden(id_usuario_autor);`
+
+---
+
+### 💻 6. Impacto y Acciones Requeridas en Backend y Frontend
+#### Backend (Kysely / Express):
+- `src/core/db/types.ts`: `EnumEstadoOrden` con los 8 estados; nuevas `HistorialEstadoOrdenTable`, `NotaOrdenTable` y `ContactoOrdenTable` en `Database`, con sus tipos `Selectable` / `Insertable` (sin `Updateable`: son de solo inserción).
+- Módulos afectados: solo **M08** (lista de estados del DTO y clasificación de Mis pedidos). M20 solo cuenta órdenes por usuario y no depende del estado.
+- **Servidor desplegado:** desde v0.3.33.1 el workflow `Deploy` ejecuta `schema_pintuclic.sql` y `seed_pintuclic.sql` con `psql -v ON_ERROR_STOP=1` sobre la base persistente. Al unir esta versión a `develop`, la sección 0.1 migra la base del servidor sin pérdida de datos (`ORD-2026-0001` pasa de `pagado` a `orden_confirmada`) y el seed añade el historial, la nota y el contacto de ejemplo. No hace falta ninguna acción manual.
+
+#### Frontend (Vistas / UI):
+- Las etiquetas de estado de la orden cambian (ver el informe de M08 para frontend). `enviado` pasa a `despachado`.
+
+#### Verificación (PostgreSQL 15.19 local, 2026-09-29):
+| Prueba | Resultado |
+| :--- | :--- |
+| `npm run db` sobre una base v3.7 con datos | ✅ 47 tablas; `ORD-2026-0001` pasa de `pagado` a `orden_confirmada`; `DEFAULT 'orden_confirmada'` |
+| `npm run db` repetido sobre la misma base | ✅ Sin errores (idempotente) |
+| Base recreada desde cero + `npm run db` | ✅ 47 tablas, ENUM con los 8 valores (sin `pendiente`) y 6 índices nuevos |
+| `npm run db:seed` en ambas bases | ✅ 4 filas de historial, 1 nota y 1 contacto (191 registros en base nueva) |
+| Pruebas de integración de M08 en ambas bases | ✅ 20/20 |
+| Simulación del deploy: base temporal con esquema y seed de `develop` v0.3.33.1, luego esquema y seed nuevos con `psql -v ON_ERROR_STOP=1` | ✅ Código de salida 0; 44 → 47 tablas; `ORD-2026-0001` `pagado` → `orden_confirmada`; líneas, pagos y facturas intactos (2/2/2) |
+| Segundo deploy seguido con `psql` | ✅ Código de salida 0; historial, notas y contactos siguen en 4/1/1 (sin duplicados) |
 
 ---
 
