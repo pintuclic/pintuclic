@@ -78,9 +78,12 @@
             <div v-else>
               <div class="grid aspect-[4/3] place-items-center overflow-hidden rounded-card bg-neutral-lightest p-5">
                 <img v-if="imagenActiva && !imagenConError" :src="imagenActiva" :alt="producto.nombre" class="h-full w-full object-contain" @error="imagenConError = true" />
-                <span v-else class="text-sm text-neutral-medium">Imagen no disponible</span>
+                <div v-else class="flex flex-col items-center justify-center text-neutral-medium">
+                  <PackageOpen :size="54" class="text-neutral-light mb-2" aria-hidden="true" />
+                  <span class="text-sm">Imagen no disponible</span>
+                </div>
               </div>
-              <div class="mt-3 flex gap-3">
+              <div v-if="galeria.length > 1" class="mt-3 flex gap-3">
                 <button
                   v-for="(imagen, indice) in galeria"
                   :key="imagen"

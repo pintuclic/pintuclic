@@ -7,6 +7,14 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.6.5] - 2026-10-09
+### M01 Inclusión de ajustes visuales de ficha y evidencia del análisis
+- Se incorporan los ajustes locales previamente excluidos: icono neutral junto al mensaje de imagen no disponible y miniaturas visibles únicamente cuando hay más de una imagen.
+- Se incorpora `informes/informe_flujo_tarjeta_producto_2026-10-09.docx` como evidencia del análisis anterior a las correcciones; no representa una nueva auditoría del código corregido.
+- Validación: TypeScript frontend y ESLint del archivo sin errores ni advertencias; backend lint y TypeScript superados. Se mantiene documentada la limitación previa del lint global frontend en componentes compartidos. Commit local solicitado por el usuario; sin push ni despliegue.
+- Walkthrough: [M01 frontend](walkthroughs/M01/walkthrough_v0.4.6.5_M01_ajustes_visuales_ficha_frontend.md).
+
+---
 ## [v0.4.6.4] - 2026-10-09
 ### M01 y M05 Corrección del flujo de tarjeta pública y carrito
 - M01 backend: bloqueo de publicación sin imagen, conforme a RF-CAT-02-05 y CA-CAT-02-06.
