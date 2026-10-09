@@ -155,7 +155,7 @@
           <!-- Acciones: Carrito -->
           <button
             type="button"
-            @click="router.push('/carrito')"
+            @click="cartStore.openDrawer()"
             class="relative flex items-center gap-2 text-neutral-dark hover:text-action transition-all duration-300 text-left cursor-pointer focus:outline-none"
             :class="{ '-translate-y-1': cartTotalItems > 0 }"
             aria-label="Ver carrito de compras"
@@ -236,6 +236,9 @@
       @seleccionar="handleSelectSubcategoria"
     />
 
+    <!-- Panel lateral del carrito M05 -->
+    <CartDrawer />
+
   </div>
 </template>
 
@@ -265,6 +268,7 @@ import type { TipoCuentaRegistro } from '@/modules/m04-cuentas/interfaces/regist
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
+import CartDrawer from '@/modules/m05-carrito-compras/components/CartDrawer.vue';
 import { formatearCOP } from '@/core/utils/moneda';
 
 // Estado global local del layout para modales

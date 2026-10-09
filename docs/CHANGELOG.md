@@ -7,6 +7,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.7.0] - 2026-10-09
+### Módulo: M05 Carrito de compras — Panel lateral "Tu carrito" (Frontend)
+- **Alcance General:** Incremento **Minior-feat (v0.4.7.0)**. Nuevo panel lateral del carrito que se abre al agregar un producto desde la tienda y desde el botón "Mi Carrito" del header.
+- **CartDrawer (`components/CartDrawer.vue`):** encabezado con logo, líneas con imagen, nombre, variante, cantidad (+/−), subtotal y eliminación; pie con total, "Continuar compra" (navega a `/carrito`), "Seguir comprando" y franja de colores corporativos. Cierra con Esc, clic fuera o "Seguir comprando"; bloquea el scroll mientras está abierto y mantiene el foco dentro del panel.
+- **Store (`cart.store.ts`):** estado `isDrawerOpen` con `openDrawer()`/`closeDrawer()`; `addToCart` abre el panel tras una respuesta exitosa, por lo que aplica a todas las vistas que ya lo usan (inicio, catálogo, detalle y paleta) sin modificar M01. Conserva en memoria el nombre e imagen enviados por la vista para mostrarlos en lugar del fallback visual.
+- **LayoutHome (archivo compartido, con aprobación explícita del equipo):** monta `<CartDrawer />` y el botón "Mi Carrito" abre el panel.
+- **Verificación:** E2E en `localhost:5173` con backend de la rama y base sembrada con `seed_pintuclic.sql`: "Agregar" en Productos destacados abrió el panel con el producto real; cantidades, eliminación, contador del header, "Seguir comprando" y "Continuar compra" funcionaron. ESLint y `vue-tsc --noEmit` sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.4.7.0_M05_panel_lateral_carrito_frontend.md](./walkthroughs/M05/walkthrough_v0.4.7.0_M05_panel_lateral_carrito_frontend.md)
+
+---
 ## [v0.4.6.4] - 2026-10-08
 ### Módulo: M05 Carrito de compras — Carrito dentro del layout de la tienda (Frontend)
 - **Alcance General:** Incremento **Patch (v0.4.6.4)**. En `v0.4.6.3`, `m05CarritoRoutes` estaba registrado en el nivel raíz del router, fuera de `LayoutHome`, por lo que `/carrito` se mostraba sin header ni footer. Esta entrega lo monta como hija de `LayoutHome`.
