@@ -7,6 +7,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.6.4] - 2026-10-09
+### M01 y M05 Corrección del flujo de tarjeta pública y carrito
+- M01 backend: bloqueo de publicación sin imagen, conforme a RF-CAT-02-05 y CA-CAT-02-06.
+- M01 frontend: selección compartida de variante y precio para inicio, catálogo, paleta y complementarios, respetando el color seleccionado.
+- M05 backend: metadatos reales de producto, presentación, color, base e imagen en las líneas, sin alterar el precio vivo ni duplicar resultados.
+- M05 frontend: retirada del mapeo de catálogo de prueba y conservación de identidad al agregar y recargar; icono neutral si no hay imagen o falla.
+- Validación: 125 comprobaciones backend M01, 72 backend M05, integración de identidad con PostgreSQL y rollback, 27 pruebas frontend; backend lint/TypeScript y frontend build/lint de módulos superados. Lint global frontend pendiente por errores previos de core; no se modificaron esos archivos.
+- M01 ficha pública: retirada de referencias a imágenes de demostración inexistentes; la galería usa las imágenes reales del catálogo. Los ajustes visuales locales previos se mantienen fuera del commit.
+- Estado: commit local solicitado explícitamente con el lint global frontend pendiente; sin push ni despliegue.
+- Walkthroughs: [M01 backend](walkthroughs/M01/walkthrough_v0.4.6.4_M01_publicacion_con_imagen_backend.md), [M01 frontend](walkthroughs/M01/walkthrough_v0.4.6.4_M01_precio_y_variante_compra_rapida_frontend.md), [M05 backend](walkthroughs/M05/walkthrough_v0.4.6.4_M05_identidad_real_lineas_carrito_backend.md) y [M05 frontend](walkthroughs/M05/walkthrough_v0.4.6.4_M05_identidad_real_y_sin_mocks_frontend.md).
+
+---
 ## [v0.4.6.3] - 2026-10-08
 ### M01 - Estabilización de selección de presentaciones, rendimiento dinámico, familias del abanico y catálogo público (Fullstack)
 - **Alcance General:** Incremento **Patch (v0.4.6.3)**. Corrección de la persistencia visual de selección de tamaños/presentaciones en la ficha pública de producto, cálculo dinámico de rendimiento por presentación (`RF-CAT-10-04`), activación interactiva de familias cromáticas en la carta de colores/abanico (`M01-13`), orden administrado de categorías públicas en base de datos (`M01-14`) y apertura de streaming público de imágenes de producto y logotipos de marca (`M01-10`).

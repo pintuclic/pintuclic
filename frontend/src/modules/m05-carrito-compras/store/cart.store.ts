@@ -1,7 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useAuthStore } from '@/modules/m04-cuentas/store/auth.store'
-import { getCartProductFallback } from '../services/cart-product-fallback'
 import { CartService } from '../services/cart.service'
 import { getVisitorToken } from '../services/visitor-token.service'
 import type {
@@ -35,14 +34,13 @@ function getErrorMessage(error: unknown): string {
 }
 
 function toVisualItem(line: CartApi['lineas'][number]): CartItem {
-  const fallback = getCartProductFallback(line.id_variante)
   return {
     id: line.id_linea_carrito,
     variantId: line.id_variante,
-    name: fallback.name,
-    description: fallback.description,
-    image: fallback.image,
-    variant: fallback.variant,
+    name: line.nombre_producto,
+    description: line.descripcion_producto ?? undefined,
+    image: line.imagen_url ?? '',
+    variant: [line.presentacion, line.color, line.base].filter(Boolean).join(' · '),
     price: toNumber(line.precio_unitario_vigente),
     subtotal: toNumber(line.subtotal),
     quantity: line.cantidad,

@@ -195,6 +195,7 @@ import heroStorefront from '../../assets/storefront/hero-storefront.png';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import { useInicioPublico } from '../../composables/publicas/useInicioPublico';
+import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
 import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 
@@ -263,12 +264,12 @@ function irCalculadora(): void {
 
 async function agregarProducto(idProducto: number): Promise<void> {
   const prod = productos.value.find((p) => p.id_producto === idProducto);
-  let variante = prod?.detalle?.variantes.find((v) => v.existencia_referencial > 0) ?? prod?.detalle?.variantes[0];
+  let variante = seleccionarVarianteCompraRapida(prod?.detalle?.variantes ?? []);
 
   if (!variante) {
     try {
       const ficha = await CatalogoPublicoService.obtenerFicha(idProducto);
-      variante = ficha.variantes.find((v) => v.existencia_referencial > 0) ?? ficha.variantes[0];
+      variante = seleccionarVarianteCompraRapida(ficha.variantes);
     } catch {
       // ignore
     }

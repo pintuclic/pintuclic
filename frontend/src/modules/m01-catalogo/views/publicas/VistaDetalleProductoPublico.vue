@@ -295,6 +295,7 @@ import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPint
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import VisualizadorAmbientesPublico from '../../components/publicas/VisualizadorAmbientesPublico.vue';
 import { useDetalleProductoPublico } from '../../composables/publicas/useDetalleProductoPublico';
+import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
 import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import { formatearCOP } from '@/core/utils/moneda';
@@ -396,16 +397,12 @@ const rendimientoEstimado = computed(() => {
   };
 });
 
-const galeria = computed(() => {
-  const remotas = producto.value?.imagenes.map((imagen) => imagen.contenido_url) ?? [];
-  if (remotas.length) return remotas;
-  if (producto.value?.clase_color === 'sin_color') {
-    return [obtenerImagenPublicaRespaldo(idProducto.value), GALERIA_PRODUCTO_DEMO.lateral, GALERIA_PRODUCTO_DEMO.ambiente];
-  }
-  return [GALERIA_PRODUCTO_DEMO.ambiente, obtenerImagenPublicaRespaldo(idProducto.value), GALERIA_PRODUCTO_DEMO.lateral];
+const imagenConError = ref(false);
+const galeria = computed(() => producto.value?.imagenes.map((imagen) => imagen.contenido_url) ?? []);
+const imagenActiva = computed(() => galeria.value[indiceGaleria.value] ?? galeria.value[0] ?? null);
+watch(imagenActiva, () => {
+  imagenConError.value = false;
 });
-
-const imagenActiva = computed(() => galeria.value[indiceGaleria.value] ?? obtenerImagenPublicaRespaldo(idProducto.value));
 
 const precioActual = computed(() =>
   varianteSeleccionada.value
@@ -441,12 +438,12 @@ async function agregarAlCarrito(): Promise<void> {
 
 async function agregarComplementarioAlCarrito(idProd: number): Promise<void> {
   const prod = complementarios.value.find((p) => p.id_producto === idProd);
-  let variante = prod?.detalle?.variantes.find((v) => v.existencia_referencial > 0) ?? prod?.detalle?.variantes[0];
+  let variante = seleccionarVarianteCompraRapida(prod?.detalle?.variantes ?? []);
 
   if (!variante) {
     try {
       const ficha = await CatalogoPublicoService.obtenerFicha(idProd);
-      variante = ficha.variantes.find((v) => v.existencia_referencial > 0) ?? ficha.variantes[0];
+      variante = seleccionarVarianteCompraRapida(ficha.variantes);
     } catch {
       // ignore
     }

@@ -66,6 +66,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
 import { PackageOpen, ShoppingCart } from 'lucide-vue-next';
 import { formatearPrecioConSufijo } from '@/core/utils/moneda';
 import type { ProductoDestacadoPublico } from '../../interfaces/publicas/catalogo-publico.interface';
@@ -75,6 +76,7 @@ const props = withDefaults(
     producto: ProductoDestacadoPublico;
     modo?: 'grid' | 'lista';
     muestraColor?: string | null;
+    idColor?: number | null;
   }>(),
   { modo: 'grid', muestraColor: null }
 );
@@ -98,12 +100,9 @@ const muestraColorEfectiva = computed(() => {
   return null;
 });
 
-const precioMinimo = computed(() => {
-  const precios = (props.producto.detalle?.variantes ?? [])
-    .map((variante) => variante.precio_vigente)
-    .filter((precio) => Number.isFinite(precio));
-  return precios.length ? Math.min(...precios) : null;
-});
+const precioMinimo = computed(() =>
+  seleccionarVarianteCompraRapida(props.producto.detalle?.variantes ?? [], props.idColor)?.precio_vigente ?? null
+);
 
 const descripcionClaseColor = computed(() => {
   if (props.producto.clase_color === 'entonable') return 'Disponible en múltiples colores y presentaciones.';
