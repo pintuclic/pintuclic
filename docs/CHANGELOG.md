@@ -7,6 +7,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.7.1] - 2026-10-09
+### Core: Versionamiento — Tag y Release desde la PR fusionada (CI)
+- **Alcance General:** Incremento **PATCH (v0.4.7.1)** sobre `.github/workflows/version.yml`. Al fusionar una PR hacia `main` o `develop`, el workflow ahora se dispara también con el evento `pull_request` (`closed` + `merged == true`), toma la **versión solicitada en el título de la PR** (`vX.Y.Z.W`) como fuente prioritaria, crea el tag en el commit de merge y publica el Release.
+- **Resolución de versión:** el título manda; si difiere de `.github/version.txt` se publica la del título y se emite una advertencia en el resumen. Si el título no trae versión se usa `version.txt`; si el evento es PR y no hay versión en el título, se omite (lo cubre el push de `version.txt`). Si la versión pedida es menor que la vigente, se omite para no degradar el release. Si el tag ya existe, se mantiene la idempotencia.
+- **Mención del autor (@):** las notas del Release incluyen número de PR, enlace y `@usuario` de quien abrió la PR. En el camino `push` se resuelve la PR asociada al commit vía `gh api repos/.../commits/{sha}/pulls` (así también se menciona al autor cuando el merge proviene de un fork). La anotación del tag incluye la referencia `(#PR por @autor)`.
+- **Canales sin cambios:** `develop` publica pre-release y `main` publica/promueve el release estable; el `bump` manual (`workflow_dispatch`) conserva su lógica.
+- **Verificación:** YAML validado con parser; lógica de resolución probada con 6 casos (título con/sin versión, sin prefijo `v`, versión menor, mismatch, fallback a `version.txt`) y parseo de PR asociada simulado con `[]` y payload real.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.4.7.1_core_tag_release_desde_pr.md](./walkthroughs/core/walkthrough_v0.4.7.1_core_tag_release_desde_pr.md)
+---
 ## [v0.4.7.0] - 2026-10-09
 ### Módulo: M05 Carrito de compras — Panel lateral "Tu carrito" (Frontend)
 - **Alcance General:** Incremento **Minior-feat (v0.4.7.0)**. Nuevo panel lateral del carrito que se abre al agregar un producto desde la tienda y desde el botón "Mi Carrito" del header.
