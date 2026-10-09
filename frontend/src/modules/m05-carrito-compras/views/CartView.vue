@@ -57,7 +57,7 @@ async function checkout(): Promise<void> {
 </script>
 
 <template>
-  <main class="min-h-screen bg-neutral-lightest py-4 text-neutral-dark sm:py-6">
+  <div class="bg-neutral-lightest py-4 text-neutral-dark sm:py-6">
     <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
       <nav aria-label="Migas de pan" class="mb-3 text-xs text-neutral-medium">
         <a href="/" class="text-action transition-colors hover:text-corporate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action">Inicio</a>
@@ -114,5 +114,5 @@ async function checkout(): Promise<void> {
         <CartBenefits />
       </div>
     </div>
-  </main>
+  </div>
 </template>

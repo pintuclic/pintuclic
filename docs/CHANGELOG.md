@@ -7,6 +7,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.6.4] - 2026-10-08
+### Módulo: M05 Carrito de compras — Carrito dentro del layout de la tienda (Frontend)
+- **Alcance General:** Incremento **Patch (v0.4.6.4)**. En `v0.4.6.3`, `m05CarritoRoutes` estaba registrado en el nivel raíz del router, fuera de `LayoutHome`, por lo que `/carrito` se mostraba sin header ni footer. Esta entrega lo monta como hija de `LayoutHome`.
+- **Router global (`core/routes/index.ts`):** `m05CarritoRoutes` pasa del nivel raíz a los `children` de `LayoutHome`; la ruta del módulo pasa de `/carrito` a `carrito` (relativa) y conserva la URL `/carrito`. Archivo compartido modificado con aprobación explícita del equipo.
+- **CartView:** el contenedor raíz pasa de `<main class="min-h-screen">` a `<div>` para no anidar `<main>` dentro del layout.
+- **Verificación:** E2E en `localhost:5173` contra los contenedores `pintuclic-m05-test-*`: header y footer visibles en `/carrito`, navegación desde "Mi Carrito" y actualización en vivo del contador del header al cambiar cantidades.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.4.6.4_M05_integracion_layout_carrito_frontend.md](./walkthroughs/M05/walkthrough_v0.4.6.4_M05_integracion_layout_carrito_frontend.md)
+
+---
 ## [v0.4.6.3] - 2026-10-08
 ### M01 - Estabilización de selección de presentaciones, rendimiento dinámico, familias del abanico y catálogo público (Fullstack)
 - **Alcance General:** Incremento **Patch (v0.4.6.3)**. Corrección de la persistencia visual de selección de tamaños/presentaciones en la ficha pública de producto, cálculo dinámico de rendimiento por presentación (`RF-CAT-10-04`), activación interactiva de familias cromáticas en la carta de colores/abanico (`M01-13`), orden administrado de categorías públicas en base de datos (`M01-14`) y apertura de streaming público de imágenes de producto y logotipos de marca (`M01-10`).
