@@ -1,4 +1,4 @@
-import { computed, isRef, onMounted, ref, watch, type Ref } from 'vue';
+import { computed, isRef, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { normalizarBusquedaCatalogoPublico } from '../../dtos/publicas/catalogo-publico.dto';
 import { CatalogoPublicoService, enriquecerProductosPublicos } from '../../services/publicas/catalogo-publico.service';
@@ -7,6 +7,16 @@ import type { CatalogoPublicoGateway, CategoriaPublica, ProductoDestacadoPublico
 import type { FacetasBusquedaFrontend, OrdenBusqueda } from '@/modules/m02-busqueda/interfaces/busqueda.interface';
 
 const LIMITE_PAGINA = 8;
+const ESPERA_BUSQUEDA_MS = 300;
+
+/** El input limita a 120 caracteres; un valor externo inválido se trata como vacío. */
+function terminoNormalizado(valor: string): string {
+  try {
+    return normalizarBusquedaCatalogoPublico(valor).q;
+  } catch {
+    return '';
+  }
+}
 
 export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPublicoService) {
   const route = useRoute();
@@ -17,6 +27,11 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
   const pagina = ref(1);
   const total = ref(0);
   const termino = ref(String(route?.query?.q || ''));
+  /** Término de la última consulta lanzada: evita repetirla y define el color coincidente. */
+  const terminoAplicado = ref(terminoNormalizado(termino.value));
+  let temporizadorBusqueda: ReturnType<typeof setTimeout> | undefined;
+  let solicitudProductos = 0;
+  let solicitudFacetas = 0;
   const subcategoria = ref<number | undefined>();
   const marcasSeleccionadas = ref<number[]>([]);
   const lineasSeleccionadas = ref<number[]>([]);
@@ -42,8 +57,9 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
   });
 
   async function cargarFacetas(): Promise<void> {
+    const solicitud = ++solicitudFacetas;
     try {
-      const { q } = normalizarBusquedaCatalogoPublico(termino.value);
+      const q = terminoAplicado.value;
       const resFacetas = await BusquedaService.facetas({
         ...(q ? { q } : {}),
         ...(subcategoria.value !== undefined ? { subcategoria: subcategoria.value } : {}),
@@ -55,17 +71,20 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
         precio_min: precioMin.value,
         precio_max: precioMax.value,
       });
-      facetas.value = resFacetas;
+      if (solicitud === solicitudFacetas) facetas.value = resFacetas;
     } catch {
       // Si falla facetas, no interrumpir la navegación
     }
   }
 
   async function cargarProductos(): Promise<void> {
+    // Solo la consulta más reciente puede actualizar resultados y estados.
+    const solicitud = ++solicitudProductos;
+    terminoAplicado.value = terminoNormalizado(termino.value);
     cargando.value = true;
     error.value = null;
     try {
-      const { q } = normalizarBusquedaCatalogoPublico(termino.value);
+      const q = terminoAplicado.value;
       const resultado = await BusquedaService.buscar({
         ...(q ? { q } : {}),
         ...(subcategoria.value !== undefined ? { subcategoria: subcategoria.value } : {}),
@@ -81,13 +100,17 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
         limite: LIMITE_PAGINA,
       });
 
-      productos.value = await enriquecerProductosPublicos(resultado.items, servicio);
+      const enriquecidos = await enriquecerProductosPublicos(resultado.items, servicio);
+      if (solicitud !== solicitudProductos) return;
+      productos.value = enriquecidos;
       total.value = resultado.total;
       void cargarFacetas();
     } catch {
-      error.value = 'No fue posible cargar el catálogo público. Intenta nuevamente.';
+      if (solicitud === solicitudProductos) {
+        error.value = 'No fue posible cargar el catálogo público. Intenta nuevamente.';
+      }
     } finally {
-      cargando.value = false;
+      if (solicitud === solicitudProductos) cargando.value = false;
     }
   }
 
@@ -100,11 +123,32 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     await cargarProductos();
   }
 
-  function buscar(): void {
-    pagina.value = 1;
-    actualizarUrlParams();
-    void cargarProductos();
+  function cancelarBusquedaPendiente(): void {
+    if (temporizadorBusqueda !== undefined) {
+      clearTimeout(temporizadorBusqueda);
+      temporizadorBusqueda = undefined;
+    }
   }
+
+  /** Lanza la búsqueda del término actual si difiere de la última consulta. */
+  function aplicarBusqueda(reemplazarUrl: boolean): void {
+    cancelarBusquedaPendiente();
+    if (terminoNormalizado(termino.value) === terminoAplicado.value) return;
+    pagina.value = 1;
+    void cargarProductos();
+    actualizarUrlParams(reemplazarUrl);
+  }
+
+  /** Enter o botón de buscar: aplica de inmediato sin esperar el debounce. */
+  function buscar(): void {
+    aplicarBusqueda(false);
+  }
+
+  // Búsqueda en tiempo real: escribir o borrar actualiza resultados tras una pausa.
+  watch(termino, () => {
+    cancelarBusquedaPendiente();
+    temporizadorBusqueda = setTimeout(() => aplicarBusqueda(true), ESPERA_BUSQUEDA_MS);
+  });
 
   function seleccionarSubcategoria(id: number | undefined): void {
     subcategoria.value = id;
@@ -149,6 +193,7 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
   }
 
   function limpiar(): void {
+    cancelarBusquedaPendiente();
     termino.value = '';
     subcategoria.value = undefined;
     marcasSeleccionadas.value = [];
@@ -164,9 +209,11 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     void cargarProductos();
   }
 
-  function actualizarUrlParams(): void {
+  /** `reemplazar` evita llenar el historial con cada pausa al escribir. */
+  function actualizarUrlParams(reemplazar = false): void {
     const query: Record<string, string | number> = {};
-    if (termino.value.trim()) query.q = termino.value.trim();
+    const q = terminoNormalizado(termino.value);
+    if (q) query.q = q;
     if (subcategoria.value !== undefined) query.subcategoria = subcategoria.value;
     if (marcasSeleccionadas.value.length) query.marca = marcasSeleccionadas.value.join(',');
     if (lineasSeleccionadas.value.length) query.linea = lineasSeleccionadas.value.join(',');
@@ -178,7 +225,9 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     if (orden.value !== 'relevancia') query.orden = orden.value;
     if (pagina.value > 1) query.pagina = pagina.value;
 
-    void router.push({ path: '/catalogo', query });
+    const destino = { path: '/catalogo', query };
+    if (reemplazar) void router.replace(destino);
+    else void router.push(destino);
   }
 
   function sincronizarDesdeRuta(): void {
@@ -204,17 +253,29 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     }
   }
 
+  // Navegación externa (buscador del header, atrás/adelante): solo recarga si la URL
+  // difiere del estado ya aplicado, para no duplicar las consultas propias.
   watch(
     () => route?.query,
     (nuevoQuery, anteriorQuery) => {
+      let recargar = false;
       if (nuevoQuery?.q !== anteriorQuery?.q) {
-        termino.value = String(nuevoQuery?.q || '');
-        pagina.value = 1;
-        void cargarProductos();
+        const qRuta = String(nuevoQuery?.q || '');
+        if (terminoNormalizado(qRuta) !== terminoAplicado.value) {
+          cancelarBusquedaPendiente();
+          termino.value = qRuta;
+          recargar = true;
+        }
       }
       if (nuevoQuery?.subcategoria !== anteriorQuery?.subcategoria) {
         const num = Number(nuevoQuery?.subcategoria);
-        subcategoria.value = !Number.isNaN(num) && nuevoQuery?.subcategoria !== undefined ? num : undefined;
+        const subRuta = !Number.isNaN(num) && nuevoQuery?.subcategoria !== undefined ? num : undefined;
+        if (subRuta !== subcategoria.value) {
+          subcategoria.value = subRuta;
+          recargar = true;
+        }
+      }
+      if (recargar) {
         pagina.value = 1;
         void cargarProductos();
       }
@@ -223,8 +284,11 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
 
   onMounted(() => {
     sincronizarDesdeRuta();
+    terminoAplicado.value = terminoNormalizado(termino.value);
     void cargarInicio();
   });
+
+  onBeforeUnmount(cancelarBusquedaPendiente);
 
   return {
     buscar,
@@ -239,6 +303,7 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     seleccionarSubcategoria,
     subcategoria,
     termino,
+    terminoAplicado,
     total,
     totalPaginas,
     // Estados y acciones avanzadas M02

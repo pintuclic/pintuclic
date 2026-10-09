@@ -311,6 +311,7 @@
               :key="producto.id_producto"
               :producto="producto"
               :modo="vista"
+              :muestra-color="muestrasCoincidentes.get(producto.id_producto) ?? null"
               @ver="verProducto"
               @agregar="agregarAlCarrito"
             />
@@ -390,6 +391,7 @@ import { Paginacion } from '@/core/components';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import { useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
+import { obtenerMuestraColorCoincidente } from '../../composables/publicas/useColorCoincidenteBusqueda';
 import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import fondoProyectoCalculadora from '../../assets/storefront/fondo-proyecto-calculadora.jpeg';
@@ -422,6 +424,7 @@ const {
   seleccionarSubcategoria,
   subcategoria,
   termino,
+  terminoAplicado,
   total,
   totalPaginas,
   facetas,
@@ -441,6 +444,18 @@ const productosVisibles = computed(() => {
   return productos.value.filter((producto) =>
     producto.detalle?.variantes.some((variante) => variante.existencia_referencial > 0)
   );
+});
+
+/** HEX de la variante cuyo color coincide con la búsqueda aplicada (null = predeterminado de la tarjeta). */
+const muestrasCoincidentes = computed(() => {
+  const muestras = new Map<number, string | null>();
+  for (const producto of productos.value) {
+    muestras.set(
+      producto.id_producto,
+      obtenerMuestraColorCoincidente(producto.detalle?.variantes ?? [], terminoAplicado.value),
+    );
+  }
+  return muestras;
 });
 
 

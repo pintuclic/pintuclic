@@ -7,6 +7,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.6.5] - 2026-10-08
+### M01 / M02 - Búsqueda en tiempo real y color coincidente en las tarjetas del catálogo público (Frontend)
+- **Alcance General:** Incremento **Patch (v0.4.6.5)**. Dos correcciones del catálogo público (`/catalogo`): la tarjeta muestra el color de la variante que coincide con la búsqueda y los resultados se actualizan mientras se escribe.
+- **Hitos Clave:**
+  - **Color coincidente (`useColorCoincidenteBusqueda.ts` / `VistaCatalogoPublico.vue`):** el círculo de la tarjeta usa el `muestra_hex` real de la variante cuyo color coincide con el término (sin tildes ni mayúsculas; selección determinista por precisión y menor `id_color`). Sin coincidencia se conserva el comportamiento predeterminado. La API de búsqueda no informa el color coincidente: se deduce de las variantes de la ficha pública ya cargada, sin cambios en el backend.
+  - **Búsqueda en tiempo real (`useCatalogoPublico.ts`):** debounce de 300 ms sin necesidad de Enter; el campo vacío devuelve el catálogo completo; la página se reinicia a 1; se descartan respuestas antiguas y consultas repetidas (incluida la doble carga previa al buscar o elegir subcategoría); la URL `?q=` se sincroniza con `router.replace` mientras se escribe.
+- **Verificación:** vitest 53/53 (10 nuevas) · `vue-tsc` 0 errores · build correcto · ESLint 0/0 en los archivos de la entrega · E2E en Firefox contra el stack local (amarillo, azul, nombre de producto, escritura progresiva, borrado, campo vacío y cambios rápidos).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.6.5_M01_busqueda_tiempo_real_y_color_coincidente_frontend.md](./walkthroughs/M01/walkthrough_v0.4.6.5_M01_busqueda_tiempo_real_y_color_coincidente_frontend.md)
+
+---
 ## [v0.4.6.4] - 2026-10-08
 ### Módulo: M05 Carrito de compras — Carrito dentro del layout de la tienda (Frontend)
 - **Alcance General:** Incremento **Patch (v0.4.6.4)**. En `v0.4.6.3`, `m05CarritoRoutes` estaba registrado en el nivel raíz del router, fuera de `LayoutHome`, por lo que `/carrito` se mostraba sin header ni footer. Esta entrega lo monta como hija de `LayoutHome`.
