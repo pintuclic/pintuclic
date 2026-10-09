@@ -7,6 +7,7 @@ import type {
   CartApi,
   CartItem,
   CartMergeResult,
+  CartProductFallback,
   CartRevalidationAlert,
   RecommendedProduct,
 } from '../interfaces/cart.interface'
@@ -57,6 +58,9 @@ export const useCartStore = defineStore('cart', () => {
   const error = ref('')
   const updatingLineIds = ref<number[]>([])
   const revalidationAlerts = ref<CartRevalidationAlert[]>([])
+  const isDrawerOpen = ref(false)
+  // Nombre e imagen reales enviados por la vista que agrega el producto (la API del carrito solo trae la variante)
+  const knownProducts = ref<Record<number, CartProductFallback>>({})
 
   const isAuthenticated = computed(() => authStore.isAuthenticated)
   const totalItems = computed(() => cartItems.value.reduce((total, item) => total + item.quantity, 0))
@@ -66,7 +70,7 @@ export const useCartStore = defineStore('cart', () => {
   const total = computed(() => serverTotal.value)
 
   function setCart(cart: CartApi): void {
-    cartItems.value = cart.lineas.map(toVisualItem)
+    cartItems.value = cart.lineas.map((line) => toVisualItem(line, knownProducts.value[line.id_variante]))
     serverTotal.value = toNumber(cart.total)
   }
 
@@ -107,10 +111,19 @@ export const useCartStore = defineStore('cart', () => {
     error.value = ''
     try {
       const payload = { id_variante: product.variantId ?? product.id, cantidad: quantity }
+      if (product.name) {
+        knownProducts.value[payload.id_variante] = {
+          name: product.name,
+          description: product.description ?? '',
+          image: product.image,
+          variant: 'variant' in product ? product.variant : undefined,
+        }
+      }
       const cart = isAuthenticated.value
         ? await CartService.addClientItem(payload)
         : await CartService.addVisitorItem(getVisitorToken(), payload)
       setCart(cart)
+      isDrawerOpen.value = true
     } catch (requestError) {
       setError(requestError)
     } finally {
@@ -208,8 +221,19 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
+  function openDrawer(): void {
+    isDrawerOpen.value = true
+  }
+
+  function closeDrawer(): void {
+    isDrawerOpen.value = false
+  }
+
   return {
     cartItems,
+    isDrawerOpen,
+    openDrawer,
+    closeDrawer,
     totalItems,
     subtotal,
     shipping,
