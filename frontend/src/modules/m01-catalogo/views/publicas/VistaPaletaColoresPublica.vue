@@ -235,6 +235,7 @@
             :key="producto.id_producto"
             :producto="producto"
             :muestra-color="colorSeleccionado?.muestra_hex"
+            :id-color="colorSeleccionado?.id_color"
             @ver="verProducto"
             @agregar="agregarAlCarrito"
           />
@@ -344,6 +345,7 @@ import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPub
 import TarjetaCombinacionColoresPublica from '../../components/publicas/TarjetaCombinacionColoresPublica.vue';
 import { usePaletaColoresPublica } from '../../composables/publicas/usePaletaColoresPublica';
 import { useCombinacionesPaleta } from '../../composables/publicas/useCombinacionesPaleta';
+import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
 import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import type { VariantePublica } from '../../interfaces/publicas/catalogo-publico.interface';
@@ -414,41 +416,16 @@ async function agregarAlCarrito(idProducto: number): Promise<void> {
   const prod =
     productosRecomendados.value.find((p) => p.id_producto === idProducto) ??
     productosComplementarios.value.find((p) => p.id_producto === idProducto);
-  let variante: VariantePublica | undefined = undefined;
-
-  if (colorSeleccionado.value && prod?.detalle?.variantes) {
-    variante =
-      prod.detalle.variantes.find(
-        (v) => v.id_color === colorSeleccionado.value?.id_color && v.existencia_referencial > 0
-      ) ??
-      prod.detalle.variantes.find(
-        (v) => v.id_color === colorSeleccionado.value?.id_color
-      );
-  }
-
-  if (!variante) {
-    variante =
-      prod?.detalle?.variantes.find((v) => v.existencia_referencial > 0) ??
-      prod?.detalle?.variantes[0];
-  }
+  let variante: VariantePublica | undefined = seleccionarVarianteCompraRapida(
+    prod?.detalle?.variantes ?? [], colorSeleccionado.value?.id_color
+  );
 
   if (!variante) {
     try {
       const ficha = await CatalogoPublicoService.obtenerFicha(idProducto);
-      if (colorSeleccionado.value) {
-        variante =
-          ficha.variantes.find(
-            (v) => v.id_color === colorSeleccionado.value?.id_color && v.existencia_referencial > 0
-          ) ??
-          ficha.variantes.find(
-            (v) => v.id_color === colorSeleccionado.value?.id_color
-          );
-      }
-      if (!variante) {
-        variante = ficha.variantes.find((v) => v.existencia_referencial > 0) ?? ficha.variantes[0];
-      }
+      variante = seleccionarVarianteCompraRapida(ficha.variantes, colorSeleccionado.value?.id_color);
     } catch {
-      // ignore
+      // El mensaje de indisponibilidad se muestra más abajo.
     }
   }
 

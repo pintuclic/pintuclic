@@ -1092,8 +1092,7 @@ async function ejecutarPruebasM01(): Promise<void> {
     );
 
     // --------------------------------------------------------------------------
-    // HU-CAT-02: Gestión de productos (con 'publicar' parcial: valida variante
-    // activa; la exigencia de imagen queda diferida a HU-CAT-07).
+    // HU-CAT-02: Gestión de productos (publicar exige variante activa e imagen)
     // --------------------------------------------------------------------------
     const resinaAgua = await resinasService.crear({ nombre: 'Base Agua' });
     assert(resinaAgua.estado === 'activo', 'RF-CAT-02-04: tipo de resina creado activo');
@@ -1182,8 +1181,11 @@ async function ejecutarPruebasM01(): Promise<void> {
       'RF-CAT-02-05: no publica un producto sin variante activa'
     );
 
+    await assertLanza(() => productosService.publicar(vinilo.id_producto), 'CA-CAT-02-06: impide publicar sin imagen');
+    assert(productos.get(vinilo.id_producto)?.publicado === false, 'Una publicación rechazada no cambia el estado');
+    await imagenesService.crear(vinilo.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1 }));
     const publicado = await productosService.publicar(vinilo.id_producto);
-    assert(publicado.publicado === true, 'RF-CAT-02-05: publica cuando hay variante activa (imagen diferida a HU-CAT-07)');
+    assert(publicado.publicado === true, 'RF-CAT-02-05: publica cuando hay variante activa e imagen');
 
     const desactivacionProducto = await productosService.desactivar(brocha.id_producto);
     assert('desactivado' in desactivacionProducto, 'RF-CAT-02-01: desactiva el producto');
@@ -1574,7 +1576,9 @@ async function ejecutarPruebasM01(): Promise<void> {
     });
     varianteStats.set(prodComp1.id_producto, { total: 1, activas: 1 });
     varianteStats.set(prodComp2.id_producto, { total: 1, activas: 1 });
+    await imagenesService.crear(prodComp1.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1 }));
     await productosService.publicar(prodComp1.id_producto);
+    await imagenesService.crear(prodComp2.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1 }));
     await productosService.publicar(prodComp2.id_producto);
     await productosService.actualizar(prodComp2.id_producto, { patrocinado: true });
 
@@ -1611,6 +1615,7 @@ async function ejecutarPruebasM01(): Promise<void> {
       id_subcategorias: [interioresEsmaltes.id_subcategoria],
     });
     varianteStats.set(prodSinCat.id_producto, { total: 1, activas: 1 });
+    await imagenesService.crear(prodSinCat.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1 }));
     await productosService.publicar(prodSinCat.id_producto);
     const compFallback = await catalogoPublicoService.complementarios(prodSinCat.id_producto);
     assert(

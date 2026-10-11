@@ -35,4 +35,5 @@ Si es un parche(fix) debe ir como:
 - Si hay errores, mencionar al usuario que abrio el pull request.
 - Verificar si cumple con el cambio de versión, si es un parche, un logro(feat), entre otros.
 - Leer antes de aceptar del pull request.
+- Al fusionar la PR, el workflow `Version` toma la versión del título (`vX.Y.Z.W`) para crear el tag y el Release, y menciona en las notas del Release a quien abrió la PR. Si el título y `.github/version.txt` no coinciden, se publica la versión del título y queda una advertencia en el resumen del workflow; si la versión pedida es menor que la vigente, no se publica.
 - Tener en cuenta git flow.
