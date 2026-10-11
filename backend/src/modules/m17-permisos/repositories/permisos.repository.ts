@@ -1,4 +1,4 @@
-import { Kysely } from 'kysely';
+﻿import { Kysely } from 'kysely';
 import { Database } from '../../../core/db/types';
 import { PermisoDetalle, AreaFuncional } from '../interfaces/m17.interfaces';
 
@@ -91,13 +91,25 @@ export class PermisosRepository {
       .execute();
   }
 
+
   /**
    * Infiere el area funcional desde el prefijo del nombre del permiso.
    * Patron: 'area.accion' (e.g., 'catalogo.ver' -> 'catalogo').
+   * Alias legados se mapean a sus areas oficiales (ordenes->ventas, usuarios->personal, etc.).
    */
   private inferirArea(nombre: string): AreaFuncional {
-    const prefijo = nombre.split('.')[0] as AreaFuncional;
+    const prefijo = nombre.split('.')[0] ?? '';
     const areasValidas: AreaFuncional[] = ['catalogo', 'ventas', 'personal', 'seguridad', 'configuracion'];
-    return areasValidas.includes(prefijo) ? prefijo : 'configuracion';
+    // Mapa de alias/prefijos legados hacia las areas funcionales oficiales
+    const aliasLegados: Record<string, AreaFuncional> = {
+      ordenes:      'ventas',
+      usuarios:     'personal',
+      productos:    'catalogo',
+      estadisticas: 'catalogo',
+    };
+    if (areasValidas.includes(prefijo as AreaFuncional)) {
+      return prefijo as AreaFuncional;
+    }
+    return aliasLegados[prefijo] ?? 'configuracion';
   }
 }

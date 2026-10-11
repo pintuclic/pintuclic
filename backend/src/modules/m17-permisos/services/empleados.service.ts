@@ -1,4 +1,4 @@
-import { EmpleadosRepository } from '../repositories/empleados.repository';
+﻿import { EmpleadosRepository } from '../repositories/empleados.repository';
 import { PermisosRepository } from '../repositories/permisos.repository';
 import { EmpleadoResumen, EmpleadoDetalle, EmpleadoCreadoRespuesta } from '../interfaces/m17.interfaces';
 import { SesionService } from '../../m20-seguridad/services/sesion.service';
@@ -62,8 +62,7 @@ export class EmpleadosService {
    * 4. Crea rol individual `empleado_{id}` (Opcion A de arquitectura de permisos).
    * 5. Asigna el rol al usuario en usuario_rol.
    * 6. El empleado inicia con CERO permisos (RF-ADM-01-04).
-   * 7. Despacha la credencial por correo transaccional vía M18 (CA-ADM-01-01).
-   * 8. Retorna la credencial temporal EN TEXTO PLANO una unica vez (RF-ADM-01-04).
+   * 7. Despacha la credencial por correo transaccional via M18 (CA-ADM-01-01). La credencial NUNCA se expone en la respuesta HTTP (HU-SEG-06).
    */
   async crearEmpleado(datos: {
     nombre: string;
@@ -116,7 +115,6 @@ export class EmpleadosService {
     return {
       id_usuario: idUsuario,
       correo: datos.correo,
-      contrasena_temporal: credencialTemporal,
     };
   }
 

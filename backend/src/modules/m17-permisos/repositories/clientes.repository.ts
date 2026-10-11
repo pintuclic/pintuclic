@@ -21,13 +21,15 @@ export class ClientesRepository {
 
   /**
    * Lista clientes (tipo = normal | empresa) con filtros facetados (RF-ADM-04-01).
-   * Excluye empleados (identificados por el patron de rol 'empleado_*').
+   * Excluye empleados (rol 'empleado_*'), el rol administrador y siempre
+   * al usuario raiz (id_usuario = 1) para evitar su exposicion como cliente
+   * (RF-ADM-04-12, RF-ADM-02-10).
    */
   async listarClientes(filtros: FiltroClientes): Promise<{
     clientes: ClienteResumen[];
     total: number;
   }> {
-    // Subquery para excluir usuarios que tengan un rol individual de empleado
+    // Excluir empleados, administrador y usuario raiz de la vista de clientes
     let query = this.db
       .selectFrom('usuario as u')
       .leftJoin('usuario_rol as ur', 'ur.id_usuario', 'u.id_usuario')
@@ -40,12 +42,18 @@ export class ClientesRepository {
         'u.tipo',
         'u.estado',
       ])
+      // Excluir roles de empleado individual y el rol administrador
       .where((eb) =>
         eb.or([
-          eb('r.nombre', 'not like', 'empleado_%'),
           eb('r.id_rol', 'is', null),
+          eb.and([
+            eb('r.nombre', 'not like', 'empleado_%'),
+            eb('r.nombre', '!=', 'administrador'),
+          ]),
         ])
-      );
+      )
+      // Defensa en profundidad: nunca exponer al Administrador raiz (ID: 1)
+      .where('u.id_usuario', '!=', 1);
 
     if (filtros.tipo) {
       query = query.where('u.tipo', '=', filtros.tipo);
@@ -82,9 +90,14 @@ export class ClientesRepository {
   }
 
   /**
-   * Obtiene la ficha de un cliente por ID. Null si no existe o es empleado.
+   * Obtiene la ficha de un cliente por ID.
+   * Retorna null si no existe, si es empleado, si tiene rol administrador
+   * o si es el usuario raiz (ID: 1) -- RF-ADM-04-12, RF-ADM-02-10.
    */
   async obtenerClientePorId(idUsuario: number): Promise<ClienteResumen | null> {
+    // Defensa en profundidad: nunca tratar al Administrador raiz como cliente
+    if (idUsuario === 1) return null;
+
     const fila = await this.db
       .selectFrom('usuario as u')
       .leftJoin('usuario_rol as ur', 'ur.id_usuario', 'u.id_usuario')
@@ -98,10 +111,14 @@ export class ClientesRepository {
         'u.estado',
       ])
       .where('u.id_usuario', '=', idUsuario)
+      // Excluir roles de empleado individual y el rol administrador
       .where((eb) =>
         eb.or([
-          eb('r.nombre', 'not like', 'empleado_%'),
           eb('r.id_rol', 'is', null),
+          eb.and([
+            eb('r.nombre', 'not like', 'empleado_%'),
+            eb('r.nombre', '!=', 'administrador'),
+          ]),
         ])
       )
       .executeTakeFirst();
