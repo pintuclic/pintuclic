@@ -39,7 +39,7 @@ test('integración: rutas bajo /admin, DTOs compartidos y aislamiento de Pinia',
     assert.equal(router.currentRoute.value.fullPath, '/admin/perfil');
 
     const { crearEmpleadoSchema, actualizarEmpleadoSchema } = await vite.ssrLoadModule('/src/modules/m17-permisos/dtos/empleado.dto.ts');
-    const employee = { nombre: ' Prueba local ', correo: 'QA@example.test', telefono: '3001234567', doc_identidad: 'TEST12345' };
+    const employee = { nombre: ' Prueba local ', correo: 'QA@example.test', telefono: '3001234567', doc_identidad: '1023456789' };
     assert.equal(crearEmpleadoSchema.parse(employee).correo, 'qa@example.test');
     assert.equal(crearEmpleadoSchema.safeParse({ ...employee, telefono: 'no valido' }).success, false);
     assert.equal(actualizarEmpleadoSchema.safeParse({ nombre: 'Prueba', telefono: '3001234567' }).success, true);

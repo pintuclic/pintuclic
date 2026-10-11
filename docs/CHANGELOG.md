@@ -7,6 +7,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.7.3] - 2026-10-10
+### Módulo: M17 Permisos y Roles — Resolución de inconsistencias de auditoría QA y extracción semántica de errores (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.4.7.3)** sobre Frontend M17 Permisos y Roles (`HU-ADM-01`, `HU-ADM-02`, `HU-ADM-04`, `RF-ADM-06`). Resolución integral de observaciones reportadas en la auditoría técnica QA.
+- **Desenmascaramiento de errores de servidor (`useM17.ts`):** la función extractora de mensajes de error procesa la estructura `{ error: { message } }` y preserva los mensajes semánticos del servidor ante respuestas `403 FORBIDDEN` (como la protección de no auto-bloqueo del Administrador raíz), `400 BAD_REQUEST` (asignación de permisos reservados), `404 NOT_FOUND` y `409 CONFLICT`, eliminando los fallbacks genéricos de `"No se pudo guardar el cambio."`.
+- **Sincronización de parámetros del sistema (`RF-ADM-06`):** en `parametro.dto.ts`, el valor por defecto y el límite superior de `inactividad_cliente_segundos` se alinean a 30 días (`2592000` s), coincidiendo con la política de base de datos y la capa backend.
+- **Suite de pruebas de integración:** corrección del mock de empleado en `integration.test.mjs` con documento numérico válido para acatar la regla estricta de solo dígitos.
+- **Verificación:** `npm run test:m17` superado con 8/8 pruebas exitosas (100% PASS); `npx eslint src/modules/m17-permisos` con 0 errores y 0 advertencias.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M17/walkthrough_v0.4.7.3_M17_resolucion_inconsistencias_qa_frontend.md](./walkthroughs/M17/walkthrough_v0.4.7.3_M17_resolucion_inconsistencias_qa_frontend.md)
+
+---
 ## [v0.4.7.2] - 2026-10-10
 ### Módulo: M17 Permisos y Roles — Resolución de vulnerabilidades y observaciones de auditoría QA (Backend)
 - **Alcance General:** Incremento **PATCH (v0.4.7.2)** sobre Backend M17 Permisos y Roles (`HU-ADM-01`, `HU-ADM-02`, `HU-ADM-03`, `HU-ADM-04`, `RF-ADM-06`). Resolución integral de observaciones y vulnerabilidades reportadas en la auditoría técnica QA.
