@@ -13,6 +13,14 @@ export interface ApiResponse<T> {
 }
 
 export interface CartApiLine {
+	id_producto: number
+	nombre_producto: string
+	descripcion_producto: string | null
+	presentacion: string
+	color: string | null
+	base: string | null
+	imagen_url: string | null
+
 	id_linea_carrito: number
 	id_variante: number
 	cantidad: number
@@ -67,13 +75,6 @@ export interface CartMergeResult {
 	carrito: CartApi
 	lineas_acumuladas: number
 	lineas_transferidas: number
-}
-
-export interface CartProductFallback {
-	name: string
-	description: string
-	image: string
-	variant?: string
 }
 
 export interface CartItem {

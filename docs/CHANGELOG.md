@@ -7,6 +7,28 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.7.1] - 2026-10-09
+### Core: Versionamiento — Tag y Release desde la PR fusionada (CI)
+- **Alcance General:** Incremento **PATCH (v0.4.7.1)** sobre `.github/workflows/version.yml`. Al fusionar una PR hacia `main` o `develop`, el workflow ahora se dispara también con el evento `pull_request` (`closed` + `merged == true`), toma la **versión solicitada en el título de la PR** (`vX.Y.Z.W`) como fuente prioritaria, crea el tag en el commit de merge y publica el Release.
+- **Resolución de versión:** el título manda; si difiere de `.github/version.txt` se publica la del título y se emite una advertencia en el resumen. Si el título no trae versión se usa `version.txt`; si el evento es PR y no hay versión en el título, se omite (lo cubre el push de `version.txt`). Si la versión pedida es menor que la vigente, se omite para no degradar el release. Si el tag ya existe, se mantiene la idempotencia.
+- **Mención del autor (@):** las notas del Release incluyen número de PR, enlace y `@usuario` de quien abrió la PR. En el camino `push` se resuelve la PR asociada al commit vía `gh api repos/.../commits/{sha}/pulls` (así también se menciona al autor cuando el merge proviene de un fork). La anotación del tag incluye la referencia `(#PR por @autor)`.
+- **Canales sin cambios:** `develop` publica pre-release y `main` publica/promueve el release estable; el `bump` manual (`workflow_dispatch`) conserva su lógica.
+- **Verificación:** YAML validado con parser; lógica de resolución probada con 6 casos (título con/sin versión, sin prefijo `v`, versión menor, mismatch, fallback a `version.txt`) y parseo de PR asociada simulado con `[]` y payload real.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.4.7.1_core_tag_release_desde_pr.md](./walkthroughs/core/walkthrough_v0.4.7.1_core_tag_release_desde_pr.md)
+
+---
+
+## [v0.4.7.0] - 2026-10-09
+### Módulo: M05 Carrito de compras — Panel lateral "Tu carrito" (Frontend)
+- **Alcance General:** Incremento **Minior-feat (v0.4.7.0)**. Nuevo panel lateral del carrito que se abre al agregar un producto desde la tienda y desde el botón "Mi Carrito" del header.
+- **CartDrawer (`components/CartDrawer.vue`):** encabezado con logo, líneas con imagen, nombre, variante, cantidad (+/−), subtotal y eliminación; pie con total, "Continuar compra" (navega a `/carrito`), "Seguir comprando" y franja de colores corporativos. Cierra con Esc, clic fuera o "Seguir comprando"; bloquea el scroll mientras está abierto y mantiene el foco dentro del panel.
+- **Store (`cart.store.ts`):** estado `isDrawerOpen` con `openDrawer()`/`closeDrawer()`; `addToCart` abre el panel tras una respuesta exitosa, por lo que aplica a todas las vistas que ya lo usan (inicio, catálogo, detalle y paleta) sin modificar M01. Conserva en memoria el nombre e imagen enviados por la vista para mostrarlos en lugar del fallback visual.
+- **LayoutHome (archivo compartido, con aprobación explícita del equipo):** monta `<CartDrawer />` y el botón "Mi Carrito" abre el panel.
+- **Verificación:** E2E en `localhost:5173` con backend de la rama y base sembrada con `seed_pintuclic.sql`: "Agregar" en Productos destacados abrió el panel con el producto real; cantidades, eliminación, contador del header, "Seguir comprando" y "Continuar compra" funcionaron. ESLint y `vue-tsc --noEmit` sin errores.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.4.7.0_M05_panel_lateral_carrito_frontend.md](./walkthroughs/M05/walkthrough_v0.4.7.0_M05_panel_lateral_carrito_frontend.md)
+
+---
+
 ## [v0.4.7.0] - 2026-10-08
 ### Módulo: M17 Permisos y Roles — Validación de empleados, selección masiva y permisos en la ficha (Fullstack)
 - **Alcance General:** Incremento **Minior-feat (v0.4.7.0)**. Tres mejoras al panel de administración de empleados y permisos (`HU-ADM-01`, `HU-ADM-02`).
@@ -16,6 +38,28 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **Permisos asignados en la ficha del empleado:** nueva sección en `/admin/empleados/:id` con el total y los permisos agrupados por área, y enlace para asignarlos o modificarlos.
 - **Verificación:** `vue-tsc -b`, ESLint, `npx tsc --noEmit` y `npm run lint` del backend sin errores ni advertencias; pruebas manuales en navegador contra backend local.
 - 🔗 **Walkthroughs Técnicos Oficiales:** [frontend](./walkthroughs/M17/walkthrough_v0.4.7.0_M17_empleados_y_permisos_frontend.md) · [backend](./walkthroughs/M17/walkthrough_v0.4.7.0_M17_empleados_y_permisos_backend.md)
+
+---
+
+## [v0.4.6.6] - 2026-10-09
+### M01 Inclusión de ajustes visuales de ficha y evidencia del análisis
+- Se incorporan los ajustes locales previamente excluidos: icono neutral junto al mensaje de imagen no disponible y miniaturas visibles únicamente cuando hay más de una imagen.
+- Se incorpora `informes/informe_flujo_tarjeta_producto_2026-10-09.docx` como evidencia del análisis anterior a las correcciones; no representa una nueva auditoría del código corregido.
+- Validación: TypeScript frontend y ESLint del archivo sin errores ni advertencias; backend lint y TypeScript superados. Se mantiene documentada la limitación previa del lint global frontend en componentes compartidos. Commit local solicitado por el usuario; sin push ni despliegue.
+- Walkthrough: [M01 frontend](walkthroughs/M01/walkthrough_v0.4.6.5_M01_ajustes_visuales_ficha_frontend.md).
+
+---
+
+## [v0.4.6.5] - 2026-10-09
+### M01 y M05 Corrección del flujo de tarjeta pública y carrito
+- M01 backend: bloqueo de publicación sin imagen, conforme a RF-CAT-02-05 y CA-CAT-02-06.
+- M01 frontend: selección compartida de variante y precio para inicio, catálogo, paleta y complementarios, respetando el color seleccionado.
+- M05 backend: metadatos reales de producto, presentación, color, base e imagen en las líneas, sin alterar el precio vivo ni duplicar resultados.
+- M05 frontend: retirada del mapeo de catálogo de prueba y conservación de identidad al agregar y recargar; icono neutral si no hay imagen o falla.
+- Validación: 125 comprobaciones backend M01, 72 backend M05, integración de identidad con PostgreSQL y rollback, 27 pruebas frontend; backend lint/TypeScript y frontend build/lint de módulos superados. Lint global frontend pendiente por errores previos de core; no se modificaron esos archivos.
+- M01 ficha pública: retirada de referencias a imágenes de demostración inexistentes; la galería usa las imágenes reales del catálogo. Los ajustes visuales locales previos se mantienen fuera del commit.
+- Estado: commit local solicitado explícitamente con el lint global frontend pendiente; sin push ni despliegue.
+- Walkthroughs: [M01 backend](walkthroughs/M01/walkthrough_v0.4.6.4_M01_publicacion_con_imagen_backend.md), [M01 frontend](walkthroughs/M01/walkthrough_v0.4.6.4_M01_precio_y_variante_compra_rapida_frontend.md), [M05 backend](walkthroughs/M05/walkthrough_v0.4.6.4_M05_identidad_real_lineas_carrito_backend.md) y [M05 frontend](walkthroughs/M05/walkthrough_v0.4.6.4_M05_identidad_real_y_sin_mocks_frontend.md).
 
 ---
 ## [v0.4.6.4] - 2026-10-08

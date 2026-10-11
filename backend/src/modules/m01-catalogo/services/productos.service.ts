@@ -128,8 +128,6 @@ export class ProductosService {
 
   /**
    * RF-CAT-02-05: publicar exige al menos una variante activa y una imagen.
-   * La exigencia de imagen queda diferida a HU-CAT-07 (aún no existe); aquí se
-   * valida la variante activa, que sí es construible hoy.
    */
   async publicar(id: number): Promise<ProductoDetalle> {
     await this.obtenerEntidad(id);
@@ -139,6 +137,13 @@ export class ProductosService {
         'No se puede publicar: el producto no tiene ninguna variante activa',
         422,
         'PRODUCTO_SIN_VARIANTE_ACTIVA'
+      );
+    }
+    if (await this.repo.contarImagenes(id) < 1) {
+      throw new AppError(
+        'No se puede publicar: el producto no tiene ninguna imagen',
+        422,
+        'PRODUCTO_SIN_IMAGEN'
       );
     }
     await this.repo.cambiarPublicado(id, true);

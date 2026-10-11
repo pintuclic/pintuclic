@@ -29,6 +29,10 @@ export class LineaCarritoRepository {
     const filas = await this.db
       .selectFrom('linea_carrito')
       .innerJoin('variante', 'variante.id_variante', 'linea_carrito.id_variante')
+      .innerJoin('producto', 'producto.id_producto', 'variante.id_producto')
+      .innerJoin('presentacion', 'presentacion.id_presentacion', 'variante.id_presentacion')
+      .leftJoin('color', 'color.id_color', 'variante.id_color')
+      .leftJoin('base', 'base.id_base', 'variante.id_base')
       .select([
         'linea_carrito.id_linea_carrito',
         'linea_carrito.id_variante',
@@ -36,7 +40,23 @@ export class LineaCarritoRepository {
         'variante.precio_vigente',
         'variante.existencia_referencial',
         'variante.estado',
+        'producto.id_producto',
+        'producto.nombre as nombre_producto',
+        'producto.descripcion as descripcion_producto',
+        'presentacion.nombre as presentacion',
+        'color.nombre as color',
+        'base.nombre as base',
       ])
+      .select((eb) => eb.selectFrom('imagen')
+        .select('id_imagen')
+        .whereRef('imagen.id_producto', '=', 'producto.id_producto')
+        .where((f) => f.or([f('imagen.id_variante', 'is', null), f('imagen.id_variante', '=', f.ref('variante.id_variante'))]))
+        .where((f) => f.or([f('imagen.id_color', 'is', null), f('imagen.id_color', '=', f.ref('variante.id_color'))]))
+        .orderBy('es_principal', 'desc')
+        .orderBy('orden', 'asc')
+        .orderBy('id_imagen', 'asc')
+        .limit(1)
+        .as('id_imagen'))
       .where('linea_carrito.id_carrito', '=', idCarrito)
       .execute();
 
@@ -47,6 +67,13 @@ export class LineaCarritoRepository {
       return {
         id_linea_carrito: fila.id_linea_carrito,
         id_variante: fila.id_variante,
+        id_producto: fila.id_producto,
+        nombre_producto: fila.nombre_producto,
+        descripcion_producto: fila.descripcion_producto,
+        presentacion: fila.presentacion,
+        color: fila.color,
+        base: fila.base,
+        imagen_url: fila.id_imagen === null ? null : `/api/catalogo/imagenes/${fila.id_imagen}/contenido`,
         cantidad: fila.cantidad,
         precio_unitario_vigente: precioUnitario.toFixed(2),
         subtotal,

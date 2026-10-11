@@ -33,6 +33,9 @@ Para crear un Release y separar las versiones por paquetes, GitHub Actions requi
   - `bump`: segmento a incrementar (`build` por defecto).
   - `version`: versión exacta opcional `X.Y.Z.W`; si se indica, tiene prioridad sobre `bump`.
 - **Disparo por llegada a `main`/`develop`:** cualquier cambio de `.github/version.txt` que llegue a `main` o `develop` (merge o push) dispara el empaquetado.
+- **Disparo por PR fusionada:** al fusionar una PR hacia `main` o `develop` (evento `pull_request` cerrado y mergeado) el workflow toma la **versión solicitada en el título de la PR** (`vX.Y.Z.W`) como fuente prioritaria del tag. Si el título difiere de `.github/version.txt`, se publica la del título y se registra una advertencia; si la versión pedida es menor que la vigente, no se publica. Si el título no trae versión, se usa `version.txt` (o lo cubre el push de ese archivo).
+- **Mención del autor (`@`):** las notas del Release incluyen el número de PR, su enlace y la mención (`@usuario`) de quien abrió la PR. En el camino `push` la PR se resuelve desde el commit de merge vía API, por lo que la mención también aplica cuando la PR proviene de un fork (el token del evento `pull_request` en forks no puede crear tags; el push a `main`/`develop` sí).
+
 - **Canales de publicación:**
   - `develop`: publica el Release como **pre-release**.
   - `main`: publica el Release **estable** (`latest`) o promueve a estable el pre-release existente del mismo tag.

@@ -244,10 +244,13 @@
             class="mx-auto grid h-28 w-full place-items-center rounded-card bg-neutral-lightest p-3"
           >
             <img
+              v-if="imagenProducto && !imagenConError"
               :src="imagenProducto"
               :alt="nombreProducto"
               class="h-24 w-24 object-contain"
+              @error="imagenConError = true"
             />
+            <span v-else class="text-xs text-neutral-medium">Imagen no disponible</span>
           </div>
 
           <h2
@@ -397,7 +400,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, ref } from 'vue';
+import { computed, markRaw, ref, watch } from 'vue';
 import {
   Armchair,
   Calculator,
@@ -419,10 +422,6 @@ import {
 import type {
   FichaProductoPublico,
 } from '../../interfaces/publicas/catalogo-publico.interface';
-
-import {
-  obtenerImagenPublicaRespaldo,
-} from '../../assets/imagenes-catalogo';
 
 import fondoProyectoCalculadora
   from '../../assets/storefront/fondo-proyecto-calculadora.jpeg';
@@ -521,14 +520,16 @@ const galones = computed(() =>
 const nombreProducto = computed(
   () =>
     props.producto?.nombre ??
-    'Pintura recomendada Pintu Clic',
+    'Cálculo general',
 );
 
-const imagenProducto = computed(() =>
-  obtenerImagenPublicaRespaldo(
-    props.producto?.id_producto ?? 1,
-  ),
-);
+const imagenConError = ref(false);
+const imagenProducto = computed(() => {
+  const imagenes = props.producto?.imagenes ?? [];
+  return (imagenes.find((imagen) => imagen.es_principal) ?? imagenes[0])?.contenido_url ?? null;
+});
+
+watch(imagenProducto, () => { imagenConError.value = false; });
 
 function seleccionarSuperficie(
   valor: CalculadoraPinturaDTO['superficie'],
