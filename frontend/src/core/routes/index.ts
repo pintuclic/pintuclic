@@ -65,7 +65,13 @@ export const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior: () => ({ top: 0 }),
+  scrollBehavior(to, from, savedPosition) {
+    // Atrás/adelante: recupera la posición que el navegador guardó para esa entrada.
+    if (savedPosition) return savedPosition;
+    // Misma ruta y solo cambia la query (filtros, orden, búsqueda): no se mueve la página.
+    if (to.path === from.path) return false;
+    return { top: 0 };
+  },
 });
 
 export default router;
