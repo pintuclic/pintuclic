@@ -12,8 +12,13 @@ export type OrdenBusqueda = 'relevancia' | 'precio_asc' | 'precio_desc' | 'noved
 
 export interface FiltrosBusquedaFrontend {
   q?: string;
-  categoria?: number;
-  subcategoria?: number;
+  /**
+   * Una o varias categorías completas (OR entre sí). Con `subcategoria`, la API aplica
+   * AND entre ambos grupos. Se admite un solo id por compatibilidad con consumidores previos.
+   */
+  categoria?: number | number[];
+  /** Una o varias subcategorías (OR entre sí). */
+  subcategoria?: number | number[];
   marca?: number[];
   linea?: number[];
   resina?: number[];

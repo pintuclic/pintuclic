@@ -8,12 +8,24 @@ import type {
 
 const BASE = '/busqueda';
 
+/**
+ * Ids en el formato que acepta la API (`?categoria=1,2`). Un id suelto se envía tal cual;
+ * una lista vacía se omite. Así una lista nunca llega como `categoria[]=…`, que la API ignora.
+ */
+function idsParametro(valor: number | number[] | undefined): string | undefined {
+  if (valor === undefined) return undefined;
+  const ids = Array.isArray(valor) ? valor : [valor];
+  return ids.length ? ids.join(',') : undefined;
+}
+
 function formatearParametros(filtros: FiltrosBusquedaFrontend): Record<string, string | number | undefined> {
   const params: Record<string, string | number | undefined> = {};
 
   if (filtros.q && filtros.q.trim()) params.q = filtros.q.trim();
-  if (filtros.categoria !== undefined) params.categoria = filtros.categoria;
-  if (filtros.subcategoria !== undefined) params.subcategoria = filtros.subcategoria;
+  const categoria = idsParametro(filtros.categoria);
+  const subcategoria = idsParametro(filtros.subcategoria);
+  if (categoria) params.categoria = categoria;
+  if (subcategoria) params.subcategoria = subcategoria;
   if (filtros.marca && filtros.marca.length) params.marca = filtros.marca.join(',');
   if (filtros.linea && filtros.linea.length) params.linea = filtros.linea.join(',');
   if (filtros.resina && filtros.resina.length) params.resina = filtros.resina.join(',');
