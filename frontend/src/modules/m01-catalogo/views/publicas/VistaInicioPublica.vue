@@ -147,7 +147,7 @@
             type="button"
             class="group relative min-h-32 overflow-hidden rounded-card p-4 text-left text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
             :class="claseCategoria(indice)"
-            @click="seleccionarCategoria(categoria.subcategorias[0]?.id_subcategoria)"
+            @click="irCategoria(categoria.id_categoria)"
           >
             <Shapes :size="72" class="absolute -bottom-3 -right-2 opacity-25 transition-transform group-hover:scale-110" />
             <strong class="font-title relative block text-base leading-tight">{{ categoria.nombre }}</strong>
@@ -168,7 +168,8 @@
       :cargando="cargando"
       :categorias="categorias"
       @cerrar="menuCategoriasAbierto = false"
-      @seleccionar="seleccionarSubcategoria"
+      @seleccionar="irSubcategoria"
+      @seleccionar-todos="irCatalogoCompleto"
     />
   </div>
 </template>
@@ -212,7 +213,6 @@ const {
   cargando,
   categorias,
   error,
-  filtrarPorSubcategoria,
   productos,
 } = useInicioPublico();
 
@@ -240,18 +240,20 @@ function ejecutarBusqueda(): void {
   void buscar(terminoBusqueda.value);
 }
 
-function seleccionarCategoria(idSubcategoria: number | undefined): void {
-  if (idSubcategoria === undefined) {
-    menuCategoriasAbierto.value = true;
-    return;
-  }
-  seleccionarSubcategoria(idSubcategoria);
+// Navegación al catálogo: la URL lleva el filtro y el catálogo lo aplica al cargar
+// (useCatalogoPublico). Los «Productos destacados» del inicio no se tocan.
+function irSubcategoria(idSubcategoria: number): void {
+  menuCategoriasAbierto.value = false;
+  void router.push({ name: 'CatalogoPublico', query: { subcategoria: idSubcategoria } });
 }
 
-function seleccionarSubcategoria(idSubcategoria: number): void {
+function irCategoria(idCategoria: number): void {
+  void router.push({ name: 'CatalogoPublico', query: { categoria: idCategoria } });
+}
+
+function irCatalogoCompleto(): void {
   menuCategoriasAbierto.value = false;
-  void filtrarPorSubcategoria(idSubcategoria);
-  document.querySelector('#productos')?.scrollIntoView({ behavior: 'smooth' });
+  void router.push({ name: 'CatalogoPublico' });
 }
 
 function verProducto(idProducto: number): void {

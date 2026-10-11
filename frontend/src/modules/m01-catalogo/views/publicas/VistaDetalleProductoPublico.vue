@@ -233,19 +233,13 @@
           </div>
         </section>
 
-        <!-- Productos complementarios -->
-        <section v-if="complementarios.length" class="mt-16">
-          <h2 class="font-title text-xl font-bold text-corporate">Productos que te pueden interesar</h2>
-          <div class="mt-5 grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            <TarjetaProductoPublico
-              v-for="item in complementarios"
-              :key="item.id_producto"
-              :producto="item"
-              @ver="irProducto"
-              @agregar="agregarComplementarioAlCarrito"
-            />
-          </div>
-        </section>
+        <!-- Productos complementarios (HU-CAT-08): se oculta si el endpoint no devuelve ninguno -->
+        <ProductosComplementariosPublicos
+          class="mt-16"
+          :productos="complementarios"
+          @ver="irProducto"
+          @agregar="agregarComplementarioAlCarrito"
+        />
       </template>
 
       <!-- Feedback de mensaje -->
@@ -296,6 +290,7 @@ import { MuestraColor } from '@/core/components';
 import CartaColoresProductoPublica from '../../components/publicas/CartaColoresProductoPublica.vue';
 import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPinturaPublica.vue';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
+import ProductosComplementariosPublicos from '../../components/publicas/ProductosComplementariosPublicos.vue';
 import VisualizadorAmbientesPublico from '../../components/publicas/VisualizadorAmbientesPublico.vue';
 import { useDetalleProductoPublico } from '../../composables/publicas/useDetalleProductoPublico';
 import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';

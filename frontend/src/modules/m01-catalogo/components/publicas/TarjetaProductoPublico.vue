@@ -1,6 +1,6 @@
 <template>
   <article
-    class="group min-w-0 rounded-2xl border border-neutral-light bg-neutral-white p-3.5 sm:p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md flex flex-col justify-between"
+    class="group h-full min-w-0 rounded-2xl border border-neutral-light bg-neutral-white p-3 sm:p-3.5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md flex flex-col justify-between"
     :class="modo === 'lista' ? 'sm:grid sm:grid-cols-[180px_1fr] sm:gap-4' : 'flex flex-col'"
   >
     <!-- Contenedor Imagen -->
@@ -27,7 +27,8 @@
 
     <!-- Contenido -->
     <div class="flex flex-1 flex-col pt-3">
-      <h3 class="font-title font-bold text-sm text-neutral-black line-clamp-1 hover:text-action transition-colors">
+      <!-- Dos líneas con altura fija: nombres largos legibles y tarjetas alineadas en la fila -->
+      <h3 class="font-title font-bold text-sm leading-5 text-neutral-black line-clamp-2 min-h-10 break-words hover:text-action transition-colors" :title="producto.nombre">
         {{ producto.nombre }}
       </h3>
       
@@ -36,8 +37,8 @@
       </p>
 
       <!-- Fila de Precios -->
-      <div class="mt-2.5 flex items-baseline gap-2 whitespace-nowrap">
-        <span class="font-title text-base sm:text-[17px] font-bold text-neutral-black whitespace-nowrap">
+      <div class="mt-2.5 flex flex-wrap items-baseline gap-x-2">
+        <span class="font-title text-base font-bold text-neutral-black whitespace-nowrap">
           {{ precioMinimo === null ? 'Consultar precio' : formatearPrecioConSufijo(precioMinimo) }}
         </span>
       </div>

@@ -52,23 +52,6 @@ export function useInicioPublico(servicio: CatalogoPublicoGateway = CatalogoPubl
     }
   }
 
-  async function filtrarPorSubcategoria(idSubcategoria: number): Promise<void> {
-    buscando.value = true;
-    error.value = null;
-    try {
-      const pagina = await servicio.listarProductos({
-        subcategoria: idSubcategoria,
-        pagina: 1,
-        limite: LIMITE_DESTACADOS,
-      });
-      productos.value = await enriquecerProductosPublicos(pagina.items, servicio);
-    } catch {
-      error.value = 'No fue posible cargar los productos de esta categoría.';
-    } finally {
-      buscando.value = false;
-    }
-  }
-
   onMounted(() => {
     void cargarInicio();
   });
@@ -80,7 +63,6 @@ export function useInicioPublico(servicio: CatalogoPublicoGateway = CatalogoPubl
     cargando,
     categorias,
     error,
-    filtrarPorSubcategoria,
     productos,
   };
 }

@@ -52,28 +52,54 @@
               </div>
             </div>
 
-            <div v-else-if="categorias.length" class="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-              <article v-for="categoria in categorias" :key="categoria.id_categoria">
-                <h3 class="font-title mb-3 flex items-center gap-2 text-sm font-bold uppercase text-corporate">
-                  <Tags :size="17" class="text-action" aria-hidden="true" />
-                  {{ categoria.nombre }}
-                </h3>
-                <ul class="space-y-1.5">
-                  <li
-                    v-for="subcategoria in categoria.subcategorias"
-                    :key="subcategoria.id_subcategoria"
-                  >
+            <div v-else-if="categorias.length">
+              <button
+                type="button"
+                class="group mb-5 flex min-h-11 w-full items-center justify-between rounded-button border border-action px-4 text-left text-sm font-semibold text-action transition-colors hover:bg-action hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+                @click="emit('seleccionarTodos')"
+              >
+                Ver todos los productos
+                <ChevronRight :size="16" class="transition-transform group-hover:translate-x-1" aria-hidden="true" />
+              </button>
+
+              <!-- Categoría → subcategorías: se elige una categoría y se muestran las suyas -->
+              <div class="grid gap-5 md:grid-cols-[minmax(0,260px)_minmax(0,1fr)] md:gap-8">
+                <ul class="space-y-1" aria-label="Categorías">
+                  <li v-for="categoria in categorias" :key="categoria.id_categoria">
                     <button
                       type="button"
-                      class="group flex min-h-11 w-full items-center justify-between rounded-button px-2 text-left text-sm text-neutral-medium transition-colors hover:bg-subaction hover:text-action focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-                      @click="emit('seleccionar', subcategoria.id_subcategoria)"
+                      class="flex min-h-11 w-full items-center gap-2 rounded-button px-3 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+                      :class="categoria.id_categoria === categoriaActiva?.id_categoria ? 'bg-subaction text-action' : 'text-corporate hover:bg-neutral-lightest'"
+                      :aria-pressed="categoria.id_categoria === categoriaActiva?.id_categoria"
+                      :title="categoria.nombre"
+                      @click="idCategoriaActiva = categoria.id_categoria"
                     >
-                      {{ subcategoria.nombre }}
-                      <ChevronRight :size="15" class="transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                      <Tags :size="16" class="shrink-0 text-action" aria-hidden="true" />
+                      <span class="min-w-0 flex-1 truncate">{{ categoria.nombre }}</span>
+                      <span class="shrink-0 text-xs font-normal text-neutral-medium">{{ categoria.subcategorias.length }}</span>
+                      <ChevronRight :size="15" class="shrink-0" aria-hidden="true" />
                     </button>
                   </li>
                 </ul>
-              </article>
+
+                <section v-if="categoriaActiva" class="min-w-0 rounded-card border border-neutral-light p-4" aria-live="polite">
+                  <h3 class="font-title mb-2 text-sm font-bold uppercase text-corporate">{{ categoriaActiva.nombre }}</h3>
+                  <ul v-if="categoriaActiva.subcategorias.length" class="grid gap-1 sm:grid-cols-2">
+                    <li v-for="subcategoria in categoriaActiva.subcategorias" :key="subcategoria.id_subcategoria" class="min-w-0">
+                      <button
+                        type="button"
+                        class="group flex min-h-11 w-full items-center justify-between gap-2 rounded-button px-2 text-left text-sm text-neutral-medium transition-colors hover:bg-subaction hover:text-action focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+                        :title="subcategoria.nombre"
+                        @click="emit('seleccionar', subcategoria.id_subcategoria)"
+                      >
+                        <span class="min-w-0 truncate">{{ subcategoria.nombre }}</span>
+                        <ChevronRight :size="15" class="shrink-0 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                      </button>
+                    </li>
+                  </ul>
+                  <p v-else class="py-3 text-sm text-neutral-medium">Esta categoría aún no tiene subcategorías publicadas.</p>
+                </section>
+              </div>
             </div>
 
             <p v-else class="py-8 text-center text-sm text-neutral-medium">
@@ -107,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { ChevronRight, Palette, PanelsTopLeft, Tags, X } from 'lucide-vue-next';
 import type { CategoriaPublica } from '../../interfaces/publicas/catalogo-publico.interface';
 
@@ -120,7 +146,15 @@ const props = defineProps<{
 const emit = defineEmits<{
   cerrar: [];
   seleccionar: [idSubcategoria: number];
+  /** «Ver todos los productos»: el catálogo sin categoría. */
+  seleccionarTodos: [];
 }>();
+
+const idCategoriaActiva = ref<number | null>(null);
+/** Categoría elegida; por defecto la primera, y si desaparece se vuelve a la primera. */
+const categoriaActiva = computed(
+  () => props.categorias.find((c) => c.id_categoria === idCategoriaActiva.value) ?? props.categorias[0] ?? null
+);
 
 watch(
   () => props.abierto,
