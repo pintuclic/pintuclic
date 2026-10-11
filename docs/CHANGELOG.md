@@ -7,6 +7,19 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.8.0] - 2026-10-11
+### M01 / M02 - Vistas públicas: catálogo con filtros múltiples, navegación y búsqueda en tiempo real (Frontend)
+- **Alcance General:** Incremento **Minior-feat (v0.4.8.0)** sobre las vistas públicas `/`, `/catalogo` y `/productos/:id`. Incluye la búsqueda en tiempo real y el color coincidente, documentados originalmente como `v0.4.6.5` (número que `develop` usó después para otra entrega).
+- **Búsqueda (HU-BUS-01):** resultados en tiempo real (300 ms) y color de la variante coincidente en la tarjeta.
+- **Filtros (HU-BUS-02):** secciones tipo select (una abierta, todas cerradas al cargar), selección múltiple (OR dentro del grupo, AND entre grupos), varias subcategorías o categorías completas, URL y atrás/adelante completos, chips individuales y rango de precio validado (CA-BUS-02-06).
+- **Catálogo (HU-BUS-05):** 16 productos por página, 4 columnas y actualización sin desmontar los resultados.
+- **Navegación (HU-CAT-06) y complementarios (HU-CAT-08):** Inicio → catálogo filtrado; la ficha vuelve a mostrar hasta 4 complementarios.
+- **M02 (aprobado):** `categoria` y `subcategoria` admiten un id o una lista y se envían separadas por comas; compatible con consumidores de un solo id.
+- **Pendiente (no incluido):** el ajuste de `scrollBehavior` en `core/routes/index.ts`, en revisión por el responsable de core. Sin él, filtrar, ordenar o volver atrás llevan la página al inicio.
+- **Fuera de alcance:** calculadora → catálogo y filtro por superficie (pausados).
+- **Verificación:** vitest 103/103; `vue-tsc` y ESLint de la entrega sin errores propios; `vite build` correcto. E2E en Firefox sin el ajuste de core: correctas salvo las 3 comprobaciones de posición de la página (con el ajuste, 7/7). `npm run build` y el ESLint global siguen bloqueados por errores heredados de M05 y core.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.8.0_M01_catalogo_publico_filtros_y_navegacion_frontend.md](./walkthroughs/M01/walkthrough_v0.4.8.0_M01_catalogo_publico_filtros_y_navegacion_frontend.md)
+---
 ## [v0.4.7.1] - 2026-10-09
 ### Core: Versionamiento — Tag y Release desde la PR fusionada (CI)
 - **Alcance General:** Incremento **PATCH (v0.4.7.1)** sobre `.github/workflows/version.yml`. Al fusionar una PR hacia `main` o `develop`, el workflow ahora se dispara también con el evento `pull_request` (`closed` + `merged == true`), toma la **versión solicitada en el título de la PR** (`vX.Y.Z.W`) como fuente prioritaria, crea el tag en el commit de merge y publica el Release.
