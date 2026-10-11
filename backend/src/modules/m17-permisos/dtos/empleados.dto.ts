@@ -1,5 +1,14 @@
 ﻿import { z } from 'zod';
 
+/** Nombre de persona: letras (con tildes y ñ), espacios, apostrofo, punto y guion. Sin numeros. */
+const NOMBRE_REGEX = /^[\p{L}][\p{L}\s'.-]*$/u;
+const NOMBRE_MENSAJE = 'El nombre solo puede contener letras y espacios, sin numeros ni simbolos';
+/** Cedula de ciudadania: solo digitos. */
+const DOCUMENTO_REGEX = /^\d+$/;
+/** Celulares y fijos en Colombia: 10 digitos. */
+const TELEFONO_REGEX = /^\d{10}$/;
+const TELEFONO_MENSAJE = 'El telefono debe tener exactamente 10 digitos numericos';
+
 // ==============================================================================
 // M17 - DTOs DE EMPLEADOS (Zod v4)
 // Validacion de entradas HTTP para operaciones de administracion de empleados.
@@ -14,13 +23,15 @@ export const CrearEmpleadoDto = z.object({
     .string()
     .min(2, 'El nombre debe tener al menos 2 caracteres')
     .max(150, 'El nombre no puede superar 150 caracteres')
-    .trim(),
+    .trim()
+    .regex(NOMBRE_REGEX, NOMBRE_MENSAJE),
 
   doc_identidad: z
     .string()
-    .min(5, 'El documento debe tener al menos 5 caracteres')
-    .max(20, 'El documento no puede superar 20 caracteres')
-    .trim(),
+    .min(5, 'El documento debe tener al menos 5 digitos')
+    .max(10, 'El documento no puede superar 10 digitos')
+    .trim()
+    .regex(DOCUMENTO_REGEX, 'El documento solo puede contener numeros'),
 
   correo: z
     .string()
@@ -31,8 +42,8 @@ export const CrearEmpleadoDto = z.object({
 
   telefono: z
     .string()
-    .max(20, 'El telefono no puede superar 20 caracteres')
     .trim()
+    .regex(TELEFONO_REGEX, TELEFONO_MENSAJE)
     .optional(),
 });
 
@@ -48,12 +59,13 @@ export const ActualizarContactoEmpleadoDto = z.object({
     .min(2, 'El nombre debe tener al menos 2 caracteres')
     .max(150)
     .trim()
+    .regex(NOMBRE_REGEX, NOMBRE_MENSAJE)
     .optional(),
 
   telefono: z
     .string()
-    .max(20)
     .trim()
+    .regex(TELEFONO_REGEX, TELEFONO_MENSAJE)
     .optional(),
 }).refine(
   (data) => data.nombre !== undefined || data.telefono !== undefined,

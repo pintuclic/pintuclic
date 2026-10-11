@@ -1,4 +1,4 @@
-import { ClientesRepository } from '../repositories/clientes.repository';
+﻿import { ClientesRepository } from '../repositories/clientes.repository';
 import { ClienteResumen } from '../interfaces/m17.interfaces';
 
 // ==============================================================================
@@ -6,6 +6,9 @@ import { ClienteResumen } from '../interfaces/m17.interfaces';
 // Busqueda, ficha y bloqueo de clientes desde el panel de administracion.
 // Aplica anonimizacion de datos sensibles (HU-SEG-06).
 // ==============================================================================
+
+/** ID del Administrador raiz: protegido de forma inviolable (RF-ADM-04-12). */
+const ID_ADMIN_RAIZ = 1;
 
 export class ClientesService {
   constructor(private readonly clientesRepo: ClientesRepository) {}
@@ -26,7 +29,7 @@ export class ClientesService {
 
   /**
    * Ficha de un cliente especifico.
-   * Retorna null si el usuario no existe o es un empleado.
+   * Retorna null si el usuario no existe, es empleado, administrador o el usuario raiz.
    * Aplica la politica de no exposicion de datos sensibles (HU-SEG-06):
    * correo se muestra anonimizado parcialmente.
    */
@@ -44,11 +47,17 @@ export class ClientesService {
   /**
    * Bloqueo administrativo de un cliente (RF-ADM-04-12).
    * El motivo es obligatorio y debe quedar en el registro.
+   * Guarda inviolable: no permite bloquear al Administrador raiz (ID: 1).
    */
   async bloquearCliente(
     idUsuario: number,
     motivo: string,
   ): Promise<{ ok: boolean; error?: string }> {
+    // Guarda defensiva: el Administrador raiz no puede ser bloqueado por esta via
+    if (idUsuario === ID_ADMIN_RAIZ) {
+      return { ok: false, error: 'No se puede bloquear al Administrador raiz del sistema (RF-ADM-04-12)' };
+    }
+
     const cliente = await this.clientesRepo.obtenerClientePorId(idUsuario);
     if (!cliente) {
       return { ok: false, error: 'Cliente no encontrado' };
@@ -69,13 +78,17 @@ export class ClientesService {
    * Desbloqueo administrativo de un cliente.
    */
   async desbloquearCliente(idUsuario: number): Promise<{ ok: boolean; error?: string }> {
+    if (idUsuario === ID_ADMIN_RAIZ) {
+      return { ok: false, error: 'No se puede desbloquear al Administrador raiz del sistema (RF-ADM-04-12)' };
+    }
+
     const cliente = await this.clientesRepo.obtenerClientePorId(idUsuario);
     if (!cliente) {
       return { ok: false, error: 'Cliente no encontrado' };
     }
 
     if (cliente.estado !== 'bloqueado' && cliente.estado !== 'inactivo') {
-      return { ok: false, error: 'El cliente no está bloqueado ni inactivo' };
+      return { ok: false, error: 'El cliente no esta bloqueado ni inactivo' };
     }
 
     await this.clientesRepo.actualizarEstado(idUsuario, 'activo');

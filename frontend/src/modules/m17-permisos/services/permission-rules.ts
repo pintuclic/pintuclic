@@ -1,3 +1,11 @@
+/** Nombre visible de cada área del catálogo de permisos. */
+export const areaNames: Record<string, string> = {
+  catalogo: "Catálogo de productos",
+  ventas: "Ventas y cotizaciones",
+  personal: "Personas y clientes",
+  seguridad: "Seguridad",
+  configuracion: "Configuración del sistema",
+};
 export function reserved(name: string): boolean {
   return (
     name.startsWith("configuracion.") ||
