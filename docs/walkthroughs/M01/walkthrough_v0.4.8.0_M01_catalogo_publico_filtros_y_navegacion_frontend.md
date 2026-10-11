@@ -130,7 +130,7 @@ Suites: header/router, selección múltiple, scroll del panel, diseño, categor�
 
 ### 7.1 Publicación y pendientes
 - **Rama:** la entrega se publica en `feature/m01-vistas-publicas`. No se usa otra rama ni se publica en `develop`.
-- **Trabajo de otros equipos:** la rama contiene la carpeta `frontend/src/modules/m01-dashboardcatalogo/` (177 archivos, panel administrativo de otro equipo) que `develop` eliminó en `e2604da`. Esta entrega **no la modifica**; solo conserva `ARQUITECTURA.md`, cuya eliminación había llegado con una fusión anterior. Un PR hacia `develop` mostraría esa carpeta como añadida: la decisión corresponde a su equipo, por lo que el PR no debe darse por listo para integrar hasta resolverlo.
+- **Módulo heredado del catálogo:** la rama conservaba la carpeta `frontend/src/modules/m01-dashboardcatalogo/` (177 archivos, copia antigua del panel administrativo), que `develop` ya había eliminado en `e2604da`. El commit `chore(M01): elimina módulo heredado del catálogo` la retira de la rama (solo eliminaciones, incluido `ARQUITECTURA.md`), de modo que queda igual que en `develop` y la carpeta deja de aparecer como diferencia frente a `develop`. No había referencias activas a ese módulo en el código; las rutas usan `m01-catalogo`.
 - **M02:** cambio del servicio y la interfaz de búsqueda aprobado e incluido.
 - **Pendiente:** revisión del responsable de core para el ajuste de `scrollBehavior`. Hasta entonces no se incluye y los puntos ⏳ de la sección 3 no se cumplen en la entrega.
 
