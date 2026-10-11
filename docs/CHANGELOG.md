@@ -7,6 +7,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.7.2] - 2026-10-10
+### Módulo: M17 Permisos y Roles — Resolución de vulnerabilidades y observaciones de auditoría QA (Backend)
+- **Alcance General:** Incremento **PATCH (v0.4.7.2)** sobre Backend M17 Permisos y Roles (`HU-ADM-01`, `HU-ADM-02`, `HU-ADM-03`, `HU-ADM-04`, `RF-ADM-06`). Resolución integral de observaciones y vulnerabilidades reportadas en la auditoría técnica QA.
+- **Auto-bloqueo y exposición del Administrador raíz (`RF-ADM-04-12`, `RF-ADM-02-10`):** exclusión estricta en `clientes.repository.ts` del rol `'administrador'`, roles `'empleado_%'` y del usuario raíz (`u.id_usuario != 1`). Guarda defensiva en `clientes.service.ts` y respuesta `403 FORBIDDEN` en `clientes.controller.ts` para intentos de bloqueo/desbloqueo sobre el Administrador raíz.
+- **Escalamiento de privilegios y fuga de credenciales (`HU-SEG-03`, `HU-SEG-06`):** la ruta `POST /api/admin/empleados` ahora exige `personal.editar` (antes permitía creación con solo `personal.ver`). Se elimina `contrasena_temporal` del payload JSON de respuesta en `empleados.service.ts` e interfaz `EmpleadoCreadoRespuesta`; la credencial inicial viaja exclusivamente por correo SMTP vía M18.
+- **Blindaje contra asignación de permisos reservados (`HU-ADM-02`, `HU-ADM-03`):** definición de lista negra `PERMISOS_RESERVADOS_ADMIN` (`seguridad.*`, `configuracion.*`). Todo intento de conceder permisos de superadministrador a un empleado se rechaza con código `400 BAD_REQUEST`.
+- **Sincronización de parámetros del sistema (`RF-ADM-06`):** corrección del valor por defecto de `inactividad_cliente_segundos` a 30 días (`2592000` s) y ajuste del rango máximo en `parametros.repository.ts`, consistente con la política de base de datos y M20.
+- **Mapeo de alias legados en catálogo:** `inferirArea` en `permisos.repository.ts` asigna prefijos legados a sus áreas funcionales oficiales (`ordenes.*` a `ventas`, `usuarios.*` a `personal`, `productos.*` y `estadisticas.*` a `catalogo`).
+- **Verificación:** `npx eslint src/modules/m17-permisos` superado con 0 errores y 0 advertencias; tipado estricto con `npx tsc --noEmit` sin errores en el módulo.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M17/walkthrough_v0.4.7.2_M17_resolucion_vulnerabilidades_qa_backend.md](./walkthroughs/M17/walkthrough_v0.4.7.2_M17_resolucion_vulnerabilidades_qa_backend.md)
+
+---
 ## [v0.4.7.1] - 2026-10-09
 ### Core: Versionamiento — Tag y Release desde la PR fusionada (CI)
 - **Alcance General:** Incremento **PATCH (v0.4.7.1)** sobre `.github/workflows/version.yml`. Al fusionar una PR hacia `main` o `develop`, el workflow ahora se dispara también con el evento `pull_request` (`closed` + `merged == true`), toma la **versión solicitada en el título de la PR** (`vX.Y.Z.W`) como fuente prioritaria, crea el tag en el commit de merge y publica el Release.
@@ -2173,3 +2185,4 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - Plantilla de Reporte de Pruebas QA (`PLANTILLA_REPORTE_QA_MODULO.md` / `.docx`).
   - Guía y Plantilla de Walkthroughs de Implementación (`PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md` / `.docx`).
 - **Estado:** ✅ Línea Base Aprobada y Lista para Desarrollo de Módulos.
+
