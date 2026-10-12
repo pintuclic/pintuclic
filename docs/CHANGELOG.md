@@ -7,6 +7,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.8.2] - 2026-10-12
+### M01 - Identidad corporativa y cierre de modales en las vistas públicas (Frontend)
+- **Alcance General:** **Patch (v0.4.8.2)** a partir de la auditoría de identidad corporativa de M01.
+- **Tipografía:** `font-title` no generaba estilos en Tailwind 4 (`@theme` solo define `--font-poppins` y `--font-inter`); los precios de la tarjeta y de la ficha se veían en Inter. M01 pasa a `font-poppins` (42 usos).
+- **Colores:** errores, campos inválidos, aviso de filtros e iconos de error pasan de `highlight` (amarillo de destacados) a `danger`.
+- **Modales:** la calculadora, la carta de colores y el menú de categorías ya no se cierran al seleccionar texto y soltar fuera (`useCierrePorFondo`).
+- **Radios y legibilidad:** 17 radios genéricos pasan a tokens (`rounded-modal`, `rounded-card`, `rounded-button`); textos de 8–9 px a 10 px; sin el término "HEX" de cara al cliente.
+- **Envíos:** el inicio indica la cobertura confirmada, "A todo el Caquetá", igual que la paleta y el encabezado.
+- **Pendiente:** franja de marca con colores escritos a mano (decisión de token en core); `font-title` y el cierre de `Modal.vue` en otros módulos, reportados al core.
+- **Verificación:** vitest M01 109/109; ESLint M01 limpio; `vue-tsc` solo con los 2 errores previos de M05; clases verificadas en el CSS servido (Docker).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.8.2_M01_identidad_corporativa_y_modales_frontend.md](./walkthroughs/M01/walkthrough_v0.4.8.2_M01_identidad_corporativa_y_modales_frontend.md)
+---
 ## [v0.4.8.1] - 2026-10-12
 ### M01 - Validación de entradas en las vistas públicas (Frontend y Backend)
 - **Alcance General:** **Patch (v0.4.8.1)** a partir de la auditoría de entradas del usuario y del informe de la calculadora del 09/10/2026 (F01).
