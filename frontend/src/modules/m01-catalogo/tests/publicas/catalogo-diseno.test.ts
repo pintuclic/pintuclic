@@ -145,6 +145,9 @@ describe('catálogo público: panel de filtros, contador y paginación', () => {
     expect(buscarMock.mock.lastCall?.[0]).toMatchObject({ pagina: 3, marca: [3], limite: 32 });
     expect(router.currentRoute.value.query).toEqual({ marca: '3', pagina: '3' });
     expect(wrapper.find('[data-contador-resultados]').text()).toBe('Mostrando 65–80 de 80 productos');
+    // El nombre accesible de cada fila sigue la numeración del catálogo, no reinicia en cada página.
+    const etiquetas = wrapper.findAll('[data-resultados] [data-carrusel]').map((fila) => fila.attributes('aria-label'));
+    expect(etiquetas).toEqual(['Productos 65 a 72', 'Productos 73 a 80']);
   });
 });
 

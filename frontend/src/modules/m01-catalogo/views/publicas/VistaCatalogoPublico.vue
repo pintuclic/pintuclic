@@ -297,7 +297,7 @@
                 v-for="(fila, indiceFila) in filasProductos"
                 :key="indiceFila"
                 :elementos="fila"
-                :etiqueta="`Productos ${indiceFila * PRODUCTOS_POR_FILA + 1} a ${indiceFila * PRODUCTOS_POR_FILA + fila.length}`"
+                :etiqueta="etiquetaFila(indiceFila, fila.length)"
                 :clave-de="(producto) => producto.id_producto"
                 variante="catalogo"
               >
@@ -584,6 +584,12 @@ const muestrasCoincidentes = computed(() => {
 });
 
 const rangoInicio = computed(() => (total.value === 0 ? 0 : (pagina.value - 1) * limitePagina + 1));
+
+/** Nombre accesible de cada fila con la numeración del catálogo completo (página 3: «Productos 65 a 72»). */
+function etiquetaFila(indiceFila: number, cantidad: number): string {
+  const primero = (pagina.value - 1) * limitePagina + indiceFila * PRODUCTOS_POR_FILA + 1;
+  return `Productos ${primero} a ${primero + cantidad - 1}`;
+}
 const rangoFin = computed(() => Math.min(pagina.value * limitePagina, total.value));
 /**
  * Encabezado y migas: con una sola categoría o subcategoría, como antes; con varias,
