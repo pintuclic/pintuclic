@@ -20,6 +20,28 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **Verificación:** vitest 103/103; `vue-tsc` y ESLint de la entrega sin errores propios; `vite build` correcto. E2E en Firefox sin el ajuste de core: correctas salvo las 3 comprobaciones de posición de la página (con el ajuste, 7/7). `npm run build` y el ESLint global siguen bloqueados por errores heredados de M05 y core.
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.8.0_M01_catalogo_publico_filtros_y_navegacion_frontend.md](./walkthroughs/M01/walkthrough_v0.4.8.0_M01_catalogo_publico_filtros_y_navegacion_frontend.md)
 ---
+## [v0.4.7.3] - 2026-10-10
+### Módulo: M17 Permisos y Roles — Resolución de inconsistencias de auditoría QA y extracción semántica de errores (Frontend)
+- **Alcance General:** Incremento **PATCH (v0.4.7.3)** sobre Frontend M17 Permisos y Roles (`HU-ADM-01`, `HU-ADM-02`, `HU-ADM-04`, `RF-ADM-06`). Resolución integral de observaciones reportadas en la auditoría técnica QA.
+- **Desenmascaramiento de errores de servidor (`useM17.ts`):** la función extractora de mensajes de error procesa la estructura `{ error: { message } }` y preserva los mensajes semánticos del servidor ante respuestas `403 FORBIDDEN` (como la protección de no auto-bloqueo del Administrador raíz), `400 BAD_REQUEST` (asignación de permisos reservados), `404 NOT_FOUND` y `409 CONFLICT`, eliminando los fallbacks genéricos de `"No se pudo guardar el cambio."`.
+- **Sincronización de parámetros del sistema (`RF-ADM-06`):** en `parametro.dto.ts`, el valor por defecto y el límite superior de `inactividad_cliente_segundos` se alinean a 30 días (`2592000` s), coincidiendo con la política de base de datos y la capa backend.
+- **Suite de pruebas de integración:** corrección del mock de empleado en `integration.test.mjs` con documento numérico válido para acatar la regla estricta de solo dígitos.
+- **Verificación:** `npm run test:m17` superado con 8/8 pruebas exitosas (100% PASS); `npx eslint src/modules/m17-permisos` con 0 errores y 0 advertencias.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M17/walkthrough_v0.4.7.3_M17_resolucion_inconsistencias_qa_frontend.md](./walkthroughs/M17/walkthrough_v0.4.7.3_M17_resolucion_inconsistencias_qa_frontend.md)
+
+---
+## [v0.4.7.2] - 2026-10-10
+### Módulo: M17 Permisos y Roles — Resolución de vulnerabilidades y observaciones de auditoría QA (Backend)
+- **Alcance General:** Incremento **PATCH (v0.4.7.2)** sobre Backend M17 Permisos y Roles (`HU-ADM-01`, `HU-ADM-02`, `HU-ADM-03`, `HU-ADM-04`, `RF-ADM-06`). Resolución integral de observaciones y vulnerabilidades reportadas en la auditoría técnica QA.
+- **Auto-bloqueo y exposición del Administrador raíz (`RF-ADM-04-12`, `RF-ADM-02-10`):** exclusión estricta en `clientes.repository.ts` del rol `'administrador'`, roles `'empleado_%'` y del usuario raíz (`u.id_usuario != 1`). Guarda defensiva en `clientes.service.ts` y respuesta `403 FORBIDDEN` en `clientes.controller.ts` para intentos de bloqueo/desbloqueo sobre el Administrador raíz.
+- **Escalamiento de privilegios y fuga de credenciales (`HU-SEG-03`, `HU-SEG-06`):** la ruta `POST /api/admin/empleados` ahora exige `personal.editar` (antes permitía creación con solo `personal.ver`). Se elimina `contrasena_temporal` del payload JSON de respuesta en `empleados.service.ts` e interfaz `EmpleadoCreadoRespuesta`; la credencial inicial viaja exclusivamente por correo SMTP vía M18.
+- **Blindaje contra asignación de permisos reservados (`HU-ADM-02`, `HU-ADM-03`):** definición de lista negra `PERMISOS_RESERVADOS_ADMIN` (`seguridad.*`, `configuracion.*`). Todo intento de conceder permisos de superadministrador a un empleado se rechaza con código `400 BAD_REQUEST`.
+- **Sincronización de parámetros del sistema (`RF-ADM-06`):** corrección del valor por defecto de `inactividad_cliente_segundos` a 30 días (`2592000` s) y ajuste del rango máximo en `parametros.repository.ts`, consistente con la política de base de datos y M20.
+- **Mapeo de alias legados en catálogo:** `inferirArea` en `permisos.repository.ts` asigna prefijos legados a sus áreas funcionales oficiales (`ordenes.*` a `ventas`, `usuarios.*` a `personal`, `productos.*` y `estadisticas.*` a `catalogo`).
+- **Verificación:** `npx eslint src/modules/m17-permisos` superado con 0 errores y 0 advertencias; tipado estricto con `npx tsc --noEmit` sin errores en el módulo.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M17/walkthrough_v0.4.7.2_M17_resolucion_vulnerabilidades_qa_backend.md](./walkthroughs/M17/walkthrough_v0.4.7.2_M17_resolucion_vulnerabilidades_qa_backend.md)
+
+---
 ## [v0.4.7.1] - 2026-10-09
 ### Core: Versionamiento — Tag y Release desde la PR fusionada (CI)
 - **Alcance General:** Incremento **PATCH (v0.4.7.1)** sobre `.github/workflows/version.yml`. Al fusionar una PR hacia `main` o `develop`, el workflow ahora se dispara también con el evento `pull_request` (`closed` + `merged == true`), toma la **versión solicitada en el título de la PR** (`vX.Y.Z.W`) como fuente prioritaria, crea el tag en el commit de merge y publica el Release.
@@ -28,7 +50,9 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **Canales sin cambios:** `develop` publica pre-release y `main` publica/promueve el release estable; el `bump` manual (`workflow_dispatch`) conserva su lógica.
 - **Verificación:** YAML validado con parser; lógica de resolución probada con 6 casos (título con/sin versión, sin prefijo `v`, versión menor, mismatch, fallback a `version.txt`) y parseo de PR asociada simulado con `[]` y payload real.
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.4.7.1_core_tag_release_desde_pr.md](./walkthroughs/core/walkthrough_v0.4.7.1_core_tag_release_desde_pr.md)
+
 ---
+
 ## [v0.4.7.0] - 2026-10-09
 ### Módulo: M05 Carrito de compras — Panel lateral "Tu carrito" (Frontend)
 - **Alcance General:** Incremento **Minior-feat (v0.4.7.0)**. Nuevo panel lateral del carrito que se abre al agregar un producto desde la tienda y desde el botón "Mi Carrito" del header.
@@ -37,7 +61,21 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **LayoutHome (archivo compartido, con aprobación explícita del equipo):** monta `<CartDrawer />` y el botón "Mi Carrito" abre el panel.
 - **Verificación:** E2E en `localhost:5173` con backend de la rama y base sembrada con `seed_pintuclic.sql`: "Agregar" en Productos destacados abrió el panel con el producto real; cantidades, eliminación, contador del header, "Seguir comprando" y "Continuar compra" funcionaron. ESLint y `vue-tsc --noEmit` sin errores.
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M05/walkthrough_v0.4.7.0_M05_panel_lateral_carrito_frontend.md](./walkthroughs/M05/walkthrough_v0.4.7.0_M05_panel_lateral_carrito_frontend.md)
+
 ---
+
+## [v0.4.7.0] - 2026-10-08
+### Módulo: M17 Permisos y Roles — Validación de empleados, selección masiva y permisos en la ficha (Fullstack)
+- **Alcance General:** Incremento **Minior-feat (v0.4.7.0)**. Tres mejoras al panel de administración de empleados y permisos (`HU-ADM-01`, `HU-ADM-02`).
+- **Validación por campo en el formulario de empleado:** cada error se muestra debajo de su campo en lugar de un único mensaje genérico o la ayuda nativa del navegador. El nombre solo admite letras y espacios; el documento, de 5 a 10 dígitos; el teléfono, exactamente 10 dígitos. Teléfono y documento descartan letras al escribir o pegar. Los errores del backend (`400` con `details` y correo duplicado `409`) se muestran en el campo correspondiente.
+- **Validación en servidor (`HU-ADM-03`):** `CrearEmpleadoDto` y `ActualizarContactoEmpleadoDto` aplican las mismas reglas de nombre, documento y teléfono.
+- **"Seleccionar todos" en Roles y permisos:** casilla con contador `N de M asignados` que marca o desmarca de una vez los permisos asignables; omite los exclusivos del administrador, respeta las dependencias `.ver` y, con búsqueda activa, solo afecta a los resultados visibles.
+- **Permisos asignados en la ficha del empleado:** nueva sección en `/admin/empleados/:id` con el total y los permisos agrupados por área, y enlace para asignarlos o modificarlos.
+- **Verificación:** `vue-tsc -b`, ESLint, `npx tsc --noEmit` y `npm run lint` del backend sin errores ni advertencias; pruebas manuales en navegador contra backend local.
+- 🔗 **Walkthroughs Técnicos Oficiales:** [frontend](./walkthroughs/M17/walkthrough_v0.4.7.0_M17_empleados_y_permisos_frontend.md) · [backend](./walkthroughs/M17/walkthrough_v0.4.7.0_M17_empleados_y_permisos_backend.md)
+
+---
+
 ## [v0.4.6.6] - 2026-10-09
 ### M01 Inclusión de ajustes visuales de ficha y evidencia del análisis
 - Se incorporan los ajustes locales previamente excluidos: icono neutral junto al mensaje de imagen no disponible y miniaturas visibles únicamente cuando hay más de una imagen.
@@ -46,6 +84,7 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - Walkthrough: [M01 frontend](walkthroughs/M01/walkthrough_v0.4.6.5_M01_ajustes_visuales_ficha_frontend.md).
 
 ---
+
 ## [v0.4.6.5] - 2026-10-09
 ### M01 y M05 Corrección del flujo de tarjeta pública y carrito
 - M01 backend: bloqueo de publicación sin imagen, conforme a RF-CAT-02-05 y CA-CAT-02-06.
@@ -2169,3 +2208,4 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
   - Plantilla de Reporte de Pruebas QA (`PLANTILLA_REPORTE_QA_MODULO.md` / `.docx`).
   - Guía y Plantilla de Walkthroughs de Implementación (`PLANTILLA_WALKTHROUGH_IMPLEMENTACION.md` / `.docx`).
 - **Estado:** ✅ Línea Base Aprobada y Lista para Desarrollo de Módulos.
+

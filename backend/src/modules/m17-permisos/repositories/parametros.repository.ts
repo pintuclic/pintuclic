@@ -22,8 +22,8 @@ const PARAMETROS_DEFECTO: Record<string, ParametroSistema> = {
   },
   inactividad_cliente_segundos: {
     clave: 'inactividad_cliente_segundos',
-    valor: 7776000,
-    descripcion: 'Segundos de inactividad antes de cerrar sesion de cliente (90 dias)',
+    valor: 2592000,
+    descripcion: 'Segundos de inactividad antes de cerrar sesion de cliente (30 dias)',
   },
   intentos_fallidos_max: {
     clave: 'intentos_fallidos_max',
@@ -81,7 +81,7 @@ export class ParametrosRepository {
   obtenerRangoAdmitido(clave: string): { min: number; max: number } | null {
     const rangos: Record<string, { min: number; max: number }> = {
       inactividad_admin_segundos: { min: 60, max: 86400 },
-      inactividad_cliente_segundos: { min: 300, max: 7776000 },
+      inactividad_cliente_segundos: { min: 300, max: 2592000 },
       intentos_fallidos_max: { min: 1, max: 20 },
     };
     return rangos[clave] ?? null;

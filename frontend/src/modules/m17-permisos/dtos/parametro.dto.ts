@@ -13,8 +13,8 @@ export const parameterMeta: Record<
   inactividad_cliente_segundos: {
     label: "Inactividad del cliente",
     min: 300,
-    max: 7776000,
-    default: 7776000,
+    max: 2592000,
+    default: 2592000,
     unit: "segundos",
   },
   intentos_fallidos_max: {

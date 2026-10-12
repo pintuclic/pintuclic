@@ -6,6 +6,7 @@ import type { Permiso } from "../interfaces";
 import { service } from "../services/m17.service";
 import { message, notify, useM17 } from "../store/useM17";
 import {
+  areaNames,
   reserved,
   dependentPermissions,
   togglePermission,
@@ -34,13 +35,6 @@ const dirty = computed(
     JSON.stringify([...selected.value].sort()) !==
     JSON.stringify([...initial.value].sort()),
 );
-const areaNames: Record<string, string> = {
-  catalogo: "Catálogo de productos",
-  ventas: "Ventas y cotizaciones",
-  personal: "Personas y clientes",
-  seguridad: "Seguridad",
-  configuracion: "Configuración del sistema",
-};
 const groups = computed(() =>
   Object.entries(
     state.catalog
@@ -122,6 +116,23 @@ function toggle(name: string, enabled: boolean) {
     enabled,
     selected.value,
     state.catalog.map((p) => p.nombre),
+  );
+}
+// Permisos asignables visibles (respeta el filtro y excluye los exclusivos del administrador).
+const assignable = computed(() =>
+  groups.value.flatMap(([, ps]) => ps.map((p) => p.nombre)).filter((n) => !reserved(n)),
+);
+const assignedCount = computed(
+  () => assignable.value.filter((n) => selected.value.includes(n)).length,
+);
+const allSelected = computed(
+  () => assignable.value.length > 0 && assignedCount.value === assignable.value.length,
+);
+function toggleAll(enabled: boolean) {
+  const catalog = state.catalog.map((p) => p.nombre);
+  selected.value = assignable.value.reduce(
+    (next, name) => togglePermission(name, enabled, next, catalog),
+    selected.value,
   );
 }
 function revoke() {
@@ -242,6 +253,23 @@ onBeforeRouteLeave(
         >
           <h2 class="font-title font-bold text-corporate">Permisos disponibles</h2>
           <Input v-model="filter" icon="search" aria-label="Filtrar permisos" placeholder="Buscar permiso…" class="sm:w-56" />
+        </div>
+        <div
+          v-if="assignable.length"
+          class="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-light bg-neutral-lightest px-4 py-2 sm:px-6"
+        >
+          <Checkbox
+            class="flex items-center gap-3 rounded-lg px-2 py-2"
+            :model-value="allSelected"
+            :disabled="busy"
+            @update:model-value="toggleAll($event)"
+            ><span class="text-sm font-semibold text-corporate">{{
+              filter ? "Seleccionar todos los resultados" : "Seleccionar todos"
+            }}</span></Checkbox
+          >
+          <span class="text-xs text-neutral-medium"
+            >{{ assignedCount }} de {{ assignable.length }} asignados</span
+          >
         </div>
         <fieldset
           v-for="[area, permissions] in groups"

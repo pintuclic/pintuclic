@@ -1,4 +1,4 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { db } from '../../core/db/connection';
 import { guardas, serviciosSeguridad } from '../m20-seguridad/seguridad.routes';
 import { servicioNotificaciones } from '../m18-notificaciones/notificaciones.routes';
@@ -77,7 +77,7 @@ adminRoutes.get(
 // -----------------------------------------------------------------------------
 adminRoutes.post(
   '/empleados',
-  guardas.requierePermiso('personal.ver'),
+  guardas.requierePermiso('personal.editar'),
   (req, res, next) => { void empleadosCtrl.crearEmpleado(req, res).catch(next); }
 );
 

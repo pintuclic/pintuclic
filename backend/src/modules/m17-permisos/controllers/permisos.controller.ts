@@ -60,8 +60,16 @@ export class PermisosController {
 
     const resultado = await this.permisosService.reemplazarPermisos(idUsuario, parsed.data.permisos);
     if (!resultado.ok) {
-      const status = resultado.error?.includes('raiz') ? 403 : 404;
-      sendError(res, resultado.error ?? 'Error al asignar permisos', 'FORBIDDEN', status);
+      let status = 404;
+      let codigo = 'NOT_FOUND';
+      if (resultado.error?.includes('raiz')) {
+        status = 403;
+        codigo = 'FORBIDDEN';
+      } else if (resultado.error?.includes('reservados')) {
+        status = 400;
+        codigo = 'BAD_REQUEST';
+      }
+      sendError(res, resultado.error ?? 'Error al asignar permisos', codigo, status);
       return;
     }
 
@@ -72,3 +80,4 @@ export class PermisosController {
     }, 'Permisos actualizados exitosamente');
   };
 }
+
