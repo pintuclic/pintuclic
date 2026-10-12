@@ -7,6 +7,22 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.8.1] - 2026-10-12
+### M01 - Validación de entradas en las vistas públicas (Frontend y Backend)
+- **Alcance General:** **Patch (v0.4.8.1)** a partir de la auditoría de entradas del usuario y del informe de la calculadora del 09/10/2026 (F01).
+- **Calculadora:** con medidas inválidas (0, negativas, vacías, menos de 0,1 m o más de 100 m) muestra el error junto al campo, no presenta galones y desactiva "Agregar al carrito".
+- **Rango de precio (HU-BUS-02, CA-BUS-02-06):** un precio negativo se informa en lugar de descartarse; un enlace con el mínimo mayor que el máximo se ignora con un aviso en lugar de terminar en "No fue posible cargar el catálogo".
+- **Ficha:** la cantidad no supera las existencias de la variante ni el máximo de 999 por línea.
+- **Inicio (HU-BUS-01):** el buscador usa la búsqueda de M02, igual que el catálogo (acentos, errores tipográficos, marca, línea y color).
+- **Backend:** el listado público escapa `%`, `_` y `\` en la búsqueda por nombre.
+- **Calculadora → carrito (F02):** se agrega la cantidad recomendada, convertida a la presentación elegida y limitada a las existencias.
+- **Ficha:** el rendimiento se muestra realmente a 2 manos, y "Anterior" vuelve al catálogo con sus filtros.
+- **Catálogo:** si fallan las opciones de filtro, se informa y se puede reintentar.
+- **Menú de categorías:** sin el número engañoso; cierre con Escape y manejo del foco. Se eliminaron los menús propios de la ficha y la paleta (nunca se abrían), y con ellos una petición de categorías que, al fallar, dejaba la ficha como "no disponible".
+- **Reportado, sin cambios (otros módulos):** escape de HTML en correos (M18), formatos de teléfono, NIT y documento (M04), extensiones `unaccent`/`pg_trgm` ausentes del esquema (BD) y precio 0 en variantes (decisión pendiente).
+- **Verificación:** vitest M01 103/103; backend M01 126/126; `tsc` y ESLint del backend sin errores ni advertencias; ESLint de M01 frontend limpio; `vue-tsc` solo reporta los 2 errores previos de M05.
+- 🔗 **Walkthroughs:** [frontend](./walkthroughs/M01/walkthrough_v0.4.8.1_M01_validacion_entradas_vistas_publicas_frontend.md) · [backend](./walkthroughs/M01/walkthrough_v0.4.8.1_M01_escape_busqueda_publica_backend.md)
+---
 ## [v0.4.8.0] - 2026-10-11
 ### M01 / M02 - Vistas públicas: catálogo con filtros múltiples, navegación y búsqueda en tiempo real (Frontend)
 - **Alcance General:** Incremento **Minior-feat (v0.4.8.0)** sobre las vistas públicas `/`, `/catalogo` y `/productos/:id`. Incluye la búsqueda en tiempo real y el color coincidente, documentados originalmente como `v0.4.6.5` (número que `develop` usó después para otra entrega).
