@@ -181,7 +181,7 @@
                   <span>Rendimiento estimado: {{ rendimientoEstimado.min }} a {{ rendimientoEstimado.max }} m²</span>
                 </div>
                 <p class="mt-1 text-[11px] leading-4 text-neutral-medium">
-                  Calculado a 2 manos para {{ rendimientoEstimado.presentacion }}. Puede variar según la porosidad y textura de la superficie.
+                  Superficie que cubre 1 {{ rendimientoEstimado.presentacion }} a {{ MANOS_RECOMENDADAS }} manos. Puede variar según la porosidad y textura de la superficie.
                 </p>
               </div>
             </div>
@@ -209,9 +209,11 @@
                 <span class="min-w-8 text-center text-sm font-semibold">{{ cantidad }}</span>
                 <button
                   type="button"
-                  class="grid h-11 w-11 place-items-center transition-colors hover:bg-neutral-lightest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+                  class="grid h-11 w-11 place-items-center transition-colors hover:bg-neutral-lightest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action disabled:cursor-not-allowed disabled:opacity-40"
                   aria-label="Aumentar cantidad"
-                  @click="cantidad += 1"
+                  :disabled="cantidad >= cantidadMaxima"
+                  :title="cantidad >= cantidadMaxima ? `Máximo disponible: ${cantidadMaxima}` : undefined"
+                  @click="cantidad = Math.min(cantidadMaxima, cantidad + 1)"
                 >
                   +
                 </button>
@@ -255,14 +257,7 @@
       </div>
     </main>
 
-    <!-- Modales de Negocio -->
-    <MenuCategoriasPublico
-      :abierto="menuCategoriasAbierto"
-      :cargando="cargando"
-      :categorias="categorias"
-      @cerrar="menuCategoriasAbierto = false"
-      @seleccionar="irSubcategoria"
-    />
+    <!-- Modales de Negocio (el menú de categorías vive en el encabezado de LayoutHome) -->
     <CartaColoresProductoPublica
       v-if="producto"
       :abierta="cartaColoresAbierta"
@@ -276,6 +271,7 @@
       v-if="producto"
       :abierta="calculadoraAbierta"
       :producto="producto"
+      :presentacion="presentacionCalculadora"
       @cerrar="calculadoraAbierta = false"
       @agregar="agregarDesdeCalculadora"
     />
@@ -289,11 +285,11 @@ import { ArrowLeft, Calculator, ChevronDown, CircleAlert, MapPin, PackageOpen, P
 import { MuestraColor } from '@/core/components';
 import CartaColoresProductoPublica from '../../components/publicas/CartaColoresProductoPublica.vue';
 import CalculadoraPinturaPublica from '../../components/publicas/CalculadoraPinturaPublica.vue';
-import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import ProductosComplementariosPublicos from '../../components/publicas/ProductosComplementariosPublicos.vue';
 import VisualizadorAmbientesPublico from '../../components/publicas/VisualizadorAmbientesPublico.vue';
 import { useDetalleProductoPublico } from '../../composables/publicas/useDetalleProductoPublico';
 import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
+import { LITROS_POR_GALON, MANOS_RECOMENDADAS, litrosDePresentacion } from '../../services/publicas/calculo-pintura';
 import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import { formatearCOP } from '@/core/utils/moneda';
@@ -305,7 +301,6 @@ const route = useRoute();
 const idProducto = computed(() => Number(props.productoId));
 const {
   cargando,
-  categorias,
   complementarios,
   error,
   producto,
@@ -328,12 +323,20 @@ watch(
   },
   { immediate: true }
 );
-const menuCategoriasAbierto = ref(false);
 const cartaColoresAbierta = ref(false);
 const calculadoraAbierta = ref(false);
 const descripcionAbierta = ref(true);
 const mensaje = ref<string | null>(null);
 const cantidad = ref(1);
+/** Tope del carrito por línea (M05 rechaza más de 999) y existencias de la variante elegida. */
+const CANTIDAD_MAXIMA_POR_LINEA = 999;
+const cantidadMaxima = computed(() =>
+  Math.max(1, Math.min(CANTIDAD_MAXIMA_POR_LINEA, varianteSeleccionada.value?.existencia_referencial ?? CANTIDAD_MAXIMA_POR_LINEA)),
+);
+// Al cambiar de presentación o color, la cantidad no puede quedar por encima del nuevo tope.
+watch(cantidadMaxima, (maxima) => {
+  if (cantidad.value > maxima) cantidad.value = maxima;
+});
 const indiceGaleria = ref(0);
 const modoVista = ref<'ambientes' | 'envase'>('ambientes');
 
@@ -383,9 +386,10 @@ const presentaciones = computed(() => {
 
 const rendimientoEstimado = computed(() => {
   if (!esPintura.value || !producto.value?.rendimiento_min || !producto.value?.rendimiento_max) return null;
-  const vol = Number(varianteSeleccionada.value?.volumen ?? 3.785);
-  // Un galón estándar en Pintu Clic equivale a 3.785 L (RF-CAT-10-04)
-  const factor = vol > 0 ? vol / 3.785 : 1.0;
+  // El rendimiento registrado es m² por galón y por mano (RF-CAT-10-02): se lleva a la
+  // presentación elegida (RF-CAT-10-03) y se reparte entre las 2 manos que anuncia el texto,
+  // igual que la calculadora.
+  const factor = litrosDePresentacion(varianteSeleccionada.value?.volumen) / LITROS_POR_GALON / MANOS_RECOMENDADAS;
   const min = Math.round(producto.value.rendimiento_min * factor * 10) / 10;
   const max = Math.round(producto.value.rendimiento_max * factor * 10) / 10;
   return {
@@ -430,7 +434,12 @@ async function agregarAlCarrito(): Promise<void> {
   if (cartStore.error) {
     mostrarMensaje(cartStore.error);
   } else {
-    mostrarMensaje(`Se agregó "${producto.value?.nombre ?? 'el producto'}" al carrito.`);
+    const nombre = producto.value?.nombre ?? 'el producto';
+    mostrarMensaje(
+      cantidad.value === 1
+        ? `Se agregó "${nombre}" al carrito.`
+        : `Se agregaron ${cantidad.value} unidades de "${nombre}" al carrito.`,
+    );
   }
 }
 
@@ -467,9 +476,22 @@ async function agregarComplementarioAlCarrito(idProd: number): Promise<void> {
   }
 }
 
-function agregarDesdeCalculadora(): void {
+/** Presentación elegida: la calculadora expresa su recomendación en estas unidades. */
+const presentacionCalculadora = computed(() =>
+  varianteSeleccionada.value
+    ? { nombre: varianteSeleccionada.value.presentacion, volumen: varianteSeleccionada.value.volumen }
+    : null,
+);
+
+/** La calculadora decide la cantidad (antes se agregaba la del selector, normalmente 1). */
+async function agregarDesdeCalculadora(unidades: number): Promise<void> {
   calculadoraAbierta.value = false;
-  void agregarAlCarrito();
+  const solicitadas = Math.max(1, Math.round(unidades));
+  cantidad.value = Math.min(solicitadas, cantidadMaxima.value);
+  await agregarAlCarrito();
+  if (solicitadas > cantidadMaxima.value && !cartStore.error) {
+    mostrarMensaje(`La calculadora recomienda ${solicitadas} unidades, pero solo hay ${cantidadMaxima.value} disponibles; se agregaron ${cantidadMaxima.value}.`);
+  }
 }
 
 function seleccionarPresentacion(idPresentacion: number): void {
@@ -505,7 +527,16 @@ function seleccionarDesdeCarta(idVariante: number): void {
   }
 }
 
+/**
+ * «Anterior» vuelve al catálogo tal como se dejó (filtros, orden, página): si la entrada
+ * previa del historial es el catálogo se retrocede; si se llegó de otra parte, se abre limpio.
+ */
 function volverCatalogo(): void {
+  const anterior: unknown = window.history.state?.back;
+  if (typeof anterior === 'string' && anterior.startsWith('/catalogo')) {
+    router.back();
+    return;
+  }
   void router.push({ name: 'CatalogoPublico' });
 }
 
@@ -515,14 +546,6 @@ function irProducto(id: number): void {
   void router.push({
     name: 'DetalleProductoPublico',
     params: { productoId: id },
-  });
-}
-
-function irSubcategoria(id: number): void {
-  menuCategoriasAbierto.value = false;
-  void router.push({
-    name: 'CatalogoPublico',
-    query: { subcategoria: id },
   });
 }
 

@@ -128,7 +128,10 @@
                   min="0.1"
                   max="100"
                   step="0.1"
-                  class="h-12 w-full rounded-input border border-neutral-light bg-neutral-white px-3 pr-10 text-sm font-medium outline-none transition-shadow focus:border-action focus:ring-2 focus:ring-action"
+                  :aria-invalid="errores.ancho ? true : undefined"
+                  :aria-describedby="errores.ancho ? 'error-calculadora-ancho' : undefined"
+                  class="h-12 w-full rounded-input border bg-neutral-white px-3 pr-10 text-sm font-medium outline-none transition-shadow focus:border-action focus:ring-2 focus:ring-action"
+                  :class="errores.ancho ? 'border-highlight' : 'border-neutral-light'"
                 />
 
                 <span
@@ -137,6 +140,9 @@
                   m
                 </span>
               </div>
+              <p v-if="errores.ancho" id="error-calculadora-ancho" class="mt-1 text-xs font-normal text-highlight" role="alert">
+                {{ errores.ancho }}
+              </p>
             </label>
 
             <label class="text-xs font-semibold text-neutral-dark">
@@ -149,7 +155,10 @@
                   min="0.1"
                   max="100"
                   step="0.1"
-                  class="h-12 w-full rounded-input border border-neutral-light bg-neutral-white px-3 pr-10 text-sm font-medium outline-none transition-shadow focus:border-action focus:ring-2 focus:ring-action"
+                  :aria-invalid="errores.alto ? true : undefined"
+                  :aria-describedby="errores.alto ? 'error-calculadora-alto' : undefined"
+                  class="h-12 w-full rounded-input border bg-neutral-white px-3 pr-10 text-sm font-medium outline-none transition-shadow focus:border-action focus:ring-2 focus:ring-action"
+                  :class="errores.alto ? 'border-highlight' : 'border-neutral-light'"
                 />
 
                 <span
@@ -158,6 +167,9 @@
                   m
                 </span>
               </div>
+              <p v-if="errores.alto" id="error-calculadora-alto" class="mt-1 text-xs font-normal text-highlight" role="alert">
+                {{ errores.alto }}
+              </p>
             </label>
           </div>
 
@@ -223,7 +235,7 @@
             <p
               class="font-title shrink-0 whitespace-nowrap text-2xl font-extrabold text-action"
             >
-              {{ area.toFixed(1) }} m²
+              {{ datosValidos ? `${area.toFixed(1)} m²` : '—' }}
             </p>
           </div>
         </div>
@@ -305,6 +317,15 @@
           Resultado estimado
         </p>
 
+        <p
+          v-if="!datosValidos"
+          class="mx-auto mt-2 max-w-md text-sm font-semibold text-corporate"
+          role="status"
+        >
+          Corrige las medidas de la superficie para ver cuánta pintura necesitas.
+        </p>
+
+        <template v-else>
         <h2
           class="font-title mt-1 text-lg font-bold text-corporate sm:text-xl"
         >
@@ -357,12 +378,24 @@
             </p>
           </div>
         </div>
+        </template>
+
+        <p
+          v-if="producto && datosValidos"
+          class="mx-auto mt-5 max-w-sm text-sm text-neutral-dark"
+          data-testid="unidades-recomendadas"
+        >
+          Se agregarán
+          <strong class="text-corporate">{{ unidadesRecomendadas }} {{ unidadesRecomendadas === 1 ? 'unidad' : 'unidades' }}</strong>
+          de {{ presentacion?.nombre ?? 'galón' }}.
+        </p>
 
         <button
           v-if="producto"
           type="button"
-          class="mx-auto mt-6 inline-flex min-h-12 w-full max-w-sm items-center justify-center gap-2 rounded-button bg-conversion px-6 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-conversion-hover hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion"
-          @click="emit('agregar')"
+          :disabled="!datosValidos"
+          class="mx-auto mt-3 inline-flex min-h-12 w-full max-w-sm items-center justify-center gap-2 rounded-button bg-conversion px-6 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-conversion-hover hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          @click="agregarRecomendacion"
         >
           <ShoppingCart :size="18" />
           Agregar al carrito
@@ -417,7 +450,9 @@ import {
 import {
   calculadoraPinturaSchema,
   type CalculadoraPinturaDTO,
+  type ErroresCalculadoraPintura,
 } from '../../dtos/publicas/calculadora-pintura.dto';
+import { MANOS_RECOMENDADAS, unidadesParaGalones } from '../../services/publicas/calculo-pintura';
 
 import type {
   FichaProductoPublico,
@@ -433,18 +468,22 @@ const fondoDecorativoCalculadora = {
 const props = withDefaults(
   defineProps<{
     producto?: FichaProductoPublico | null;
+    /** Presentación elegida en la ficha: define en qué unidades se agrega la recomendación. */
+    presentacion?: { nombre: string; volumen: string | number | null } | null;
     mostrarVolver?: boolean;
     compacto?: boolean;
   }>(),
   {
     producto: null,
+    presentacion: null,
     mostrarVolver: false,
     compacto: false,
   },
 );
 
 const emit = defineEmits<{
-  agregar: [];
+  /** Unidades de la presentación elegida que cubren la recomendación. */
+  agregar: [unidades: number];
   verProducto: [];
   verProductos: [];
 }>();
@@ -456,7 +495,7 @@ const ancho = ref(5);
 const alto = ref(2.5);
 const cantidad = ref(2);
 
-const manos = 2;
+const manos = MANOS_RECOMENDADAS;
 
 const superficies = [
   {
@@ -481,18 +520,31 @@ const superficies = [
   },
 ] as const;
 
-const datosValidos = computed(() =>
+const validacion = computed(() =>
   calculadoraPinturaSchema.safeParse({
     superficie: superficie.value,
     ancho: ancho.value,
     alto: alto.value,
     cantidad: cantidad.value,
-  }).success,
+  }),
 );
 
+const datosValidos = computed(() => validacion.value.success);
+
+/** Se conserva el primer mensaje de Zod por campo para mostrarlo junto a la medida. */
+const errores = computed<ErroresCalculadoraPintura>(() => {
+  if (validacion.value.success) return {};
+  const porCampo: ErroresCalculadoraPintura = {};
+  for (const issue of validacion.value.error.issues) {
+    const campo = issue.path[0] as keyof ErroresCalculadoraPintura;
+    porCampo[campo] ??= issue.message;
+  }
+  return porCampo;
+});
+
 const area = computed(() =>
-  datosValidos.value
-    ? ancho.value * alto.value * cantidad.value
+  validacion.value.success
+    ? validacion.value.data.ancho * validacion.value.data.alto * validacion.value.data.cantidad
     : 0,
 );
 
@@ -508,14 +560,22 @@ const rendimiento = computed(() => {
     : 35;
 });
 
+// Sin medidas válidas no hay recomendación: el mínimo de 1 galón solo aplica a un área real.
 const galones = computed(() =>
-  Math.max(
-    1,
-    Math.ceil(
-      (area.value * manos) / rendimiento.value,
-    ),
-  ),
+  datosValidos.value
+    ? Math.max(1, Math.ceil((area.value * manos) / rendimiento.value))
+    : 0,
 );
+
+/** Unidades de la presentación elegida (p. ej. cuartos de galón) que cubren los galones recomendados. */
+const unidadesRecomendadas = computed(() =>
+  unidadesParaGalones(galones.value, props.presentacion?.volumen),
+);
+
+function agregarRecomendacion(): void {
+  if (!datosValidos.value || unidadesRecomendadas.value < 1) return;
+  emit('agregar', unidadesRecomendadas.value);
+}
 
 const nombreProducto = computed(
   () =>

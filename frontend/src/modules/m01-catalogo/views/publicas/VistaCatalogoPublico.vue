@@ -102,6 +102,17 @@
             de la barra queda reservado para que los conteos no toquen el borde.
           -->
           <div ref="panelFiltros" data-scroll-filtros class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-2 [scrollbar-gutter:stable]">
+            <div
+              v-if="errorFacetas"
+              id="error-facetas"
+              class="mt-3 flex items-center justify-between gap-2 rounded-card border border-highlight/30 bg-neutral-lightest px-3 py-2 text-xs text-neutral-dark"
+              role="status"
+            >
+              <span>{{ errorFacetas }}</span>
+              <button type="button" class="min-h-9 shrink-0 px-2 font-semibold text-action hover:text-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" @click="reintentarFacetas">
+                Reintentar
+              </button>
+            </div>
             <FiltroAcordeonPublico
               id="filtro-categorias"
               titulo="Categorías"
@@ -172,11 +183,11 @@
               <form class="grid grid-cols-2 gap-2 px-2 pt-1" @submit.prevent="aplicarPrecio">
                 <label class="min-w-0">
                   <span class="mb-1 block text-xs text-neutral-medium">Mínimo ($)</span>
-                  <input v-model.number="inputPrecioMin" :aria-invalid="errorPrecio ? true : undefined" :aria-describedby="errorPrecio ? 'error-rango-precio' : undefined" type="number" min="0" inputmode="numeric" placeholder="0" class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-2.5 text-sm outline-none placeholder:text-neutral-medium focus:border-action focus:ring-1 focus:ring-action" />
+                  <input v-model.number="inputPrecioMin" :aria-invalid="campoErrorPrecio === 'min' ? true : undefined" :aria-describedby="campoErrorPrecio === 'min' ? 'error-rango-precio' : undefined" type="number" min="0" inputmode="numeric" placeholder="0" class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-2.5 text-sm outline-none placeholder:text-neutral-medium focus:border-action focus:ring-1 focus:ring-action" />
                 </label>
                 <label class="min-w-0">
                   <span class="mb-1 block text-xs text-neutral-medium">Máximo ($)</span>
-                  <input v-model.number="inputPrecioMax" type="number" min="0" inputmode="numeric" placeholder="Sin límite" class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-2.5 text-sm outline-none placeholder:text-neutral-medium focus:border-action focus:ring-1 focus:ring-action" />
+                  <input v-model.number="inputPrecioMax" :aria-invalid="campoErrorPrecio === 'max' ? true : undefined" :aria-describedby="campoErrorPrecio === 'max' ? 'error-rango-precio' : undefined" type="number" min="0" inputmode="numeric" placeholder="Sin límite" class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-2.5 text-sm outline-none placeholder:text-neutral-medium focus:border-action focus:ring-1 focus:ring-action" />
                 </label>
                 <p v-if="errorPrecio" id="error-rango-precio" class="col-span-2 text-xs text-highlight" role="alert">{{ errorPrecio }}</p>
                 <button type="submit" class="col-span-2 min-h-10 rounded-button border border-action text-xs font-semibold text-action transition-colors hover:bg-subaction focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action">
@@ -399,6 +410,8 @@ const {
   totalPaginas,
   limitePagina,
   facetas,
+  errorFacetas,
+  reintentarFacetas,
   marcasSeleccionadas,
   lineasSeleccionadas,
   resinasSeleccionadas,
@@ -406,6 +419,7 @@ const {
   presentacionesSeleccionadas,
   precioMin,
   precioMax,
+  rangoPrecioDescartado,
   orden,
   cambiarOrden,
   toggleFiltro,
@@ -416,12 +430,19 @@ const inputPrecioMin = ref<number | undefined>(precioMin.value);
 const inputPrecioMax = ref<number | undefined>(precioMax.value);
 /** Rango inválido (mínimo > máximo): se informa junto a los campos y no se consulta (CA-BUS-02-06). */
 const errorPrecio = ref<string | null>(null);
+/** Campo que se marca como inválido junto al mensaje. */
+const campoErrorPrecio = ref<'min' | 'max' | null>(null);
 // El rango puede llegar por URL (recarga, enlace compartido): se refleja en los campos.
 watch([precioMin, precioMax], ([min, max]) => {
   inputPrecioMin.value = min;
   inputPrecioMax.value = max;
   errorPrecio.value = null;
+  campoErrorPrecio.value = null;
 });
+// Un enlace con el mínimo mayor que el máximo se ignora: se explica en lugar de fallar la carga.
+watch(rangoPrecioDescartado, (descartado) => {
+  if (descartado) mostrarMensaje('El rango de precio del enlace no era válido (mínimo mayor que máximo) y no se aplicó.');
+}, { immediate: true });
 
 /** Resultados atenuados mientras llega una consulta nueva (la primera usa esqueletos). */
 const actualizando = computed(() => cargando.value && resultadosListos.value);
@@ -608,10 +629,13 @@ const chipsFiltros = computed<ChipFiltro[]>(() => {
 function aplicarPrecio(): void {
   const rango = rangoPrecioPublicoSchema.safeParse({ min: inputPrecioMin.value, max: inputPrecioMax.value });
   if (!rango.success) {
-    errorPrecio.value = rango.error.issues[0]?.message ?? 'Rango de precio no válido.';
+    const issue = rango.error.issues[0];
+    errorPrecio.value = issue?.message ?? 'Rango de precio no válido.';
+    campoErrorPrecio.value = issue?.path[0] === 'max' ? 'max' : 'min';
     return;
   }
   errorPrecio.value = null;
+  campoErrorPrecio.value = null;
   aplicarRangoPrecio(rango.data.min, rango.data.max);
 }
 

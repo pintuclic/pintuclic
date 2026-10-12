@@ -312,14 +312,6 @@
         </button>
       </div>
     </div>
-
-    <MenuCategoriasPublico
-      :abierto="menuCategoriasAbierto"
-      :cargando="cargando"
-      :categorias="categorias"
-      @cerrar="menuCategoriasAbierto = false"
-      @seleccionar="seleccionarSubcategoria"
-    />
   </div>
 </template>
 
@@ -340,7 +332,6 @@ import {
 
 import heroStorefront from '../../assets/storefront/hero-storefront.png';
 import AbanicoColoresPublico from '../../components/publicas/AbanicoColoresPublico.vue';
-import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import TarjetaCombinacionColoresPublica from '../../components/publicas/TarjetaCombinacionColoresPublica.vue';
 import { usePaletaColoresPublica } from '../../composables/publicas/usePaletaColoresPublica';
@@ -353,7 +344,6 @@ import type { VariantePublica } from '../../interfaces/publicas/catalogo-publico
 const router = useRouter();
 const cartStore = useCartStore();
 
-const menuCategoriasAbierto = ref(false);
 const mensaje = ref<string | null>(null);
 
 const familias = [
@@ -390,7 +380,6 @@ const beneficios = [
 const {
   cargarPaleta,
   cargando,
-  categorias,
   colorSeleccionado,
   colores,
   coloresFiltrados,
@@ -458,17 +447,6 @@ function verProducto(idProducto: number): void {
     query: colorSeleccionado.value?.id_color
       ? { color: colorSeleccionado.value.id_color }
       : undefined,
-  });
-}
-
-function seleccionarSubcategoria(idSubcategoria: number): void {
-  menuCategoriasAbierto.value = false;
-
-  void router.push({
-    name: 'CatalogoPublico',
-    query: {
-      subcategoria: idSubcategoria,
-    },
   });
 }
 </script>

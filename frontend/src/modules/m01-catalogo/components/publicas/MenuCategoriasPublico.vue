@@ -13,6 +13,7 @@
         @click.self="emit('cerrar')"
       >
         <section
+          ref="dialogo"
           class="w-full max-w-4xl overflow-hidden rounded-2xl bg-neutral-white shadow-2xl"
           role="dialog"
           aria-modal="true"
@@ -34,6 +35,7 @@
               </h2>
             </div>
             <button
+              ref="botonCerrar"
               type="button"
               class="grid h-11 w-11 place-items-center rounded-button text-neutral-medium transition-colors hover:bg-neutral-lightest hover:text-corporate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
               aria-label="Cerrar categorías"
@@ -75,8 +77,8 @@
                       @click="idCategoriaActiva = categoria.id_categoria"
                     >
                       <Tags :size="16" class="shrink-0 text-action" aria-hidden="true" />
+                      <!-- Sin número: contaba subcategorías y se leía como cantidad de productos. -->
                       <span class="min-w-0 flex-1 truncate">{{ categoria.nombre }}</span>
-                      <span class="shrink-0 text-xs font-normal text-neutral-medium">{{ categoria.subcategorias.length }}</span>
                       <ChevronRight :size="15" class="shrink-0" aria-hidden="true" />
                     </button>
                   </li>
@@ -133,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { ChevronRight, Palette, PanelsTopLeft, Tags, X } from 'lucide-vue-next';
 import type { CategoriaPublica } from '../../interfaces/publicas/catalogo-publico.interface';
 
@@ -156,14 +158,57 @@ const categoriaActiva = computed(
   () => props.categorias.find((c) => c.id_categoria === idCategoriaActiva.value) ?? props.categorias[0] ?? null
 );
 
+const dialogo = ref<HTMLElement | null>(null);
+const botonCerrar = ref<HTMLElement | null>(null);
+/** Elemento que abrió el menú: recupera el foco al cerrar. */
+let focoPrevio: HTMLElement | null = null;
+
+const SELECTOR_ENFOCABLES = 'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/** Escape cierra; Tab y Mayús+Tab quedan dentro del diálogo mientras está abierto. */
+function alPulsarTecla(evento: KeyboardEvent): void {
+  if (evento.key === 'Escape') {
+    evento.preventDefault();
+    emit('cerrar');
+    return;
+  }
+  if (evento.key !== 'Tab' || !dialogo.value) return;
+  const enfocables = Array.from(dialogo.value.querySelectorAll<HTMLElement>(SELECTOR_ENFOCABLES));
+  const primero = enfocables[0];
+  const ultimo = enfocables[enfocables.length - 1];
+  if (!primero || !ultimo) return;
+  const activo = document.activeElement;
+  if (evento.shiftKey && (activo === primero || !dialogo.value.contains(activo))) {
+    evento.preventDefault();
+    ultimo.focus();
+  } else if (!evento.shiftKey && (activo === ultimo || !dialogo.value.contains(activo))) {
+    evento.preventDefault();
+    primero.focus();
+  }
+}
+
 watch(
   () => props.abierto,
-  (abierto) => {
+  async (abierto, estabaAbierto) => {
+    // Al montarse cerrado no hay nada que restaurar (no se toca el overflow de otros modales).
+    if (!abierto && !estabaAbierto) return;
     document.body.style.overflow = abierto ? 'hidden' : '';
-  }
+    if (abierto) {
+      focoPrevio = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      document.addEventListener('keydown', alPulsarTecla);
+      await nextTick();
+      botonCerrar.value?.focus();
+    } else {
+      document.removeEventListener('keydown', alPulsarTecla);
+      focoPrevio?.focus();
+      focoPrevio = null;
+    }
+  },
+  { immediate: true }
 );
 
 onBeforeUnmount(() => {
   document.body.style.overflow = '';
+  document.removeEventListener('keydown', alPulsarTecla);
 });
 </script>

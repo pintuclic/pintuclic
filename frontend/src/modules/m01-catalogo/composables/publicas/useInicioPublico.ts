@@ -1,6 +1,7 @@
 import { onMounted, ref } from 'vue';
 import { normalizarBusquedaCatalogoPublico } from '../../dtos/publicas/catalogo-publico.dto';
 import { CatalogoPublicoService, enriquecerProductosPublicos } from '../../services/publicas/catalogo-publico.service';
+import { BusquedaService } from '@/modules/m02-busqueda/services/busqueda.service';
 import type {
   CatalogoPublicoGateway,
   CategoriaPublica,
@@ -9,7 +10,12 @@ import type {
 
 const LIMITE_DESTACADOS = 5;
 
-export function useInicioPublico(servicio: CatalogoPublicoGateway = CatalogoPublicoService) {
+export function useInicioPublico(
+  servicio: CatalogoPublicoGateway = CatalogoPublicoService,
+  // El buscador usa el mismo motor que el catálogo (M02): acentos, errores tipográficos,
+  // marca, línea y color (RF-BUS-01-03). El listado de M01 solo compara el nombre.
+  buscador: Pick<typeof BusquedaService, 'buscar'> = BusquedaService,
+) {
   const categorias = ref<CategoriaPublica[]>([]);
   const productos = ref<ProductoDestacadoPublico[]>([]);
   const cargando = ref(true);
@@ -39,7 +45,7 @@ export function useInicioPublico(servicio: CatalogoPublicoGateway = CatalogoPubl
     buscando.value = true;
     error.value = null;
     try {
-      const pagina = await servicio.listarProductos({
+      const pagina = await buscador.buscar({
         ...(q ? { q } : {}),
         pagina: 1,
         limite: LIMITE_DESTACADOS,

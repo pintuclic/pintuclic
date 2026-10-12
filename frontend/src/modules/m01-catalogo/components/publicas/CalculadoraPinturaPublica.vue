@@ -23,7 +23,14 @@
           </button>
         </div>
         <div class="min-h-0 overflow-y-auto p-4 sm:p-6">
-          <CalculadoraPinturaContenido :producto="producto" mostrar-volver compacto @agregar="emit('agregar')" @ver-producto="emit('cerrar')" />
+          <CalculadoraPinturaContenido
+            :producto="producto"
+            :presentacion="presentacion"
+            mostrar-volver
+            compacto
+            @agregar="(unidades) => emit('agregar', unidades)"
+            @ver-producto="emit('cerrar')"
+          />
         </div>
       </div>
     </dialog>
@@ -36,8 +43,12 @@ import { X } from 'lucide-vue-next';
 import type { FichaProductoPublico } from '../../interfaces/publicas/catalogo-publico.interface';
 import CalculadoraPinturaContenido from './CalculadoraPinturaContenido.vue';
 
-const props = defineProps<{ abierta: boolean; producto?: FichaProductoPublico | null }>();
-const emit = defineEmits<{ cerrar: []; agregar: [] }>();
+const props = defineProps<{
+  abierta: boolean;
+  producto?: FichaProductoPublico | null;
+  presentacion?: { nombre: string; volumen: string | number | null } | null;
+}>();
+const emit = defineEmits<{ cerrar: []; agregar: [unidades: number] }>();
 const dialogo = ref<HTMLDialogElement | null>(null);
 let desbordamientoAnterior = '';
 

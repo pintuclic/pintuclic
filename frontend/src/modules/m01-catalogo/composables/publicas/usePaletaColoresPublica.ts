@@ -2,7 +2,6 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { normalizarBusquedaCatalogoPublico } from '../../dtos/publicas/catalogo-publico.dto';
 import type {
   CatalogoPublicoGateway,
-  CategoriaPublica,
   ColorPaletaPublica,
   ProductoDestacadoPublico,
 } from '../../interfaces/publicas/catalogo-publico.interface';
@@ -11,7 +10,6 @@ import { CatalogoPublicoService, enriquecerProductosPublicos } from '../../servi
 const LIMITE_PRODUCTOS = 20;
 
 export function usePaletaColoresPublica(servicio: CatalogoPublicoGateway = CatalogoPublicoService) {
-  const categorias = ref<CategoriaPublica[]>([]);
   const productos = ref<ProductoDestacadoPublico[]>([]);
   const termino = ref('');
   const familiaSeleccionada = ref<string | null>(null);
@@ -79,11 +77,9 @@ export function usePaletaColoresPublica(servicio: CatalogoPublicoGateway = Catal
     cargando.value = true;
     error.value = null;
     try {
-      const [categoriasPublicas, pagina] = await Promise.all([
-        servicio.listarCategorias(),
-        servicio.listarProductos({ pagina: 1, limite: LIMITE_PRODUCTOS }),
-      ]);
-      categorias.value = categoriasPublicas;
+      // Las categorías ya no se piden aquí (el menú vive en el encabezado): un fallo de ese
+      // servicio no impide cargar la paleta.
+      const pagina = await servicio.listarProductos({ pagina: 1, limite: LIMITE_PRODUCTOS });
       productos.value = await enriquecerProductosPublicos(pagina.items, servicio);
       colorSeleccionadoId.value = colores.value[0]?.id_color ?? null;
     } catch {
@@ -113,7 +109,6 @@ export function usePaletaColoresPublica(servicio: CatalogoPublicoGateway = Catal
   return {
     cargarPaleta,
     cargando,
-    categorias,
     colorSeleccionado,
     colores,
     coloresFiltrados,

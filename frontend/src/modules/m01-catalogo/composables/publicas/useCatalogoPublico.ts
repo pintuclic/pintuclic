@@ -1,6 +1,6 @@
 import { computed, isRef, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter, type LocationQuery } from 'vue-router';
-import { normalizarBusquedaCatalogoPublico } from '../../dtos/publicas/catalogo-publico.dto';
+import { normalizarBusquedaCatalogoPublico, rangoPrecioPublicoSchema } from '../../dtos/publicas/catalogo-publico.dto';
 import { CatalogoPublicoService, enriquecerProductosPublicos } from '../../services/publicas/catalogo-publico.service';
 import { BusquedaService } from '@/modules/m02-busqueda/services/busqueda.service';
 import type { CatalogoPublicoGateway, CategoriaPublica, ProductoDestacadoPublico } from '../../interfaces/publicas/catalogo-publico.interface';
@@ -78,6 +78,10 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
   const presentacionesSeleccionadas = ref<number[]>([]);
   const precioMin = ref<number | undefined>();
   const precioMax = ref<number | undefined>();
+  /** Fallo al cargar las opciones de filtro: los resultados siguen visibles (RF-BUS-01-06). */
+  const errorFacetas = ref<string | null>(null);
+  /** La última URL leída traía un rango de precio inválido que se descartó. */
+  const rangoPrecioDescartado = ref(false);
   const orden = ref<OrdenBusqueda>('relevancia');
   /** Cuenta las navegaciones que llegan desde fuera del catálogo (menú del header, atrás/adelante). */
   const navegacionesExternas = ref(0);
@@ -140,10 +144,20 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
       const [completa, ...porGrupo] = await Promise.all([BusquedaService.facetas(base), ...parciales]);
       if (solicitud !== solicitudFacetas) return;
       facetas.value = Object.assign({}, completa, ...porGrupo);
+      errorFacetas.value = null;
     } catch {
-      // Si fallan las facetas no se interrumpe la navegación; se reintentan en el próximo cambio.
-      if (solicitud === solicitudFacetas) claveFacetas = null;
+      // Si fallan las facetas no se interrumpe la navegación: se avisa y se puede reintentar
+      // (también se reintentan solas en el próximo cambio de filtros).
+      if (solicitud === solicitudFacetas) {
+        claveFacetas = null;
+        errorFacetas.value = 'No pudimos actualizar las opciones de los filtros.';
+      }
     }
+  }
+
+  function reintentarFacetas(): void {
+    claveFacetas = null;
+    void cargarFacetas();
   }
 
   async function cargarProductos(): Promise<void> {
@@ -349,8 +363,15 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     resinasSeleccionadas.value = idsDesdeQuery(query.resina);
     coloresSeleccionados.value = idsDesdeQuery(query.color);
     presentacionesSeleccionadas.value = idsDesdeQuery(query.presentacion);
-    precioMin.value = numeroPositivo(query.precioMin);
-    precioMax.value = numeroPositivo(query.precioMax);
+    // Un enlace con el rango invertido no llega a la API (respondería 400 y se vería como
+    // un fallo de carga): se descarta y se avisa (CA-BUS-02-06).
+    const rango = rangoPrecioPublicoSchema.safeParse({
+      min: numeroPositivo(query.precioMin),
+      max: numeroPositivo(query.precioMax),
+    });
+    precioMin.value = rango.success ? rango.data.min : undefined;
+    precioMax.value = rango.success ? rango.data.max : undefined;
+    rangoPrecioDescartado.value = !rango.success;
   }
 
   // Navegación externa (buscador del header, Inicio → catálogo, atrás/adelante): si la URL
@@ -398,6 +419,8 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     limitePagina: LIMITE_PAGINA,
     // Estados y acciones avanzadas M02
     facetas,
+    errorFacetas,
+    reintentarFacetas,
     marcasSeleccionadas,
     lineasSeleccionadas,
     resinasSeleccionadas,
@@ -405,6 +428,7 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     presentacionesSeleccionadas,
     precioMin,
     precioMax,
+    rangoPrecioDescartado,
     orden,
     cambiarOrden,
     toggleFiltro,
