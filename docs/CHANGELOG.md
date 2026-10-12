@@ -7,6 +7,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.9.0] - 2026-10-12
+### M01 - Carruseles manuales en el catálogo y en los destacados del inicio (Frontend)
+- **Alcance General:** **Minior-feat (v0.4.9.0)** por indicación del líder técnico (12/10/2026).
+- **Catálogo:** 4 filas de 8 productos por página (32, antes 16); cada fila es un carrusel manual con flechas, deslizamiento y teclado. No avanza solo. La paginación se conserva.
+- **Inicio:** "Productos destacados" pasa a un carrusel manual de 10 productos (antes 5 en cuadrícula).
+- **Fondo del catálogo:** gris claro (`neutral-lightest`), igual que el inicio.
+- **Componente nuevo:** `CarruselProductosPublico` (accesible, `scroll-snap`, respeta `prefers-reduced-motion`, sin temporizadores).
+- **Verificación:** vitest M01 117/117; ESLint M01 limpio; `vue-tsc` solo con los 2 errores previos de M05; reglas de ancho comprobadas en el CSS servido (Docker).
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.9.0_M01_carruseles_catalogo_e_inicio_frontend.md](./walkthroughs/M01/walkthrough_v0.4.9.0_M01_carruseles_catalogo_e_inicio_frontend.md)
+---
 ## [v0.4.8.2] - 2026-10-12
 ### M01 - Identidad corporativa y cierre de modales en las vistas públicas (Frontend)
 - **Alcance General:** **Patch (v0.4.8.2)** a partir de la auditoría de identidad corporativa de M01.
