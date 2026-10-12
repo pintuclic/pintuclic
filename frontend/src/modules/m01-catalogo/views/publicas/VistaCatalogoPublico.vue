@@ -1,5 +1,6 @@
 <template>
-  <div class="bg-neutral-white text-neutral-dark font-sans">
+  <div class="bg-neutral-lightest text-neutral-dark font-sans">
+    <!-- Fondo gris claro, igual que el inicio; tarjetas y panel de filtros quedan en blanco -->
     <main>
       <section class="mx-auto max-w-7xl px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
         <nav class="text-xs text-neutral-medium" aria-label="Migas de pan">
@@ -280,9 +281,9 @@
             :inert="actualizando || undefined"
             data-resultados
           >
-            <!-- 4 columnas con panel en escritorio (≥1280 px): 16 = 4 filas de 4 -->
+            <!-- 4 filas de 8 productos; cada fila es un carrusel manual (4 visibles en escritorio) -->
             <div v-if="cargando && !resultadosListos" class="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-              <div v-for="n in 8" :key="n" class="h-96 animate-pulse rounded-card bg-neutral-lightest" />
+              <div v-for="n in 8" :key="n" class="h-96 animate-pulse rounded-card bg-neutral-white" />
             </div>
             <div v-else-if="error" class="rounded-card border border-neutral-light bg-neutral-white p-12 text-center">
               <CircleAlert :size="34" class="mx-auto text-danger" />
@@ -291,15 +292,24 @@
                 Reintentar
               </button>
             </div>
-            <div v-else-if="productos.length" class="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-              <TarjetaProductoPublico
-                v-for="producto in productos"
-                :key="producto.id_producto"
-                :producto="producto"
-                :muestra-color="muestrasCoincidentes.get(producto.id_producto) ?? null"
-                @ver="verProducto"
-                @agregar="agregarAlCarrito"
-              />
+            <div v-else-if="productos.length" class="space-y-6">
+              <CarruselProductosPublico
+                v-for="(fila, indiceFila) in filasProductos"
+                :key="indiceFila"
+                :elementos="fila"
+                :etiqueta="`Productos ${indiceFila * PRODUCTOS_POR_FILA + 1} a ${indiceFila * PRODUCTOS_POR_FILA + fila.length}`"
+                :clave-de="(producto) => producto.id_producto"
+                variante="catalogo"
+              >
+                <template #elemento="{ elemento: producto }">
+                  <TarjetaProductoPublico
+                    :producto="producto"
+                    :muestra-color="muestrasCoincidentes.get(producto.id_producto) ?? null"
+                    @ver="verProducto"
+                    @agregar="agregarAlCarrito"
+                  />
+                </template>
+              </CarruselProductosPublico>
             </div>
             <div v-else class="rounded-card border border-neutral-light bg-neutral-white p-12 text-center">
               <SearchX :size="36" class="mx-auto text-neutral-medium" />
@@ -357,10 +367,11 @@ import {
   X,
 } from 'lucide-vue-next';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
+import CarruselProductosPublico from '../../components/publicas/CarruselProductosPublico.vue';
 import FiltroAcordeonPublico from '../../components/publicas/FiltroAcordeonPublico.vue';
 import OpcionFiltroPublico from '../../components/publicas/OpcionFiltroPublico.vue';
 import PaginacionCatalogoPublico from '../../components/publicas/PaginacionCatalogoPublico.vue';
-import { useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
+import { PRODUCTOS_POR_FILA, useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
 import { rangoPrecioPublicoSchema } from '../../dtos/publicas/catalogo-publico.dto';
 import { obtenerMuestraColorCoincidente } from '../../composables/publicas/useColorCoincidenteBusqueda';
 import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
@@ -552,6 +563,15 @@ function conteoSubcategoria(id: number): number | null {
 }
 
 /** HEX de la variante cuyo color coincide con la búsqueda aplicada (null = predeterminado de la tarjeta). */
+/** La página se reparte en filas de 8; cada fila se muestra como un carrusel manual. */
+const filasProductos = computed(() => {
+  const filas: (typeof productos.value)[] = [];
+  for (let inicio = 0; inicio < productos.value.length; inicio += PRODUCTOS_POR_FILA) {
+    filas.push(productos.value.slice(inicio, inicio + PRODUCTOS_POR_FILA));
+  }
+  return filas;
+});
+
 const muestrasCoincidentes = computed(() => {
   const muestras = new Map<number, string | null>();
   for (const producto of productos.value) {

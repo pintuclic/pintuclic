@@ -212,7 +212,7 @@ describe('inicio: el buscador usa el mismo motor que el catálogo', () => {
 
     await buscarInicio('  VINÍLTEX  ');
 
-    expect(buscar).toHaveBeenCalledWith({ q: 'VINÍLTEX', pagina: 1, limite: 5 });
+    expect(buscar).toHaveBeenCalledWith({ q: 'VINÍLTEX', pagina: 1, limite: 10 });
     expect(servicio.listarProductos).not.toHaveBeenCalled();
   });
 });

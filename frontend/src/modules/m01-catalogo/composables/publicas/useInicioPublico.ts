@@ -8,7 +8,8 @@ import type {
   ProductoDestacadoPublico,
 } from '../../interfaces/publicas/catalogo-publico.interface';
 
-const LIMITE_DESTACADOS = 5;
+/** Productos destacados del inicio: un carrusel manual de 10 (decisión del líder técnico, 12/10/2026). */
+export const LIMITE_DESTACADOS = 10;
 
 export function useInicioPublico(
   servicio: CatalogoPublicoGateway = CatalogoPublicoService,

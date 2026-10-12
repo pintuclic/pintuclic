@@ -68,10 +68,10 @@ describe('catálogo público: panel de filtros, contador y paginación', () => {
     facetasMock.mockReset();
     facetasMock.mockResolvedValue(FACETAS);
     buscarMock.mockImplementation(async (filtros = {}) => ({
-      items: Array.from({ length: Math.min(filtros.limite ?? 16, 40 - ((filtros.pagina ?? 1) - 1) * (filtros.limite ?? 16)) }, (_, i) => ({
+      items: Array.from({ length: Math.min(filtros.limite ?? 32, 80 - ((filtros.pagina ?? 1) - 1) * (filtros.limite ?? 32)) }, (_, i) => ({
         id_producto: (filtros.pagina ?? 1) * 100 + i, nombre: `Producto ${i}`, id_marca: 3, clase_color: 'colores_fijos' as const,
       })),
-      total: 40, pagina: filtros.pagina ?? 1, limite: filtros.limite ?? 16, total_paginas: 3,
+      total: 80, pagina: filtros.pagina ?? 1, limite: filtros.limite ?? 32, total_paginas: 3,
     }));
   });
 
@@ -84,11 +84,13 @@ describe('catálogo público: panel de filtros, contador y paginación', () => {
     expect(wrapper.text()).not.toContain('Con existencia');
   });
 
-  it('pide 16 productos por página y muestra un único contador sobre las tarjetas', async () => {
+  it('pide 32 productos por página: 4 filas de 8, cada fila un carrusel, y un único contador', async () => {
     const { wrapper } = await montarCatalogo();
-    expect(buscarMock.mock.lastCall?.[0]).toMatchObject({ limite: 16, pagina: 1 });
-    expect(wrapper.findAll('article')).toHaveLength(16);
-    expect(wrapper.find('[data-contador-resultados]').text()).toBe('Mostrando 1–16 de 40 productos');
+    expect(buscarMock.mock.lastCall?.[0]).toMatchObject({ limite: 32, pagina: 1 });
+    const filas = wrapper.findAll('[data-resultados] [data-carrusel]');
+    expect(filas).toHaveLength(4);
+    expect(filas.map((fila) => fila.findAll('article').length)).toEqual([8, 8, 8, 8]);
+    expect(wrapper.find('[data-contador-resultados]').text()).toBe('Mostrando 1–32 de 80 productos');
     expect(wrapper.text().match(/Mostrando/g)).toHaveLength(1);
   });
 
@@ -140,9 +142,9 @@ describe('catálogo público: panel de filtros, contador y paginación', () => {
     expect(nav.text()).not.toContain('Mostrando');
     await nav.find('[aria-label="Página 3"]').trigger('click');
     await flushPromises();
-    expect(buscarMock.mock.lastCall?.[0]).toMatchObject({ pagina: 3, marca: [3], limite: 16 });
+    expect(buscarMock.mock.lastCall?.[0]).toMatchObject({ pagina: 3, marca: [3], limite: 32 });
     expect(router.currentRoute.value.query).toEqual({ marca: '3', pagina: '3' });
-    expect(wrapper.find('[data-contador-resultados]').text()).toBe('Mostrando 33–40 de 40 productos');
+    expect(wrapper.find('[data-contador-resultados]').text()).toBe('Mostrando 65–80 de 80 productos');
   });
 });
 

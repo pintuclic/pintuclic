@@ -118,15 +118,22 @@
             Reintentar
           </button>
         </div>
-        <div v-else-if="productos.length" class="grid grid-cols-1 gap-3.5 min-[420px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          <TarjetaProductoPublico
-            v-for="producto in productos"
-            :key="producto.id_producto"
-            :producto="producto"
-            @ver="verProducto"
-            @agregar="agregarProducto"
-          />
-        </div>
+        <!-- Carrusel manual de 10 destacados (5 visibles en escritorio); no avanza solo -->
+        <CarruselProductosPublico
+          v-else-if="productos.length"
+          :elementos="productos"
+          etiqueta="Productos destacados"
+          :clave-de="(producto) => producto.id_producto"
+          variante="inicio"
+        >
+          <template #elemento="{ elemento: producto }">
+            <TarjetaProductoPublico
+              :producto="producto"
+              @ver="verProducto"
+              @agregar="agregarProducto"
+            />
+          </template>
+        </CarruselProductosPublico>
         <p v-else class="rounded-card bg-neutral-white px-6 py-10 text-center text-sm text-neutral-medium">
           No encontramos productos para mostrar.
         </p>
@@ -195,6 +202,7 @@ import {
 import heroStorefront from '../../assets/storefront/hero-storefront.png';
 import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPublico.vue';
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
+import CarruselProductosPublico from '../../components/publicas/CarruselProductosPublico.vue';
 import { useInicioPublico } from '../../composables/publicas/useInicioPublico';
 import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
 import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';

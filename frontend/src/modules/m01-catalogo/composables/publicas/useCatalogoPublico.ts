@@ -10,8 +10,13 @@ import type {
   OrdenBusqueda,
 } from '@/modules/m02-busqueda/interfaces/busqueda.interface';
 
-/** Productos por página; la API admite hasta 100 (`limite` en M02). */
-export const LIMITE_PAGINA = 16;
+/**
+ * Cada página son 4 filas de 8 productos; cada fila es un carrusel manual
+ * (decisión del líder técnico, 12/10/2026). La API admite hasta 100 (`limite` en M02).
+ */
+export const PRODUCTOS_POR_FILA = 8;
+export const FILAS_POR_PAGINA = 4;
+export const LIMITE_PAGINA = PRODUCTOS_POR_FILA * FILAS_POR_PAGINA;
 const ESPERA_BUSQUEDA_MS = 300;
 const ORDENES: readonly OrdenBusqueda[] = ['relevancia', 'precio_asc', 'precio_desc', 'novedad'];
 /** Parámetros de la URL que pertenecen al estado del catálogo. */
