@@ -29,6 +29,7 @@ Cambios pedidos por el líder técnico el 12/10/2026:
 - Las flechas solo aparecen si hay tarjetas fuera de la vista, y se desactivan en los extremos.
 - Accesible: región con `aria-roledescription="carrusel"` y nombre propio, diapositivas "n de N", flechas con etiqueta y manejo con el teclado. Respeta `prefers-reduced-motion`.
 - Al cambiar los resultados (filtro, orden o página), cada fila vuelve al principio.
+- El nombre accesible de cada fila sigue la numeración del catálogo completo: en la página 3, "Productos 65 a 72" en lugar de reiniciar en 1. Lo detectó la auditoría previa al push con datos locales.
 - Solo usa tokens del sistema de diseño.
 
 ---
@@ -46,7 +47,7 @@ Cambios pedidos por el líder técnico el 12/10/2026:
 | Criterio | Método de Validación | Resultado |
 | :--- | :--- | :---: |
 | El catálogo pide 32 productos y los muestra en 4 carruseles de 8 | Prueba actualizada (`catalogo-diseno.test.ts`) | ✅ |
-| La paginación conserva filtros con el nuevo tamaño (página 3: 65–80 de 80) | Prueba actualizada | ✅ |
+| La paginación conserva filtros con el nuevo tamaño (página 3: 65–80 de 80) y las filas se nombran "Productos 65 a 72"… | Prueba actualizada; verificado en Docker con 91 productos | ✅ |
 | El carrusel no avanza solo ni deja temporizadores | Prueba nueva con temporizadores simulados | ✅ |
 | Las flechas avanzan y retroceden una pantalla y se desactivan en los extremos; el teclado también funciona | Pruebas nuevas | ✅ |
 | El inicio pide 10 destacados | Prueba nueva | ✅ |
@@ -55,7 +56,9 @@ Cambios pedidos por el líder técnico el 12/10/2026:
 
 **Pruebas:** suite M01 frontend 117/117 (`carrusel-productos.test.ts`, 9 casos nuevos). ESLint de M01 sin errores ni advertencias. `vue-tsc` solo reporta los 2 errores previos de M05. En Docker: `/` y `/catalogo` responden 200, la API acepta `limite=32` y las reglas de ancho del carrusel están en el CSS servido.
 
-**No verificado en navegador:** el desplazamiento real y la vista en móvil. Los datos de prueba locales solo tienen 3 productos, así que el desplazamiento no se ve hasta que haya más de 4 por fila.
+**Verificación con datos locales (91 productos, Edge sin interfaz):** el inicio muestra 1 carrusel de 10 (5 visibles, flecha a la derecha); el catálogo muestra 4 filas de 8 con el fondo gris, "Mostrando 1–32 de 91" y 3 páginas; la página 3 tiene 4 filas (8+8+8+3); a 600 px se ven 2 tarjetas por fila sin desbordamiento. Suite frontend completa 143/143 y compilación de producción correcta.
+
+**No verificado:** anchos menores de unos 500 px (Edge sin interfaz no baja de ese ancho); conviene revisarlo en el navegador a 390 px.
 
 ---
 

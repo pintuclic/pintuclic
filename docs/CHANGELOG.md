@@ -14,7 +14,8 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **Inicio:** "Productos destacados" pasa a un carrusel manual de 10 productos (antes 5 en cuadrícula).
 - **Fondo del catálogo:** gris claro (`neutral-lightest`), igual que el inicio.
 - **Componente nuevo:** `CarruselProductosPublico` (accesible, `scroll-snap`, respeta `prefers-reduced-motion`, sin temporizadores).
-- **Verificación:** vitest M01 117/117; ESLint M01 limpio; `vue-tsc` solo con los 2 errores previos de M05; reglas de ancho comprobadas en el CSS servido (Docker).
+- **Accesibilidad:** cada fila se anuncia con la numeración del catálogo completo (página 3: "Productos 65 a 72").
+- **Verificación:** vitest del frontend completo 143/143; ESLint M01 limpio; `vue-tsc` solo con los 2 errores previos de M05; compilación de producción correcta; flujos comprobados en Docker con 91 productos (inicio, catálogo, página 3, filtros, ficha).
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.9.0_M01_carruseles_catalogo_e_inicio_frontend.md](./walkthroughs/M01/walkthrough_v0.4.9.0_M01_carruseles_catalogo_e_inicio_frontend.md)
 ---
 ## [v0.4.8.2] - 2026-10-12
