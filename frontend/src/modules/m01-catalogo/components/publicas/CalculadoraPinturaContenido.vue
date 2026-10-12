@@ -2,7 +2,7 @@
   <section class="space-y-5">
     <!-- Encabezado -->
     <header
-      class="relative overflow-hidden rounded-2xl bg-corporate bg-cover bg-center p-5 text-white shadow-sm sm:p-7"
+      class="relative overflow-hidden rounded-card bg-corporate bg-cover bg-center p-5 text-white shadow-sm sm:p-7"
       :style="fondoDecorativoCalculadora"
     >
       <div
@@ -26,7 +26,7 @@
             </p>
 
             <h1
-              class="font-title mt-1 text-2xl font-extrabold sm:text-3xl"
+              class="font-poppins mt-1 text-2xl font-extrabold sm:text-3xl"
             >
               Calculadora de pintura
             </h1>
@@ -63,7 +63,7 @@
           </p>
 
           <h2
-            class="font-title mt-1 text-xl font-bold text-corporate"
+            class="font-poppins mt-1 text-xl font-bold text-corporate"
           >
             ¿Qué vas a pintar?
           </h2>
@@ -107,7 +107,7 @@
         <div class="mt-7 border-t border-neutral-light pt-6">
           <div>
             <h3
-              class="font-title text-base font-bold text-neutral-black"
+              class="font-poppins text-base font-bold text-neutral-black"
             >
               Medidas de la superficie
             </h3>
@@ -131,7 +131,7 @@
                   :aria-invalid="errores.ancho ? true : undefined"
                   :aria-describedby="errores.ancho ? 'error-calculadora-ancho' : undefined"
                   class="h-12 w-full rounded-input border bg-neutral-white px-3 pr-10 text-sm font-medium outline-none transition-shadow focus:border-action focus:ring-2 focus:ring-action"
-                  :class="errores.ancho ? 'border-highlight' : 'border-neutral-light'"
+                  :class="errores.ancho ? 'border-danger' : 'border-neutral-light'"
                 />
 
                 <span
@@ -140,7 +140,7 @@
                   m
                 </span>
               </div>
-              <p v-if="errores.ancho" id="error-calculadora-ancho" class="mt-1 text-xs font-normal text-highlight" role="alert">
+              <p v-if="errores.ancho" id="error-calculadora-ancho" class="mt-1 text-xs font-medium text-danger" role="alert">
                 {{ errores.ancho }}
               </p>
             </label>
@@ -158,7 +158,7 @@
                   :aria-invalid="errores.alto ? true : undefined"
                   :aria-describedby="errores.alto ? 'error-calculadora-alto' : undefined"
                   class="h-12 w-full rounded-input border bg-neutral-white px-3 pr-10 text-sm font-medium outline-none transition-shadow focus:border-action focus:ring-2 focus:ring-action"
-                  :class="errores.alto ? 'border-highlight' : 'border-neutral-light'"
+                  :class="errores.alto ? 'border-danger' : 'border-neutral-light'"
                 />
 
                 <span
@@ -167,7 +167,7 @@
                   m
                 </span>
               </div>
-              <p v-if="errores.alto" id="error-calculadora-alto" class="mt-1 text-xs font-normal text-highlight" role="alert">
+              <p v-if="errores.alto" id="error-calculadora-alto" class="mt-1 text-xs font-medium text-danger" role="alert">
                 {{ errores.alto }}
               </p>
             </label>
@@ -233,7 +233,7 @@
             </div>
 
             <p
-              class="font-title shrink-0 whitespace-nowrap text-2xl font-extrabold text-action"
+              class="font-poppins shrink-0 whitespace-nowrap text-2xl font-extrabold text-action"
             >
               {{ datosValidos ? `${area.toFixed(1)} m²` : '—' }}
             </p>
@@ -266,7 +266,7 @@
           </div>
 
           <h2
-            class="font-title mx-auto mt-3 line-clamp-2 max-w-60 text-sm font-bold leading-5 text-corporate"
+            class="font-poppins mx-auto mt-3 line-clamp-2 max-w-60 text-sm font-bold leading-5 text-corporate"
           >
             {{ nombreProducto }}
           </h2>
@@ -327,20 +327,20 @@
 
         <template v-else>
         <h2
-          class="font-title mt-1 text-lg font-bold text-corporate sm:text-xl"
+          class="font-poppins mt-1 text-lg font-bold text-corporate sm:text-xl"
         >
           Necesitas aproximadamente
         </h2>
 
         <div class="mt-1">
           <span
-            class="font-title text-5xl font-extrabold text-action sm:text-6xl"
+            class="font-poppins text-5xl font-extrabold text-action sm:text-6xl"
           >
             {{ galones }}
           </span>
 
           <span
-            class="font-title ml-2 text-2xl font-bold text-action sm:text-3xl"
+            class="font-poppins ml-2 text-2xl font-bold text-action sm:text-3xl"
           >
             {{ galones === 1 ? 'galón' : 'galones' }}
           </span>
@@ -360,7 +360,7 @@
             </p>
 
             <p
-              class="font-title mt-1 text-lg font-extrabold text-corporate"
+              class="font-poppins mt-1 text-lg font-extrabold text-corporate"
             >
               {{ area.toFixed(1) }} m²
             </p>
@@ -372,7 +372,7 @@
             </p>
 
             <p
-              class="font-title mt-1 text-lg font-extrabold text-corporate"
+              class="font-poppins mt-1 text-lg font-extrabold text-corporate"
             >
               {{ rendimiento.toFixed(1) }} m²/gal
             </p>

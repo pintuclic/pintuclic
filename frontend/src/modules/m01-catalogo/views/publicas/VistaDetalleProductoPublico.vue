@@ -14,8 +14,8 @@
         <div class="h-96 animate-pulse rounded-card bg-neutral-white" />
       </div>
       <div v-else-if="error || !producto" class="mt-6 rounded-card border border-neutral-light bg-neutral-white p-12 text-center shadow-sm">
-        <CircleAlert :size="36" class="mx-auto text-highlight" />
-        <h1 class="font-title mt-3 text-xl font-bold text-corporate">Producto no disponible</h1>
+        <CircleAlert :size="36" class="mx-auto text-danger" />
+        <h1 class="font-poppins mt-3 text-xl font-bold text-corporate">Producto no disponible</h1>
         <p class="mt-2 text-sm text-neutral-medium">{{ error }}</p>
         <router-link
           to="/catalogo"
@@ -39,7 +39,7 @@
               <div class="flex items-center gap-1.5">
                 <button
                   type="button"
-                  class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer"
+                  class="inline-flex items-center gap-1.5 rounded-button px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer"
                   :class="modoVista === 'ambientes'
                     ? 'bg-corporate text-white shadow-sm'
                     : 'bg-neutral-lightest text-neutral-dark hover:bg-neutral-light hover:text-corporate'"
@@ -50,7 +50,7 @@
                 </button>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer"
+                  class="inline-flex items-center gap-1.5 rounded-button px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer"
                   :class="modoVista === 'envase'
                     ? 'bg-corporate text-white shadow-sm'
                     : 'bg-neutral-lightest text-neutral-dark hover:bg-neutral-light hover:text-corporate'"
@@ -99,8 +99,8 @@
           </div>
 
           <div>
-            <h1 class="font-title text-3xl font-extrabold leading-tight text-corporate">{{ producto.nombre }}</h1>
-            <p class="font-title mt-2 text-2xl font-extrabold text-corporate">{{ precioActual }}</p>
+            <h1 class="font-poppins text-3xl font-extrabold leading-tight text-corporate">{{ producto.nombre }}</h1>
+            <p class="font-poppins mt-2 text-2xl font-extrabold text-corporate">{{ precioActual }}</p>
 
             <div class="mt-5 rounded-card border border-neutral-light bg-neutral-white p-4">
               <button
@@ -109,7 +109,7 @@
                 :aria-expanded="descripcionAbierta"
                 @click="descripcionAbierta = !descripcionAbierta"
               >
-                <h2 class="font-title text-sm font-semibold text-corporate">Descripción</h2>
+                <h2 class="font-poppins text-sm font-semibold text-corporate">Descripción</h2>
                 <ChevronDown :size="17" class="text-neutral-medium transition-transform" :class="descripcionAbierta ? 'rotate-180' : ''" />
               </button>
               <p v-show="descripcionAbierta" class="mt-2 text-sm leading-6 text-neutral-medium">
@@ -119,7 +119,7 @@
 
             <div v-if="todosLosColores.length" class="mt-5">
               <div class="flex items-center justify-between gap-3">
-                <h2 class="font-title text-sm font-semibold text-corporate">Elige un color:</h2>
+                <h2 class="font-poppins text-sm font-semibold text-corporate">Elige un color:</h2>
                 <button
                   type="button"
                   class="inline-flex min-h-9 items-center gap-1.5 rounded-button px-2.5 text-xs font-medium text-action transition-colors hover:bg-subaction focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
@@ -158,7 +158,7 @@
             </div>
 
             <div class="mt-5">
-              <h2 class="font-title text-sm font-semibold text-corporate">Elige un tamaño:</h2>
+              <h2 class="font-poppins text-sm font-semibold text-corporate">Elige un tamaño:</h2>
               <div class="mt-2 grid grid-cols-2 gap-3">
                 <button
                   v-for="variante in presentaciones"

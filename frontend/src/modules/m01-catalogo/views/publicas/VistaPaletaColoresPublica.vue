@@ -21,7 +21,7 @@
           >
             <p class="text-sm font-semibold">Paleta de colores</p>
 
-            <h1 class="font-title mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">
+            <h1 class="font-poppins mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">
               Elige el color perfecto<br />
               para tu proyecto
             </h1>
@@ -37,7 +37,7 @@
       <section class="mx-auto max-w-7xl px-4 py-5 sm:px-6">
         <div class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="font-title flex items-center gap-2 text-base font-bold text-corporate">
+            <h2 class="font-poppins flex items-center gap-2 text-base font-bold text-corporate">
               <Droplets :size="19" class="text-action" />
               Filtrar por familia de color
             </h2>
@@ -94,7 +94,7 @@
 
       <section class="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 md:grid-cols-2">
         <article class="rounded-card border border-neutral-light bg-neutral-white p-6 shadow-sm">
-          <h2 class="font-title text-xl font-bold text-corporate">
+          <h2 class="font-poppins text-xl font-bold text-corporate">
             Paleta de colores
           </h2>
 
@@ -111,7 +111,7 @@
             v-else-if="error"
             class="mt-6 rounded-card bg-neutral-lightest p-8 text-center"
           >
-            <CircleAlert :size="30" class="mx-auto text-highlight" />
+            <CircleAlert :size="30" class="mx-auto text-danger" />
 
             <p class="mt-3 text-sm">
               {{ error }}
@@ -146,7 +146,7 @@
           class="flex flex-col rounded-card border border-neutral-light bg-neutral-white p-6 shadow-sm"
         >
           <header>
-            <h2 class="font-title text-xl font-bold text-corporate">
+            <h2 class="font-poppins text-xl font-bold text-corporate">
               Combinador de colores
             </h2>
 
@@ -164,12 +164,12 @@
                       class="h-16 w-16 shrink-0 rounded-card border border-neutral-light shadow-sm"
                       :style="{
                         backgroundColor:
-                          colorSeleccionado.muestra_hex ?? '#CCCCCC',
+                          colorSeleccionado.muestra_hex ?? 'var(--color-neutral-light)',
                       }"
                     />
 
                     <div>
-                      <h3 class="font-title text-base font-bold text-corporate">
+                      <h3 class="font-poppins text-base font-bold text-corporate">
                         {{ colorSeleccionado.nombre }}
                       </h3>
 
@@ -223,7 +223,7 @@
         v-if="productosRecomendados.length"
         class="mx-auto max-w-7xl px-4 py-10 sm:px-6"
       >
-        <h2 class="font-title text-xl font-bold text-corporate">
+        <h2 class="font-poppins text-xl font-bold text-corporate">
           Pinturas disponibles en este tono
         </h2>
 
@@ -246,7 +246,7 @@
         v-if="productosComplementarios.length"
         class="mx-auto max-w-7xl px-4 pb-12 sm:px-6"
       >
-        <h2 class="font-title text-xl font-bold text-corporate">
+        <h2 class="font-poppins text-xl font-bold text-corporate">
           Herramientas recomendadas
         </h2>
 

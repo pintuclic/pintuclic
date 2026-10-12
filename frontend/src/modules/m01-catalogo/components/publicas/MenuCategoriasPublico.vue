@@ -10,11 +10,12 @@
         v-if="abierto"
         class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-corporate/70 px-4 py-8 sm:py-14"
         role="presentation"
-        @click.self="emit('cerrar')"
+        @mousedown="alPulsarFondo"
+        @click="alSoltarEnFondo"
       >
         <section
           ref="dialogo"
-          class="w-full max-w-4xl overflow-hidden rounded-2xl bg-neutral-white shadow-2xl"
+          class="w-full max-w-4xl overflow-hidden rounded-modal bg-neutral-white shadow-2xl"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-menu-categorias"
@@ -30,7 +31,7 @@
               <span class="grid h-10 w-10 place-items-center rounded-card bg-neutral-lightest text-corporate">
                 <PanelsTopLeft :size="20" aria-hidden="true" />
               </span>
-              <h2 id="titulo-menu-categorias" class="font-title text-lg font-bold text-neutral-black">
+              <h2 id="titulo-menu-categorias" class="font-poppins text-lg font-bold text-neutral-black">
                 Categorías
               </h2>
             </div>
@@ -85,7 +86,7 @@
                 </ul>
 
                 <section v-if="categoriaActiva" class="min-w-0 rounded-card border border-neutral-light p-4" aria-live="polite">
-                  <h3 class="font-title mb-2 text-sm font-bold uppercase text-corporate">{{ categoriaActiva.nombre }}</h3>
+                  <h3 class="font-poppins mb-2 text-sm font-bold uppercase text-corporate">{{ categoriaActiva.nombre }}</h3>
                   <ul v-if="categoriaActiva.subcategorias.length" class="grid gap-1 sm:grid-cols-2">
                     <li v-for="subcategoria in categoriaActiva.subcategorias" :key="subcategoria.id_subcategoria" class="min-w-0">
                       <button
@@ -138,6 +139,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { ChevronRight, Palette, PanelsTopLeft, Tags, X } from 'lucide-vue-next';
 import type { CategoriaPublica } from '../../interfaces/publicas/catalogo-publico.interface';
+import { useCierrePorFondo } from '../../composables/publicas/useCierrePorFondo';
 
 const props = defineProps<{
   abierto: boolean;
@@ -151,6 +153,8 @@ const emit = defineEmits<{
   /** «Ver todos los productos»: el catálogo sin categoría. */
   seleccionarTodos: [];
 }>();
+
+const { alPulsarFondo, alSoltarEnFondo } = useCierrePorFondo(() => emit('cerrar'));
 
 const idCategoriaActiva = ref<number | null>(null);
 /** Categoría elegida; por defecto la primera, y si desaparece se vuelve a la primera. */

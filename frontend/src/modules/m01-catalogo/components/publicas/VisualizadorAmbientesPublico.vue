@@ -1,7 +1,7 @@
 <template>
-  <section aria-label="Simulador de color en ambientes" class="overflow-hidden rounded-xl border border-neutral-light bg-neutral-white shadow-sm">
+  <section aria-label="Simulador de color en ambientes" class="overflow-hidden rounded-card border border-neutral-light bg-neutral-white shadow-sm">
     <header class="flex flex-col gap-2 border-b border-neutral-light bg-neutral-lightest p-3">
-      <h3 class="flex items-center gap-2 font-title text-sm font-bold text-corporate">
+      <h3 class="flex items-center gap-2 font-poppins text-sm font-bold text-corporate">
         <Palette :size="18" class="shrink-0 text-action" aria-hidden="true" />
         Simulador de color en ambientes
       </h3>
@@ -10,7 +10,7 @@
           v-for="espacio in espacios"
           :key="espacio.id"
           type="button"
-          class="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2"
+          class="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-button px-2.5 py-2 text-xs font-semibold transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2"
           :class="ambienteActivo === espacio.id ? 'bg-action text-neutral-white' : 'bg-neutral-white text-neutral-dark hover:bg-subaction'"
           :aria-pressed="ambienteActivo === espacio.id"
           @click="ambienteActivo = espacio.id"
@@ -31,7 +31,7 @@
         decoding="async"
       />
       <!-- Indicador sutil del ambiente actual -->
-      <div class="pointer-events-none absolute top-2.5 right-2.5 z-10 rounded-md bg-neutral-black/60 px-2 py-1 text-[10px] font-medium text-white backdrop-blur-sm">
+      <div class="pointer-events-none absolute top-2.5 right-2.5 z-10 rounded-button bg-neutral-black/60 px-2 py-1 text-[10px] font-medium text-white backdrop-blur-sm">
         {{ espacioActual.nombre }}
       </div>
     </div>

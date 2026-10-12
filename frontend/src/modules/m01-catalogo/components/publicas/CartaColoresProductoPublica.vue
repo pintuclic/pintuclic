@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
-    <div v-if="abierta" class="fixed inset-0 z-50 grid place-items-center bg-corporate/70 p-3 sm:p-6" role="presentation" @click.self="emit('cerrar')">
-      <section class="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-neutral-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="titulo-carta">
+    <div v-if="abierta" class="fixed inset-0 z-50 grid place-items-center bg-corporate/70 p-3 sm:p-6" role="presentation" @mousedown="alPulsarFondo" @click="alSoltarEnFondo">
+      <section class="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-modal bg-neutral-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="titulo-carta">
         <!-- Franja decorativa de marca arcoíris Pintu Clic -->
         <div
           class="h-2 w-full shrink-0"
@@ -11,7 +11,7 @@
           <div class="flex items-start gap-3">
             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-card bg-subaction text-action"><Palette :size="21" /></span>
             <div>
-              <h2 id="titulo-carta" class="font-title text-lg font-bold text-corporate sm:text-xl">Carta de colores</h2>
+              <h2 id="titulo-carta" class="font-poppins text-lg font-bold text-corporate sm:text-xl">Carta de colores</h2>
               <p class="mt-0.5 text-xs text-neutral-medium">{{ nombreProducto }}</p>
             </div>
           </div>
@@ -45,11 +45,11 @@
             <div>
               <div v-if="coloresPaginados.length" class="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
                 <button v-for="color in coloresPaginados" :key="color.idColor" type="button" class="group rounded-card border p-1.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" :class="colorBorradorId === color.idColor ? 'border-action bg-subaction shadow-sm ring-1 ring-action/30' : 'border-neutral-light bg-neutral-white'" @click="seleccionar(color.idColor)">
-                  <span class="relative block h-16 w-full rounded-lg shadow-sm ring-1 ring-neutral-black/10 transition-transform group-hover:scale-[1.02]" :class="color.muestraHex ? '' : 'bg-neutral-light'" :style="estiloMuestra(color.muestraHex)">
+                  <span class="relative block h-16 w-full rounded-card shadow-sm ring-1 ring-neutral-black/10 transition-transform group-hover:scale-[1.02]" :class="color.muestraHex ? '' : 'bg-neutral-light'" :style="estiloMuestra(color.muestraHex)">
                     <span v-if="colorBorradorId === color.idColor" class="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-action text-white shadow-sm"><CircleCheck :size="12" /></span>
                   </span>
                   <strong class="mt-1.5 block truncate text-[10px] font-bold leading-3 text-corporate">{{ color.nombre }}</strong>
-                  <span class="mt-0.5 block truncate text-[8px] leading-3" :class="color.muestraHex ? 'text-neutral-medium' : 'font-semibold text-highlight'">{{ color.codigo ?? (color.muestraHex ? color.muestraHex : 'Sin HEX') }}</span>
+                  <span class="mt-0.5 block truncate text-[10px] leading-3" :class="color.muestraHex ? 'text-neutral-medium' : 'italic text-neutral-medium'">{{ color.codigo ?? (color.muestraHex ? color.muestraHex : 'Sin muestra') }}</span>
                 </button>
               </div>
               <div v-else class="rounded-card border border-neutral-light bg-neutral-lightest p-10 text-center">
@@ -67,18 +67,18 @@
 
             <aside class="h-fit rounded-card border border-neutral-light bg-neutral-lightest p-4 lg:sticky lg:top-0">
               <p class="text-xs font-semibold text-neutral-medium">Tu selección</p>
-              <div class="mt-3 overflow-hidden rounded-xl border border-neutral-light bg-neutral-white shadow-sm">
+              <div class="mt-3 overflow-hidden rounded-card border border-neutral-light bg-neutral-white shadow-sm">
                 <span class="block h-24 w-full" :class="colorBorrador?.muestraHex ? '' : 'bg-neutral-light'" :style="estiloMuestra(colorBorrador?.muestraHex ?? null)" />
                 <div class="p-3">
-                  <h3 class="font-title truncate text-sm font-bold text-corporate">{{ colorBorrador?.nombre ?? 'Selecciona un color' }}</h3>
-                  <p class="mt-0.5 text-[10px]" :class="colorBorrador?.muestraHex ? 'text-neutral-medium' : 'font-semibold text-highlight'">{{ colorBorrador?.codigo ?? (colorBorrador?.muestraHex ?? 'Sin muestra HEX') }}</p>
+                  <h3 class="font-poppins truncate text-sm font-bold text-corporate">{{ colorBorrador?.nombre ?? 'Selecciona un color' }}</h3>
+                  <p class="mt-0.5 text-[10px]" :class="colorBorrador?.muestraHex ? 'text-neutral-medium' : 'italic text-neutral-medium'">{{ colorBorrador?.codigo ?? (colorBorrador?.muestraHex ?? 'Muestra no disponible') }}</p>
                 </div>
               </div>
               <div class="mt-3 rounded-card border border-neutral-light bg-neutral-white p-3">
                 <p class="flex items-start gap-2 text-[11px] leading-4 text-neutral-medium"><Info :size="14" class="mt-0.5 shrink-0 text-action" /> Al aplicar el color conservaremos la presentación elegida cuando exista una variante compatible.</p>
               </div>
               <button type="button" class="mt-4 w-full rounded-button bg-action px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-action-hover active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action disabled:cursor-not-allowed disabled:opacity-50" :disabled="colorBorradorId === null" @click="aplicar">Aplicar color</button>
-              <p class="mt-2 text-center text-[9px] leading-4 text-neutral-medium">La base de entonado se determina internamente y nunca se presenta como elección de compra.</p>
+              <p class="mt-2 text-center text-[10px] leading-4 text-neutral-medium">La base de entonado se determina internamente y nunca se presenta como elección de compra.</p>
             </aside>
           </div>
 
@@ -93,6 +93,7 @@
 import { computed, ref, watch } from 'vue';
 import { ChevronLeft, ChevronRight, CircleCheck, Info, Layers3, Palette, Search, SearchX, X } from 'lucide-vue-next';
 import { normalizarBusquedaCatalogoPublico } from '../../dtos/publicas/catalogo-publico.dto';
+import { useCierrePorFondo } from '../../composables/publicas/useCierrePorFondo';
 import type { VariantePublica } from '../../interfaces/publicas/catalogo-publico.interface';
 
 const props = defineProps<{
@@ -102,6 +103,8 @@ const props = defineProps<{
   varianteSeleccionadaId: number | null;
 }>();
 const emit = defineEmits<{ cerrar: []; seleccionar: [idVariante: number] }>();
+// Seleccionar el buscador arrastrando y soltar fuera ya no cierra la carta.
+const { alPulsarFondo, alSoltarEnFondo } = useCierrePorFondo(() => emit('cerrar'));
 
 const LIMITE_PAGINA = 36;
 const termino = ref('');

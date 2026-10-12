@@ -15,7 +15,7 @@
             </template>
           </template>
         </nav>
-        <h1 class="font-title mt-3 text-2xl font-bold text-corporate sm:text-4xl">{{ seleccionActual?.subcategoria ?? seleccionActual?.categoria ?? 'Todos los productos' }}</h1>
+        <h1 class="font-poppins mt-3 text-2xl font-bold text-corporate sm:text-4xl">{{ seleccionActual?.subcategoria ?? seleccionActual?.categoria ?? 'Todos los productos' }}</h1>
         <p class="mt-1.5 max-w-2xl text-sm leading-6 text-neutral-medium">{{ seleccionActual ? (seleccionActual.descripcion ?? `Productos de ${seleccionActual.categoria}`) : 'Explora pinturas, herramientas y accesorios publicados para completar tu proyecto.' }}</p>
       </section>
 
@@ -85,7 +85,7 @@
             : 'hidden lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-7rem)] lg:flex-col lg:self-start lg:rounded-card lg:border lg:border-neutral-light'"
         >
           <div class="flex items-center justify-between gap-2 border-b border-neutral-light px-4 py-3">
-            <h2 class="font-title flex items-center gap-2 text-base font-semibold text-neutral-black">
+            <h2 class="font-poppins flex items-center gap-2 text-base font-semibold text-neutral-black">
               <SlidersHorizontal :size="18" class="text-action" /> Filtros
             </h2>
             <div class="flex items-center gap-1">
@@ -105,7 +105,7 @@
             <div
               v-if="errorFacetas"
               id="error-facetas"
-              class="mt-3 flex items-center justify-between gap-2 rounded-card border border-highlight/30 bg-neutral-lightest px-3 py-2 text-xs text-neutral-dark"
+              class="mt-3 flex items-center justify-between gap-2 rounded-card border border-danger/30 bg-danger-subtle px-3 py-2 text-xs text-neutral-dark"
               role="status"
             >
               <span>{{ errorFacetas }}</span>
@@ -189,7 +189,7 @@
                   <span class="mb-1 block text-xs text-neutral-medium">Máximo ($)</span>
                   <input v-model.number="inputPrecioMax" :aria-invalid="campoErrorPrecio === 'max' ? true : undefined" :aria-describedby="campoErrorPrecio === 'max' ? 'error-rango-precio' : undefined" type="number" min="0" inputmode="numeric" placeholder="Sin límite" class="h-10 w-full rounded-input border border-neutral-light bg-neutral-white px-2.5 text-sm outline-none placeholder:text-neutral-medium focus:border-action focus:ring-1 focus:ring-action" />
                 </label>
-                <p v-if="errorPrecio" id="error-rango-precio" class="col-span-2 text-xs text-highlight" role="alert">{{ errorPrecio }}</p>
+                <p v-if="errorPrecio" id="error-rango-precio" class="col-span-2 text-xs font-medium text-danger" role="alert">{{ errorPrecio }}</p>
                 <button type="submit" class="col-span-2 min-h-10 rounded-button border border-action text-xs font-semibold text-action transition-colors hover:bg-subaction focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action">
                   Aplicar precio
                 </button>
@@ -282,10 +282,10 @@
           >
             <!-- 4 columnas con panel en escritorio (≥1280 px): 16 = 4 filas de 4 -->
             <div v-if="cargando && !resultadosListos" class="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-              <div v-for="n in 8" :key="n" class="h-96 animate-pulse rounded-2xl bg-neutral-lightest" />
+              <div v-for="n in 8" :key="n" class="h-96 animate-pulse rounded-card bg-neutral-lightest" />
             </div>
             <div v-else-if="error" class="rounded-card border border-neutral-light bg-neutral-white p-12 text-center">
-              <CircleAlert :size="34" class="mx-auto text-highlight" />
+              <CircleAlert :size="34" class="mx-auto text-danger" />
               <p class="mt-3 text-sm text-neutral-dark">{{ error }}</p>
               <button type="button" class="mt-5 min-h-11 rounded-button bg-action px-5 text-sm font-medium text-white hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" @click="cargarInicio">
                 Reintentar
@@ -303,7 +303,7 @@
             </div>
             <div v-else class="rounded-card border border-neutral-light bg-neutral-white p-12 text-center">
               <SearchX :size="36" class="mx-auto text-neutral-medium" />
-              <h2 class="font-title mt-4 text-lg font-semibold text-corporate">No encontramos productos</h2>
+              <h2 class="font-poppins mt-4 text-lg font-semibold text-corporate">No encontramos productos</h2>
               <p class="mt-2 text-sm text-neutral-medium">Prueba con otra búsqueda o limpia los filtros activos.</p>
               <div class="mt-5 flex flex-wrap justify-center gap-3">
                 <button type="button" class="min-h-11 rounded-button border border-action bg-neutral-white px-5 text-sm font-medium text-action transition-colors hover:bg-action hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action" @click="limpiarFiltros">
@@ -322,7 +322,7 @@
         <div class="relative overflow-hidden rounded-card bg-corporate bg-cover bg-center p-6 text-white sm:p-8" :style="fondoCompletaProyecto">
           <div class="absolute inset-0 bg-corporate/75" aria-hidden="true"></div>
           <div class="relative z-10">
-            <h2 class="font-title text-xl font-semibold">Completa tu proyecto</h2>
+            <h2 class="font-poppins text-xl font-semibold">Completa tu proyecto</h2>
             <p class="mt-1 text-sm text-white/75">Explora otras categorías disponibles.</p>
             <div class="mt-5 flex flex-wrap gap-3">
               <button

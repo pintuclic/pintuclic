@@ -11,7 +11,7 @@
           />
           <div class="absolute inset-0 bg-gradient-to-r from-corporate via-corporate/80 to-transparent" />
           <div class="relative z-10 flex min-h-80 max-w-xl flex-col justify-center px-7 py-10 text-white sm:min-h-96 sm:px-12 lg:min-h-80">
-            <h1 class="font-title max-w-md text-3xl font-bold leading-tight sm:text-4xl">
+            <h1 class="font-poppins max-w-md text-3xl font-bold leading-tight sm:text-4xl">
               Todo para tu proyecto,<br />
               <span class="text-highlight">en un solo lugar</span>
             </h1>
@@ -102,7 +102,7 @@
       <!-- Productos Destacados -->
       <section id="productos" class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div class="mb-5 flex items-center justify-between">
-          <h2 class="font-title text-xl font-bold text-neutral-black">Productos destacados</h2>
+          <h2 class="font-poppins text-xl font-bold text-neutral-black">Productos destacados</h2>
           <router-link to="/catalogo" class="text-sm font-semibold text-action hover:text-action-hover">
             Ver todos <ChevronRight :size="15" class="inline" />
           </router-link>
@@ -112,7 +112,7 @@
           <div v-for="indice in 5" :key="indice" class="h-80 animate-pulse rounded-card bg-neutral-white" />
         </div>
         <div v-else-if="error" class="rounded-card border border-neutral-light bg-neutral-white px-6 py-10 text-center">
-          <CircleAlert :size="32" class="mx-auto text-highlight" />
+          <CircleAlert :size="32" class="mx-auto text-danger" />
           <p class="mt-3 text-sm text-neutral-dark">{{ error }}</p>
           <button type="button" class="mt-4 rounded-button bg-action px-4 py-2 text-sm font-semibold text-white hover:bg-action-hover" @click="cargarInicio">
             Reintentar
@@ -135,7 +135,7 @@
       <!-- Explorar Categorías -->
       <section id="categorias" class="mx-auto max-w-7xl px-4 pb-12 sm:px-6">
         <div class="mb-5 flex items-center justify-between">
-          <h2 class="font-title text-xl font-bold text-neutral-black">Explora nuestras categorías</h2>
+          <h2 class="font-poppins text-xl font-bold text-neutral-black">Explora nuestras categorías</h2>
           <button type="button" class="text-sm font-semibold text-action hover:text-action-hover" @click="menuCategoriasAbierto = true">
             Ver categorías <ChevronRight :size="15" class="inline" />
           </button>
@@ -150,7 +150,7 @@
             @click="irCategoria(categoria.id_categoria)"
           >
             <Shapes :size="72" class="absolute -bottom-3 -right-2 opacity-25 transition-transform group-hover:scale-110" />
-            <strong class="font-title relative block text-base leading-tight">{{ categoria.nombre }}</strong>
+            <strong class="font-poppins relative block text-base leading-tight">{{ categoria.nombre }}</strong>
             <span class="relative mt-2 inline-flex items-center gap-1 text-xs font-medium">
               Ver productos <ChevronRight :size="13" />
             </span>
@@ -219,7 +219,7 @@ const {
 const beneficios = [
   { titulo: 'Compra segura', detalle: 'Tus datos protegidos', icono: ShieldCheck },
   { titulo: 'Productos de calidad', detalle: 'Las mejores marcas', icono: PackageCheck },
-  { titulo: 'Envíos rápidos', detalle: 'A toda Colombia', icono: Truck },
+  { titulo: 'Envíos rápidos', detalle: 'A todo el Caquetá', icono: Truck },
   { titulo: 'Pagos seguros', detalle: 'Múltiples métodos', icono: CreditCard },
 ] as const;
 

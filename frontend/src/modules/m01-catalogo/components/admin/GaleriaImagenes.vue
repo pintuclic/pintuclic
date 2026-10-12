@@ -2,7 +2,7 @@
   <div class="space-y-5 font-sans">
     <!-- Carga (RF-CAT-07-01/02): imagen del producto, opcionalmente asociada a una variante o a un color. -->
     <form class="rounded-card border border-neutral-light bg-neutral-white p-4" novalidate @submit.prevent="subir">
-      <h3 class="mb-3 font-title text-base font-semibold text-corporate">Cargar imagen</h3>
+      <h3 class="mb-3 font-poppins text-base font-semibold text-corporate">Cargar imagen</h3>
       <div class="grid gap-4 md:grid-cols-2">
         <div class="flex flex-col gap-1.5">
           <label for="m01-archivo-imagen" class="text-sm font-medium text-neutral-dark">Archivo (JPG, PNG o WEBP, máx. 5 MB)</label>

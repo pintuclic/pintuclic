@@ -2,10 +2,11 @@
   <Teleport to="body">
     <dialog
       ref="dialogo"
-      class="fixed inset-0 m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-[820px] overflow-hidden rounded-2xl border border-neutral-light bg-neutral-lightest p-0 shadow-2xl backdrop:bg-neutral-black/60 backdrop:backdrop-blur-sm"
+      class="fixed inset-0 m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-[820px] overflow-hidden rounded-modal border border-neutral-light bg-neutral-lightest p-0 shadow-2xl backdrop:bg-neutral-black/60 backdrop:backdrop-blur-sm"
       aria-label="Calculadora de pintura del producto"
       @cancel.prevent="emit('cerrar')"
-      @click="cerrarAlPulsarFondo"
+      @mousedown="alPulsarFondo"
+      @click="alSoltarEnFondo"
     >
       <div class="flex max-h-[calc(100dvh-1.5rem)] flex-col">
         <div class="flex h-2 w-full shrink-0" aria-hidden="true">
@@ -42,6 +43,7 @@ import { nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { X } from 'lucide-vue-next';
 import type { FichaProductoPublico } from '../../interfaces/publicas/catalogo-publico.interface';
 import CalculadoraPinturaContenido from './CalculadoraPinturaContenido.vue';
+import { useCierrePorFondo } from '../../composables/publicas/useCierrePorFondo';
 
 const props = defineProps<{
   abierta: boolean;
@@ -69,7 +71,6 @@ onBeforeUnmount(() => {
   if (props.abierta) document.body.style.overflow = desbordamientoAnterior;
 });
 
-function cerrarAlPulsarFondo(evento: { target: unknown }): void {
-  if (evento.target === dialogo.value) emit('cerrar');
-}
+// Seleccionar una medida arrastrando y soltar fuera de la ventana ya no cierra la calculadora.
+const { alPulsarFondo, alSoltarEnFondo } = useCierrePorFondo(() => emit('cerrar'));
 </script>

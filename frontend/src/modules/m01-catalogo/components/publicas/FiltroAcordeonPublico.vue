@@ -5,7 +5,7 @@
     contenedor desplazable del panel (sin scroll propio ni capas flotantes recortadas).
   -->
   <section class="py-2">
-    <h3 :id="`${id}-titulo`" class="px-1 pb-1.5 font-title text-xs font-semibold uppercase tracking-wide text-corporate">{{ titulo }}</h3>
+    <h3 :id="`${id}-titulo`" class="px-1 pb-1.5 font-poppins text-xs font-semibold uppercase tracking-wide text-corporate">{{ titulo }}</h3>
     <button
       :id="`${id}-encabezado`"
       type="button"

@@ -1,5 +1,5 @@
 <template>
-  <nav v-if="abierto" class="absolute inset-x-3 top-full z-50 overflow-hidden rounded-b-2xl border border-neutral-white/30 bg-neutral-black/50 text-neutral-white shadow-2xl ring-1 ring-inset ring-neutral-white/10 backdrop-blur-2xl xl:hidden" aria-label="Menú principal móvil">
+  <nav v-if="abierto" class="absolute inset-x-3 top-full z-50 overflow-hidden rounded-b-card border border-neutral-white/30 bg-neutral-black/50 text-neutral-white shadow-2xl ring-1 ring-inset ring-neutral-white/10 backdrop-blur-2xl xl:hidden" aria-label="Menú principal móvil">
     <div class="mx-auto max-h-[calc(100vh-7rem)] max-w-7xl overflow-y-auto px-4 py-3 sm:px-6">
       <template v-if="!categoriaSeleccionada">
         <router-link to="/" class="block min-h-11 rounded-button px-3 py-3 text-sm font-semibold text-neutral-white hover:bg-neutral-white/20" @click="emit('cerrar')">Inicio</router-link>
