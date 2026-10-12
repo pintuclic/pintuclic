@@ -7,6 +7,11 @@ import { Database, Producto } from '../../../core/db/types';
 // lectura con joins; el listado se pagina (RNF-CAT-06-01).
 // ==============================================================================
 
+/** Escapa los comodines de LIKE/ILIKE (escape por defecto de PostgreSQL: `\`). */
+export function escaparPatronLike(texto: string): string {
+  return texto.replace(/[\\%_]/g, (caracter) => `\\${caracter}`);
+}
+
 export interface FiltrosProductosPublicos {
   idSubcategoria?: number;
   busqueda?: string;
@@ -205,7 +210,8 @@ export class CatalogoPublicoRepository {
       );
     }
     if (filtros.busqueda) {
-      query = query.where('p.nombre', 'ilike', `%${filtros.busqueda}%`);
+      // `%`, `_` y `\` del usuario son texto literal, no comodines: sin esto «%» devolvía todo.
+      query = query.where('p.nombre', 'ilike', `%${escaparPatronLike(filtros.busqueda)}%`);
     }
     return query;
   }

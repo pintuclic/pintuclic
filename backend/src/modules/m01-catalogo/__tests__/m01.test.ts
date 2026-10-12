@@ -12,6 +12,7 @@ import { RendimientoService, derivarRendimiento } from '../services/rendimiento.
 import { ProductoBasesService } from '../services/producto-bases.service';
 import { ImagenesService } from '../services/imagenes.service';
 import { CatalogoPublicoService } from '../services/catalogo-publico.service';
+import { escaparPatronLike } from '../repositories/catalogo-publico.repository';
 import { EstablecerRendimientoDto } from '../dtos/rendimiento.dto';
 import { CrearImagenDto } from '../dtos/imagenes.dto';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
@@ -1541,6 +1542,10 @@ async function ejecutarPruebasM01(): Promise<void> {
 
     const paginaLimitada = await catalogoPublicoService.listarProductos({ limite: 1, pagina: 1 });
     assert(paginaLimitada.items.length <= 1, 'CA-CAT-06-05: la paginación no descarga todo el catálogo');
+    assert(
+      escaparPatronLike('50%_a\\b') === '50\\%\\_a\\\\b',
+      'Búsqueda pública: «%», «_» y «\\» del usuario se escapan y no actúan como comodines de ILIKE'
+    );
 
     const ficha = await catalogoPublicoService.obtenerFicha(prodFijo.id_producto);
     assert(
