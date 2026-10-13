@@ -113,7 +113,7 @@ describe('tamaños acordados por el líder técnico', () => {
       obtenerFicha: async () => ({}) as FichaProductoPublico,
       listarComplementarios: async () => [],
     };
-    mount(defineComponent({ setup() { useInicioPublico(servicio, { buscar: vi.fn() }); return () => null; } }));
+    mount(defineComponent({ setup() { useInicioPublico(servicio); return () => null; } }));
     await flushPromises();
 
     expect(LIMITE_DESTACADOS).toBe(10);

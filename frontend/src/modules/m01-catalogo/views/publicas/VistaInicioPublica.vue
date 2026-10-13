@@ -65,11 +65,9 @@
             <button
               type="submit"
               class="absolute right-0 top-0 grid h-11 w-12 place-items-center rounded-r-button bg-action text-white transition-colors hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-              :disabled="buscando"
-              aria-label="Buscar"
+              aria-label="Buscar en el catálogo"
             >
-              <LoaderCircle v-if="buscando" :size="18" class="animate-spin" />
-              <Search v-else :size="18" />
+              <Search :size="18" />
             </button>
           </label>
           <button
@@ -189,7 +187,6 @@ import {
   ChevronRight,
   CircleAlert,
   CreditCard,
-  LoaderCircle,
   PackageCheck,
   Palette,
   Search,
@@ -204,6 +201,7 @@ import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPubli
 import TarjetaProductoPublico from '../../components/publicas/TarjetaProductoPublico.vue';
 import CarruselProductosPublico from '../../components/publicas/CarruselProductosPublico.vue';
 import { useInicioPublico } from '../../composables/publicas/useInicioPublico';
+import { normalizarBusquedaCatalogoPublico } from '../../dtos/publicas/catalogo-publico.dto';
 import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
 import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
@@ -215,8 +213,6 @@ const mensaje = ref<string | null>(null);
 const router = useRouter();
 
 const {
-  buscar,
-  buscando,
   cargarInicio,
   cargando,
   categorias,
@@ -244,8 +240,13 @@ function informarPendiente(texto: string): void {
   mensaje.value = texto;
 }
 
+/**
+ * Buscar desde el inicio lleva al catálogo con el término aplicado: allí la búsqueda se
+ * actualiza mientras se escribe y muestra cuántos resultados hay, con filtros y paginación.
+ */
 function ejecutarBusqueda(): void {
-  void buscar(terminoBusqueda.value);
+  const { q } = normalizarBusquedaCatalogoPublico(terminoBusqueda.value);
+  void router.push({ name: 'CatalogoPublico', query: q ? { q } : {} });
 }
 
 // Navegación al catálogo: la URL lleva el filtro y el catálogo lo aplica al cargar

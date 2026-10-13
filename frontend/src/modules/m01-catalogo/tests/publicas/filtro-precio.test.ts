@@ -62,6 +62,22 @@ describe('selección de variante con rango de precio', () => {
   it('si ninguna variante cumple el rango, vuelve a la regla normal en lugar de quedarse sin precio', () => {
     expect(seleccionarVarianteCompraRapida(TINTE.variantes, null, { min: 90000 })?.precio_vigente).toBe(23300);
   });
+
+  it('con filtro de presentación elige una variante de esa presentación (Litro → $26.200, no el cuarto)', () => {
+    expect(seleccionarVarianteCompraRapida(TINTE.variantes, null, { presentaciones: [3] })?.presentacion).toBe('Litro');
+  });
+
+  it('con filtro de color elige una variante de ese color', () => {
+    expect(seleccionarVarianteCompraRapida(TINTE.variantes, null, { colores: [2] })?.color).toBe('Nogal');
+    expect(seleccionarVarianteCompraRapida(TINTE.variantes, null, { colores: [1] })?.color).toBe('Natural');
+  });
+
+  it('si ninguna variante cumple todo a la vez, prioriza el color y luego la presentación sobre el precio', () => {
+    // Nogal solo existe en litro a $26.200: con máximo $25.000 se respeta el color y se suelta el precio.
+    const elegida = seleccionarVarianteCompraRapida(TINTE.variantes, null, { colores: [2], max: 25000 });
+    expect(elegida?.color).toBe('Nogal');
+    expect(elegida?.precio_vigente).toBe(26200);
+  });
 });
 
 describe('catálogo con filtro de precio activo', () => {
@@ -100,6 +116,29 @@ describe('catálogo con filtro de precio activo', () => {
     await tarjeta.find('button[aria-label^="Agregar"]').trigger('click');
     await flushPromises();
     expect(agregar).toHaveBeenCalledWith(expect.objectContaining({ variantId: 2, price: 26200 }));
+    wrapper.unmount();
+  });
+
+  it('con filtro de presentación la tarjeta muestra y agrega esa presentación', async () => {
+    const wrapper = await montar('/catalogo?presentacion=3');
+    const tarjeta = wrapper.find('article');
+    expect(tarjeta.text()).toContain('26.200');
+
+    const carrito = useCartStore();
+    const agregar = vi.spyOn(carrito, 'addToCart').mockResolvedValue(undefined as never);
+    await tarjeta.find('button[aria-label^="Agregar"]').trigger('click');
+    await flushPromises();
+    expect(agregar).toHaveBeenCalledWith(expect.objectContaining({ variantId: 2 }));
+    wrapper.unmount();
+  });
+
+  it('con filtro de color la compra rápida agrega ese color, no otro más barato', async () => {
+    const wrapper = await montar('/catalogo?color=2');
+    const carrito = useCartStore();
+    const agregar = vi.spyOn(carrito, 'addToCart').mockResolvedValue(undefined as never);
+    await wrapper.find('article button[aria-label^="Agregar"]').trigger('click');
+    await flushPromises();
+    expect(agregar).toHaveBeenCalledWith(expect.objectContaining({ variantId: 2 }));
     wrapper.unmount();
   });
 

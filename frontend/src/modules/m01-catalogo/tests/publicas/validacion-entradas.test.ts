@@ -7,7 +7,7 @@ import VistaCatalogoPublico from '../../views/publicas/VistaCatalogoPublico.vue'
 import VistaDetalleProductoPublico from '../../views/publicas/VistaDetalleProductoPublico.vue';
 import { calculadoraPinturaSchema } from '../../dtos/publicas/calculadora-pintura.dto';
 import { rangoPrecioPublicoSchema } from '../../dtos/publicas/catalogo-publico.dto';
-import { useInicioPublico } from '../../composables/publicas/useInicioPublico';
+import VistaInicioPublica from '../../views/publicas/VistaInicioPublica.vue';
 import { BusquedaService } from '@/modules/m02-busqueda/services/busqueda.service';
 import type { FichaProductoPublico } from '../../interfaces/publicas/catalogo-publico.interface';
 
@@ -199,20 +199,42 @@ describe('ficha: la cantidad no supera las existencias de la variante', () => {
   });
 });
 
-describe('inicio: el buscador usa el mismo motor que el catálogo', () => {
-  it('consulta la búsqueda de M02 con el término normalizado', async () => {
-    const buscar = vi.fn().mockResolvedValue({ items: [], total: 0, pagina: 1, limite: 5, total_paginas: 0 });
-    const servicio = {
-      listarCategorias: async () => [],
-      listarProductos: vi.fn(async () => ({ items: [], total: 0, pagina: 1, limite: 5 })),
-      obtenerFicha: async () => FICHA,
-      listarComplementarios: async () => [],
-    };
-    const { buscar: buscarInicio } = useInicioPublico(servicio, { buscar });
+describe('inicio: buscar lleva al catálogo con el término aplicado', () => {
+  async function montarInicio() {
+    setActivePinia(createPinia());
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', name: 'InicioTiendaPublica', component: VistaInicioPublica },
+        { path: '/catalogo', name: 'CatalogoPublico', component: { render: () => null } },
+        { path: '/calculadora', name: 'CalculadoraPinturaPublica', component: { render: () => null } },
+        { path: '/productos/:productoId', name: 'DetalleProductoPublico', component: { render: () => null } },
+      ],
+    });
+    await router.push('/');
+    await router.isReady();
+    const wrapper = mount(VistaInicioPublica, { global: { plugins: [router], stubs: { MenuCategoriasPublico: true } } });
+    await flushPromises();
+    return { wrapper, router };
+  }
 
-    await buscarInicio('  VINÍLTEX  ');
+  it('Enter o la lupa abren el catálogo con la búsqueda (sin reemplazar los destacados)', async () => {
+    const { wrapper, router } = await montarInicio();
+    await wrapper.find('form[role="search"] input').setValue('  azul  ');
+    await wrapper.find('form[role="search"]').trigger('submit');
+    await flushPromises();
 
-    expect(buscar).toHaveBeenCalledWith({ q: 'VINÍLTEX', pagina: 1, limite: 10 });
-    expect(servicio.listarProductos).not.toHaveBeenCalled();
+    expect(router.currentRoute.value.name).toBe('CatalogoPublico');
+    expect(router.currentRoute.value.query).toEqual({ q: 'azul' });
+    wrapper.unmount();
+  });
+
+  it('con el buscador vacío abre el catálogo completo', async () => {
+    const { wrapper, router } = await montarInicio();
+    await wrapper.find('form[role="search"]').trigger('submit');
+    await flushPromises();
+
+    expect(router.currentRoute.value.fullPath).toBe('/catalogo');
+    wrapper.unmount();
   });
 });

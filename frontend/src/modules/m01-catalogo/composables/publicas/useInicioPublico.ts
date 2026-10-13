@@ -1,7 +1,5 @@
 import { onMounted, ref } from 'vue';
-import { normalizarBusquedaCatalogoPublico } from '../../dtos/publicas/catalogo-publico.dto';
 import { CatalogoPublicoService, enriquecerProductosPublicos } from '../../services/publicas/catalogo-publico.service';
-import { BusquedaService } from '@/modules/m02-busqueda/services/busqueda.service';
 import type {
   CatalogoPublicoGateway,
   CategoriaPublica,
@@ -11,16 +9,16 @@ import type {
 /** Productos destacados del inicio: un carrusel manual de 10 (decisión del líder técnico, 12/10/2026). */
 export const LIMITE_DESTACADOS = 10;
 
-export function useInicioPublico(
-  servicio: CatalogoPublicoGateway = CatalogoPublicoService,
-  // El buscador usa el mismo motor que el catálogo (M02): acentos, errores tipográficos,
-  // marca, línea y color (RF-BUS-01-03). El listado de M01 solo compara el nombre.
-  buscador: Pick<typeof BusquedaService, 'buscar'> = BusquedaService,
-) {
+/**
+ * Datos del inicio: categorías y productos destacados.
+ * La búsqueda del inicio no se resuelve aquí: lleva al catálogo (`/catalogo?q=…`), que busca
+ * mientras se escribe, cuenta resultados, filtra y pagina. Antes los resultados reemplazaban
+ * en silencio a los destacados, limitados a 10 y bajo el mismo título.
+ */
+export function useInicioPublico(servicio: CatalogoPublicoGateway = CatalogoPublicoService) {
   const categorias = ref<CategoriaPublica[]>([]);
   const productos = ref<ProductoDestacadoPublico[]>([]);
   const cargando = ref(true);
-  const buscando = ref(false);
   const error = ref<string | null>(null);
 
   async function cargarInicio(): Promise<void> {
@@ -41,31 +39,11 @@ export function useInicioPublico(
     }
   }
 
-  async function buscar(valor: string): Promise<void> {
-    const { q } = normalizarBusquedaCatalogoPublico(valor);
-    buscando.value = true;
-    error.value = null;
-    try {
-      const pagina = await buscador.buscar({
-        ...(q ? { q } : {}),
-        pagina: 1,
-        limite: LIMITE_DESTACADOS,
-      });
-      productos.value = await enriquecerProductosPublicos(pagina.items, servicio);
-    } catch {
-      error.value = 'No fue posible completar la búsqueda. Intenta nuevamente.';
-    } finally {
-      buscando.value = false;
-    }
-  }
-
   onMounted(() => {
     void cargarInicio();
   });
 
   return {
-    buscar,
-    buscando,
     cargarInicio,
     cargando,
     categorias,

@@ -67,7 +67,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { seleccionarVarianteCompraRapida, type RangoPrecioVariante } from '../../services/publicas/seleccion-variante';
+import { seleccionarVarianteCompraRapida, type FiltrosVariante } from '../../services/publicas/seleccion-variante';
 import { PackageOpen, ShoppingCart } from 'lucide-vue-next';
 import { formatearPrecioConSufijo } from '@/core/utils/moneda';
 import type { ProductoDestacadoPublico } from '../../interfaces/publicas/catalogo-publico.interface';
@@ -78,10 +78,10 @@ const props = withDefaults(
     modo?: 'grid' | 'lista';
     muestraColor?: string | null;
     idColor?: number | null;
-    /** Rango de precio activo en el catálogo: el precio mostrado debe cumplirlo. */
-    rangoPrecio?: RangoPrecioVariante | null;
+    /** Filtros activos en el catálogo (precio, presentación, color): la variante mostrada debe cumplirlos. */
+    filtrosVariante?: FiltrosVariante | null;
   }>(),
-  { modo: 'grid', muestraColor: null, rangoPrecio: null }
+  { modo: 'grid', muestraColor: null, filtrosVariante: null }
 );
 const emit = defineEmits<{ ver: [idProducto: number]; agregar: [idProducto: number] }>();
 const imagenConError = ref(false);
@@ -96,7 +96,7 @@ const imagenVisible = computed(() => {
 
 /** Variante que se muestra y que agrega la compra rápida (la misma regla en ambos casos). */
 const varianteMostrada = computed(() =>
-  seleccionarVarianteCompraRapida(props.producto.detalle?.variantes ?? [], props.idColor, props.rangoPrecio),
+  seleccionarVarianteCompraRapida(props.producto.detalle?.variantes ?? [], props.idColor, props.filtrosVariante),
 );
 
 // El punto de color corresponde a la variante cuyo precio se muestra (antes, a la primera

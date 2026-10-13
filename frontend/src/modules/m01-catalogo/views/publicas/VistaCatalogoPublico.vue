@@ -305,7 +305,7 @@
                   <TarjetaProductoPublico
                     :producto="producto"
                     :muestra-color="muestrasCoincidentes.get(producto.id_producto) ?? null"
-                    :rango-precio="rangoPrecioActivo"
+                    :filtros-variante="filtrosVarianteActivos"
                     @ver="verProducto"
                     @agregar="agregarAlCarrito"
                   />
@@ -375,7 +375,7 @@ import PaginacionCatalogoPublico from '../../components/publicas/PaginacionCatal
 import { PRODUCTOS_POR_FILA, useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
 import { rangoPrecioPublicoSchema } from '../../dtos/publicas/catalogo-publico.dto';
 import { obtenerMuestraColorCoincidente } from '../../composables/publicas/useColorCoincidenteBusqueda';
-import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
+import { seleccionarVarianteCompraRapida, type FiltrosVariante } from '../../services/publicas/seleccion-variante';
 import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import { formatearPrecio } from '@/core/utils/moneda';
@@ -563,13 +563,20 @@ function conteoSubcategoria(id: number): number | null {
   return facetas.value.subcategorias.find((s) => s.id === id)?.cantidad ?? null;
 }
 
-/** HEX de la variante cuyo color coincide con la búsqueda aplicada (null = predeterminado de la tarjeta). */
-/** Rango de precio aplicado (o null): la tarjeta y la compra rápida eligen una variante que lo cumpla. */
-const rangoPrecioActivo = computed(() =>
-  precioMin.value === undefined && precioMax.value === undefined
-    ? null
-    : { min: precioMin.value, max: precioMax.value },
-);
+/**
+ * Filtros aplicados que la variante de cada tarjeta debe cumplir (precio, presentación y color).
+ * La tarjeta y la compra rápida usan la misma variante: la que cumple lo filtrado.
+ */
+const filtrosVarianteActivos = computed<FiltrosVariante | null>(() => {
+  const hayPrecio = precioMin.value !== undefined || precioMax.value !== undefined;
+  if (!hayPrecio && !presentacionesSeleccionadas.value.length && !coloresSeleccionados.value.length) return null;
+  return {
+    min: precioMin.value,
+    max: precioMax.value,
+    presentaciones: presentacionesSeleccionadas.value,
+    colores: coloresSeleccionados.value,
+  };
+});
 
 /** La página se reparte en filas de 8; cada fila se muestra como un carrusel manual. */
 const filasProductos = computed(() => {
@@ -580,6 +587,7 @@ const filasProductos = computed(() => {
   return filas;
 });
 
+/** HEX de la variante cuyo color coincide con la búsqueda aplicada (null = predeterminado de la tarjeta). */
 const muestrasCoincidentes = computed(() => {
   const muestras = new Map<number, string | null>();
   for (const producto of productos.value) {
@@ -680,12 +688,12 @@ function mostrarMensaje(texto: string): void {
 async function agregarAlCarrito(idProducto: number): Promise<void> {
   const prod = productos.value.find((p) => p.id_producto === idProducto);
   // Con un rango de precio activo se agrega la misma variante (dentro del rango) que muestra la tarjeta.
-  let variante = seleccionarVarianteCompraRapida(prod?.detalle?.variantes ?? [], null, rangoPrecioActivo.value);
+  let variante = seleccionarVarianteCompraRapida(prod?.detalle?.variantes ?? [], null, filtrosVarianteActivos.value);
 
   if (!variante) {
     try {
       const ficha = await CatalogoPublicoService.obtenerFicha(idProducto);
-      variante = seleccionarVarianteCompraRapida(ficha.variantes, null, rangoPrecioActivo.value);
+      variante = seleccionarVarianteCompraRapida(ficha.variantes, null, filtrosVarianteActivos.value);
     } catch {
       // ignore
     }
