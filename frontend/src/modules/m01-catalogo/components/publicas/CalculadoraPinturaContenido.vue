@@ -421,9 +421,20 @@
             class="mx-auto mt-5 max-w-sm text-sm text-neutral-dark"
             data-testid="unidades-recomendadas"
           >
-            Se agregarán
-            <strong class="text-corporate">{{ unidadesRecomendadas }} {{ unidadesRecomendadas === 1 ? 'unidad' : 'unidades' }}</strong>
+            {{ unidadesAAgregar === 1 ? 'Se agregará' : 'Se agregarán' }}
+            <strong class="text-corporate">{{ unidadesAAgregar }} {{ unidadesAAgregar === 1 ? 'unidad' : 'unidades' }}</strong>
             de {{ presentacion?.nombre ?? 'galón' }}.
+          </p>
+          <!-- Aviso antes de agregar: la recomendación supera las existencias de la presentación -->
+          <p
+            v-if="producto && datosValidos && recomendacionLimitada"
+            class="mx-auto mt-2 max-w-sm rounded-card border border-highlight bg-highlight/10 px-3 py-2 text-xs leading-5 text-neutral-dark"
+            role="status"
+            data-testid="aviso-existencias"
+          >
+            Solo {{ unidadesAAgregar === 1 ? 'hay 1 unidad disponible' : `hay ${unidadesAAgregar} unidades disponibles` }}
+            de {{ presentacion?.nombre ?? 'esta presentación' }}; la recomendación es de {{ unidadesRecomendadas }}.
+            Puedes elegir otra presentación en la ficha.
           </p>
 
           <button
@@ -513,12 +524,15 @@ const props = withDefaults(
     producto?: FichaProductoPublico | null;
     /** Presentación elegida en la ficha: define en qué unidades se agrega la recomendación. */
     presentacion?: { nombre: string; volumen: string | number | null } | null;
+    /** Unidades que la ficha permite agregar de esa presentación (existencias); null = sin límite. */
+    maximoUnidades?: number | null;
     mostrarVolver?: boolean;
     compacto?: boolean;
   }>(),
   {
     producto: null,
     presentacion: null,
+    maximoUnidades: null,
     mostrarVolver: false,
     compacto: false,
   },
@@ -629,6 +643,12 @@ const resultadoEnPresentacion = computed(() =>
 );
 
 const formatoLitros = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 });
+
+/** Lo que realmente se agregará: la recomendación, limitada por las existencias de la presentación. */
+const unidadesAAgregar = computed(() =>
+  props.maximoUnidades == null ? unidadesRecomendadas.value : Math.min(unidadesRecomendadas.value, props.maximoUnidades),
+);
+const recomendacionLimitada = computed(() => unidadesAAgregar.value < unidadesRecomendadas.value);
 
 function agregarRecomendacion(): void {
   if (!datosValidos.value || unidadesRecomendadas.value < 1) return;

@@ -247,7 +247,7 @@
       <!-- Feedback de mensaje -->
       <div
         v-if="mensaje"
-        class="fixed bottom-5 left-1/2 z-40 flex w-[min(92%,520px)] -translate-x-1/2 justify-between rounded-card bg-subaction px-4 py-3 text-sm text-corporate shadow-lg"
+        class="fixed bottom-5 left-1/2 z-[60] flex w-[min(92%,520px)] -translate-x-1/2 justify-between rounded-card bg-subaction px-4 py-3 text-sm text-corporate shadow-lg"
         role="status"
       >
         <span>{{ mensaje }}</span>
@@ -272,6 +272,7 @@
       :abierta="calculadoraAbierta"
       :producto="producto"
       :presentacion="presentacionCalculadora"
+      :maximo-unidades="cantidadMaxima"
       @cerrar="calculadoraAbierta = false"
       @agregar="agregarDesdeCalculadora"
     />
@@ -490,7 +491,12 @@ async function agregarDesdeCalculadora(unidades: number): Promise<void> {
   cantidad.value = Math.min(solicitadas, cantidadMaxima.value);
   await agregarAlCarrito();
   if (solicitadas > cantidadMaxima.value && !cartStore.error) {
-    mostrarMensaje(`La calculadora recomienda ${solicitadas} unidades, pero solo hay ${cantidadMaxima.value} disponibles; se agregaron ${cantidadMaxima.value}.`);
+    const maxima = cantidadMaxima.value;
+    mostrarMensaje(
+      maxima === 1
+        ? `La calculadora recomienda ${solicitadas} unidades, pero solo hay 1 disponible; se agregó 1.`
+        : `La calculadora recomienda ${solicitadas} unidades, pero solo hay ${maxima} disponibles; se agregaron ${maxima}.`,
+    );
   }
 }
 

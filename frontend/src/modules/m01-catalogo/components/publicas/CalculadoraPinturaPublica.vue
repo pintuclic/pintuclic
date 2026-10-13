@@ -26,6 +26,7 @@
           <CalculadoraPinturaContenido
             :producto="producto"
             :presentacion="presentacion"
+            :maximo-unidades="maximoUnidades"
             mostrar-volver
             compacto
             @agregar="(unidades) => emit('agregar', unidades)"
@@ -48,6 +49,7 @@ const props = defineProps<{
   abierta: boolean;
   producto?: FichaProductoPublico | null;
   presentacion?: { nombre: string; volumen: string | number | null } | null;
+  maximoUnidades?: number | null;
 }>();
 const emit = defineEmits<{ cerrar: []; agregar: [unidades: number] }>();
 const dialogo = ref<HTMLDialogElement | null>(null);

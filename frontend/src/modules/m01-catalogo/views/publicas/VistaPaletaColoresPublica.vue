@@ -297,7 +297,7 @@
 
     <div
       v-if="mensaje"
-      class="fixed bottom-5 left-1/2 z-40 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-card bg-corporate px-4 py-3 text-sm text-white shadow-lg"
+      class="fixed bottom-5 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-card bg-corporate px-4 py-3 text-sm text-white shadow-lg"
       role="status"
     >
       <div class="flex items-start justify-between gap-3">

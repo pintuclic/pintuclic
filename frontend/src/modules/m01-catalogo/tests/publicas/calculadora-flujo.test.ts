@@ -53,6 +53,28 @@ describe('calculadora pública M01', () => {
     expect(wrapper.emitted('verProducto')).toHaveLength(1);
   });
 
+  it.each([
+    [3, 'Se agregarán 3 unidades de Galón.', 'Solo hay 3 unidades disponibles de Galón; la recomendación es de 5.'],
+    [1, 'Se agregará 1 unidad de Galón.', 'Solo hay 1 unidad disponible de Galón; la recomendación es de 5.'],
+  ])('con %i en existencia avisa antes de agregar cuánto se agregará realmente', (maximo, agregar, aviso) => {
+    const producto = { id_producto: 7, nombre: 'Pintura de prueba', rendimiento_min: 10, rendimiento_max: 10 } as FichaProductoPublico;
+    const wrapper = mount(CalculadoraPinturaContenido, {
+      props: { producto, presentacion: { nombre: 'Galón', volumen: '3.785' }, maximoUnidades: maximo, compacto: true },
+    });
+
+    expect(wrapper.find('[data-testid="unidades-recomendadas"]').text().replace(/\s+/g, ' ')).toBe(agregar);
+    expect(wrapper.find('[data-testid="aviso-existencias"]').text().replace(/\s+/g, ' ')).toContain(aviso);
+  });
+
+  it('si las existencias alcanzan, no muestra aviso', () => {
+    const producto = { id_producto: 7, nombre: 'Pintura de prueba', rendimiento_min: 10, rendimiento_max: 10 } as FichaProductoPublico;
+    const wrapper = mount(CalculadoraPinturaContenido, {
+      props: { producto, presentacion: { nombre: 'Galón', volumen: '3.785' }, maximoUnidades: 40 },
+    });
+    expect(wrapper.find('[data-testid="aviso-existencias"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="unidades-recomendadas"]').text()).toContain('5 unidades');
+  });
+
   it('en el modal (compacto) no repite el producto ni el botón de volver, y muestra el resultado al lado', () => {
     const producto = { id_producto: 7, nombre: 'Pintura de prueba', rendimiento_min: 10, rendimiento_max: 10 } as FichaProductoPublico;
     const wrapper = mount(CalculadoraPinturaContenido, { props: { producto, mostrarVolver: true, compacto: true } });
