@@ -52,4 +52,17 @@ describe('calculadora pública M01', () => {
     await wrapper.findAll('button').find((button) => button.text() === 'Volver al producto')?.trigger('click');
     expect(wrapper.emitted('verProducto')).toHaveLength(1);
   });
+
+  it('en el modal (compacto) no repite el producto ni el botón de volver, y muestra el resultado al lado', () => {
+    const producto = { id_producto: 7, nombre: 'Pintura de prueba', rendimiento_min: 10, rendimiento_max: 10 } as FichaProductoPublico;
+    const wrapper = mount(CalculadoraPinturaContenido, { props: { producto, mostrarVolver: true, compacto: true } });
+
+    expect(wrapper.find('header').text()).toContain('Pintura de prueba');
+    expect(wrapper.find('header').text()).toContain('10.0 m² por galón y mano');
+    expect(wrapper.text()).not.toContain('Volver al producto');
+    expect(wrapper.text()).not.toContain('Ver detalle del producto');
+    expect(wrapper.text()).not.toContain('Herramienta de estimación');
+    expect(wrapper.text().match(/Área (total|calculada)/gi)).toHaveLength(1);
+    expect(wrapper.find('[data-testid="resultado-calculadora"]').text()).toMatch(/5\s*galones/);
+  });
 });

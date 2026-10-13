@@ -1,7 +1,24 @@
 <template>
   <section class="space-y-5">
+    <!-- Encabezado compacto (modal): título y producto en una línea, sin banner -->
+    <header v-if="compacto" class="flex items-center gap-3 pr-12">
+      <span class="grid h-11 w-11 shrink-0 place-items-center rounded-card bg-corporate text-white">
+        <Calculator :size="22" />
+      </span>
+      <div class="min-w-0">
+        <h1 class="font-poppins text-xl font-extrabold text-corporate sm:text-2xl">
+          Calculadora de pintura
+        </h1>
+        <p v-if="producto" class="truncate text-sm text-neutral-medium">
+          Para <strong class="font-semibold text-neutral-dark">{{ nombreProducto }}</strong>
+          · {{ rendimiento.toFixed(1) }} m² por galón y mano
+        </p>
+      </div>
+    </header>
+
     <!-- Encabezado -->
     <header
+      v-else
       class="relative overflow-hidden rounded-card bg-corporate bg-cover bg-center p-5 text-white shadow-sm sm:p-7"
       :style="fondoDecorativoCalculadora"
     >
@@ -40,7 +57,8 @@
       </div>
     </header>
 
-    <div v-if="mostrarVolver && producto" class="flex justify-end">
+    <!-- En el modal la «X» ya cierra y vuelve a la ficha: no se repite el botón -->
+    <div v-if="mostrarVolver && producto && !compacto" class="flex justify-end">
       <button
         type="button"
         class="inline-flex min-h-10 items-center justify-center rounded-button border border-action px-4 text-sm font-semibold text-action transition-colors hover:bg-subaction focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
@@ -50,8 +68,11 @@
       </button>
     </div>
 
-    <!-- Configuración -->
-    <div class="grid gap-5" :class="compacto ? 'lg:grid-cols-[minmax(0,500px)_240px] lg:justify-center' : 'lg:grid-cols-[minmax(0,1fr)_310px]'">
+    <!-- Configuración; en el modal, el resultado ocupa la columna derecha para verse sin desplazarse -->
+    <div
+      class="grid gap-5"
+      :class="compacto ? 'lg:grid-cols-[minmax(0,1fr)_320px]' : 'lg:grid-cols-[minmax(0,1fr)_310px]'"
+    >
       <section
         class="rounded-card border border-neutral-light bg-neutral-white p-5 shadow-sm sm:p-6"
       >
@@ -216,8 +237,9 @@
             </div>
           </div>
 
-          <!-- Área calculada -->
+          <!-- Área calculada (en el modal se ve junto al resultado) -->
           <div
+            v-if="!compacto"
             class="mt-4 flex items-center justify-between gap-4 rounded-card border border-action/20 bg-subaction px-4 py-3"
           >
             <div class="min-w-0">
@@ -241,8 +263,9 @@
         </div>
       </section>
 
-      <!-- Producto -->
+      <!-- Producto (en el modal, su nombre y rendimiento van en el encabezado) -->
       <aside
+        v-if="!compacto"
         class="h-fit rounded-card border border-neutral-light bg-neutral-white p-4 shadow-sm lg:sticky lg:top-24"
       >
         <p
@@ -298,143 +321,151 @@
           Ver detalle del producto
         </button>
       </aside>
-    </div>
 
-    <!-- Resultado -->
-    <section
-      class="overflow-hidden rounded-card border border-neutral-light bg-neutral-white shadow-sm"
-    >
-      <div class="px-5 py-6 text-center sm:px-8">
-        <div
-          class="mx-auto grid h-11 w-11 place-items-center rounded-full bg-subaction text-action"
-        >
-          <PaintBucket :size="21" />
-        </div>
-
-        <p
-          class="mt-3 text-xs font-semibold uppercase tracking-wider text-neutral-medium"
-        >
-          Resultado estimado
-        </p>
-
-        <p
-          v-if="!datosValidos"
-          class="mx-auto mt-2 max-w-md text-sm font-semibold text-corporate"
-          role="status"
-        >
-          Corrige las medidas de la superficie para ver cuánta pintura necesitas.
-        </p>
-
-        <template v-else>
-        <h2
-          class="font-poppins mt-1 text-lg font-bold text-corporate sm:text-xl"
-        >
-          Necesitas aproximadamente
-        </h2>
-
-        <!-- En la presentación elegida (p. ej. cuartos), o en galones si no hay presentación -->
-        <div class="mt-1" data-testid="resultado-calculadora">
-          <span
-            class="font-poppins text-5xl font-extrabold text-action sm:text-6xl"
-          >
-            {{ resultadoEnPresentacion ? unidadesRecomendadas : galones }}
-          </span>
-
-          <span
-            class="font-poppins ml-2 text-2xl font-bold text-action sm:text-3xl"
-          >
-            <template v-if="resultadoEnPresentacion">
-              {{ unidadesRecomendadas === 1 ? 'unidad' : 'unidades' }} de {{ presentacion?.nombre }}
-            </template>
-            <template v-else>
-              {{ galones === 1 ? 'galón' : 'galones' }}
-            </template>
-          </span>
-        </div>
-
-        <p class="mt-2 text-sm font-semibold text-corporate" data-testid="detalle-resultado">
-          para {{ manos }} manos · aprox. {{ formatoLitros.format(litrosNecesarios) }} litros de pintura
-        </p>
-
-        <!-- Resumen -->
-        <div
-          class="mx-auto mt-6 grid max-w-2xl grid-cols-2 divide-x divide-neutral-light rounded-card bg-neutral-lightest"
-        >
-          <div class="p-4">
-            <p class="text-xs font-semibold text-neutral-medium">
-              Área calculada
-            </p>
-
-            <p
-              class="font-poppins mt-1 text-lg font-extrabold text-corporate"
-            >
-              {{ area.toFixed(1) }} m²
-            </p>
-          </div>
-
-          <div class="p-4">
-            <p class="text-xs font-semibold text-neutral-medium">
-              Rendimiento por galón y mano
-            </p>
-
-            <p
-              class="font-poppins mt-1 text-lg font-extrabold text-corporate"
-            >
-              {{ rendimiento.toFixed(1) }} m²/gal
-            </p>
-          </div>
-        </div>
-        </template>
-
-        <p
-          v-if="producto && datosValidos"
-          class="mx-auto mt-5 max-w-sm text-sm text-neutral-dark"
-          data-testid="unidades-recomendadas"
-        >
-          Se agregarán
-          <strong class="text-corporate">{{ unidadesRecomendadas }} {{ unidadesRecomendadas === 1 ? 'unidad' : 'unidades' }}</strong>
-          de {{ presentacion?.nombre ?? 'galón' }}.
-        </p>
-
-        <button
-          v-if="producto"
-          type="button"
-          :disabled="!datosValidos"
-          class="mx-auto mt-3 inline-flex min-h-12 w-full max-w-sm items-center justify-center gap-2 rounded-button bg-conversion px-6 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-conversion-hover hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-          @click="agregarRecomendacion"
-        >
-          <ShoppingCart :size="18" />
-          Agregar al carrito
-        </button>
-        <button
-          v-else
-          type="button"
-          class="mx-auto mt-6 inline-flex min-h-12 w-full max-w-sm items-center justify-center rounded-button bg-action px-6 text-sm font-bold text-white shadow-sm transition-colors hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-          @click="emit('verProductos')"
-        >
-          Ver productos
-        </button>
-      </div>
-
-      <!-- Nota -->
-      <div
-        class="flex gap-3 border-t border-neutral-light bg-neutral-lightest px-5 py-4 text-xs leading-5 text-neutral-medium sm:px-8"
+      <!-- Resultado -->
+      <section
+        class="overflow-hidden rounded-card border border-neutral-light bg-neutral-white shadow-sm"
+        :class="compacto ? 'lg:sticky lg:top-0' : 'lg:col-span-2'"
       >
-        <Lightbulb
-          :size="17"
-          class="mt-0.5 shrink-0 text-highlight"
-        />
+        <div class="text-center" :class="compacto ? 'px-5 py-5' : 'px-5 py-6 sm:px-8'">
+          <div
+            v-if="!compacto"
+            class="mx-auto grid h-11 w-11 place-items-center rounded-full bg-subaction text-action"
+          >
+            <PaintBucket :size="21" />
+          </div>
 
-        <p>
-          <strong class="text-neutral-dark">
-            Ten en cuenta:
-          </strong>
-          esta es una estimación aproximada. El rendimiento real puede variar
-          según la textura, porosidad, herramienta utilizada y color de la
-          superficie.
-        </p>
-      </div>
-    </section>
+          <p
+            class="text-xs font-semibold uppercase tracking-wider text-neutral-medium"
+            :class="{ 'mt-3': !compacto }"
+          >
+            Resultado estimado
+          </p>
+
+          <p
+            v-if="!datosValidos"
+            class="mx-auto mt-2 max-w-md text-sm font-semibold text-corporate"
+            role="status"
+          >
+            Corrige las medidas de la superficie para ver cuánta pintura necesitas.
+          </p>
+
+          <template v-else>
+          <h2
+            class="font-poppins mt-1 text-lg font-bold text-corporate sm:text-xl"
+          >
+            Necesitas aproximadamente
+          </h2>
+
+          <!-- En la presentación elegida (p. ej. cuartos), o en galones si no hay presentación -->
+          <div class="mt-1" data-testid="resultado-calculadora">
+            <span
+              class="font-poppins text-5xl font-extrabold text-action"
+              :class="{ 'sm:text-6xl': !compacto }"
+            >
+              {{ resultadoEnPresentacion ? unidadesRecomendadas : galones }}
+            </span>
+
+            <span
+              class="font-poppins font-bold text-action"
+              :class="compacto ? 'mt-1 block text-lg leading-6' : 'ml-2 text-2xl sm:text-3xl'"
+            >
+              <template v-if="resultadoEnPresentacion">
+                {{ unidadesRecomendadas === 1 ? 'unidad' : 'unidades' }} de {{ presentacion?.nombre }}
+              </template>
+              <template v-else>
+                {{ galones === 1 ? 'galón' : 'galones' }}
+              </template>
+            </span>
+          </div>
+
+          <p class="mt-2 text-sm font-semibold text-corporate" data-testid="detalle-resultado">
+            para {{ manos }} manos · aprox. {{ formatoLitros.format(litrosNecesarios) }} litros de pintura
+          </p>
+
+          <!-- Resumen -->
+          <div
+            class="mx-auto grid max-w-2xl divide-x divide-neutral-light rounded-card bg-neutral-lightest"
+            :class="compacto ? 'mt-4 grid-cols-1' : 'mt-6 grid-cols-2'"
+          >
+            <div :class="compacto ? 'flex items-center justify-between gap-3 px-4 py-3' : 'p-4'">
+              <p class="text-xs font-semibold text-neutral-medium">
+                Área calculada
+              </p>
+
+              <p
+                class="font-poppins text-lg font-extrabold text-corporate"
+                :class="{ 'mt-1': !compacto }"
+              >
+                {{ area.toFixed(1) }} m²
+              </p>
+            </div>
+
+            <!-- En el modal el rendimiento ya figura en el encabezado -->
+            <div v-if="!compacto" class="p-4">
+              <p class="text-xs font-semibold text-neutral-medium">
+                Rendimiento por galón y mano
+              </p>
+
+              <p
+                class="font-poppins mt-1 text-lg font-extrabold text-corporate"
+              >
+                {{ rendimiento.toFixed(1) }} m²/gal
+              </p>
+            </div>
+          </div>
+          </template>
+
+          <p
+            v-if="producto && datosValidos"
+            class="mx-auto mt-5 max-w-sm text-sm text-neutral-dark"
+            data-testid="unidades-recomendadas"
+          >
+            Se agregarán
+            <strong class="text-corporate">{{ unidadesRecomendadas }} {{ unidadesRecomendadas === 1 ? 'unidad' : 'unidades' }}</strong>
+            de {{ presentacion?.nombre ?? 'galón' }}.
+          </p>
+
+          <button
+            v-if="producto"
+            type="button"
+            :disabled="!datosValidos"
+            class="mx-auto mt-3 inline-flex min-h-12 w-full max-w-sm items-center justify-center gap-2 rounded-button bg-conversion px-6 text-sm font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-conversion-hover hover:shadow-md active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-conversion disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+            @click="agregarRecomendacion"
+          >
+            <ShoppingCart :size="18" />
+            Agregar al carrito
+          </button>
+          <button
+            v-else
+            type="button"
+            class="mx-auto mt-6 inline-flex min-h-12 w-full max-w-sm items-center justify-center rounded-button bg-action px-6 text-sm font-bold text-white shadow-sm transition-colors hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
+            @click="emit('verProductos')"
+          >
+            Ver productos
+          </button>
+        </div>
+
+        <!-- Nota -->
+        <div
+          class="flex gap-3 border-t border-neutral-light bg-neutral-lightest px-5 py-4 text-xs leading-5 text-neutral-medium sm:px-8"
+        >
+          <Lightbulb
+            :size="17"
+            class="mt-0.5 shrink-0 text-highlight"
+          />
+
+          <p>
+            <strong class="text-neutral-dark">
+              Ten en cuenta:
+            </strong>
+            esta es una estimación aproximada. El rendimiento real puede variar
+            según la textura, porosidad, herramienta utilizada y color de la
+            superficie.
+          </p>
+        </div>
+      </section>
+    </div>
   </section>
 </template>
 

@@ -2,7 +2,7 @@
   <Teleport to="body">
     <dialog
       ref="dialogo"
-      class="fixed inset-0 m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-[820px] overflow-hidden rounded-modal border border-neutral-light bg-neutral-lightest p-0 shadow-2xl backdrop:bg-neutral-black/60 backdrop:backdrop-blur-sm"
+      class="fixed inset-0 m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-[960px] overflow-hidden rounded-modal border border-neutral-light bg-neutral-lightest p-0 shadow-2xl backdrop:bg-neutral-black/60 backdrop:backdrop-blur-sm"
       aria-label="Calculadora de pintura del producto"
       @cancel.prevent="emit('cerrar')"
       @mousedown="alPulsarFondo"
@@ -13,16 +13,15 @@
           <span class="w-1/2 bg-gradient-to-r from-conversion via-highlight to-offer" />
           <span class="w-1/2 bg-gradient-to-r from-offer to-action" />
         </div>
-        <div class="flex shrink-0 justify-end border-b border-neutral-light bg-neutral-white px-4 py-2">
-          <button
-            type="button"
-            class="grid h-10 w-10 place-items-center rounded-button text-neutral-dark hover:bg-neutral-lightest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action"
-            aria-label="Cerrar calculadora"
-            @click="emit('cerrar')"
-          >
-            <X :size="20" aria-hidden="true" />
-          </button>
-        </div>
+        <!-- La «X» flota sobre el contenido para no gastar una franja vacía de alto -->
+        <button
+          type="button"
+          class="absolute right-3 top-5 z-10 grid h-10 w-10 place-items-center rounded-button text-neutral-dark hover:bg-neutral-light focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action sm:right-5 sm:top-7"
+          aria-label="Cerrar calculadora"
+          @click="emit('cerrar')"
+        >
+          <X :size="20" aria-hidden="true" />
+        </button>
         <div class="min-h-0 overflow-y-auto p-4 sm:p-6">
           <CalculadoraPinturaContenido
             :producto="producto"
