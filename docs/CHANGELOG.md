@@ -7,6 +7,14 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.9.3] - 2026-10-12
+### M01 - Filtros de presentación y color en la tarjeta, y buscador del inicio (Frontend)
+- **Alcance General:** **Patch (v0.4.9.3)** por la auditoría de flujos de filtros con datos locales.
+- **Tarjeta y compra rápida:** respetan también los filtros de presentación y color (antes, con "Galón" mostraban el precio del cuarto y con un color agregaban otro). Si ninguna variante cumple todos los filtros, se prioriza color, luego presentación y luego precio.
+- **Buscador del inicio:** lleva al catálogo con el término (`/catalogo?q=…`); antes solo buscaba con Enter y reemplazaba en silencio a los destacados con 10 resultados.
+- **Verificación:** vitest del frontend completo 159/159; ESLint M01 limpio; `vue-tsc` solo con los 2 errores previos de M05; compilación correcta; filtro Galón y búsqueda "azul" comprobados en Docker.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.9.3_M01_filtros_tarjeta_y_buscador_inicio_frontend.md](./walkthroughs/M01/walkthrough_v0.4.9.3_M01_filtros_tarjeta_y_buscador_inicio_frontend.md)
+---
 ## [v0.4.9.2] - 2026-10-12
 ### M01 - Filtro de precio: la tarjeta muestra un precio dentro del rango (Frontend)
 - **Alcance General:** **Patch (v0.4.9.2)** por la auditoría del filtro de precio con datos locales.
