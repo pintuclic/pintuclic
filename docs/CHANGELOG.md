@@ -7,6 +7,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.9.2] - 2026-10-12
+### M01 - Filtro de precio: la tarjeta muestra un precio dentro del rango (Frontend)
+- **Alcance General:** **Patch (v0.4.9.2)** por la auditoría del filtro de precio con datos locales.
+- **Tarjeta y compra rápida:** con un rango activo se muestra y se agrega la variante más barata dentro del rango (antes la más barata del producto, aunque estuviera fuera: el filtro parecía no funcionar).
+- **Punto de color:** corresponde a la variante cuyo precio se muestra.
+- **Máximo 0:** ahora es un error ("El precio máximo debe ser mayor que 0."); antes se convertía en silencio en "sin límite".
+- **Verificación:** vitest del frontend completo 153/153; ESLint M01 limpio; `vue-tsc` solo con los 2 errores previos de M05; compilación correcta; caso $26.000–$26.800 comprobado en Docker.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.9.2_M01_filtro_precio_tarjetas_frontend.md](./walkthroughs/M01/walkthrough_v0.4.9.2_M01_filtro_precio_tarjetas_frontend.md)
+---
 ## [v0.4.9.1] - 2026-10-12
 ### M01 - Calculadora: cantidad recomendada correcta en cuartos y litros (Frontend)
 - **Alcance General:** **Patch (v0.4.9.1)** por la auditoría de la calculadora con datos locales.
