@@ -7,6 +7,13 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.9.5] - 2026-10-13
+### M01 - Distribución del modal de la calculadora (Frontend)
+- **Alcance General:** **Patch (v0.4.9.5)**.
+- **Modal de la calculadora:** encabezado compacto con el producto y su rendimiento; el resultado y «Agregar al carrito» van en la columna derecha y se ven sin desplazarse; se retiran el banner, «Volver al producto», la tarjeta del producto y los datos repetidos. La página `/calculadora` no cambia.
+- **Verificación:** vitest del frontend 163/163; ESLint M01 limpio; `vue-tsc` solo con los 2 errores previos de M05; comprobado en Docker a 1440×900 y 1280×720.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.9.5_M01_distribucion_modal_calculadora_frontend.md](./walkthroughs/M01/walkthrough_v0.4.9.5_M01_distribucion_modal_calculadora_frontend.md)
+---
 ## [v0.4.9.4] - 2026-10-12
 ### M01 - Filas de 4 con pocos resultados (Frontend)
 - **Alcance General:** **Patch (v0.4.9.4)**.
