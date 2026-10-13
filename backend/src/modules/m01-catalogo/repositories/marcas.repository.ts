@@ -1,4 +1,4 @@
-import { Kysely } from 'kysely';
+import { Kysely, Transaction } from 'kysely';
 import { Database, NewMarca, MarcaUpdate } from '../../../core/db/types';
 import { MarcaResumen, MarcaLogotipo } from '../interfaces/m01.interfaces';
 
@@ -64,17 +64,18 @@ export class MarcasRepository {
   }
 
   /**
-   * RF-CAT-04-03: desactiva la marca y, en cascada, sus líneas, bases, colores,
-   * productos y las variantes de esos productos, todo en una sola transacción
-   * para no dejar cambios parciales si una escritura falla.
+   * RF-CAT-04-03: desactiva la marca y, en cascada, sus líneas, bases, colores y
+   * productos, más las escrituras externas que reciba (campañas), todo en una
+   * sola transacción para no dejar cambios parciales si una escritura falla.
    */
-  async desactivarEnCascada(id: number): Promise<void> {
+  async desactivarEnCascada(id: number, cascadaExterna: (trx: Transaction<Database>) => Promise<void>): Promise<void> {
     await this.db.transaction().execute(async (trx) => {
       await trx.updateTable('marca').set({ estado: 'inactivo' }).where('id_marca', '=', id).execute();
       await trx.updateTable('linea').set({ estado: 'inactivo' }).where('id_marca', '=', id).execute();
       await trx.updateTable('base').set({ estado: 'inactivo' }).where('id_marca', '=', id).execute();
       await trx.updateTable('color').set({ estado: 'inactivo' }).where('id_marca', '=', id).execute();
       await trx.updateTable('producto').set({ estado: 'inactivo' }).where('id_marca', '=', id).execute();
+      await cascadaExterna(trx);
     });
   }
 }

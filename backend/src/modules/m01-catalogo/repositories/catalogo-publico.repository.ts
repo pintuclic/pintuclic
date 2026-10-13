@@ -1,5 +1,6 @@
 import { Kysely, ExpressionBuilder, Expression, SqlBool, sql } from 'kysely';
-import { Database, Producto, ProductoTable, Color, EnumClaseColor } from '../../../core/db/types';
+import { Database, Producto, ProductoTable, Color, ColorTable, EnumClaseColor } from '../../../core/db/types';
+import { TamanoImagen, VersionesImagen } from '../interfaces/m01.interfaces';
 
 // ==============================================================================
 // M01 - REPOSITORIO DE CONSULTA PÚBLICA (HU-CAT-06)
@@ -60,13 +61,56 @@ export interface FilaProductoResumenPublico {
   id_imagen_principal: number | null;
   cantidad_colores: string | number;
   patrocinado: boolean;
+  es_combo: boolean;
+  agotado: boolean;
 }
-export interface ContenidoImagenPublica {
-  datos: Buffer;
+
+/** Producto público con su estado de combo (HU-CAT-13). */
+export type ProductoPublico = Producto & { es_combo: boolean; agotado: boolean };
+/** Columna de `imagen` que corresponde a cada tamaño público (RNF-CAT-07-01). */
+const COLUMNA_POR_TAMANO = { original: 'i.datos', miniatura: 'i.miniatura', optimizada: 'i.optimizada' } as const;
+
+/** Versión pedida de una imagen pública; `contenido` es null si esa versión aún no se generó. */
+export interface VersionImagenPublica {
+  contenido: Buffer | null;
   mime_type: string;
 }
 
 type EbProducto = ExpressionBuilder<Database & { p: ProductoTable }, 'p'>;
+type EbColor = ExpressionBuilder<Database & { c: ColorTable }, 'c'>;
+
+/** Variante entonable que resuelve la base consumida por un color (RF-CAT-12-05). */
+export interface FilaVarianteEntonada {
+  id_variante: number;
+  id_base: number;
+  base: string;
+  precio_vigente: string;
+}
+
+/**
+ * RF-CAT-12-04/06: variantes del producto sobre las que puede prepararse el
+ * color `c`. La base debe estar declarada para el color (color_base), ofrecida
+ * por el producto (producto_base) y activa, y la variante y su presentación
+ * deben estar activas. Es la única definición de "color preparable" del módulo:
+ * la usan la carta, el conteo de colores del listado y la resolución de la base.
+ */
+function variantesPreparables(eb: EbColor, idProducto: Expression<number> | number) {
+  return eb
+    .selectFrom('variante as ve')
+    .innerJoin('color_base as cb', (j) => j.onRef('cb.id_base', '=', 've.id_base').onRef('cb.id_color', '=', 'c.id_color'))
+    .innerJoin('producto_base as pb', (j) => j.onRef('pb.id_producto', '=', 've.id_producto').onRef('pb.id_base', '=', 've.id_base'))
+    .innerJoin('base as ba', 'ba.id_base', 've.id_base')
+    .innerJoin('presentacion as pre', 'pre.id_presentacion', 've.id_presentacion')
+    .where('ve.id_producto', '=', idProducto)
+    .where('ve.estado', '=', 'activo')
+    .where('ba.estado', '=', 'activo')
+    .where('pre.estado', '=', 'activo');
+}
+
+/** RF-CAT-12-06: el color `c` tiene al menos una base vendible en el producto. */
+function colorPreparable(eb: EbColor, idProducto: Expression<number> | number) {
+  return eb.exists(variantesPreparables(eb, idProducto).select('ve.id_variante'));
+}
 
 /**
  * RF-CAT-01-04 / RF-CAT-09-02: elegibilidad pública única de un producto. Además
@@ -122,6 +166,32 @@ function productoElegible(eb: EbProducto): Expression<SqlBool> {
   ]);
 }
 
+/** HU-CAT-13: el producto está registrado como combo. */
+function esCombo(eb: EbProducto) {
+  return eb
+    .exists(eb.selectFrom('combo as cb').whereRef('cb.id_producto', '=', 'p.id_producto').select('cb.id_combo'))
+    .$castTo<boolean>();
+}
+
+/** CA-CAT-13-06 / RF-CAT-13-04: combo sin ninguna variante activa con unidades disponibles. */
+function comboAgotado(eb: EbProducto) {
+  return eb
+    .and([
+      esCombo(eb),
+      eb.not(
+        eb.exists(
+          eb
+            .selectFrom('variante as vx')
+            .whereRef('vx.id_producto', '=', 'p.id_producto')
+            .where('vx.estado', '=', 'activo')
+            .where('vx.existencia_referencial', '>', 0)
+            .select('vx.id_variante')
+        )
+      ),
+    ])
+    .$castTo<boolean>();
+}
+
 export class CatalogoPublicoRepository {
   constructor(private readonly db: Kysely<Database>) {}
 
@@ -168,6 +238,7 @@ export class CatalogoPublicoRepository {
   /** RF-CAT-06-01 / RNF-CAT-06-01: productos activos+publicados, filtrables y paginados con resumen sin N+1. */
   async listarProductos(filtros: FiltrosProductosPublicos): Promise<FilaProductoResumenPublico[]> {
     const query = this.aplicarFiltros(filtros)
+      .select((eb) => [esCombo(eb).as('es_combo'), comboAgotado(eb).as('agotado')])
       .innerJoin('marca as m', 'm.id_marca', 'p.id_marca')
       .select([
         'p.id_producto',
@@ -212,18 +283,8 @@ export class CatalogoPublicoRepository {
               eb
                 .selectFrom('color as c')
                 .select(({ fn }) => fn.count<number>('c.id_color').as('count'))
-                .whereRef('c.id_marca', '=', 'p.id_marca')
                 .where('c.estado', '=', 'activo')
-                .where((ebColor) =>
-                  ebColor.exists(
-                    ebColor
-                      .selectFrom('variante as v2')
-                      .innerJoin('base as b2', 'b2.id_base', 'v2.id_base')
-                      .whereRef('v2.id_producto', '=', 'p.id_producto')
-                      .where('v2.estado', '=', 'activo')
-                      .where('b2.estado', '=', 'activo')
-                  )
-                )
+                .where((ebColor) => colorPreparable(ebColor, eb.ref('p.id_producto')))
             )
             .else(eb.lit(0))
             .end(),
@@ -245,10 +306,11 @@ export class CatalogoPublicoRepository {
   }
 
   /** CA-CAT-06-03 / RF-CAT-09-02: la ficha solo existe si el producto es públicamente elegible. */
-  async obtenerProductoPublico(id: number): Promise<Producto | undefined> {
+  async obtenerProductoPublico(id: number): Promise<ProductoPublico | undefined> {
     return this.db
       .selectFrom('producto as p')
       .selectAll('p')
+      .select((eb) => [esCombo(eb).as('es_combo'), comboAgotado(eb).as('agotado')])
       .where('p.id_producto', '=', id)
       .where(productoElegible)
       .executeTakeFirst();
@@ -289,8 +351,12 @@ export class CatalogoPublicoRepository {
       .execute();
   }
 
-  /** Recupera colores activos para el paginado en memoria, evaluando la disponibilidad según clase. */
-  async listarColoresActivosDeProducto(idProducto: number, idMarca: number, claseColor: EnumClaseColor): Promise<Color[]> {
+  /**
+   * RF-CAT-06-03/04: colores activos que el producto puede vender. Colores fijos:
+   * los de sus variantes activas. Entonable: los preparables sobre una base
+   * vendible del producto (RF-CAT-12-06, CA-CAT-12-05/06).
+   */
+  async listarColoresActivosDeProducto(idProducto: number, claseColor: EnumClaseColor): Promise<Color[]> {
     if (claseColor === 'sin_color') return [];
 
     let query = this.db.selectFrom('color as c')
@@ -310,32 +376,23 @@ export class CatalogoPublicoRepository {
         )
       );
     } else if (claseColor === 'entonable') {
-      query = query.where('c.id_marca', '=', idMarca).where((eb) =>
-        eb.exists(
-          eb.selectFrom('variante as v')
-            .innerJoin('base as b', 'b.id_base', 'v.id_base')
-            .innerJoin('presentacion as pr', 'pr.id_presentacion', 'v.id_presentacion')
-            .where('v.id_producto', '=', idProducto)
-            .where('v.estado', '=', 'activo')
-            .where('b.estado', '=', 'activo')
-            .where('pr.estado', '=', 'activo')
-            .select('v.id_variante')
-        )
-      );
+      query = query.where((eb) => colorPreparable(eb, idProducto));
     }
 
     return query.execute();
   }
 
   /**
-   * RF-CAT-08-02 / CA-CAT-08-03: productos elegibles de una categoría (bajo una
-   * subcategoría activa), patrocinados primero y el resto al azar, excluyendo uno.
+   * RF-CAT-08-02/03 / CA-CAT-08-02: productos elegibles de una categoría (bajo una
+   * subcategoría activa) que no sean combos agotados, patrocinados primero y el
+   * resto al azar, excluyendo uno.
    */
   async complementariosPorCategoria(idCategoria: number, excluirId: number, limite: number): Promise<Producto[]> {
     return this.db
       .selectFrom('producto as p')
       .selectAll('p')
       .where(productoElegible)
+      .where((eb) => eb.not(comboAgotado(eb)))
       .where('p.id_producto', '!=', excluirId)
       .where((eb) =>
         eb.exists(
@@ -354,12 +411,61 @@ export class CatalogoPublicoRepository {
       .execute();
   }
 
-  /** RF-CAT-08-02 (fallback): productos patrocinados elegibles, al azar, excluyendo uno. */
+  /**
+   * RF-CAT-12-05 / CA-CAT-12-04: variante de base que se consume al pedir un
+   * color activo en una presentación de un producto entonable. Si el color
+   * admite varias bases vendibles, se elige de forma estable la de menor id.
+   */
+  async resolverVarianteEntonada(
+    idProducto: number,
+    idColor: number,
+    idPresentacion: number
+  ): Promise<FilaVarianteEntonada | undefined> {
+    return this.db
+      .selectFrom('color as c')
+      .innerJoinLateral(
+        (eb) =>
+          variantesPreparables(eb, idProducto)
+            .where('ve.id_presentacion', '=', idPresentacion)
+            .select(['ve.id_variante', 'ba.id_base', 'ba.nombre as base', 've.precio_vigente'])
+            .orderBy('ba.id_base', 'asc')
+            .limit(1)
+            .as('vp'),
+        (join) => join.onTrue()
+      )
+      .select(['vp.id_variante', 'vp.id_base', 'vp.base', 'vp.precio_vigente'])
+      .where('c.id_color', '=', idColor)
+      .where('c.estado', '=', 'activo')
+      .executeTakeFirst();
+  }
+
+  /**
+   * RF-CAT-08-01: categoría complementaria heredada de las categorías activas
+   * del producto (por su orden administrado), o null si ninguna la declara.
+   */
+  async categoriaComplementariaHeredada(idProducto: number): Promise<number | null> {
+    const fila = await this.db
+      .selectFrom('producto_subcategoria as ps')
+      .innerJoin('subcategorias as s', 's.id_subcategoria', 'ps.id_subcategoria')
+      .innerJoin('categoria as c', 'c.id_categoria', 's.id_categoria')
+      .select('c.id_categoria_complementaria')
+      .where('ps.id_producto', '=', idProducto)
+      .where('s.estado', '=', 'activo')
+      .where('c.estado', '=', 'activo')
+      .where('c.id_categoria_complementaria', 'is not', null)
+      .orderBy('c.orden', 'asc')
+      .orderBy('c.id_categoria', 'asc')
+      .executeTakeFirst();
+    return fila?.id_categoria_complementaria ?? null;
+  }
+
+  /** RF-CAT-08-02/03 (fallback): patrocinados elegibles que no sean combos agotados, al azar, excluyendo uno. */
   async patrocinados(excluirId: number, limite: number): Promise<Producto[]> {
     return this.db
       .selectFrom('producto as p')
       .selectAll('p')
       .where(productoElegible)
+      .where((eb) => eb.not(comboAgotado(eb)))
       .where('p.patrocinado', '=', true)
       .where('p.id_producto', '!=', excluirId)
       .orderBy(sql`random()`)
@@ -378,16 +484,21 @@ export class CatalogoPublicoRepository {
   }
 
   /**
-   * RF-CAT-06-01 / RF-CAT-07-03: binario de una imagen accesible al visitante
-   * solo si su producto es públicamente elegible.
+   * RF-CAT-06-01 / RF-CAT-07-03 / RNF-CAT-07-01: lee solo la versión pedida de
+   * una imagen, y solo si su producto es públicamente elegible.
    */
-  async obtenerContenidoImagenPublica(idImagen: number): Promise<ContenidoImagenPublica | undefined> {
+  async obtenerVersionImagenPublica(idImagen: number, tamano: TamanoImagen): Promise<VersionImagenPublica | undefined> {
     return this.db
       .selectFrom('imagen as i')
-      .select(['i.datos', 'i.mime_type'])
+      .select([`${COLUMNA_POR_TAMANO[tamano]} as contenido`, 'i.mime_type'])
       .where('i.id_imagen', '=', idImagen)
       .where('i.id_producto', 'in', this.idsElegibles())
       .executeTakeFirst();
+  }
+
+  /** RNF-CAT-07-01: guarda las versiones generadas de una imagen previa a v4.0. */
+  async guardarVersionesImagen(idImagen: number, versiones: VersionesImagen): Promise<void> {
+    await this.db.updateTable('imagen').set(versiones).where('id_imagen', '=', idImagen).execute();
   }
 
   private aplicarFiltros(filtros: FiltrosProductosPublicos) {

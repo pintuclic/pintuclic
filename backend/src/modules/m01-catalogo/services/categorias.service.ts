@@ -19,7 +19,12 @@ export class CategoriasService {
     if (existente) {
       throw new AppError('Ya existe una categoría raíz con ese nombre', 409, 'CATEGORIA_DUPLICADA');
     }
-    return this.repo.crear({ nombre: dto.nombre, orden: dto.orden });
+    await this.validarCategoriaComplementaria(dto.id_categoria_complementaria);
+    return this.repo.crear({
+      nombre: dto.nombre,
+      orden: dto.orden,
+      id_categoria_complementaria: dto.id_categoria_complementaria ?? null,
+    });
   }
 
   async listar(): Promise<Categoria[]> {
@@ -44,7 +49,12 @@ export class CategoriasService {
       }
     }
 
-    const actualizada = await this.repo.actualizar(id, { nombre: dto.nombre, orden: dto.orden });
+    await this.validarCategoriaComplementaria(dto.id_categoria_complementaria);
+    const actualizada = await this.repo.actualizar(id, {
+      nombre: dto.nombre,
+      orden: dto.orden,
+      id_categoria_complementaria: dto.id_categoria_complementaria,
+    });
     if (!actualizada) {
       throw new AppError('Categoría no encontrada', 404, 'NOT_FOUND');
     }
@@ -86,5 +96,13 @@ export class CategoriasService {
     }
     await this.repo.cambiarEstado(id, 'activo');
     return { reactivado: true };
+  }
+
+  /** RF-CAT-08-01: la categoría complementaria indicada debe existir. */
+  private async validarCategoriaComplementaria(idCategoria: number | null | undefined): Promise<void> {
+    if (idCategoria === undefined || idCategoria === null) return;
+    if (!(await this.repo.obtenerPorId(idCategoria))) {
+      throw new AppError('La categoría complementaria indicada no existe', 404, 'CATEGORIA_NO_ENCONTRADA');
+    }
   }
 }

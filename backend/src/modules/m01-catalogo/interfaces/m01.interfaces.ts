@@ -1,4 +1,5 @@
-import { EnumEstadoGeneral, EnumClaseColor, EnumEstadoProducto } from '../../../core/db/types';
+import { Transaction } from 'kysely';
+import { Database, EnumEstadoGeneral, EnumClaseColor, EnumEstadoProducto } from '../../../core/db/types';
 
 // ==============================================================================
 // M01 - CATÁLOGO DE PRODUCTOS
@@ -15,6 +16,8 @@ export interface CategoriaDetalle {
   readonly nombre: string;
   readonly orden: number;
   readonly estado: EnumEstadoGeneral;
+  /** RF-CAT-08-01: complementarios heredables por los productos de la categoría. */
+  readonly id_categoria_complementaria: number | null;
 }
 
 /** Ficha de una subcategoría, siempre atada a una única categoría padre (RF-CAT-01-02). */
@@ -35,10 +38,11 @@ export interface ImpactoDesactivacion {
   readonly requiere_confirmacion: true;
   readonly productos_afectados: number;
   readonly subcategorias_afectadas?: number;
-  /** Reglas comerciales vigentes de M06 que dependen del elemento (RF-CAT-11-03). */
-  readonly reglas_afectadas?: number;
-  /** false mientras M06 no exista: `reglas_afectadas` no es un conteo confirmado. */
-  readonly reglas_integradas?: boolean;
+  /**
+   * Reglas comerciales vigentes de M06 que dependen del elemento (RF-CAT-11-03).
+   * `null` indica que M06 no está integrado: no hay conteo confirmado.
+   */
+  readonly reglas_afectadas?: number | null;
 }
 
 /** Confirmación de que la desactivación (o reactivación) se aplicó. */
@@ -173,6 +177,28 @@ export interface ImagenContenido {
   readonly mime_type: string;
 }
 
+/**
+ * RNF-CAT-07-01: tamaño de imagen que se entrega al visitante. La miniatura
+ * sirve a los listados, la optimizada a la ficha y el original al panel.
+ */
+export type TamanoImagen = 'miniatura' | 'optimizada' | 'original';
+
+/** Versiones derivadas de una imagen original (WebP). */
+export interface VersionesImagen {
+  readonly miniatura: Buffer;
+  readonly optimizada: Buffer;
+}
+
+/**
+ * Puerto de procesamiento de imágenes (RNF-CAT-07-01). Aísla la librería de
+ * imágenes del resto del módulo y permite sustituirla en las pruebas.
+ */
+export interface OptimizadorImagenes {
+  readonly mimeVersiones: string;
+  /** Genera las versiones; rechaza si el archivo no es una imagen válida. */
+  generarVersiones(original: Buffer): Promise<VersionesImagen>;
+}
+
 // ------------------------------------------------------------------------------
 // CICLO DE VIDA (HU-CAT-09): aviso de impacto en cascada antes de desactivar
 // ------------------------------------------------------------------------------
@@ -215,6 +241,10 @@ export interface ProductoPublicoResumen {
   readonly imagen_principal_url: string | null;
   readonly cantidad_colores: number;
   readonly patrocinado: boolean;
+  /** HU-CAT-13: el producto es un combo con existencia controlada. */
+  readonly es_combo: boolean;
+  /** CA-CAT-13-06: combo sin unidades disponibles; se muestra pero no se puede comprar. */
+  readonly agotado: boolean;
 }
 
 /** Página del listado público (RNF-CAT-06-01: no se descarga todo el catálogo). */
@@ -259,6 +289,19 @@ export interface VariantePublica {
   readonly existencia_referencial: number;
 }
 
+/**
+ * RF-CAT-12-05 / CA-CAT-12-04/08: variante de base que se consume al pedir un
+ * color entonado. M05/M08 la registran en la línea junto al color solicitado.
+ */
+export interface VarianteEntonada {
+  readonly id_variante: number;
+  readonly id_base: number;
+  readonly base: string;
+  readonly id_color: number;
+  readonly id_presentacion: number;
+  readonly precio_vigente: number;
+}
+
 /** Ficha pública de un producto (RF-CAT-06-01, CA-CAT-06-02). */
 export interface FichaProductoPublico {
   readonly id_producto: number;
@@ -268,6 +311,8 @@ export interface FichaProductoPublico {
   readonly clase_color: EnumClaseColor;
   readonly rendimiento_min: number | null;
   readonly rendimiento_max: number | null;
+  readonly es_combo: boolean;
+  readonly agotado: boolean;
   readonly variantes: VariantePublica[];
   readonly imagenes: ImagenDetalle[];
 }
@@ -300,4 +345,49 @@ export interface VarianteDetalle {
   readonly existencia_referencial: number;
   readonly codigo_proveedor: string | null;
   readonly estado: EnumEstadoProducto;
+}
+
+// ------------------------------------------------------------------------------
+// COMBOS (HU-CAT-13)
+// ------------------------------------------------------------------------------
+
+/** Variante que compone un combo y cuántas unidades incluye (informativo, RF-CAT-13-01). */
+export interface ComponenteCombo {
+  readonly id_variante: number;
+  readonly cantidad: number;
+}
+
+/** Ficha administrativa de un combo: producto propio con existencia controlada. */
+export interface ComboDetalle {
+  readonly id_combo: number;
+  readonly id_producto: number;
+  /** RF-CAT-13-01 / CA-CAT-13-09: se cobra a su precio, sin rebajas. */
+  readonly excluido_descuentos: boolean;
+  readonly componentes: readonly ComponenteCombo[];
+}
+
+/**
+ * Unidades de una variante que una orden reserva o libera (RF-CAT-13-02/03,
+ * CA-CAT-13-07). Contrato que M08 consume al generar o cancelar una orden.
+ */
+export interface LineaExistencia {
+  readonly id_variante: number;
+  readonly cantidad: number;
+}
+
+// ------------------------------------------------------------------------------
+// PUERTOS HACIA MÓDULOS AÚN NO INTEGRADOS (Inversión de dependencias)
+// M01 depende de estos contratos, no de M06 ni del módulo de campañas: cuando
+// existan, se inyecta su implementación en m01.routes.ts sin tocar el catálogo.
+// ------------------------------------------------------------------------------
+
+/** Consulta a M06 de las reglas comerciales vigentes que dependen de una línea (RF-CAT-11-03). */
+export interface ConsultaReglasComerciales {
+  /** Cantidad de reglas vigentes, o `null` si M06 no está integrado. */
+  contarVigentesPorLinea(idLinea: number): Promise<number | null>;
+}
+
+/** Cascada de la baja de una marca hacia sus campañas (RF-CAT-04-03), dentro de la misma transacción. */
+export interface CascadaCampanas {
+  desactivarPorMarca(idMarca: number, trx: Transaction<Database>): Promise<void>;
 }

@@ -3,7 +3,6 @@ import {
   FilaVariantePublica,
   FilaImagenPublica,
   FilaProductoResumenPublico,
-  ContenidoImagenPublica,
 } from '../repositories/catalogo-publico.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import {
@@ -15,6 +14,10 @@ import {
   ProductoPublicoResumen,
   PaginaColoresProductoPublico,
   ColorProductoPublico,
+  VarianteEntonada,
+  ImagenContenido,
+  OptimizadorImagenes,
+  TamanoImagen,
 } from '../interfaces/m01.interfaces';
 import { cielabAHex, clasificarFamiliaCromatica } from './colores.service';
 
@@ -30,7 +33,10 @@ const LIMITE_POR_DEFECTO = 20;
 const LIMITE_MAXIMO = 100;
 
 export class CatalogoPublicoService {
-  constructor(private readonly repo: CatalogoPublicoRepository) {}
+  constructor(
+    private readonly repo: CatalogoPublicoRepository,
+    private readonly optimizador: OptimizadorImagenes
+  ) {}
 
   async listarCategorias(): Promise<CategoriaPublica[]> {
     const filas = await this.repo.listarCategoriasConProductos();
@@ -92,6 +98,8 @@ export class CatalogoPublicoService {
       clase_color: producto.clase_color,
       rendimiento_min: producto.rendimiento_min === null ? null : Number(producto.rendimiento_min),
       rendimiento_max: producto.rendimiento_max === null ? null : Number(producto.rendimiento_max),
+      es_combo: producto.es_combo,
+      agotado: producto.agotado,
       variantes: variantes.map(aVariantePublica),
       imagenes: imagenes.map(aImagenDetalle),
     };
@@ -109,7 +117,7 @@ export class CatalogoPublicoService {
     const pagina = opciones.pagina && opciones.pagina > 0 ? Math.floor(opciones.pagina) : 1;
     const limite = Math.min(opciones.limite && opciones.limite > 0 ? Math.floor(opciones.limite) : 100, 500);
 
-    const filas = await this.repo.listarColoresActivosDeProducto(idProducto, producto.id_marca, producto.clase_color);
+    const filas = await this.repo.listarColoresActivosDeProducto(idProducto, producto.clase_color);
 
     let colores: ColorProductoPublico[] = filas.map((c) => {
       const l = Number(c.cie_l);
@@ -147,21 +155,73 @@ export class CatalogoPublicoService {
   }
 
   /**
-   * RF-CAT-06-01 / RF-CAT-07-03: contenido de una imagen para el visitante anónimo.
-   * Solo se entrega si su producto es públicamente elegible; la ruta
-   * administrativa /imagenes/:id/contenido sigue protegida por permiso.
+   * RF-CAT-12-05 / CA-CAT-12-04: determina la variante de base que se consume
+   * cuando el cliente elige un color y una presentación de un producto
+   * entonable. Solo resuelve combinaciones declaradas (RF-CAT-12-04) con base y
+   * variante vendibles (RF-CAT-12-06).
    */
-  async obtenerContenidoImagen(idImagen: number): Promise<ContenidoImagenPublica> {
-    const imagen = await this.repo.obtenerContenidoImagenPublica(idImagen);
-    if (!imagen) {
-      throw new AppError('Imagen no disponible', 404, 'IMAGEN_NO_DISPONIBLE');
+  async resolverEntonado(idProducto: number, idColor: number, idPresentacion: number): Promise<VarianteEntonada> {
+    const producto = await this.repo.obtenerProductoPublico(idProducto);
+    if (!producto) {
+      throw new AppError('Producto no disponible', 404, 'PRODUCTO_NO_DISPONIBLE');
     }
-    return imagen;
+    if (producto.clase_color !== 'entonable') {
+      throw new AppError('El producto no es entonable', 409, 'PRODUCTO_NO_ENTONABLE');
+    }
+    const variante = await this.repo.resolverVarianteEntonada(idProducto, idColor, idPresentacion);
+    if (!variante) {
+      throw new AppError(
+        'El color no puede prepararse en esa presentación del producto',
+        404,
+        'COLOR_NO_DISPONIBLE'
+      );
+    }
+    return {
+      id_variante: variante.id_variante,
+      id_base: variante.id_base,
+      base: variante.base,
+      id_color: idColor,
+      id_presentacion: idPresentacion,
+      precio_vigente: Number(variante.precio_vigente),
+    };
   }
 
   /**
-   * RF-CAT-08-02/03 / CA-CAT-08-03: hasta 4 productos complementarios elegibles
-   * (con variante activa), patrocinados primero y el resto al azar.
+   * RF-CAT-06-01 / RF-CAT-07-03 / RNF-CAT-07-01: imagen para el visitante
+   * anónimo en el tamaño pedido (miniatura para listados, optimizada para la
+   * ficha). Solo se entrega si su producto es públicamente elegible; la ruta
+   * administrativa /imagenes/:id/contenido sigue protegida por permiso. Las
+   * imágenes previas a v4.0 generan y guardan sus versiones en la primera consulta.
+   */
+  async obtenerContenidoImagen(idImagen: number, tamano: TamanoImagen): Promise<ImagenContenido> {
+    const version = await this.repo.obtenerVersionImagenPublica(idImagen, tamano);
+    if (!version) {
+      throw new AppError('Imagen no disponible', 404, 'IMAGEN_NO_DISPONIBLE');
+    }
+    if (version.contenido !== null) {
+      return { datos: version.contenido, mime_type: tamano === 'original' ? version.mime_type : this.optimizador.mimeVersiones };
+    }
+    if (tamano === 'original') {
+      throw new AppError('Imagen no disponible', 404, 'IMAGEN_NO_DISPONIBLE');
+    }
+    return { datos: (await this.generarVersiones(idImagen))[tamano], mime_type: this.optimizador.mimeVersiones };
+  }
+
+  private async generarVersiones(idImagen: number) {
+    const original = await this.repo.obtenerVersionImagenPublica(idImagen, 'original');
+    if (!original?.contenido) {
+      throw new AppError('Imagen no disponible', 404, 'IMAGEN_NO_DISPONIBLE');
+    }
+    const versiones = await this.optimizador.generarVersiones(original.contenido);
+    await this.repo.guardarVersionesImagen(idImagen, versiones);
+    return versiones;
+  }
+
+  /**
+   * RF-CAT-08-01/02/03 / CA-CAT-08-03: hasta 4 productos complementarios
+   * elegibles (con variante activa y sin combos agotados), patrocinados primero
+   * y el resto al azar. La categoría de origen es la del producto o, si no la
+   * declara, la heredada de su categoría.
    */
   async complementarios(idProducto: number): Promise<ProductoPublicoResumen[]> {
     const producto = await this.repo.obtenerProductoPublico(idProducto);
@@ -169,10 +229,10 @@ export class CatalogoPublicoService {
       throw new AppError('Producto no disponible', 404, 'PRODUCTO_NO_DISPONIBLE');
     }
 
+    const idCategoria =
+      producto.id_categoria_complementaria ?? (await this.repo.categoriaComplementariaHeredada(idProducto));
     let candidatos =
-      producto.id_categoria_complementaria !== null
-        ? await this.repo.complementariosPorCategoria(producto.id_categoria_complementaria, idProducto, MAX_COMPLEMENTARIOS)
-        : [];
+      idCategoria !== null ? await this.repo.complementariosPorCategoria(idCategoria, idProducto, MAX_COMPLEMENTARIOS) : [];
 
     if (candidatos.length === 0) {
       candidatos = await this.repo.patrocinados(idProducto, MAX_COMPLEMENTARIOS);
@@ -191,9 +251,9 @@ export class CatalogoPublicoService {
   }
 }
 
-/** Ruta pública (sin autenticación) del binario de una imagen de producto. */
-function urlImagenPublica(idImagen: number): string {
-  return `/api/catalogo/publico/imagenes/${idImagen}/contenido`;
+/** Ruta pública (sin autenticación) de una imagen de producto en el tamaño indicado (RNF-CAT-07-01). */
+function urlImagenPublica(idImagen: number, tamano: TamanoImagen): string {
+  return `/api/catalogo/publico/imagenes/${idImagen}/contenido?tamano=${tamano}`;
 }
 
 function aProductoPublicoResumen(p: FilaProductoResumenPublico): ProductoPublicoResumen {
@@ -204,9 +264,11 @@ function aProductoPublicoResumen(p: FilaProductoResumenPublico): ProductoPublico
     marca: p.marca,
     clase_color: p.clase_color,
     precio_desde: p.precio_desde === null ? null : Number(p.precio_desde),
-    imagen_principal_url: p.id_imagen_principal ? urlImagenPublica(p.id_imagen_principal) : null,
+    imagen_principal_url: p.id_imagen_principal ? urlImagenPublica(p.id_imagen_principal, 'miniatura') : null,
     cantidad_colores: Number(p.cantidad_colores),
     patrocinado: p.patrocinado,
+    es_combo: p.es_combo,
+    agotado: p.agotado,
   };
 }
 
@@ -247,6 +309,6 @@ function aImagenDetalle(i: FilaImagenPublica): ImagenDetalle {
     mime_type: i.mime_type,
     orden: i.orden,
     es_principal: i.es_principal,
-    contenido_url: urlImagenPublica(i.id_imagen),
+    contenido_url: urlImagenPublica(i.id_imagen, 'optimizada'),
   };
 }

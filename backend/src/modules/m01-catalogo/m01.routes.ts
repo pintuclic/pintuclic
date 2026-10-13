@@ -13,8 +13,10 @@ import { ProductosRepository } from './repositories/productos.repository';
 import { PresentacionesRepository } from './repositories/presentaciones.repository';
 import { VariantesRepository } from './repositories/variantes.repository';
 import { ProductoBasesRepository } from './repositories/producto-bases.repository';
+import { ColorBasesRepository } from './repositories/color-bases.repository';
 import { ImagenesRepository } from './repositories/imagenes.repository';
 import { CatalogoPublicoRepository } from './repositories/catalogo-publico.repository';
+import { CombosRepository } from './repositories/combos.repository';
 
 import { CategoriasService } from './services/categorias.service';
 import { SubcategoriasService } from './services/subcategorias.service';
@@ -28,8 +30,12 @@ import { PresentacionesService } from './services/presentaciones.service';
 import { VariantesService } from './services/variantes.service';
 import { RendimientoService } from './services/rendimiento.service';
 import { ProductoBasesService } from './services/producto-bases.service';
+import { ColorBasesService } from './services/color-bases.service';
 import { ImagenesService } from './services/imagenes.service';
 import { CatalogoPublicoService } from './services/catalogo-publico.service';
+import { CombosService } from './services/combos.service';
+import { reglasComercialesNoIntegradas, campanasNoIntegradas } from './services/integraciones-pendientes';
+import { optimizadorSharp } from './services/optimizador-imagenes';
 
 import { CategoriasController } from './controllers/categorias.controller';
 import { SubcategoriasController } from './controllers/subcategorias.controller';
@@ -43,8 +49,10 @@ import { PresentacionesController } from './controllers/presentaciones.controlle
 import { VariantesController } from './controllers/variantes.controller';
 import { RendimientoController } from './controllers/rendimiento.controller';
 import { ProductoBasesController } from './controllers/producto-bases.controller';
+import { ColorBasesController } from './controllers/color-bases.controller';
 import { ImagenesController } from './controllers/imagenes.controller';
 import { CatalogoPublicoController } from './controllers/catalogo-publico.controller';
+import { CombosController } from './controllers/combos.controller';
 
 // ==============================================================================
 // M01 - ENRUTADOR PRINCIPAL: CATÁLOGO DE PRODUCTOS
@@ -64,13 +72,15 @@ const productosRepo = new ProductosRepository(db);
 const presentacionesRepo = new PresentacionesRepository(db);
 const variantesRepo = new VariantesRepository(db);
 const productoBasesRepo = new ProductoBasesRepository(db);
+const colorBasesRepo = new ColorBasesRepository(db);
 const imagenesRepo = new ImagenesRepository(db);
 const catalogoPublicoRepo = new CatalogoPublicoRepository(db);
+const combosRepo = new CombosRepository(db);
 
 const categoriasService = new CategoriasService(categoriasRepo);
 const subcategoriasService = new SubcategoriasService(subcategoriasRepo, categoriasRepo);
-const lineasService = new LineasService(lineasRepo, marcasRepo);
-const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo, coloresRepo, productosRepo);
+const lineasService = new LineasService(lineasRepo, marcasRepo, reglasComercialesNoIntegradas);
+const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo, coloresRepo, productosRepo, campanasNoIntegradas);
 const basesService = new BasesService(basesRepo, marcasRepo);
 const coloresService = new ColoresService(coloresRepo, marcasRepo);
 const resinasService = new TipoResinasService(resinasRepo);
@@ -79,8 +89,10 @@ const presentacionesService = new PresentacionesService(presentacionesRepo);
 const variantesService = new VariantesService(variantesRepo, productosRepo, presentacionesRepo, basesRepo, coloresRepo, productoBasesRepo);
 const rendimientoService = new RendimientoService(productosRepo, presentacionesRepo);
 const productoBasesService = new ProductoBasesService(productoBasesRepo, productosRepo, basesRepo);
-const imagenesService = new ImagenesService(imagenesRepo, productosRepo, variantesRepo, coloresRepo);
-const catalogoPublicoService = new CatalogoPublicoService(catalogoPublicoRepo);
+const colorBasesService = new ColorBasesService(colorBasesRepo, coloresRepo, basesRepo);
+const imagenesService = new ImagenesService(imagenesRepo, productosRepo, variantesRepo, coloresRepo, optimizadorSharp);
+const catalogoPublicoService = new CatalogoPublicoService(catalogoPublicoRepo, optimizadorSharp);
+const combosService = new CombosService(combosRepo, productosRepo, variantesRepo);
 
 const categoriasCtrl = new CategoriasController(categoriasService);
 const subcategoriasCtrl = new SubcategoriasController(subcategoriasService);
@@ -94,8 +106,10 @@ const presentacionesCtrl = new PresentacionesController(presentacionesService);
 const variantesCtrl = new VariantesController(variantesService);
 const rendimientoCtrl = new RendimientoController(rendimientoService);
 const productoBasesCtrl = new ProductoBasesController(productoBasesService);
+const colorBasesCtrl = new ColorBasesController(colorBasesService);
 const imagenesCtrl = new ImagenesController(imagenesService);
 const catalogoPublicoCtrl = new CatalogoPublicoController(catalogoPublicoService);
+const combosCtrl = new CombosController(combosService);
 
 const catalogoRoutes = Router();
 
@@ -121,6 +135,11 @@ catalogoRoutes.get(
 catalogoRoutes.get(
   '/publico/productos/:id/colores',
   (req, res, next) => { void catalogoPublicoCtrl.colores(req, res).catch(next); }
+);
+
+catalogoRoutes.get(
+  '/publico/productos/:id/entonado',
+  (req, res, next) => { void catalogoPublicoCtrl.entonado(req, res).catch(next); }
 );
 
 catalogoRoutes.get(
@@ -380,6 +399,27 @@ catalogoRoutes.patch(
 );
 
 // -----------------------------------------------------------------------------
+// Rutas: Bases de cada color (HU-CAT-12 flujo 3, RF-CAT-12-04)
+// -----------------------------------------------------------------------------
+catalogoRoutes.get(
+  '/colores/:idColor/bases',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void colorBasesCtrl.listar(req, res).catch(next); }
+);
+
+catalogoRoutes.post(
+  '/colores/:idColor/bases',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void colorBasesCtrl.asignar(req, res).catch(next); }
+);
+
+catalogoRoutes.delete(
+  '/colores/:idColor/bases/:idBase',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void colorBasesCtrl.quitar(req, res).catch(next); }
+);
+
+// -----------------------------------------------------------------------------
 // Rutas: Tipos de resina (HU-CAT-02, RF-CAT-02-04)
 // -----------------------------------------------------------------------------
 catalogoRoutes.post(
@@ -622,7 +662,24 @@ catalogoRoutes.delete(
   (req, res, next) => { void imagenesCtrl.eliminar(req, res).catch(next); }
 );
 
-// Fachadas públicas exportadas por M01 para consumo inter-módulo (HU-CAT-02 en adelante)
-export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService, resinasService, productosService, presentacionesService, variantesService, rendimientoService, productoBasesService, imagenesService, catalogoPublicoService };
+// -----------------------------------------------------------------------------
+// Rutas: Combos (HU-CAT-13). La existencia se ajusta con PATCH /variantes/:id.
+// -----------------------------------------------------------------------------
+catalogoRoutes.get(
+  '/productos/:idProducto/combo',
+  ...guardas.protegido('catalogo.ver'),
+  (req, res, next) => { void combosCtrl.obtener(req, res).catch(next); }
+);
+
+catalogoRoutes.put(
+  '/productos/:idProducto/combo',
+  ...guardas.protegido('catalogo.editar'),
+  (req, res, next) => { void combosCtrl.definir(req, res).catch(next); }
+);
+
+// Fachadas públicas exportadas por M01 para consumo inter-módulo (HU-CAT-02 en adelante).
+// M08 usa combosService.reservarExistencias / liberarExistencias / excluidoDeDescuentos (HU-CAT-13)
+// y catalogoPublicoService.resolverEntonado para registrar la base consumida (RF-CAT-12-05).
+export const serviciosCatalogo = { categoriasService, subcategoriasService, lineasService, marcasService, basesService, coloresService, resinasService, productosService, presentacionesService, variantesService, rendimientoService, productoBasesService, imagenesService, catalogoPublicoService, combosService, colorBasesService };
 
 export { catalogoRoutes };

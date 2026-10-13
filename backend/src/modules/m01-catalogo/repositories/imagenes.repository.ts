@@ -6,8 +6,8 @@ import { Database, Imagen, NewImagen, ImagenUpdate } from '../../../core/db/type
 // Único punto de acceso SQL (Kysely) para la tabla `imagen`.
 // ==============================================================================
 
-/** Metadatos de imagen sin el binario (para listados). */
-export type ImagenMetadatos = Omit<Imagen, 'datos'>;
+/** Metadatos de imagen sin binarios (para listados). */
+export type ImagenMetadatos = Omit<Imagen, 'datos' | 'miniatura' | 'optimizada'>;
 
 const COLUMNAS_META = [
   'id_imagen',

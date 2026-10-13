@@ -19,3 +19,16 @@ export const PaginaColoresQuerySchema = z.object({
   limite: z.coerce.number().int().positive().max(500).optional(),
 });
 export type PaginaColoresQuerySchema = z.infer<typeof PaginaColoresQuerySchema>;
+
+/** RNF-CAT-07-01: tamaño de la imagen pública; por defecto, la versión optimizada. */
+export const ImagenPublicaQuerySchema = z.object({
+  tamano: z.enum(['miniatura', 'optimizada', 'original']).default('optimizada'),
+});
+export type ImagenPublicaQuerySchema = z.infer<typeof ImagenPublicaQuerySchema>;
+
+/** RF-CAT-12-05 / RF-CAT-12-07: el cliente elige color y presentación, nunca la base. */
+export const EntonadoQuerySchema = z.object({
+  id_color: z.coerce.number().int().positive(),
+  id_presentacion: z.coerce.number().int().positive(),
+});
+export type EntonadoQuerySchema = z.infer<typeof EntonadoQuerySchema>;

@@ -3,7 +3,12 @@ import { MarcasRepository } from '../repositories/marcas.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { Linea } from '../../../core/db/types';
 import { CrearLineaDto, ActualizarLineaDto } from '../dtos/lineas.dto';
-import { ImpactoDesactivacion, ResultadoDesactivacion, ResultadoReactivacion } from '../interfaces/m01.interfaces';
+import {
+  ImpactoDesactivacion,
+  ResultadoDesactivacion,
+  ResultadoReactivacion,
+  ConsultaReglasComerciales,
+} from '../interfaces/m01.interfaces';
 
 // ==============================================================================
 // M01 - SERVICIO DE LÍNEAS COMERCIALES (HU-CAT-11)
@@ -14,7 +19,8 @@ import { ImpactoDesactivacion, ResultadoDesactivacion, ResultadoReactivacion } f
 export class LineasService {
   constructor(
     private readonly repo: LineasRepository,
-    private readonly marcasRepo: MarcasRepository
+    private readonly marcasRepo: MarcasRepository,
+    private readonly reglasComerciales: ConsultaReglasComerciales
   ) {}
 
   /** RF-CAT-11-01, RF-CAT-11-02, CA-CAT-11-01, CA-CAT-11-03. */
@@ -78,9 +84,8 @@ export class LineasService {
    * la desactiva (sin cascada: la desactivación de productos es responsabilidad
    * de HU-CAT-02/09, no de esta HU).
    *
-   * NOTA: el módulo M06 (Reglas y Descuentos) todavía no existe en el sistema.
-   * `reglas_afectadas` reporta 0 y `reglas_integradas: false` deja explícito
-   * que ese 0 no es un conteo confirmado sino una dependencia no integrada.
+   * El conteo de reglas se delega al puerto `ConsultaReglasComerciales`; mientras
+   * M06 no esté integrado devuelve `null`, que no se confunde con un cero confirmado.
    */
   async solicitarDesactivacion(
     id: number,
@@ -92,8 +97,11 @@ export class LineasService {
     }
 
     if (!confirmar) {
-      const productos_afectados = await this.repo.contarProductosAfectados(id);
-      return { requiere_confirmacion: true, productos_afectados, reglas_afectadas: 0, reglas_integradas: false };
+      const [productos_afectados, reglas_afectadas] = await Promise.all([
+        this.repo.contarProductosAfectados(id),
+        this.reglasComerciales.contarVigentesPorLinea(id),
+      ]);
+      return { requiere_confirmacion: true, productos_afectados, reglas_afectadas };
     }
 
     await this.repo.cambiarEstado(id, 'inactivo');

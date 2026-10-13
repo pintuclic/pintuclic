@@ -11,6 +11,7 @@ import {
   ResultadoDesactivacion,
   ResultadoReactivacion,
   ImpactoDesactivacionMarca,
+  CascadaCampanas,
 } from '../interfaces/m01.interfaces';
 
 // ==============================================================================
@@ -26,7 +27,8 @@ export class MarcasService {
     private readonly lineasRepo: LineasRepository,
     private readonly basesRepo: BasesRepository,
     private readonly coloresRepo: ColoresRepository,
-    private readonly productosRepo: ProductosRepository
+    private readonly productosRepo: ProductosRepository,
+    private readonly campanas: CascadaCampanas
   ) {}
 
   /** RF-CAT-04-01, RF-CAT-04-02, CA-CAT-04-01, CA-CAT-04-02. */
@@ -85,15 +87,13 @@ export class MarcasService {
   }
 
   /**
-   * RF-CAT-04-03: desactiva la marca y, en cascada, sus líneas activas.
-   * El diagrama de esta HU no pide confirmación previa (a diferencia de
-   * categoría/línea): se desactiva directamente.
+   * RF-CAT-04-03 / HU-CAT-09: desactiva la marca y, en cascada, sus líneas,
+   * bases, colores, productos y campañas. El diagrama de esta HU no pide
+   * confirmación previa (a diferencia de categoría/línea).
    *
-   * RF-CAT-04-03 / HU-CAT-09: la desactivación cascada a `linea`, `base`,
-   * `color` y `producto` (esta última se cerró en HU-CAT-09, al existir ya
-   * `producto.id_marca` desde HU-CAT-02). Todas las escrituras se ejecutan en
-   * una única transacción: si una falla no quedan cambios parciales. El módulo
-   * de campañas aún no existe; su cascada queda pendiente de ese módulo.
+   * Todas las escrituras, incluida la cascada de campañas (puerto
+   * `CascadaCampanas`), se ejecutan en una única transacción: si una falla no
+   * quedan cambios parciales.
    */
   async desactivar(id: number): Promise<ResultadoDesactivacion> {
     const marca = await this.obtenerPorId(id);
@@ -101,7 +101,7 @@ export class MarcasService {
       throw new AppError('La marca ya está inactiva', 400, 'MARCA_YA_INACTIVA');
     }
 
-    await this.repo.desactivarEnCascada(id);
+    await this.repo.desactivarEnCascada(id, (trx) => this.campanas.desactivarPorMarca(id, trx));
     return { desactivado: true };
   }
 

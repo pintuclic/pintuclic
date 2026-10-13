@@ -5,17 +5,15 @@ import { ColoresRepository } from '../repositories/colores.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { Producto } from '../../../core/db/types';
 import { CrearImagenDto, ActualizarImagenDto } from '../dtos/imagenes.dto';
-import { ImagenDetalle, ImagenContenido } from '../interfaces/m01.interfaces';
+import { ImagenDetalle, ImagenContenido, OptimizadorImagenes } from '../interfaces/m01.interfaces';
 
 // ==============================================================================
 // M01 - SERVICIO DE IMÁGENES (HU-CAT-07)
 // Cargar/reemplazar/eliminar/ordenar imágenes de un producto (RF-CAT-07-01),
 // asociarlas a una variante o color del propio producto (RF-CAT-07-02) y
-// mantener una sola imagen principal por producto (CA-CAT-07-02).
-//
-// FUERA DE ALCANCE (documentado): generación de miniaturas optimizadas
-// (RNF-CAT-07-01) — se sirve el binario con caché; las miniaturas requieren una
-// librería de imágenes y quedan pendientes.
+// mantener una sola imagen principal por producto (CA-CAT-07-02). Al cargar o
+// reemplazar el archivo se generan su miniatura y su versión optimizada
+// (RNF-CAT-07-01); un archivo que no es una imagen válida se rechaza.
 // ==============================================================================
 
 export class ImagenesService {
@@ -23,13 +21,15 @@ export class ImagenesService {
     private readonly repo: ImagenesRepository,
     private readonly productosRepo: ProductosRepository,
     private readonly variantesRepo: VariantesRepository,
-    private readonly coloresRepo: ColoresRepository
+    private readonly coloresRepo: ColoresRepository,
+    private readonly optimizador: OptimizadorImagenes
   ) {}
 
   async crear(idProducto: number, dto: CrearImagenDto): Promise<ImagenDetalle> {
     const producto = await this.exigirProducto(idProducto);
     await this.validarAsociaciones(idProducto, producto, dto.id_variante ?? null, dto.id_color ?? null);
 
+    const versiones = await this.optimizador.generarVersiones(dto.imagen.buffer);
     if (dto.es_principal) {
       await this.repo.desmarcarPrincipal(idProducto);
     }
@@ -40,6 +40,8 @@ export class ImagenesService {
       id_color: dto.id_color ?? null,
       datos: dto.imagen.buffer,
       mime_type: dto.imagen.mimeType,
+      miniatura: versiones.miniatura,
+      optimizada: versiones.optimizada,
       orden: dto.orden ?? 0,
       es_principal: dto.es_principal ?? false,
     });
@@ -68,6 +70,7 @@ export class ImagenesService {
     const idColor = dto.id_color !== undefined ? dto.id_color : meta.id_color;
     await this.validarAsociaciones(meta.id_producto, producto, idVariante, idColor);
 
+    const versiones = dto.imagen !== undefined ? await this.optimizador.generarVersiones(dto.imagen.buffer) : undefined;
     if (dto.es_principal === true) {
       await this.repo.desmarcarPrincipal(meta.id_producto, id);
     }
@@ -77,7 +80,9 @@ export class ImagenesService {
       id_color: dto.id_color,
       orden: dto.orden,
       es_principal: dto.es_principal,
-      ...(dto.imagen !== undefined ? { datos: dto.imagen.buffer, mime_type: dto.imagen.mimeType } : {}),
+      ...(dto.imagen !== undefined && versiones !== undefined
+        ? { datos: dto.imagen.buffer, mime_type: dto.imagen.mimeType, ...versiones }
+        : {}),
     });
     if (!actualizada) {
       throw new AppError('Imagen no encontrada', 404, 'NOT_FOUND');

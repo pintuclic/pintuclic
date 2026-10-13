@@ -14,9 +14,13 @@ const nombreCategoriaSchema = z
 
 const ordenSchema = z.number().int().min(0).optional();
 
+/** RF-CAT-08-01: categoría de la que heredan sus complementarios los productos de esta categoría. */
+const categoriaComplementariaSchema = z.number().int().positive().nullable().optional();
+
 export const CrearCategoriaDto = z.object({
   nombre: nombreCategoriaSchema,
   orden: ordenSchema,
+  id_categoria_complementaria: categoriaComplementariaSchema,
 });
 export type CrearCategoriaDto = z.infer<typeof CrearCategoriaDto>;
 
@@ -24,8 +28,9 @@ export const ActualizarCategoriaDto = z
   .object({
     nombre: nombreCategoriaSchema.optional(),
     orden: ordenSchema,
+    id_categoria_complementaria: categoriaComplementariaSchema,
   })
-  .refine((data) => data.nombre !== undefined || data.orden !== undefined, {
+  .refine((data) => Object.values(data).some((valor) => valor !== undefined), {
     message: 'Debe indicar al menos un dato a actualizar',
   });
 export type ActualizarCategoriaDto = z.infer<typeof ActualizarCategoriaDto>;

@@ -2,7 +2,13 @@ import { Request, Response } from 'express';
 import { sendSuccess } from '../../../core/utils/apiResponse';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { CatalogoPublicoService } from '../services/catalogo-publico.service';
-import { ListarProductosQuerySchema, PaginaColoresQuerySchema, IdParamSchema } from '../dtos/catalogo-publico.dto';
+import {
+  ListarProductosQuerySchema,
+  PaginaColoresQuerySchema,
+  IdParamSchema,
+  EntonadoQuerySchema,
+  ImagenPublicaQuerySchema,
+} from '../dtos/catalogo-publico.dto';
 
 // ==============================================================================
 // M01 - CONTROLADOR DE CONSULTA PÚBLICA (HU-CAT-06) — sin autenticación
@@ -79,10 +85,29 @@ export class CatalogoPublicoController {
     if (!validacionId.success) {
       throw new AppError('Identificador inválido', 400, 'VALIDATION_ERROR', validacionId.error.issues);
     }
-    const { datos, mime_type } = await this.service.obtenerContenidoImagen(validacionId.data.id);
+    const validacionQuery = ImagenPublicaQuerySchema.safeParse(req.query);
+    if (!validacionQuery.success) {
+      throw new AppError('Parámetros de consulta inválidos', 400, 'VALIDATION_ERROR', validacionQuery.error.issues);
+    }
+    const { datos, mime_type } = await this.service.obtenerContenidoImagen(validacionId.data.id, validacionQuery.data.tamano);
+    // Caché pública de un día; Express añade un ETag y responde 304 si no cambió.
     res.setHeader('Content-Type', mime_type);
     res.setHeader('Cache-Control', 'public, max-age=86400');
     res.send(datos);
+  };
+
+  /** GET /catalogo/publico/productos/:id/entonado?id_color=&id_presentacion= (RF-CAT-12-05). */
+  entonado = async (req: Request, res: Response): Promise<void> => {
+    const validacionId = IdParamSchema.safeParse(req.params);
+    if (!validacionId.success) {
+      throw new AppError('Identificador inválido', 400, 'VALIDATION_ERROR', validacionId.error.issues);
+    }
+    const validacionQuery = EntonadoQuerySchema.safeParse(req.query);
+    if (!validacionQuery.success) {
+      throw new AppError('Parámetros de consulta inválidos', 400, 'VALIDATION_ERROR', validacionQuery.error.issues);
+    }
+    const { id_color, id_presentacion } = validacionQuery.data;
+    sendSuccess(res, await this.service.resolverEntonado(validacionId.data.id, id_color, id_presentacion));
   };
 
   complementarios = async (req: Request, res: Response): Promise<void> => {

@@ -4,6 +4,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 > Formato de Versiones: `[vMAJOR.MINOR.PATCH] - AAAA-MM-DD`
 
+## [v3.36.0] - 2026-10-13
+### Módulo: M01 Catálogo de productos — combos, entonado color↔base, miniaturas, herencia de complementarios y puertos M06/campañas
+- **Añadido:** combos con existencia real, exclusión de descuentos, estado agotado y reserva atómica sin sobreventa para M08 (HU-CAT-13); combinaciones color↔base con carta entonable coherente y resolución de la base consumida (HU-CAT-12, RF-CAT-12-04/05/06); categoría complementaria heredable (RF-CAT-08-01); miniaturas y versiones optimizadas WebP con caché pública (RNF-CAT-07-01, dependencia `sharp` 0.35.5).
+- **Cambiado:** reglas M06 y cascada de campañas vía puertos inyectables (RF-CAT-11-03, RF-CAT-04-03); `reglas_afectadas` es `null` mientras M06 no exista.
+- **Base de datos:** versión `v2.8` / esquema 4.0 (`color_base`, `categoria.id_categoria_complementaria`, `combo.excluido_descuentos`, `uq_combo_producto`, `imagen.miniatura`/`optimizada`), registrada aparte en `bd/docs/CHANGELOG_DATABASE.md`.
+- **Calidad:** 154 pruebas unitarias y 50 de integración contra PostgreSQL 15 superadas (concurrencia repetida 4 veces); esquema validado desde cero, idempotente y como migración; `tsc` y `eslint` limpios.
+- **Pendiente (otros módulos):** permisos separados (M17), integración de reservas y entonado en M08 y regla de existencia en M05.
+- **Walkthrough:** [Combos, entonado y puertos M01](./walkthroughs/M01/walkthrough_v3.36.0_M01_combos_entonado_y_puertos_backend.md).
+
+---
+
 ## [v3.35.11] - 2026-10-07
 ### Módulo: M01 Catálogo de productos — correcciones backend del informe de faltantes
 - **Corregido:** publicar exige imagen (RF-CAT-02-05); impacto de categorías/subcategorías vía `producto_subcategoria` (RF-CAT-01-04); desactivar color desactiva sus variantes de colores fijos (RF-CAT-05-05); reactivar producto exige clasificación activa (RF-CAT-09-04).

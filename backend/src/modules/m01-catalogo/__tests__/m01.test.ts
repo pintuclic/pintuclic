@@ -12,6 +12,12 @@ import { RendimientoService, derivarRendimiento } from '../services/rendimiento.
 import { ProductoBasesService } from '../services/producto-bases.service';
 import { ImagenesService } from '../services/imagenes.service';
 import { CatalogoPublicoService } from '../services/catalogo-publico.service';
+import { CombosService } from '../services/combos.service';
+import { ColorBasesService } from '../services/color-bases.service';
+import { optimizadorSharp } from '../services/optimizador-imagenes';
+import { OptimizadorImagenes } from '../interfaces/m01.interfaces';
+import { DefinirComboDto } from '../dtos/combos.dto';
+import { LineaExistencia } from '../interfaces/m01.interfaces';
 import { EstablecerRendimientoDto } from '../dtos/rendimiento.dto';
 import { CrearImagenDto } from '../dtos/imagenes.dto';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
@@ -20,6 +26,7 @@ import { CrearColorDto } from '../dtos/colores.dto';
 import { CrearProductoDto } from '../dtos/productos.dto';
 import { CrearVarianteDto } from '../dtos/variantes.dto';
 import { MarcaResumen } from '../interfaces/m01.interfaces';
+import { reglasComercialesNoIntegradas, campanasNoIntegradas } from '../services/integraciones-pendientes';
 import {
   Categoria,
   Subcategoria,
@@ -99,6 +106,7 @@ async function ejecutarPruebasM01(): Promise<void> {
         nombre: data.nombre,
         orden: data.orden ?? 0,
         estado: 'activo',
+        id_categoria_complementaria: data.id_categoria_complementaria ?? null,
       };
       categorias.set(categoria.id_categoria, categoria);
       return categoria;
@@ -211,7 +219,8 @@ async function ejecutarPruebasM01(): Promise<void> {
       const m = marcas.get(id);
       if (m) marcas.set(id, { ...m, estado });
     },
-    desactivarEnCascada: async (id: number) => {
+    desactivarEnCascada: async (id: number, cascadaExterna: (trx: never) => Promise<void>) => {
+      await cascadaExterna(undefined as never);
       const m = marcas.get(id);
       if (m) marcas.set(id, { ...m, estado: 'inactivo' });
       await mockLineasRepo.desactivarLineasDeMarca(id);
@@ -586,12 +595,12 @@ async function ejecutarPruebasM01(): Promise<void> {
   let seqImagen = 1;
   const metaImagen = (i: Imagen) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { datos, ...meta } = i;
+    const { datos, miniatura, optimizada, ...meta } = i;
     return meta;
   };
 
   const mockImagenesRepo = {
-    crear: async (data: NewImagen): Promise<Omit<Imagen, 'datos'>> => {
+    crear: async (data: NewImagen): Promise<Omit<Imagen, 'datos' | 'miniatura' | 'optimizada'>> => {
       const imagen: Imagen = {
         id_imagen: seqImagen++,
         id_producto: data.id_producto,
@@ -601,6 +610,8 @@ async function ejecutarPruebasM01(): Promise<void> {
         mime_type: data.mime_type,
         orden: typeof data.orden === 'number' ? data.orden : 0,
         es_principal: typeof data.es_principal === 'boolean' ? data.es_principal : false,
+        miniatura: data.miniatura ?? null,
+        optimizada: data.optimizada ?? null,
       };
       imagenes.set(imagen.id_imagen, imagen);
       return metaImagen(imagen);
@@ -711,9 +722,18 @@ async function ejecutarPruebasM01(): Promise<void> {
     },
     contarProductos: async (filtros: { idSubcategoria?: number; busqueda?: string }) => filtrarProductosPublicos(filtros).length,
     obtenerProductoPublico: async (id: number) => (esPublico(id) ? productos.get(id) : undefined),
-    obtenerContenidoImagenPublica: async (idImagen: number) => {
+    categoriaComplementariaHeredada: async (idProducto: number) =>
+      (productoSubcats.get(idProducto) ?? [])
+        .map((idSub) => categorias.get(subcategorias.get(idSub)?.id_categoria ?? -1)?.id_categoria_complementaria ?? null)
+        .find((idCategoria) => idCategoria !== null) ?? null,
+    obtenerVersionImagenPublica: async (idImagen: number, tamano: 'miniatura' | 'optimizada' | 'original') => {
       const i = imagenes.get(idImagen);
-      return i && esPublico(i.id_producto) ? { datos: i.datos, mime_type: i.mime_type } : undefined;
+      if (!i || !esPublico(i.id_producto)) return undefined;
+      return { contenido: tamano === 'original' ? i.datos : i[tamano], mime_type: i.mime_type };
+    },
+    guardarVersionesImagen: async (idImagen: number, versiones: { miniatura: Buffer; optimizada: Buffer }) => {
+      const i = imagenes.get(idImagen);
+      if (i) imagenes.set(idImagen, { ...i, ...versiones });
     },
     complementariosPorCategoria: async (idCategoria: number, excluirId: number, limite: number) =>
       Array.from(productos.values())
@@ -785,9 +805,9 @@ async function ejecutarPruebasM01(): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const subcategoriasService = new SubcategoriasService(mockSubcategoriasRepo as any, mockCategoriasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const lineasService = new LineasService(mockLineasRepo as any, mockMarcasRepo as any);
+  const lineasService = new LineasService(mockLineasRepo as any, mockMarcasRepo as any, reglasComercialesNoIntegradas);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const marcasService = new MarcasService(mockMarcasRepo as any, mockLineasRepo as any, mockBasesRepo as any, mockColoresRepo as any, mockProductosRepo as any);
+  const marcasService = new MarcasService(mockMarcasRepo as any, mockLineasRepo as any, mockBasesRepo as any, mockColoresRepo as any, mockProductosRepo as any, campanasNoIntegradas);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const basesService = new BasesService(mockBasesRepo as any, mockMarcasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -838,6 +858,11 @@ async function ejecutarPruebasM01(): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockPresentacionesRepo as any
   );
+  // Optimizador de prueba: versiones deterministas sin depender de la librería de imágenes.
+  const optimizadorDePrueba: OptimizadorImagenes = {
+    mimeVersiones: 'image/webp',
+    generarVersiones: async () => ({ miniatura: Buffer.from('miniatura'), optimizada: Buffer.from('optimizada') }),
+  };
   const imagenesService = new ImagenesService(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockImagenesRepo as any,
@@ -846,10 +871,11 @@ async function ejecutarPruebasM01(): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockVariantesRepo as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockColoresRepo as any
+    mockColoresRepo as any,
+    optimizadorDePrueba
   );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const catalogoPublicoService = new CatalogoPublicoService(mockCatalogoPublicoRepo as any);
+  const catalogoPublicoService = new CatalogoPublicoService(mockCatalogoPublicoRepo as any, optimizadorDePrueba);
 
   try {
     // --------------------------------------------------------------------------
@@ -976,8 +1002,15 @@ async function ejecutarPruebasM01(): Promise<void> {
     productosAfectadosPorLinea.set(viniltex.id_linea, 4);
     const impactoLinea = await lineasService.solicitarDesactivacion(viniltex.id_linea, false);
     assert(
-      'requiere_confirmacion' in impactoLinea && impactoLinea.productos_afectados === 4 && impactoLinea.reglas_afectadas === 0,
-      'RF-CAT-11-03: informa productos y reglas M06 afectadas antes de confirmar (M06 aún no existe, reporta 0)'
+      'requiere_confirmacion' in impactoLinea && impactoLinea.productos_afectados === 4 && impactoLinea.reglas_afectadas === null,
+      'RF-CAT-11-03: informa productos afectados y reglas M06 como no integradas (null, no un cero falso)'
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lineasConM06 = new LineasService(mockLineasRepo as any, mockMarcasRepo as any, { contarVigentesPorLinea: async () => 3 });
+    const impactoConM06 = await lineasConM06.solicitarDesactivacion(viniltex.id_linea, false);
+    assert(
+      'requiere_confirmacion' in impactoConM06 && impactoConM06.reglas_afectadas === 3,
+      'RF-CAT-11-03 / CA-CAT-11-04: con M06 integrado informa cuántas reglas vigentes dependen de la línea'
     );
 
     const lineaTrasImpacto = await lineasService.obtenerPorId(viniltex.id_linea);
@@ -1164,8 +1197,7 @@ async function ejecutarPruebasM01(): Promise<void> {
     );
 
     // --------------------------------------------------------------------------
-    // HU-CAT-02: Gestión de productos (con 'publicar' parcial: valida variante
-    // activa; la exigencia de imagen queda diferida a HU-CAT-07).
+    // HU-CAT-02: Gestión de productos ('publicar' exige variante activa e imagen).
     // --------------------------------------------------------------------------
     const resinaAgua = await resinasService.crear({ nombre: 'Base Agua' });
     assert(resinaAgua.estado === 'activo', 'RF-CAT-02-04: tipo de resina creado activo');
@@ -1712,19 +1744,26 @@ async function ejecutarPruebasM01(): Promise<void> {
     // Correcciones del informe M01 (imágenes públicas y cascada de color)
     // --------------------------------------------------------------------------
     const imgPublica = await agregarImagenDePrueba(prodSinCat.id_producto);
-    const contenidoPublico = await catalogoPublicoService.obtenerContenidoImagen(imgPublica.id_imagen);
+    const contenidoPublico = await catalogoPublicoService.obtenerContenidoImagen(imgPublica.id_imagen, 'original');
     assert(
       contenidoPublico.mime_type === 'image/png',
       'RF-CAT-07-03: el visitante obtiene la imagen de un producto público sin autenticación'
     );
+    const miniaturaPublica = await catalogoPublicoService.obtenerContenidoImagen(imgPublica.id_imagen, 'miniatura');
+    assert(
+      miniaturaPublica.mime_type === 'image/webp' &&
+        miniaturaPublica.datos.toString() === 'miniatura' &&
+        imagenes.get(imgPublica.id_imagen)?.optimizada?.toString() === 'optimizada',
+      'RNF-CAT-07-01: una imagen sin versiones las genera en la primera consulta y las guarda'
+    );
     const fichaConImagen = await catalogoPublicoService.obtenerFicha(prodSinCat.id_producto);
     assert(
-      fichaConImagen.imagenes.every((i) => i.contenido_url.startsWith('/api/catalogo/publico/imagenes/')),
+      fichaConImagen.imagenes.every((i) => i.contenido_url.startsWith('/api/catalogo/publico/imagenes/') && i.contenido_url.endsWith('?tamano=optimizada')),
       'RF-CAT-06-01: la ficha pública entrega URLs de imagen accesibles al visitante'
     );
     await productosService.despublicar(prodSinCat.id_producto);
     await assertLanza(
-      () => catalogoPublicoService.obtenerContenidoImagen(imgPublica.id_imagen),
+      () => catalogoPublicoService.obtenerContenidoImagen(imgPublica.id_imagen, 'miniatura'),
       'RF-CAT-07-03: no entrega la imagen de un producto que dejó de ser público'
     );
 
@@ -1742,6 +1781,183 @@ async function ejecutarPruebasM01(): Promise<void> {
     assert(
       variantes.get(varFijaCascada.id_variante)?.estado === 'inactivo',
       'RF-CAT-05-05: desactivar un color desactiva sus variantes de colores fijos'
+    );
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-13: Combos (reglas del servicio; el SQL y la concurrencia se
+    // validan en m01.integracion.test.ts contra PostgreSQL)
+    // --------------------------------------------------------------------------
+    const combosPorProducto = new Map<number, { id_combo: number; id_producto: number; excluido_descuentos: boolean }>();
+    const lineasReservadas: LineaExistencia[][] = [];
+    let faltanteSimulado: number | null = null;
+    const mockCombosRepo = {
+      obtenerPorProducto: async (idProducto: number) => combosPorProducto.get(idProducto),
+      listarComponentes: async () => [],
+      definir: async (idProducto: number, excluidoDescuentos: boolean) => {
+        const id_combo = combosPorProducto.get(idProducto)?.id_combo ?? combosPorProducto.size + 1;
+        const combo = { id_combo, id_producto: idProducto, excluido_descuentos: excluidoDescuentos };
+        combosPorProducto.set(idProducto, combo);
+        return combo;
+      },
+      reservar: async (lineas: LineaExistencia[]) => {
+        lineasReservadas.push(lineas);
+        return faltanteSimulado;
+      },
+      liberar: async () => undefined,
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const combosService = new CombosService(mockCombosRepo as any, mockProductosRepo as any, mockVariantesRepo as any);
+
+    const comboSinComponentes = await combosService.definir(prodSinCat.id_producto, DefinirComboDto.parse({ componentes: [] }));
+    assert(
+      comboSinComponentes.id_producto === prodSinCat.id_producto && comboSinComponentes.componentes.length === 0,
+      'CA-CAT-13-02: registra un combo sin declarar de qué productos se compone'
+    );
+    await assertLanza(
+      () => combosService.definir(99999, DefinirComboDto.parse({ componentes: [] })),
+      'RF-CAT-13-01: rechaza registrar como combo un producto inexistente'
+    );
+    await assertLanza(
+      () => combosService.definir(prodSinCat.id_producto, DefinirComboDto.parse({ componentes: [{ id_variante: 99999, cantidad: 1 }] })),
+      'RF-CAT-13-01: rechaza un componente con una variante inexistente'
+    );
+    await assertLanza(
+      () => combosService.definir(prodFijo.id_producto, DefinirComboDto.parse({ componentes: [{ id_variante: varFijaCascada.id_variante, cantidad: 1 }] })),
+      'RF-CAT-13-01: un combo no puede incluirse a sí mismo como componente'
+    );
+    await assertLanza(
+      () => combosService.obtener(prodComp1.id_producto),
+      'HU-CAT-13: consultar como combo un producto que no lo es responde no encontrado'
+    );
+
+    await combosService.reservarExistencias([
+      { id_variante: 7, cantidad: 1 },
+      { id_variante: 3, cantidad: 2 },
+      { id_variante: 7, cantidad: 2 },
+    ]);
+    const consolidadas = lineasReservadas.at(-1) ?? [];
+    assert(
+      consolidadas.length === 2 &&
+        consolidadas[0]?.id_variante === 3 && consolidadas[0]?.cantidad === 2 &&
+        consolidadas[1]?.id_variante === 7 && consolidadas[1]?.cantidad === 3,
+      'RF-CAT-13-03: agrupa las líneas por variante y las ordena para un bloqueo estable'
+    );
+    await assertLanza(
+      () => combosService.reservarExistencias([{ id_variante: 3, cantidad: 0 }]),
+      'RF-CAT-13-03: rechaza reservar una cantidad no positiva'
+    );
+    faltanteSimulado = 3;
+    await assertLanza(
+      () => combosService.reservarExistencias([{ id_variante: 3, cantidad: 5 }]),
+      'CA-CAT-13-03: impide comprar más unidades del combo de las disponibles'
+    );
+
+    const comboSinDescuento = await combosService.definir(
+      prodSinCat.id_producto,
+      DefinirComboDto.parse({ excluido_descuentos: true })
+    );
+    assert(
+      comboSinDescuento.excluido_descuentos && (await combosService.excluidoDeDescuentos(prodSinCat.id_producto)),
+      'RF-CAT-13-01 / CA-CAT-13-09: el combo puede marcarse excluido de descuentos'
+    );
+    assert(
+      !(await combosService.excluidoDeDescuentos(prodComp1.id_producto)),
+      'CA-CAT-13-09: un producto que no es combo no queda excluido de descuentos'
+    );
+
+    // --------------------------------------------------------------------------
+    // HU-CAT-12 flujo 3: bases sobre las que se prepara cada color (RF-CAT-12-04)
+    // --------------------------------------------------------------------------
+    const colorBases = new Map<number, Set<number>>();
+    const mockColorBasesRepo = {
+      asignar: async (idColor: number, idBase: number) => {
+        colorBases.set(idColor, (colorBases.get(idColor) ?? new Set()).add(idBase));
+      },
+      quitar: async (idColor: number, idBase: number) => {
+        colorBases.get(idColor)?.delete(idBase);
+      },
+      existe: async (idColor: number, idBase: number) => colorBases.get(idColor)?.has(idBase) ?? false,
+      listarBases: async (idColor: number) =>
+        [...(colorBases.get(idColor) ?? [])].map((idBase) => bases.get(idBase)).filter((b) => b !== undefined),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const colorBasesService = new ColorBasesService(mockColorBasesRepo as any, mockColoresRepo as any, mockBasesRepo as any);
+
+    const colorEntonable = await coloresService.crear({ nombre: 'Azul Entonable', id_marca: comex.id_marca, cielab: { l: 40, a: 10, b: -50 } });
+    const basePastel = await basesService.crear({ nombre: 'Base Pastel', id_marca: comex.id_marca });
+    const basesDelColor = await colorBasesService.asignar(colorEntonable.id_color, basePastel.id_base);
+    assert(
+      basesDelColor.length === 1 && basesDelColor[0]?.id_base === basePastel.id_base,
+      'RF-CAT-12-04: asocia un color a la base sobre la que se prepara'
+    );
+    await assertLanza(
+      () => colorBasesService.asignar(colorEntonable.id_color, basePastel.id_base),
+      'RF-CAT-12-04: no repite una combinación color↔base ya declarada'
+    );
+    await assertLanza(
+      () => colorBasesService.asignar(colorEntonable.id_color, baseA.id_base),
+      'RF-CAT-12-03: rechaza asociar el color a una base de otra marca'
+    );
+    await assertLanza(
+      () => colorBasesService.asignar(colorEntonable.id_color, baseComex.id_base),
+      'RF-CAT-12-06: rechaza asociar el color a una base inactiva'
+    );
+    await colorBasesService.quitar(colorEntonable.id_color, basePastel.id_base);
+    assert(
+      (await colorBasesService.listar(colorEntonable.id_color)).length === 0,
+      'RF-CAT-12-04: retira una combinación color↔base'
+    );
+    await assertLanza(
+      () => colorBasesService.quitar(colorEntonable.id_color, basePastel.id_base),
+      'RF-CAT-12-04: informa cuando la combinación a retirar no existe'
+    );
+
+    // --------------------------------------------------------------------------
+    // RF-CAT-08-01: complementarios heredados de la categoría
+    // --------------------------------------------------------------------------
+    await assertLanza(
+      () => categoriasService.actualizar(esmaltes.id_categoria, { id_categoria_complementaria: 99999 }),
+      'RF-CAT-08-01: rechaza una categoría complementaria inexistente'
+    );
+    const esmaltesConComp = await categoriasService.actualizar(esmaltes.id_categoria, { id_categoria_complementaria: catComp.id_categoria });
+    assert(
+      esmaltesConComp.id_categoria_complementaria === catComp.id_categoria,
+      'RF-CAT-08-01: la categoría declara de dónde salen los complementarios de sus productos'
+    );
+    await productosService.actualizar(prodSinCat.id_producto, { id_categoria_complementaria: null });
+    await productosService.publicar(prodSinCat.id_producto);
+    const compHeredados = await catalogoPublicoService.complementarios(prodSinCat.id_producto);
+    assert(
+      compHeredados.some((c) => c.id_producto === prodComp1.id_producto),
+      'RF-CAT-08-01: sin configuración propia, el producto hereda los complementarios de su categoría'
+    );
+
+    // --------------------------------------------------------------------------
+    // RF-CAT-12-05: resolución de la base consumida (reglas del servicio; el SQL
+    // de la combinación se valida en m01.integracion.test.ts)
+    // --------------------------------------------------------------------------
+    await assertLanza(
+      () => catalogoPublicoService.resolverEntonado(prodSinCat.id_producto, colorEntonable.id_color, galon.id_presentacion),
+      'RF-CAT-12-05: un producto que no es entonable no resuelve base consumida'
+    );
+
+    // --------------------------------------------------------------------------
+    // RNF-CAT-07-01: optimizador real (sharp)
+    // --------------------------------------------------------------------------
+    const esWebp = (b: Buffer) => b.subarray(0, 4).toString() === 'RIFF' && b.subarray(8, 12).toString() === 'WEBP';
+    const versionesReales = await optimizadorSharp.generarVersiones(CrearImagenDto.parse({ imagen: LOGO_PNG_1X1 }).imagen.buffer);
+    assert(
+      esWebp(versionesReales.miniatura) && esWebp(versionesReales.optimizada),
+      'RNF-CAT-07-01: genera la miniatura y la versión optimizada en WebP'
+    );
+    await assertLanza(
+      () => optimizadorSharp.generarVersiones(Buffer.from('esto no es una imagen')),
+      'RNF-CAT-07-01: rechaza un archivo que no es una imagen válida'
+    );
+    const imagenConVersiones = await imagenesService.crear(prodSinCat.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1 }));
+    assert(
+      imagenes.get(imagenConVersiones.id_imagen)?.miniatura?.toString() === 'miniatura',
+      'RNF-CAT-07-01: al cargar una imagen se guardan sus versiones optimizadas'
     );
 
     console.log(`\n======================================================`);
