@@ -7,6 +7,15 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.9.1] - 2026-10-12
+### M01 - Calculadora: cantidad recomendada correcta en cuartos y litros (Frontend)
+- **Alcance General:** **Patch (v0.4.9.1)** por la auditoría de la calculadora con datos locales.
+- **Conversión:** las unidades se calculan desde los galones exactos y no desde los ya redondeados. Ejemplo: 25 m² con 45 m²/gal recomendaba 9 cuartos (8,5 L) y ahora 5 (4,2 L necesarios). El error venía de la v0.4.8.1.
+- **Cuarto de galón:** 1 galón son 4 cuartos y no 5 (margen del 0,1 % para el volumen guardado como 0,946 L).
+- **Resultado:** se expresa en la presentación elegida, con los litros de referencia; el rendimiento se rotula "por galón y mano".
+- **Verificación:** vitest del frontend completo 146/146; ESLint M01 limpio; `vue-tsc` solo con los 2 errores previos de M05; compilación correcta; calculadora general comprobada en Docker.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.9.1_M01_calculadora_conversion_presentaciones_frontend.md](./walkthroughs/M01/walkthrough_v0.4.9.1_M01_calculadora_conversion_presentaciones_frontend.md)
+---
 ## [v0.4.9.0] - 2026-10-12
 ### M01 - Carruseles manuales en el catálogo y en los destacados del inicio (Frontend)
 - **Alcance General:** **Minior-feat (v0.4.9.0)** por indicación del líder técnico (12/10/2026).
