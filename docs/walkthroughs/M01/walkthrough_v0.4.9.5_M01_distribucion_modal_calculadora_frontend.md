@@ -14,7 +14,7 @@
 
 | ID Historia | Título | Estado de Cobertura | Componentes |
 | :--- | :--- | :---: | :--- |
-| **HU-CAT-07** | Calculadora de pintura (modal en la ficha) | Ajuste visual | `CalculadoraPinturaPublica.vue`, `CalculadoraPinturaContenido.vue` |
+| **HU-CAT-10** | Atributos técnicos: calculadora de pintura (modal en la ficha) | Ajuste visual | `CalculadoraPinturaPublica.vue`, `CalculadoraPinturaContenido.vue` |
 
 ### Descripción del Alcance de la Versión
 El modal de la calculadora que se abre desde la ficha repartía mal el espacio: el resultado y el botón «Agregar al carrito» quedaban fuera de la vista (1.414 px de contenido en 811 px visibles a 1440×900) y había información repetida. Cambios, solo en el modo modal (`compacto`):

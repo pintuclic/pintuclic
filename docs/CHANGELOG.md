@@ -7,6 +7,16 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.9.6] - 2026-10-13
+### M01 - Aviso de existencias en la calculadora (Frontend)
+- **Alcance General:** **Patch (v0.4.9.6)** por la auditoría de agregar desde la calculadora.
+- **Calculadora:** antes de agregar, indica cuántas unidades se agregarán realmente y avisa si la recomendación supera las existencias de la presentación.
+- **Avisos:** los de la ficha y la paleta ya no quedan tapados por el carrito; el mensaje del límite concuerda en singular.
+- **Documentación:** el walkthrough v0.4.9.5 cita HU-CAT-10 en lugar de HU-CAT-07.
+- **Pendiente:** vender sin existencias (PINT-001, PINT-005) espera la definición de la regla.
+- **Verificación:** vitest del frontend 166/166; ESLint M01 limpio; `vue-tsc` solo con los 2 errores previos de M05; comprobado en Docker.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.9.6_M01_aviso_existencias_calculadora_frontend.md](./walkthroughs/M01/walkthrough_v0.4.9.6_M01_aviso_existencias_calculadora_frontend.md)
+---
 ## [v0.4.9.5] - 2026-10-13
 ### M01 - Distribución del modal de la calculadora (Frontend)
 - **Alcance General:** **Patch (v0.4.9.5)**.
