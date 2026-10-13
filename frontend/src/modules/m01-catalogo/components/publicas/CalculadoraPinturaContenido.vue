@@ -279,7 +279,7 @@
             <span>
               Rendimiento:
               <strong class="text-neutral-dark">
-                {{ rendimiento.toFixed(1) }} m²/gal
+                {{ rendimiento.toFixed(1) }} m² por galón y mano
               </strong>
             </span>
           </div>
@@ -332,22 +332,28 @@
           Necesitas aproximadamente
         </h2>
 
-        <div class="mt-1">
+        <!-- En la presentación elegida (p. ej. cuartos), o en galones si no hay presentación -->
+        <div class="mt-1" data-testid="resultado-calculadora">
           <span
             class="font-poppins text-5xl font-extrabold text-action sm:text-6xl"
           >
-            {{ galones }}
+            {{ resultadoEnPresentacion ? unidadesRecomendadas : galones }}
           </span>
 
           <span
             class="font-poppins ml-2 text-2xl font-bold text-action sm:text-3xl"
           >
-            {{ galones === 1 ? 'galón' : 'galones' }}
+            <template v-if="resultadoEnPresentacion">
+              {{ unidadesRecomendadas === 1 ? 'unidad' : 'unidades' }} de {{ presentacion?.nombre }}
+            </template>
+            <template v-else>
+              {{ galones === 1 ? 'galón' : 'galones' }}
+            </template>
           </span>
         </div>
 
-        <p class="mt-2 text-sm font-semibold text-corporate">
-          para {{ manos }} manos
+        <p class="mt-2 text-sm font-semibold text-corporate" data-testid="detalle-resultado">
+          para {{ manos }} manos · aprox. {{ formatoLitros.format(litrosNecesarios) }} litros de pintura
         </p>
 
         <!-- Resumen -->
@@ -368,7 +374,7 @@
 
           <div class="p-4">
             <p class="text-xs font-semibold text-neutral-medium">
-              Rendimiento
+              Rendimiento por galón y mano
             </p>
 
             <p
@@ -452,7 +458,13 @@ import {
   type CalculadoraPinturaDTO,
   type ErroresCalculadoraPintura,
 } from '../../dtos/publicas/calculadora-pintura.dto';
-import { MANOS_RECOMENDADAS, unidadesParaGalones } from '../../services/publicas/calculo-pintura';
+import {
+  LITROS_POR_GALON,
+  MANOS_RECOMENDADAS,
+  esGalon,
+  galonesNecesarios,
+  unidadesParaGalones,
+} from '../../services/publicas/calculo-pintura';
 
 import type {
   FichaProductoPublico,
@@ -561,16 +573,31 @@ const rendimiento = computed(() => {
 });
 
 // Sin medidas válidas no hay recomendación: el mínimo de 1 galón solo aplica a un área real.
-const galones = computed(() =>
-  datosValidos.value
-    ? Math.max(1, Math.ceil((area.value * manos) / rendimiento.value))
-    : 0,
+/** Galones exactos (sin redondear): base de toda conversión. Sin medidas válidas no hay recomendación. */
+const galonesExactos = computed(() =>
+  datosValidos.value ? galonesNecesarios(area.value, rendimiento.value, manos) : 0,
 );
 
-/** Unidades de la presentación elegida (p. ej. cuartos de galón) que cubren los galones recomendados. */
+/** Galones enteros a comprar si se compra por galón. */
+const galones = computed(() => unidadesParaGalones(galonesExactos.value, LITROS_POR_GALON));
+
+/** Litros que realmente se necesitan, como referencia para el cliente. */
+const litrosNecesarios = computed(() => galonesExactos.value * LITROS_POR_GALON);
+
+/**
+ * Unidades de la presentación elegida (p. ej. cuartos de galón). Se calculan desde los galones
+ * EXACTOS: convertir los galones ya redondeados casi duplicaba la compra.
+ */
 const unidadesRecomendadas = computed(() =>
-  unidadesParaGalones(galones.value, props.presentacion?.volumen),
+  unidadesParaGalones(galonesExactos.value, props.presentacion?.volumen),
 );
+
+/** El resultado se expresa en la presentación elegida; sin presentación o si es el galón, en galones. */
+const resultadoEnPresentacion = computed(() =>
+  Boolean(props.presentacion) && !esGalon(props.presentacion?.volumen),
+);
+
+const formatoLitros = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 });
 
 function agregarRecomendacion(): void {
   if (!datosValidos.value || unidadesRecomendadas.value < 1) return;

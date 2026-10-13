@@ -9,7 +9,7 @@ import MenuCategoriasPublico from '../../components/publicas/MenuCategoriasPubli
 import VistaCatalogoPublico from '../../views/publicas/VistaCatalogoPublico.vue';
 import VistaDetalleProductoPublico from '../../views/publicas/VistaDetalleProductoPublico.vue';
 import { useDetalleProductoPublico } from '../../composables/publicas/useDetalleProductoPublico';
-import { unidadesParaGalones } from '../../services/publicas/calculo-pintura';
+import { galonesNecesarios, unidadesParaGalones } from '../../services/publicas/calculo-pintura';
 import { BusquedaService } from '@/modules/m02-busqueda/services/busqueda.service';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import type { CategoriaPublica, FichaProductoPublico } from '../../interfaces/publicas/catalogo-publico.interface';
@@ -84,10 +84,25 @@ describe('1 · calculadora → carrito: se agrega la cantidad calculada', () => 
   it('convierte los galones a unidades de la presentación elegida', () => {
     expect(unidadesParaGalones(5, '3.785')).toBe(5);
     expect(unidadesParaGalones(1, '3.785')).toBe(1);
-    expect(unidadesParaGalones(5, '0.946')).toBe(21); // cuartos de galón
-    expect(unidadesParaGalones(5, '1')).toBe(19); // litros
+    // El cuarto se guarda como 0,946 L: 1 galón son 4 cuartos y 5 galones son 20, no 5 y 21.
+    expect(unidadesParaGalones(1, '0.946')).toBe(4);
+    expect(unidadesParaGalones(5, '0.946')).toBe(20);
+    expect(unidadesParaGalones(5, '1')).toBe(19); // litros (18,9 L)
     expect(unidadesParaGalones(5, null)).toBe(5); // sin volumen: se asume galón
     expect(unidadesParaGalones(0, '3.785')).toBe(0);
+  });
+
+  it('convierte desde la cantidad exacta, no desde los galones ya redondeados (caso de la captura)', () => {
+    // Barniz de 45 m²/gal/mano: 25 m² a 2 manos = 1,11 galones = 4,2 L.
+    const galones = galonesNecesarios(25, 45);
+    expect(galones).toBeCloseTo(1.111, 3);
+    expect(unidadesParaGalones(galones, '3.785')).toBe(2); // galones
+    expect(unidadesParaGalones(galones, '0.946')).toBe(5); // cuartos (antes recomendaba 9)
+    expect(unidadesParaGalones(galones, '1')).toBe(5); // litros (antes 8)
+    // Una pared pequeña de 5 m² cabe en un cuarto (antes recomendaba 5).
+    expect(unidadesParaGalones(galonesNecesarios(5, 45), '0.946')).toBe(1);
+    expect(galonesNecesarios(0, 45)).toBe(0);
+    expect(galonesNecesarios(10, 0)).toBe(0);
   });
 
   it('la calculadora muestra y emite las unidades de la presentación', async () => {
@@ -95,10 +110,33 @@ describe('1 · calculadora → carrito: se agrega la cantidad calculada', () => 
     const wrapper = mount(CalculadoraPinturaContenido, {
       props: { producto, presentacion: { nombre: 'Cuarto de Galón', volumen: '0.946' } },
     });
-    // 5 m × 2,5 m × 2 superficies = 25 m²; a 2 manos y 10 m²/gal = 5 galones = 21 cuartos.
-    expect(wrapper.find('[data-testid="unidades-recomendadas"]').text()).toBe('Se agregarán 21 unidades de Cuarto de Galón.');
+    // 5 m × 2,5 m × 2 superficies = 25 m²; a 2 manos y 10 m²/gal = 5 galones = 20 cuartos.
+    expect(wrapper.find('[data-testid="unidades-recomendadas"]').text()).toBe('Se agregarán 20 unidades de Cuarto de Galón.');
+    // El resultado principal se expresa en la presentación elegida, con los litros de referencia.
+    expect(wrapper.find('[data-testid="resultado-calculadora"]').text()).toMatch(/20\s*unidades de Cuarto de Galón/);
+    expect(wrapper.find('[data-testid="detalle-resultado"]').text()).toContain('aprox. 18,9 litros');
     await wrapper.findAll('button').find((b) => b.text().includes('Agregar al carrito'))?.trigger('click');
-    expect(wrapper.emitted('agregar')).toEqual([[21]]);
+    expect(wrapper.emitted('agregar')).toEqual([[20]]);
+  });
+
+  it('caso de la captura: barniz de 45 m²/gal en cuartos recomienda 5, no 9', async () => {
+    const barniz = { ...FICHA, rendimiento_min: 40, rendimiento_max: 50 } as FichaProductoPublico;
+    const wrapper = mount(CalculadoraPinturaContenido, {
+      props: { producto: barniz, presentacion: { nombre: 'Cuarto de Galón', volumen: '0.946' } },
+    });
+    expect(wrapper.text()).toContain('45.0 m² por galón y mano');
+    expect(wrapper.find('[data-testid="resultado-calculadora"]').text()).toMatch(/5\s*unidades de Cuarto de Galón/);
+    expect(wrapper.find('[data-testid="detalle-resultado"]').text()).toContain('aprox. 4,2 litros');
+    await wrapper.findAll('button').find((b) => b.text().includes('Agregar al carrito'))?.trigger('click');
+    expect(wrapper.emitted('agregar')).toEqual([[5]]);
+  });
+
+  it('con la presentación galón, el resultado se muestra en galones', () => {
+    const barniz = { ...FICHA, rendimiento_min: 40, rendimiento_max: 50 } as FichaProductoPublico;
+    const wrapper = mount(CalculadoraPinturaContenido, {
+      props: { producto: barniz, presentacion: { nombre: 'Galón', volumen: '3.785' } },
+    });
+    expect(wrapper.find('[data-testid="resultado-calculadora"]').text()).toMatch(/2\s*galones/);
   });
 
   it('el diálogo retransmite las unidades', async () => {
