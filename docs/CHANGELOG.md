@@ -7,6 +7,14 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.9.4] - 2026-10-12
+### M01 - Filas de 4 con pocos resultados (Frontend)
+- **Alcance General:** **Patch (v0.4.9.4)**.
+- **Catálogo:** con menos de 32 productos en la página, las filas llevan 4 para que no quede nada oculto (9 → 4 + 4 + 1); con la página completa se mantienen 4 filas de 8.
+- **Calculadora:** verificado que el botón del inicio y del catálogo abre la calculadora; el enlace del pie (`core`, `href="#"`) se reporta, no se modificó.
+- **Verificación:** vitest del frontend 162/162; ESLint M01 limpio; `vue-tsc` solo con los 2 errores previos de M05; comprobado en Docker.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.9.4_M01_filas_de_4_con_pocos_resultados_frontend.md](./walkthroughs/M01/walkthrough_v0.4.9.4_M01_filas_de_4_con_pocos_resultados_frontend.md)
+---
 ## [v0.4.9.3] - 2026-10-12
 ### M01 - Filtros de presentación y color en la tarjeta, y buscador del inicio (Frontend)
 - **Alcance General:** **Patch (v0.4.9.3)** por la auditoría de flujos de filtros con datos locales.
