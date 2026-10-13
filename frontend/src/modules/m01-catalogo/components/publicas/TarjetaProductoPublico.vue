@@ -67,7 +67,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { seleccionarVarianteCompraRapida } from '../../services/publicas/seleccion-variante';
+import { seleccionarVarianteCompraRapida, type RangoPrecioVariante } from '../../services/publicas/seleccion-variante';
 import { PackageOpen, ShoppingCart } from 'lucide-vue-next';
 import { formatearPrecioConSufijo } from '@/core/utils/moneda';
 import type { ProductoDestacadoPublico } from '../../interfaces/publicas/catalogo-publico.interface';
@@ -78,8 +78,10 @@ const props = withDefaults(
     modo?: 'grid' | 'lista';
     muestraColor?: string | null;
     idColor?: number | null;
+    /** Rango de precio activo en el catálogo: el precio mostrado debe cumplirlo. */
+    rangoPrecio?: RangoPrecioVariante | null;
   }>(),
-  { modo: 'grid', muestraColor: null }
+  { modo: 'grid', muestraColor: null, rangoPrecio: null }
 );
 const emit = defineEmits<{ ver: [idProducto: number]; agregar: [idProducto: number] }>();
 const imagenConError = ref(false);
@@ -92,18 +94,23 @@ const imagenVisible = computed(() => {
   return null;
 });
 
+/** Variante que se muestra y que agrega la compra rápida (la misma regla en ambos casos). */
+const varianteMostrada = computed(() =>
+  seleccionarVarianteCompraRapida(props.producto.detalle?.variantes ?? [], props.idColor, props.rangoPrecio),
+);
+
+// El punto de color corresponde a la variante cuyo precio se muestra (antes, a la primera
+// variante del producto, que podía ser de otro color).
 const muestraColorEfectiva = computed(() => {
   if (props.muestraColor) return props.muestraColor;
   if (props.producto.clase_color !== 'sin_color') {
     const primeraConMuestra = props.producto.detalle?.variantes.find((v) => v.muestra_hex);
-    return primeraConMuestra?.muestra_hex ?? null;
+    return varianteMostrada.value?.muestra_hex ?? primeraConMuestra?.muestra_hex ?? null;
   }
   return null;
 });
 
-const precioMinimo = computed(() =>
-  seleccionarVarianteCompraRapida(props.producto.detalle?.variantes ?? [], props.idColor)?.precio_vigente ?? null
-);
+const precioMinimo = computed(() => varianteMostrada.value?.precio_vigente ?? null);
 
 const descripcionClaseColor = computed(() => {
   if (props.producto.clase_color === 'entonable') return 'Disponible en múltiples colores y presentaciones.';
