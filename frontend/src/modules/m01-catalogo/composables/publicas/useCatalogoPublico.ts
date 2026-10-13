@@ -17,6 +17,8 @@ import type {
 export const PRODUCTOS_POR_FILA = 8;
 export const FILAS_POR_PAGINA = 4;
 export const LIMITE_PAGINA = PRODUCTOS_POR_FILA * FILAS_POR_PAGINA;
+/** Con menos de una página completa, filas de 4 (lo que cabe en pantalla) para que no quede nada oculto. */
+export const PRODUCTOS_POR_FILA_REPARTIDA = 4;
 const ESPERA_BUSQUEDA_MS = 300;
 const ORDENES: readonly OrdenBusqueda[] = ['relevancia', 'precio_asc', 'precio_desc', 'novedad'];
 /** Parámetros de la URL que pertenecen al estado del catálogo. */

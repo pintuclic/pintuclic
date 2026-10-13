@@ -142,6 +142,22 @@ describe('catálogo con filtro de precio activo', () => {
     wrapper.unmount();
   });
 
+  it.each([
+    [9, [4, 4, 1]],
+    [31, [4, 4, 4, 4, 4, 4, 4, 3]],
+    [32, [8, 8, 8, 8]],
+  ])('con %i resultados las filas quedan %j (menos de una página: 4 por fila, todo visible)', async (cantidad, filas) => {
+    vi.mocked(BusquedaService.buscar).mockResolvedValue({
+      items: Array.from({ length: cantidad }, (_, i) => ({ id_producto: i + 1, nombre: `Producto ${i + 1}`, id_marca: 5, clase_color: 'colores_fijos' })),
+      total: cantidad, pagina: 1, limite: 32, total_paginas: 1,
+    });
+    const wrapper = await montar('/catalogo');
+    const carruseles = wrapper.findAll('[aria-roledescription="carrusel"]');
+    expect(carruseles.map((c) => c.findAll('[aria-roledescription="diapositiva"]').length)).toEqual(filas);
+    expect(carruseles[1]?.attributes('aria-label')).toBe(`Productos ${filas[0] + 1} a ${filas[0] + filas[1]}`);
+    wrapper.unmount();
+  });
+
   it('sin filtro de precio la tarjeta sigue mostrando la variante más barata', async () => {
     const wrapper = await montar('/catalogo');
     expect(wrapper.find('article').text()).toContain('23.300');

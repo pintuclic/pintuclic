@@ -372,7 +372,7 @@ import CarruselProductosPublico from '../../components/publicas/CarruselProducto
 import FiltroAcordeonPublico from '../../components/publicas/FiltroAcordeonPublico.vue';
 import OpcionFiltroPublico from '../../components/publicas/OpcionFiltroPublico.vue';
 import PaginacionCatalogoPublico from '../../components/publicas/PaginacionCatalogoPublico.vue';
-import { PRODUCTOS_POR_FILA, useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
+import { PRODUCTOS_POR_FILA, PRODUCTOS_POR_FILA_REPARTIDA, useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
 import { rangoPrecioPublicoSchema } from '../../dtos/publicas/catalogo-publico.dto';
 import { obtenerMuestraColorCoincidente } from '../../composables/publicas/useColorCoincidenteBusqueda';
 import { seleccionarVarianteCompraRapida, type FiltrosVariante } from '../../services/publicas/seleccion-variante';
@@ -578,11 +578,17 @@ const filtrosVarianteActivos = computed<FiltrosVariante | null>(() => {
   };
 });
 
-/** La página se reparte en filas de 8; cada fila se muestra como un carrusel manual. */
+/**
+ * La página completa se reparte en filas de 8, cada una como carrusel manual. Con menos
+ * de una página completa, filas de 4 para que todo quede a la vista (9 → 4 + 4 + 1).
+ */
+const productosPorFila = computed(() =>
+  productos.value.length < limitePagina ? PRODUCTOS_POR_FILA_REPARTIDA : PRODUCTOS_POR_FILA,
+);
 const filasProductos = computed(() => {
   const filas: (typeof productos.value)[] = [];
-  for (let inicio = 0; inicio < productos.value.length; inicio += PRODUCTOS_POR_FILA) {
-    filas.push(productos.value.slice(inicio, inicio + PRODUCTOS_POR_FILA));
+  for (let inicio = 0; inicio < productos.value.length; inicio += productosPorFila.value) {
+    filas.push(productos.value.slice(inicio, inicio + productosPorFila.value));
   }
   return filas;
 });
@@ -603,7 +609,7 @@ const rangoInicio = computed(() => (total.value === 0 ? 0 : (pagina.value - 1) *
 
 /** Nombre accesible de cada fila con la numeración del catálogo completo (página 3: «Productos 65 a 72»). */
 function etiquetaFila(indiceFila: number, cantidad: number): string {
-  const primero = (pagina.value - 1) * limitePagina + indiceFila * PRODUCTOS_POR_FILA + 1;
+  const primero = (pagina.value - 1) * limitePagina + indiceFila * productosPorFila.value + 1;
   return `Productos ${primero} a ${primero + cantidad - 1}`;
 }
 const rangoFin = computed(() => Math.min(pagina.value * limitePagina, total.value));
