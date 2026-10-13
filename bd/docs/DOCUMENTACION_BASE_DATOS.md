@@ -1,8 +1,8 @@
 # 📘 Arquitectura y Documentación del Esquema de Base de Datos - PINTUCLIC
 
-> **Versión Actual:** 2.4 (Módulo de Cuentas, Autenticación y Perfil - M04)  
+> **Versión Actual:** 2.8 / v3.36.0 — esquema 4.0 (M01: asociación color↔base, complementarios por categoría, combos excluidos de descuentos y miniaturas)  
 > **Motor de Base de Datos:** PostgreSQL 13+ (`gen_random_uuid()` nativo; compatible con PostgreSQL 18)  
-> **Total de Tablas:** 36  
+> **Total de Tablas:** 50  
 > **Script DDL Oficial:** [`../sql/schema_pintuclic.sql`](../sql/schema_pintuclic.sql)  
 > **Script de Mocks / Seed Oficial:** [`../sql/seed_pintuclic.sql`](../sql/seed_pintuclic.sql)  
 > **Guía Oficial de Mocks y Datos de Prueba:** [`./GUIA_MOCKS_Y_DATOS_PRUEBA.md`](./GUIA_MOCKS_Y_DATOS_PRUEBA.md)  
@@ -14,6 +14,10 @@
 
 | Versión | Fecha | Tablas Nuevas | Tablas Deprecadas | Cambios Destacados | Detalle Completo |
 | :---: | :---: | :--- | :--- | :--- | :--- |
+| **v2.8 / v3.36.0** (esquema 4.0) | 2026-10-13 | `color_base` (1) | Ninguna | M01 Catálogo: combinaciones color↔base para el entonado (RF-CAT-12-04/05/06), `categoria.id_categoria_complementaria` para heredar complementarios (RF-CAT-08-01), `combo.excluido_descuentos` (RF-CAT-13-01), `UNIQUE (id_producto)` en `combo` e `imagen.miniatura`/`optimizada` en WebP (RNF-CAT-07-01). Migración idempotente para bases existentes. Total 50 tablas. | [Ver v2.8](./WALKTHROUGH_DATABASE.md#-versión-28--v3360-2026-10-13) |
+| **v2.7 / v0.3.37.0** (esquema 3.9) | 2026-09-29 | `linea_orden_descuento`, `consecutivo` (2) | Ninguna | M08 Orden de venta: copia histórica completa. `orden` añade solicitud SOL de origen, modo y costo de entrega, base, importe y tasa de IVA (dirección opcional en recogida). `linea_orden` añade color solicitado, precio inicial, referencia a la variante sin FK, entonado y base consumida, y pasa a `ON DELETE RESTRICT`. Descuentos por línea en orden y consecutivo sin huecos para `PC-AAAA-NNNNN`. Nuevo `enum_modo_entrega`. Total 49 tablas. | [Ver v2.7](./WALKTHROUGH_DATABASE.md#-versión-27--v03370-2026-09-29) |
+| **v2.6 / v0.3.34.0** (esquema 3.8) | 2026-09-29 | `historial_estado_orden`, `nota_orden`, `contacto_orden` (3) | Ninguna | M08 Orden de venta: `enum_estado_orden` pasa al ciclo de HU-ORD-03 (`orden_confirmada` … `devuelto`) con migración idempotente para bases existentes (`pagado` → `orden_confirmada`, `enviado` → `despachado`); `orden.estado` nace en `orden_confirmada`; historial de transiciones con autor, notas internas y registro de contactos. Total 47 tablas. | [Ver v2.6](./WALKTHROUGH_DATABASE.md#-versión-26--v03340-2026-09-29) |
+| **v2.5 / v3.29.0** | 2026-09-22 | Ninguna (Ajuste estructural de 6 tablas) | Ninguna | Sincronización del modelo ER: bloque fusionado `variante` $\rightarrow$ `base` (`id_variante`, `prefijo`) $\rightarrow$ `color` (`id_base`) $\rightarrow$ `tonos` (`nombre`, `hexagesimal`), `linea_carrito.ref_viva`, `cotizacion.id_usuario/id_rol` y `orden.carrito_o_cotizacion`. Total 44 tablas. | [Ver v2.5](./WALKTHROUGH_DATABASE.md#-versión-25--v3290-2026-09-22) |
 | **v2.4** | 2026-09-05 | `direccion_cliente`, `solicitud_empresa`, `solicitud_actualizacion_nit`, `usuario_identidad_externa`, `codigo_verificacion` (5) | Ninguna | Módulo Cuentas y Perfil (M04). Múltiples direcciones (`HU-CUE-07`), flujo B2B corporativo con aprobación admin (`HU-CUE-03/09`), federación Google Identity (`HU-CUE-02`) y almacén OTP efímero con TTL (`HU-CUE-01/05`). Total 36 tablas. | [Ver v2.4](./WALKTHROUGH_DATABASE.md#-versión-24-2026-09-05) |
 | **v2.3** | 2026-09-05 | `aviso_privacidad`, `consentimiento_usuario`, `solicitud_supresion` (3) | Ninguna | Protección de datos personales, términos legales y Habeas Data (M20 HU-SEG-05). Trazabilidad de consentimiento inmutable y radicación de supresión de datos. Preserva `sesion` (v2.2). | [Ver v2.3](./WALKTHROUGH_DATABASE.md#-versión-23-2026-09-05) |
 | **v2.2** | 2026-09-05 | `sesion` (1) | Ninguna | Estado de sesión persistido para M20: cierre manual, caducidad por inactividad e invalidación en bloque. PK `UUID` no enumerable y 3 ENUMs nuevos. Cambio puramente aditivo. | [Ver v2.2](./WALKTHROUGH_DATABASE.md#-versión-22-2026-09-05) |
@@ -42,8 +46,6 @@ El esquema de base de datos de **Pintuclic** soporta las operaciones integrales 
    - Almacenamiento histórico inmutable en `linea_orden` (preservando nombre de producto, copia de variante y precio cobrado en el momento de la transacción).
 5. **Blindaje de Integridad:**  
    - 10 tipos `ENUM` nativos de PostgreSQL para evitar estados inconsistentes o errores tipográficos.
-   - Restricción `UNIQUE(id_usuario)` en `usuario_rol` para forzar que ningún usuario tenga más de 1 rol simultáneo.
-   - Restricción `UNIQUE(id_carrito, id_variante)` en `linea_carrito` para unificar cantidades de un mismo ítem.
    - Restricción `UNIQUE` en `usuario(correo)`, `rol(nombre)`, `permisos(nombre)`, `asignacion_permiso(id_rol, id_permiso)`, `orden(codigo_visible)` y `variante_combo(id_variante, id_combo)`.
 
 ---
@@ -52,44 +54,338 @@ El esquema de base de datos de **Pintuclic** soporta las operaciones integrales 
 
 ```mermaid
 erDiagram
-    descuento ||--o{ sub_rol_empresa : "aplica a"
-    sub_rol_empresa ||--o{ rol : "agrupa"
-    rol ||--o{ asignacion_permiso : "tiene"
-    permisos ||--o{ asignacion_permiso : "asignado en"
-    rol ||--o{ usuario : "define perfil"
-    usuario ||--|| usuario_rol : "posee (1:1)"
-    rol ||--o{ usuario_rol : "asignado a"
-    usuario ||--o{ sesion : "mantiene abiertas"
-    usuario ||--o{ consentimiento_usuario : "otorga"
-    aviso_privacidad ||--o{ consentimiento_usuario : "recibe"
-    usuario ||--o{ solicitud_supresion : "radica"
+    %% ==== Catálogo / Jerarquía de producto ====
+    Categoria {
+        int UniqueID PK
+        string nombre
+        int id_categoria_complementaria FK "v4.0, RF-CAT-08-01"
+    }
+    Subcategorias {
+        int UniqueID PK
+        int id_categoria FK
+        string nombre
+    }
+    Sub_Subcategorias {
+        int UniqueID PK
+        int id_subcategoria FK
+        string nombre
+    }
+    Marca {
+        int UniqueID PK
+        string nombre
+    }
+    Linea {
+        int UniqueID PK
+        int id_sub_subcategoria FK
+        string nombre
+        string marca
+    }
+    Producto {
+        int UniqueID PK
+        int id_linea FK
+        string nombre
+    }
 
-    usuario ||--o{ carrito : "crea (opcional)"
-    carrito ||--o{ linea_carrito : "contiene"
-    variante ||--o{ linea_carrito : "agregada a"
+    %% ==== Bloque fusionado (diagrama 1: Variante -> Bases -> Color -> tonos) ====
+    Variante {
+        int UniqueID PK
+        int id_producto FK
+        float precio_vigente
+        string estado
+    }
+    Bases {
+        int id_base PK
+        int id_marca FK
+        string nombre
+    }
+    Color {
+        int UniqueID PK
+        int id_marca FK
+        string nombre
+        float cie_l
+        float cie_a
+        float cie_b
+    }
+    Color_Base {
+        int id_color PK, FK "v4.0, RF-CAT-12-04"
+        int id_base PK, FK
+    }
+    tonos {
+        int UniqueID PK
+        int id_color FK
+        string nombre
+        string hexagesimal
+        float precio
+    }
 
-    cotizacion ||--o{ orden : "origina (opcional)"
-    usuario ||--o{ orden : "realiza"
-    orden ||--o{ linea_orden : "contiene (snapshot)"
-    orden ||--o{ pagos : "registra"
-    metodo_pago ||--o{ pagos : "utilizado en"
-    orden ||--o{ factura : "emite"
-    usuario ||--o{ reservaciones : "realiza"
+    Caracteristica {
+        int UniqueID PK
+        int id_variante FK
+        string nombre
+    }
+    Combo {
+        int UniqueID PK
+        int id_producto FK "UNIQUE v4.0"
+        bool excluido_descuentos "v4.0, RF-CAT-13-01"
+    }
+    variante_Combo {
+        int UniqueID PK
+        int id_variante FK
+        int id_combo FK
+        int cantidad
+    }
 
-    categoria ||--o{ subcategorias : "divide en"
-    subcategorias ||--o{ sub_subcategorias : "subdivide en"
-    sub_subcategorias ||--o{ linea : "agrupa"
-    linea ||--o{ producto : "clasifica"
+    %% ==== Roles, permisos y descuentos ====
+    descuento {
+        int id_descuento PK
+        float tope
+        float porcentaje_descuento
+        string estado
+    }
+    sub_roll_empresa {
+        int id_sub_roll_empresa PK
+        string nombre
+        int id_descuento FK
+        string estado
+    }
+    roll {
+        int id_roll PK
+        string nombre
+        int id_sub_roll_empresa FK
+        string estado
+    }
+    permisos {
+        int id_permiso PK
+        string nombre
+        string descripcion
+        string estado
+    }
+    asignacion_permiso {
+        int id_asignacion_permiso PK
+        int id_roll FK
+        int id_permiso FK
+    }
 
-    producto ||--o{ combo : "es un"
-    producto ||--o{ variante : "tiene"
-    color ||--o{ variante : "define"
-    color ||--o{ tonos : "desglosa en"
-    variante ||--o{ variante_combo : "incluida en"
-    combo ||--o{ variante_combo : "compuesto por"
-    variante ||--o{ caracteristica : "describe"
+    %% ==== Usuarios y privacidad ====
+    usuario {
+        int id PK
+        string nombre
+        string telefono
+        string correo
+        string contrasena
+        int id_roll FK
+        string estado
+        string tipo "normal_o_empresa"
+    }
+    usuario_rol {
+        int id_usuario_rol PK
+        int id_usuario FK
+        int id_rol FK
+    }
+    solicitud_supresion {
+        int id_solicitud_supresion PK
+        int id_usuario FK
+        date fecha_solicitud
+        string fecha_resolucion
+        string estado
+    }
+    aviso_privacidad {
+        int id_aviso_privacidad PK
+        string version
+        string descripcion
+        boolean es_vigente
+    }
+    consentimiento_usuario {
+        int id_consentimiento PK
+        int id_usuario FK
+        int id_aviso_privacidad FK
+        date fecha
+    }
 
-    producto ||--o{ reservaciones : "reservado en"
+    %% ==== Ventas: cotización, carrito, reservas, orden ====
+    Cotizacion {
+        int id PK
+        int id_usuario FK
+        int id_rol FK
+        string estado "M21_no_analizado"
+    }
+    Carrito {
+        int id PK
+        string token_visitante "nullable"
+        int cliente_id FK "nullable"
+        date fecha_ultima_actividad
+    }
+    LineaCarrito {
+        int id PK
+        int carrito_id FK
+        int variante_id FK
+        int ref_viva
+        int cantidad
+    }
+    reservaciones {
+        int id_reservacion PK
+        int id_producto FK
+        int id_usuario FK
+        date fecha
+        time hora
+        string estado
+    }
+    Orden {
+        int id PK "interno"
+        string codigo_visible
+        int cliente_id FK
+        string origen
+        int cotizacion_id FK "nullable"
+        string carrito_o_cotizacion
+        enum estado "M08 v3.8: orden_confirmada, revision_disponibilidad, en_preparacion, preparada, despachado, entregado, cancelado, devuelto"
+        int transaccion_pago_id "unico"
+        string codigo_solicitud "M08 v3.9: SOL de M07, unico, nullable"
+        enum modo_entrega "M08 v3.9: domicilio, recogida"
+        decimal costo_entrega "M08 v3.9"
+        string direccion "nullable en recogida"
+        decimal sub_total
+        decimal descuento
+        decimal total
+        decimal base_sin_impuesto "M08 v3.9"
+        decimal importe_iva "M08 v3.9"
+        decimal tasa_iva "M08 v3.9"
+        string observaciones "nullable"
+        date fecha
+    }
+    LineaOrden {
+        int id PK
+        int orden_id FK
+        string nombre_producto "copia"
+        string variante_copia "copia"
+        decimal precio_aplicado "copia"
+        int cantidad
+        string color_solicitado "M08 v3.9, copia"
+        decimal precio_inicial "M08 v3.9, copia"
+        int id_variante_ref "M08 v3.9, sin FK"
+        boolean es_entonado "M08 v3.9"
+        string base_consumida "M08 v3.9, copia"
+    }
+    %% ==== M08 v3.9: descuentos por línea y consecutivo ====
+    linea_orden_descuento {
+        int id_linea_orden_descuento PK
+        int id_linea_orden FK
+        int orden_aplicacion
+        string origen
+        decimal porcentaje "nullable = importe fijo"
+        decimal importe
+    }
+    consecutivo {
+        int id_consecutivo PK
+        string nombre "unico: orden, solicitud"
+        bigint ultimo_valor
+    }
+    %% ==== M08 v3.8: historial de estados, notas internas y contactos ====
+    historial_estado_orden {
+        int id_historial_estado_orden PK
+        int id_orden FK
+        enum estado_anterior "nullable al nacer la orden"
+        enum estado_nuevo
+        int id_usuario_autor FK "nullable = sistema"
+        string motivo "nullable"
+        string referencia_externa "nullable"
+        timestamp fecha
+    }
+    nota_orden {
+        int id_nota_orden PK
+        int id_orden FK
+        int id_usuario_autor FK
+        string texto "solo insercion, no visible al cliente"
+        timestamp fecha
+    }
+    contacto_orden {
+        int id_contacto_orden PK
+        int id_orden FK
+        int id_usuario_autor FK
+        string medio
+        string detalle "nullable"
+        timestamp fecha
+    }
+    factura {
+        int id_factura PK
+        int id_orden FK
+        date fecha
+        string estado
+    }
+    pagos {
+        int id_pago PK
+        int id_orden FK
+        int id_metodo_pago FK
+        string estado
+        float monto
+    }
+    metodo_pago {
+        int id_metodo_pago PK
+        string nombre
+        string descripcion
+        string estado
+    }
+
+    %% ================== RELACIONES ==================
+
+    %% Jerarquía de catálogo
+    Categoria         ||--o{ Subcategorias        : "divide_en"
+    Categoria         |o--o{ Categoria            : "complementa_a"
+    Subcategorias      ||--o{ Sub_Subcategorias     : "subdivide_en"
+    Sub_Subcategorias  ||--o{ Linea                 : "agrupa"
+    Marca               ||--o{ Linea                 : "agrupa"
+    Linea               ||--o{ Producto              : "clasifica"
+    Producto            ||--o| Combo                 : "es_un"
+
+    %% Bloque fusionado: Variante -> Bases -> Color -> tonos
+    Producto  ||--o{ Variante          : "tiene"
+    Bases     ||--o{ Variante          : "entonada_sobre"
+    Color     ||--o{ Color_Base        : "se_prepara_sobre"
+    Bases     ||--o{ Color_Base        : "admite"
+    Color     ||--o{ tonos             : "desglosa_en"
+    Variante  ||--o{ Caracteristica    : "describe"
+    Combo     ||--o{ variante_Combo    : "compuesto_por"
+    Variante  ||--o{ variante_Combo    : "incluida_en"
+    Variante  ||--o{ LineaCarrito      : "referencia (ref_viva)"
+
+    %% Roles / permisos / descuentos
+    descuento          ||--o{ sub_roll_empresa   : "aplica_a"
+    sub_roll_empresa   ||--o{ roll               : "agrupa"
+    roll               ||--o{ usuario            : "define_perfil"
+    roll               ||--o{ asignacion_permiso : "asignado_en"
+    permisos           ||--o{ asignacion_permiso : "asignado_en"
+    usuario            ||--o{ usuario_rol        : "posee"
+    roll               ||--o{ usuario_rol        : "posee"
+
+    %% Usuario y privacidad
+    usuario                 ||--o{ solicitud_supresion    : "solicita"
+    usuario                 ||--o{ consentimiento_usuario : "puede_tener"
+    aviso_privacidad        ||--o{ consentimiento_usuario : "puede_aceptar"
+
+    %% Ventas
+    usuario      ||--o{ Cotizacion     : "1:N (realiza)"
+    roll         ||--o{ Cotizacion     : "1:N (realiza)"
+    usuario      ||--o{ Carrito        : "tiene"
+    Cotizacion   ||--o{ Orden          : "origen_opcional"
+    Carrito      ||--o{ Orden          : "revalidado_en_checkout"
+    usuario      ||--o{ Orden          : "realiza"
+    Carrito      ||--o{ LineaCarrito   : "1:N"
+    usuario      ||--o{ reservaciones  : "1_0_N (crea)"
+    Producto     ||--o{ reservaciones  : "reservado_en"
+    Orden        ||--o{ factura        : "emite"
+    Orden        ||--o{ pagos          : "registra"
+    metodo_pago  ||--o{ pagos          : "utilizado_en"
+    Orden        ||--o{ LineaOrden     : "1:N"
+
+    %% M08 v3.8: historial, notas internas y contactos
+    Orden        ||--o{ historial_estado_orden : "cambia_de_estado"
+    usuario      |o--o{ historial_estado_orden : "registra (nullable = sistema)"
+    Orden        ||--o{ nota_orden             : "tiene_notas"
+    usuario      ||--o{ nota_orden             : "escribe"
+    Orden        ||--o{ contacto_orden         : "registra_contactos"
+    usuario      ||--o{ contacto_orden         : "contacta"
+
+    %% M08 v3.9: descuentos por línea
+    LineaOrden   ||--o{ linea_orden_descuento  : "aplica_descuentos"
 ```
 
 ---
@@ -110,35 +406,42 @@ erDiagram
 | :--- | :--- | :--- | :--- |
 | **`usuario`** | `id_usuario` | `id_rol` $\rightarrow$ `rol` | Cuentas con `correo` UNIQUE, hash BCrypt en `contrasena`, tipo (`normal`/`empresa`) y estado. |
 | **`usuario_rol`** | `id_usuario_rol` | `id_usuario`, `id_rol` | Asignación con restricción `UNIQUE(id_usuario)` (máximo 1 rol por usuario). |
-| **`sesion`** | `id_sesion` (**UUID**) | `id_usuario` $ightarrow$ `usuario` (CASCADE) | Sesiones abiertas por dispositivo (M20 / HU-SEG-02). Guarda último acceso y expiración para aplicar la caducidad por inactividad en servidor, y estado más motivo de cierre para poder revocar un token ya emitido. Admite varias filas activas por usuario (sesiones simultáneas). PK `UUID` por seguridad: el identificador viaja en el JWT y no debe ser enumerable. |
+| **`sesion`** | `id_sesion` (**UUID**) | `id_usuario` $\rightarrow$ `usuario` (CASCADE) | Sesiones abiertas por dispositivo (M20 / HU-SEG-02). Guarda último acceso y expiración. |
 
-### Módulo 3: Catálogo Multinivel, Colores y Variantes (11 Tablas)
+### Módulo 3: Catálogo Multinivel, Colores, Bases y Variantes (11 Tablas)
 | Tabla | PK | FKs | Descripción |
 | :--- | :--- | :--- | :--- |
-| **`categoria`** | `id_categoria` | Ninguna | Nivel 1 del catálogo (e.g. Pinturas Arquitectónicas, Esmaltes). |
+| **`categoria`** | `id_categoria` | `id_categoria_complementaria` $\rightarrow$ `categoria` | Nivel 1 del catálogo (e.g. Pinturas Arquitectónicas, Esmaltes). Puede declarar la categoría de la que heredan sus complementarios los productos sin configuración propia (v4.0). |
 | **`subcategorias`** | `id_subcategoria` | `id_categoria` $\rightarrow$ `categoria` | Nivel 2 de agrupación. |
 | **`sub_subcategorias`** | `id_sub_subcategoria` | `id_subcategoria` $\rightarrow$ `subcategorias` | Nivel 3 de agrupación. |
 | **`linea`** | `id_linea` | `id_sub_subcategoria` $\rightarrow$ `sub_subcategorias` | Nivel 4: Línea de marca (e.g. Viniltex, Koraza). |
 | **`producto`** | `id_producto` | `id_linea` $\rightarrow$ `linea` | Entidad base del producto. |
-| **`color`** | `id_color` | Ninguna | Catálogo maestro de colores base (`nombre` UNIQUE). |
-| **`tonos`** | `id_tono` | `id_color` $\rightarrow$ `color` | Tonos/matices derivados de un color con su precio adicional. |
-| **`variante`** | `id_variante` | `id_producto`, `id_color` | SKU vendible con `precio_vigente`, `estado` comercial y color opcional. |
+| **`variante`** | `id_variante` | `id_producto` $\rightarrow$ `producto` | SKU vendible con `precio_vigente`, `estado` comercial y presentación. |
+| **`base`** | `id_base` | `id_marca` $\rightarrow$ `marca` | Base de entonado de una marca; la variante entonable la referencia (`variante.id_base`). |
+| **`color`** | `id_color` | `id_marca` $\rightarrow$ `marca` | Color de la carta de una marca con su valor CIELAB. |
+| **`color_base`** | (`id_color`, `id_base`) | `id_color` $\rightarrow$ `color`, `id_base` $\rightarrow$ `base` | Bases sobre las que puede prepararse cada color (v4.0, RF-CAT-12-04). La carta entonable y la base consumida se resuelven desde aquí. |
+| **`tonos`** | `id_tono` | `id_color` $\rightarrow$ `color` | Tonos/matices derivados con `nombre`, `hexagesimal` y precio adicional. |
 | **`caracteristica`** | `id_caracteristica` | `id_variante` $\rightarrow$ `variante` | Ficha técnica o especificaciones de la variante. |
-| **`combo`** | `id_combo` | `id_producto` $\rightarrow$ `producto` | Paquete comercial ligado a un producto. |
+| **`combo`** | `id_combo` | `id_producto` $\rightarrow$ `producto` (UNIQUE) | Marca un producto como combo con existencia real; `excluido_descuentos` indica que se cobra sin rebaja (v4.0). |
 | **`variante_combo`** | `id_variante_combo` | `id_variante`, `id_combo` | Detalle N:M de las variantes y `cantidad` que componen el combo. |
 
 ### Módulo 4: Carrito Vivo de Compras (2 Tablas)
 | Tabla | PK | FKs | Descripción |
 | :--- | :--- | :--- | :--- |
 | **`carrito`** | `id_carrito` | `id_usuario` $\rightarrow$ `usuario` (opcional) | Carrito vivo con `token_visitante` para usuarios anónimos y fecha de actividad. |
-| **`linea_carrito`** | `id_linea_carrito` | `id_carrito`, `id_variante` | Ítems agregados vivos vinculados a la variante de producto con `cantidad`. |
+| **`linea_carrito`** | `id_linea_carrito` | `id_carrito`, `id_variante` | Ítems agregados vivos vinculados a variante con `ref_viva` y `cantidad`. |
 
-### Módulo 5: Cotizaciones y Órdenes Inmutables (3 Tablas)
+### Módulo 5: Cotizaciones y Órdenes Inmutables (8 Tablas)
 | Tabla | PK | FKs | Descripción |
 | :--- | :--- | :--- | :--- |
-| **`cotizacion`** | `id_cotizacion` | Ninguna | Cotización comercial B2B/B2C con ciclo de vida (`enum_estado_cotizacion`). |
-| **`orden`** | `id_orden` | `id_usuario`, `id_cotizacion` | Orden de compra confirmada con `codigo_visible`, `origen`, pasarela, montos y estado. |
-| **`linea_orden`** | `id_linea_orden` | `id_orden` $\rightarrow$ `orden` | Snapshot congelado inmutable (`nombre_producto`, `variante_copia`, `precio_aplicado`, `cantidad`). |
+| **`cotizacion`** | `id_cotizacion` | `id_usuario`, `id_rol` | Cotización comercial B2B/B2C vinculada a usuario y rol. |
+| **`orden`** | `id_orden` | `id_usuario`, `id_cotizacion` | Orden de compra confirmada con `codigo_visible`, `origen`, `carrito_o_cotizacion`, pasarela y estado (nace en `orden_confirmada`). Desde v3.9 conserva la solicitud SOL de origen (`codigo_solicitud` UNIQUE), el modo y costo de entrega, y la base, el importe y la tasa de IVA; la dirección es opcional en recogida. |
+| **`linea_orden`** | `id_linea_orden` | `id_orden` $\rightarrow$ `orden` (RESTRICT) | Snapshot congelado inmutable (`nombre_producto`, `variante_copia`, `precio_aplicado`, `cantidad`). Desde v3.9: `color_solicitado`, `precio_inicial`, `id_variante_ref` sin FK, `es_entonado` y `base_consumida`. |
+| **`linea_orden_descuento`** | `id_linea_orden_descuento` | `id_linea_orden` $\rightarrow$ `linea_orden` | Descuentos aplicados a cada línea con origen, porcentaje, importe y orden de aplicación (M08 - RF-ORD-02-02). Solo inserción. |
+| **`consecutivo`** | `id_consecutivo` | Ninguna | Numeración corrida sin huecos por tipo de documento (M08 - RF-ORD-06-04; reutilizable por M07). |
+| **`historial_estado_orden`** | `id_historial_estado_orden` | `id_orden` $\rightarrow$ `orden`, `id_usuario_autor` $\rightarrow$ `usuario` (NULL = sistema) | Transiciones de la orden con estado anterior y nuevo, autor, motivo, referencia externa y fecha (M08 - HU-ORD-03). Solo inserción. |
+| **`nota_orden`** | `id_nota_orden` | `id_orden` $\rightarrow$ `orden`, `id_usuario_autor` $\rightarrow$ `usuario` | Notas internas del personal, nunca visibles al cliente (M08 - HU-ORD-10). Solo inserción. |
+| **`contacto_orden`** | `id_contacto_orden` | `id_orden` $\rightarrow$ `orden`, `id_usuario_autor` $\rightarrow$ `usuario` | Contactos con el cliente iniciados desde la orden: medio, detalle, autor y fecha (M08 - HU-ORD-09). Solo inserción. |
 
 ### Módulo 6: Pagos y Facturación (3 Tablas)
 | Tabla | PK | FKs | Descripción |
@@ -171,7 +474,9 @@ enum_tipo_usuario       -- ('normal', 'empresa')
 enum_estado_usuario     -- ('activo', 'inactivo', 'bloqueado', 'pendiente')
 enum_estado_producto    -- ('activo', 'inactivo', 'agotado', 'descontinuado')
 enum_origen_orden       -- ('carrito', 'cotizacion')
-enum_estado_orden       -- ('pendiente', 'pagado', 'en_preparacion', 'enviado', 'entregado', 'cancelado')
+enum_estado_orden       -- ('orden_confirmada', 'revision_disponibilidad', 'en_preparacion', 'preparada',
+                        --  'despachado', 'entregado', 'cancelado', 'devuelto')  -- v3.8 (M08)
+enum_modo_entrega       -- ('domicilio', 'recogida')  -- v3.9 (M08)
 enum_estado_cotizacion  -- ('borrador', 'enviada', 'aprobada', 'rechazada', 'vencida')
 enum_estado_pago        -- ('pendiente', 'completado', 'fallido', 'reembolsado')
 enum_estado_factura     -- ('emitida', 'pagada', 'anulada')
