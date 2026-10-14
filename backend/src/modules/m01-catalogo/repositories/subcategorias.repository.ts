@@ -1,4 +1,5 @@
 import { Kysely } from 'kysely';
+import { dejaDeVerse } from './elegibilidad-publica';
 import { Database, Subcategoria, NewSubcategoria, SubcategoriaUpdate } from '../../../core/db/types';
 
 // ==============================================================================
@@ -70,33 +71,15 @@ export class SubcategoriasRepository {
   }
 
   /**
-   * Cuenta los productos activos que dejarán de verse si esta subcategoría se
-   * desactiva (RF-CAT-01-04, CA-CAT-01-06): los clasificados en ella
-   * (producto_subcategoria) que no conservan otra subcategoría activa bajo una
-   * categoría activa.
+   * RF-CAT-01-04 / CA-CAT-01-06: productos que dejarán de verse si esta
+   * subcategoría se desactiva; los que conservan otra clasificación activa
+   * siguen visibles (M01-02).
    */
   async contarProductosAfectados(idSubcategoria: number): Promise<number> {
     const fila = await this.db
-      .selectFrom('producto_subcategoria as ps')
-      .innerJoin('producto as p', 'p.id_producto', 'ps.id_producto')
-      .select(({ fn }) => fn.count<string>('ps.id_producto').distinct().as('total'))
-      .where('ps.id_subcategoria', '=', idSubcategoria)
-      .where('p.estado', '=', 'activo')
-      .where((eb) =>
-        eb.not(
-          eb.exists(
-            eb
-              .selectFrom('producto_subcategoria as ps2')
-              .innerJoin('subcategorias as s2', 's2.id_subcategoria', 'ps2.id_subcategoria')
-              .innerJoin('categoria as c2', 'c2.id_categoria', 's2.id_categoria')
-              .whereRef('ps2.id_producto', '=', 'ps.id_producto')
-              .where('ps2.id_subcategoria', '!=', idSubcategoria)
-              .where('s2.estado', '=', 'activo')
-              .where('c2.estado', '=', 'activo')
-              .select('ps2.id_producto')
-          )
-        )
-      )
+      .selectFrom('producto as p')
+      .select(({ fn }) => fn.countAll<string>().as('total'))
+      .where((eb) => dejaDeVerse(eb, { idSubcategoria }))
       .executeTakeFirst();
     return Number(fila?.total ?? 0);
   }

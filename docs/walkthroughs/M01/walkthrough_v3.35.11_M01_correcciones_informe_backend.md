@@ -3,7 +3,7 @@
 ## 1. Metadatos de la Implementación
 - **Versión:** `v3.35.11`
 - **Módulo de Origen:** `M01 Catálogo de productos`
-- **Fecha y Autor:** 2026-10-07 — Agente IA (Claude), a solicitud del equipo M01.
+- **Fecha y Autor:** 2026-10-07 — Ingri Julieth, con apoyo de un agente de IA (Claude Code).
 - **Fuente:** `Informe_M01_faltantes_errores_inconsistencias.docx` (6 de octubre de 2026). Solo hallazgos de backend.
 
 ## 2. Historias de Usuario (HUs) Cubiertas

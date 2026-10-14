@@ -119,6 +119,16 @@ export class ProductosRepository {
   }
 
   /** RF-CAT-02-05 / RF-CAT-09-03: imágenes del producto (publicación y aviso de impacto). */
+  /** HU-CAT-13: el producto está registrado como combo. */
+  async esCombo(idProducto: number): Promise<boolean> {
+    const fila = await this.db
+      .selectFrom('combo')
+      .select('id_combo')
+      .where('id_producto', '=', idProducto)
+      .executeTakeFirst();
+    return fila !== undefined;
+  }
+
   async contarImagenes(idProducto: number): Promise<number> {
     const fila = await this.db
       .selectFrom('imagen')

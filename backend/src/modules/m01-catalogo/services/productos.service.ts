@@ -16,9 +16,10 @@ import {
 
 // ==============================================================================
 // M01 - SERVICIO DE PRODUCTOS (HU-CAT-02)
-// Reglas de negocio: marca obligatoria y existente; al menos una subcategoría;
-// una pintura (clase != sin_color) exige línea + resina, y la línea debe ser de
-// la marca del producto; la clase no puede cambiarse si ya hay variantes.
+// Reglas de negocio: marca existente, obligatoria salvo en los combos de varias
+// marcas (RF-CAT-13-09: sin marca no se publica si no es combo); al menos una
+// subcategoría; una pintura (clase != sin_color) exige línea + resina, y la línea
+// debe ser de la marca del producto; la clase no puede cambiarse si ya hay variantes.
 //
 // FUERA DE ALCANCE (documentado):
 // - La marca de un producto no es editable tras crearlo (evita romper la
@@ -37,13 +38,13 @@ export class ProductosService {
   ) {}
 
   async crear(dto: CrearProductoDto): Promise<ProductoDetalle> {
-    const marca = await this.marcasRepo.obtenerPorId(dto.id_marca);
-    if (!marca) {
+    const idMarca = dto.id_marca ?? null;
+    if (idMarca !== null && !(await this.marcasRepo.obtenerPorId(idMarca))) {
       throw new AppError('El producto debe asociarse a una marca existente', 404, 'MARCA_NO_ENCONTRADA');
     }
 
     await this.validarSubcategorias(dto.id_subcategorias);
-    await this.validarLineaYResina(dto.clase_color, dto.id_marca, dto.id_linea ?? null, dto.id_tipo_resina ?? null);
+    await this.validarLineaYResina(dto.clase_color, idMarca, dto.id_linea ?? null, dto.id_tipo_resina ?? null);
 
     if (dto.id_categoria_complementaria !== undefined && dto.id_categoria_complementaria !== null) {
       const categoria = await this.categoriasRepo.obtenerPorId(dto.id_categoria_complementaria);
@@ -54,7 +55,7 @@ export class ProductosService {
 
     const creado = await this.repo.crear(
       {
-        id_marca: dto.id_marca,
+        id_marca: idMarca,
         id_linea: dto.id_linea ?? null,
         id_tipo_resina: dto.id_tipo_resina ?? null,
         nombre: dto.nombre,
@@ -126,7 +127,10 @@ export class ProductosService {
 
   /** RF-CAT-02-05: publicar exige al menos una variante activa y al menos una imagen (HU-CAT-07). */
   async publicar(id: number): Promise<ProductoDetalle> {
-    await this.obtenerEntidad(id);
+    const producto = await this.obtenerEntidad(id);
+    if (producto.id_marca === null && !(await this.repo.esCombo(id))) {
+      throw new AppError('No se puede publicar: solo un combo puede quedar sin marca', 422, 'PRODUCTO_SIN_MARCA');
+    }
     const [variantesActivas, imagenes] = await Promise.all([
       this.repo.contarVariantesActivas(id),
       this.repo.contarImagenes(id),
@@ -182,9 +186,11 @@ export class ProductosService {
       throw new AppError('El producto ya está activo', 400, 'PRODUCTO_YA_ACTIVO');
     }
 
-    const marca = await this.marcasRepo.obtenerPorId(producto.id_marca);
-    if (marca?.estado !== 'activo') {
-      throw new AppError('No se puede reactivar: la marca está inactiva', 400, 'MARCA_INACTIVA');
+    if (producto.id_marca !== null) {
+      const marca = await this.marcasRepo.obtenerPorId(producto.id_marca);
+      if (marca?.estado !== 'activo') {
+        throw new AppError('No se puede reactivar: la marca está inactiva', 400, 'MARCA_INACTIVA');
+      }
     }
     if (producto.id_linea !== null) {
       const linea = await this.lineasRepo.obtenerPorId(producto.id_linea);
@@ -226,11 +232,12 @@ export class ProductosService {
   /**
    * RF-CAT-02-02: una pintura (clase != sin_color) exige línea y resina; una
    * brocha (sin_color) puede omitirlas. Toda línea indicada debe pertenecer a la
-   * marca del producto (RF-CAT-11-02) y toda resina indicada debe estar activa.
+   * marca del producto (RF-CAT-11-02), por lo que un combo sin marca no lleva
+   * línea; toda resina indicada debe estar activa.
    */
   private async validarLineaYResina(
     clase: EnumClaseColor,
-    idMarca: number,
+    idMarca: number | null,
     idLinea: number | null,
     idResina: number | null
   ): Promise<void> {

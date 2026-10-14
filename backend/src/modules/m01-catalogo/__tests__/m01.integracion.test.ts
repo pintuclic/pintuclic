@@ -134,14 +134,15 @@ async function ejecutarPruebasIntegracionM01(): Promise<void> {
         throw new Error('falla forzada en la cascada de campañas');
       },
     };
-    const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo, coloresRepo, productosRepo, campanasRegistradas);
-    const marcasServiceConFalla = new MarcasService(marcasRepo, lineasRepo, basesRepo, coloresRepo, productosRepo, campanasQueFallan);
-    const coloresService = new ColoresService(coloresRepo, marcasRepo);
+    const colorBasesRepo = new ColorBasesRepository(db);
+    const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo, productosRepo, campanasRegistradas);
+    const marcasServiceConFalla = new MarcasService(marcasRepo, lineasRepo, basesRepo, productosRepo, campanasQueFallan);
+    const coloresService = new ColoresService(coloresRepo, colorBasesRepo);
     const productosService = new ProductosService(productosRepo, marcasRepo, lineasRepo, resinasRepo, subcategoriasRepo, categoriasRepo);
     const publicoService = new CatalogoPublicoService(publicoRepo, optimizadorSharp);
     const imagenesService = new ImagenesService(new ImagenesRepository(db), productosRepo, new VariantesRepository(db), coloresRepo, optimizadorSharp);
     const combosService = new CombosService(new CombosRepository(db), productosRepo, new VariantesRepository(db));
-    const colorBasesService = new ColorBasesService(new ColorBasesRepository(db), coloresRepo, basesRepo);
+    const colorBasesService = new ColorBasesService(colorBasesRepo, coloresRepo, basesRepo);
 
     // --------------------------------------------------------------------------
     // Datos de prueba
@@ -173,11 +174,15 @@ async function ejecutarPruebasIntegracionM01(): Promise<void> {
     const presentacion = await db.insertInto('presentacion').values({ nombre: `${PREFIJO} Galon`, volumen: 3.785 })
       .returning('id_presentacion').executeTakeFirstOrThrow();
     creados.presentaciones.push(presentacion.id_presentacion);
-    const base = await db.insertInto('base').values({ id_marca: marca.id_marca, nombre: `${PREFIJO} Base Pastel` })
+    const presentacionRetirada = await db.insertInto('presentacion')
+      .values({ nombre: `${PREFIJO} Retirada`, volumen: 1, estado: 'inactivo' })
+      .returning('id_presentacion').executeTakeFirstOrThrow();
+    creados.presentaciones.push(presentacionRetirada.id_presentacion);
+    const base = await db.insertInto('base').values({ id_marca: marca.id_marca, nombre: `${PREFIJO} Base Pastel`, id_tipo_resina: resina.id_tipo_resina })
       .returning('id_base').executeTakeFirstOrThrow();
     creados.bases.push(base.id_base);
     const color = await db.insertInto('color')
-      .values({ id_marca: marca.id_marca, nombre: `${PREFIJO} Rojo`, codigo: 'IT-01', cie_l: 40, cie_a: 60, cie_b: 40 })
+      .values({ nombre: `${PREFIJO} Rojo`, codigo: `${PREFIJO}-01`, hexadecimal: '#B03A2E' })
       .returning('id_color').executeTakeFirstOrThrow();
     creados.colores.push(color.id_color);
 
@@ -218,6 +223,15 @@ async function ejecutarPruebasIntegracionM01(): Promise<void> {
     // --------------------------------------------------------------------------
     const listado = await publicoService.listarProductos({ busqueda: PREFIJO });
     assert(listado.total === 2, 'M01-09: ambos productos con dependencias activas son públicos');
+
+    await db.insertInto('variante')
+      .values({ id_producto: p1.id_producto, id_presentacion: presentacionRetirada.id_presentacion, id_color: color.id_color, precio_vigente: 1000 })
+      .execute();
+    const resumenP1 = (await publicoService.listarProductos({ busqueda: `${PREFIJO} Esmalte` })).items[0];
+    assert(
+      resumenP1?.precio_desde === 50000,
+      'M01-08 A RF-CAT-06-01: una variante más barata en una presentación inactiva no fija el "desde"'
+    );
 
     const menu = (await publicoService.listarCategorias()).filter((c) => c.nombre.startsWith(PREFIJO));
     assert(
@@ -275,10 +289,18 @@ async function ejecutarPruebasIntegracionM01(): Promise<void> {
     // --------------------------------------------------------------------------
     // M01 02 — Impacto basado en producto_subcategoria
     // --------------------------------------------------------------------------
+    const noPublicado = await productosService.crear({
+      nombre: `${PREFIJO} Borrador`, id_marca: marca.id_marca, clase_color: 'sin_color', id_subcategorias: [subA.id_subcategoria],
+    });
+    creados.productos.push(noPublicado.id_producto);
+    await db.insertInto('variante')
+      .values({ id_producto: noPublicado.id_producto, id_presentacion: presentacion.id_presentacion, precio_vigente: 5000 })
+      .execute();
+
     const impactoCatA = await categoriasService.solicitarDesactivacion(catA.id_categoria, false);
     assert(
       'productos_afectados' in impactoCatA && impactoCatA.productos_afectados === 1,
-      'M01-02 RF-CAT-01-04: desactivar la categoría A solo oculta P2 (P1 conserva SubZ; P2 no tiene línea)'
+      'M01-02 RF-CAT-01-04: desactivar la categoría A solo oculta P2 (P1 conserva SubZ; el borrador no publicado no cuenta)'
     );
     const impactoSubA = await subcategoriasService.solicitarDesactivacion(subA.id_subcategoria, false);
     assert(
@@ -432,6 +454,14 @@ async function ejecutarPruebasIntegracionM01(): Promise<void> {
 
     const fichaAgotada = await publicoService.obtenerFicha(p3.id_producto);
     assert(fichaAgotada.es_combo && fichaAgotada.agotado, 'M01-08 CA-CAT-13-06: con existencia en cero el visitante ve el combo agotado');
+    await db.insertInto('variante')
+      .values({ id_producto: p3.id_producto, id_presentacion: presentacionRetirada.id_presentacion, precio_vigente: 10000, existencia_referencial: 5 })
+      .execute();
+    const comboAunAgotado = (await publicoService.listarProductos({ busqueda: `${PREFIJO} Combo` })).items[0];
+    assert(
+      comboAunAgotado?.agotado === true,
+      'M01-08 B RF-CAT-13-04: unidades en una variante no vendible no hacen disponible el combo'
+    );
     const compSinCombo = await publicoService.complementarios(p2.id_producto);
     assert(
       !compSinCombo.some((c) => c.id_producto === p3.id_producto),
@@ -477,19 +507,20 @@ async function ejecutarPruebasIntegracionM01(): Promise<void> {
     // --------------------------------------------------------------------------
     // M01 13 — Carta entonable por combinaciones color↔base (HU-CAT-12)
     // --------------------------------------------------------------------------
-    const baseOscura = await db.insertInto('base').values({ id_marca: marca.id_marca, nombre: `${PREFIJO} Base Oscura` })
+    const baseOscura = await db.insertInto('base').values({ id_marca: marca.id_marca, nombre: `${PREFIJO} Base Oscura`, id_tipo_resina: resina.id_tipo_resina })
       .returning('id_base').executeTakeFirstOrThrow();
     creados.bases.push(baseOscura.id_base);
-    const nuevoColor = async (nombre: string, l: number) => {
+    const nuevoColor = async (nombre: string, hexadecimal: string, sinBase = false) => {
       const fila = await db.insertInto('color')
-        .values({ id_marca: marca.id_marca, nombre: `${PREFIJO} ${nombre}`, cie_l: l, cie_a: 0, cie_b: 0 })
+        .values({ nombre: `${PREFIJO} ${nombre}`, hexadecimal, sin_base: sinBase })
         .returning('id_color').executeTakeFirstOrThrow();
       creados.colores.push(fila.id_color);
       return fila.id_color;
     };
-    const colorClaro = await nuevoColor('Marfil', 90);
-    const colorOscuro = await nuevoColor('Grafito', 20);
-    const colorSinBase = await nuevoColor('Sin Base', 50);
+    const colorClaro = await nuevoColor('Marfil', '#F2E8D5');
+    const colorOscuro = await nuevoColor('Grafito', '#383838');
+    const colorSinBase = await nuevoColor('No Declarado', '#777777');
+    const colorTransparente = await nuevoColor('Natural', '#E9D8B4', true);
 
     const p4 = await productosService.crear({
       nombre: `${PREFIJO} Vinilo Entonable`, id_marca: marca.id_marca, id_linea: linea.id_linea,
@@ -509,27 +540,19 @@ async function ejecutarPruebasIntegracionM01(): Promise<void> {
     await db.insertInto('imagen').values({ id_producto: p4.id_producto, datos: PNG, mime_type: 'image/png' }).execute();
     await productosService.publicar(p4.id_producto);
 
-    const otraMarca = await db.insertInto('marca')
-      .values({ nombre: `${PREFIJO} Otra Marca`, logotipo: PNG, logotipo_mime_type: 'image/png' })
-      .returning('id_marca').executeTakeFirstOrThrow();
-    creados.marcas.push(otraMarca.id_marca);
-    const otraMarcaBase = await db.insertInto('base').values({ id_marca: otraMarca.id_marca, nombre: `${PREFIJO} Base Ajena` })
-      .returning('id_base').executeTakeFirstOrThrow();
-    creados.bases.push(otraMarcaBase.id_base);
-
     await colorBasesService.asignar(colorClaro, base.id_base);
     await colorBasesService.asignar(colorOscuro, baseOscura.id_base);
     await assertLanza(
-      () => colorBasesService.asignar(colorClaro, otraMarcaBase.id_base),
-      'BASE_DE_OTRA_MARCA',
-      'M01-13 RF-CAT-12-03: rechaza asociar un color a una base de otra marca'
+      () => colorBasesService.asignar(colorTransparente, base.id_base),
+      'COLOR_SIN_BASE',
+      'M01-13 RF-CAT-12-13: un color «sin base» no se asocia a bases'
     );
 
     const idsCarta = async () => (await publicoService.obtenerColoresPaginados(p4.id_producto, {})).items.map((c) => c.id_color);
     const carta = await idsCarta();
     assert(
       carta.includes(colorClaro) && carta.includes(colorOscuro) && !carta.includes(colorSinBase),
-      'M01-13 RF-CAT-12-04/06: la carta solo ofrece colores con una base declarada y vendible en el producto'
+      'M01-13 RF-CAT-12-04/06: la carta solo ofrece colores con una base declarada y vendible en el producto (no los «sin base»)'
     );
     const resumenP4 = (await publicoService.listarProductos({ busqueda: `${PREFIJO} Vinilo` })).items[0];
     assert(resumenP4?.cantidad_colores === 2, 'M01-13 RF-CAT-06-03: el listado cuenta los mismos colores que ofrece la carta');
@@ -543,6 +566,36 @@ async function ejecutarPruebasIntegracionM01(): Promise<void> {
       () => publicoService.resolverEntonado(p4.id_producto, colorSinBase, presentacion.id_presentacion),
       'COLOR_NO_DISPONIBLE',
       'M01-13 RF-CAT-12-04: no admite una combinación color↔base no declarada'
+    );
+
+    await colorBasesService.asignar(colorClaro, baseOscura.id_base);
+    await assertLanza(
+      () => publicoService.resolverEntonado(p4.id_producto, colorClaro, presentacion.id_presentacion),
+      'BASE_AMBIGUA',
+      'M01-13 RF-CAT-12-12: si el catálogo admite dos bases para el color, no elige una por su id'
+    );
+    await colorBasesService.quitar(colorClaro, baseOscura.id_base);
+
+    // Producto transparente: variantes sin base y colores «sin base» (RF-CAT-12-13)
+    const p5 = await productosService.crear({
+      nombre: `${PREFIJO} Barniz Transparente`, id_marca: marca.id_marca, id_linea: linea.id_linea,
+      id_tipo_resina: resina.id_tipo_resina, clase_color: 'entonable', id_subcategorias: [subZ.id_subcategoria],
+    });
+    creados.productos.push(p5.id_producto);
+    const varTransparente = await db.insertInto('variante')
+      .values({ id_producto: p5.id_producto, id_presentacion: presentacion.id_presentacion, precio_vigente: 40000 })
+      .returning('id_variante').executeTakeFirstOrThrow();
+    await db.insertInto('imagen').values({ id_producto: p5.id_producto, datos: PNG, mime_type: 'image/png' }).execute();
+    await productosService.publicar(p5.id_producto);
+    const cartaTransparente = (await publicoService.obtenerColoresPaginados(p5.id_producto, {})).items.map((c) => c.id_color);
+    assert(
+      cartaTransparente.includes(colorTransparente) && !cartaTransparente.includes(colorClaro),
+      'M01-13 RF-CAT-12-13: un producto transparente ofrece solo los colores «sin base»'
+    );
+    const entonadoSinBase = await publicoService.resolverEntonado(p5.id_producto, colorTransparente, presentacion.id_presentacion);
+    assert(
+      entonadoSinBase.id_variante === varTransparente.id_variante && entonadoSinBase.id_base === null,
+      'M01-13 RF-CAT-12-13: el color «sin base» se prepara sobre la variante sin base'
     );
 
     await db.updateTable('base').set({ estado: 'inactivo' }).where('id_base', '=', baseOscura.id_base).execute();
@@ -586,6 +639,8 @@ async function ejecutarPruebasIntegracionM01(): Promise<void> {
       db.selectFrom('producto').select('estado').where('id_producto', '=', p2.id_producto).executeTakeFirstOrThrow(),
     ]);
     assert(estados.every((e) => e.estado === 'inactivo'), 'M01-07: la cascada completa desactiva marca, línea, base y productos');
+    const colorTrasMarca = await db.selectFrom('color').select('estado').where('id_color', '=', colorClaro).executeTakeFirstOrThrow();
+    assert(colorTrasMarca.estado === 'activo', 'CA-CAT-04-04: desactivar una marca no desactiva colores del catálogo único');
     assert(
       campanasInvocadas.length === 1 &&
         campanasInvocadas[0]?.idMarca === marca.id_marca &&

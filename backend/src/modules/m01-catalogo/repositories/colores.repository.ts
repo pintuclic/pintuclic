@@ -1,10 +1,17 @@
-import { Kysely } from 'kysely';
+import { Kysely, sql } from 'kysely';
 import { Database, Color, NewColor, ColorUpdate } from '../../../core/db/types';
 
 // ==============================================================================
 // M01 - REPOSITORIO DE COLORES
-// Único punto de acceso SQL (Kysely) para la tabla `color`.
+// Único punto de acceso SQL (Kysely) para la tabla `color`, catálogo único del
+// sistema (RF-CAT-05-01).
 // ==============================================================================
+
+export interface FiltroColores {
+  busqueda?: string;
+  limite: number;
+  offset: number;
+}
 
 export class ColoresRepository {
   constructor(private readonly db: Kysely<Database>) {}
@@ -13,27 +20,35 @@ export class ColoresRepository {
     return this.db.insertInto('color').values(data).returningAll().executeTakeFirstOrThrow();
   }
 
-  /** RF-CAT-05-01: lista los colores de una marca; búsqueda opcional por nombre o código. */
-  async listarPorMarca(idMarca: number, busqueda?: string): Promise<Color[]> {
-    let query = this.db.selectFrom('color').selectAll().where('id_marca', '=', idMarca);
-    if (busqueda) {
-      const patron = `%${busqueda}%`;
-      query = query.where((eb) => eb.or([eb('nombre', 'ilike', patron), eb('codigo', 'ilike', patron)]));
-    }
-    return query.orderBy('nombre', 'asc').execute();
+  /** RF-CAT-05-01: página del catálogo, con búsqueda opcional por nombre o código. */
+  async listar(filtro: FiltroColores): Promise<{ colores: Color[]; total: number }> {
+    const base = this.db.selectFrom('color').where((eb) => {
+      if (!filtro.busqueda) return eb.lit(true);
+      const patron = `%${filtro.busqueda}%`;
+      return eb.or([eb('nombre', 'ilike', patron), eb('codigo', 'ilike', patron)]);
+    });
+    const [colores, conteo] = await Promise.all([
+      base.selectAll().orderBy('nombre', 'asc').orderBy('id_color', 'asc').limit(filtro.limite).offset(filtro.offset).execute(),
+      base.select(({ fn }) => fn.countAll<string>().as('total')).executeTakeFirst(),
+    ]);
+    return { colores, total: Number(conteo?.total ?? 0) };
   }
 
   async obtenerPorId(id: number): Promise<Color | undefined> {
     return this.db.selectFrom('color').selectAll().where('id_color', '=', id).executeTakeFirst();
   }
 
-  /** RF-CAT-05-01 / CA-CAT-05-01: unicidad del nombre dentro de la misma marca. */
-  async obtenerPorNombreYMarca(nombre: string, idMarca: number, excluirId?: number): Promise<Color | undefined> {
+  /** RF-CAT-05-01: otro color con el mismo nombre o el mismo código (sin distinguir mayúsculas). */
+  async buscarDuplicado(nombre: string, codigo: string | null, excluirId?: number): Promise<Color | undefined> {
     let query = this.db
       .selectFrom('color')
       .selectAll()
-      .where('nombre', '=', nombre)
-      .where('id_marca', '=', idMarca);
+      .where((eb) =>
+        eb.or([
+          eb(sql`lower(nombre)`, '=', nombre.toLowerCase()),
+          ...(codigo !== null ? [eb(sql`lower(codigo)`, '=', codigo.toLowerCase())] : []),
+        ])
+      );
     if (excluirId !== undefined) {
       query = query.where('id_color', '!=', excluirId);
     }
@@ -63,21 +78,5 @@ export class ColoresRepository {
         .where('estado', '=', 'activo')
         .execute();
     });
-  }
-
-  /** RF-CAT-04-03: desactiva en cascada todos los colores de una marca. */
-  async desactivarColoresDeMarca(idMarca: number): Promise<void> {
-    await this.db.updateTable('color').set({ estado: 'inactivo' }).where('id_marca', '=', idMarca).execute();
-  }
-
-  /** RF-CAT-09-03: colores activos de la marca (aviso de impacto). */
-  async contarActivosPorMarca(idMarca: number): Promise<number> {
-    const fila = await this.db
-      .selectFrom('color')
-      .select(({ fn }) => fn.countAll<string>().as('total'))
-      .where('id_marca', '=', idMarca)
-      .where('estado', '=', 'activo')
-      .executeTakeFirst();
-    return Number(fila?.total ?? 0);
   }
 }

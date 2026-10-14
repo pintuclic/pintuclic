@@ -7,9 +7,10 @@ import { Base, Color } from '../../../core/db/types';
 // ==============================================================================
 // M01 - SERVICIO DE COLOR_BASE (HU-CAT-12 flujo 3)
 // Declara sobre qué base o bases se prepara cada color de la carta
-// (RF-CAT-12-04). La base debe ser de la marca del color (RF-CAT-12-03) y estar
-// activa. Qué base exige cada color lo define el negocio (RF-CAT-12-12): el
-// sistema no la infiere, la registra el administrador.
+// (RF-CAT-12-04). El color es del catálogo único (RF-CAT-05-01) y la base debe
+// estar activa; un color «sin base» no admite bases (RF-CAT-12-13). Qué base
+// exige cada color lo toma el sistema de este catálogo (RF-CAT-12-12): no la
+// infiere, la registra el administrador.
 // ==============================================================================
 
 export class ColorBasesService {
@@ -26,8 +27,8 @@ export class ColorBasesService {
     if (!base) {
       throw new AppError('La base indicada no existe', 404, 'BASE_NO_ENCONTRADA');
     }
-    if (base.id_marca !== color.id_marca) {
-      throw new AppError('La base no pertenece a la marca del color', 409, 'BASE_DE_OTRA_MARCA');
+    if (color.sin_base) {
+      throw new AppError('El color está declarado «sin base»: no admite bases', 409, 'COLOR_SIN_BASE');
     }
     if (base.estado !== 'activo') {
       throw new AppError('La base indicada está inactiva', 409, 'BASE_INACTIVA');

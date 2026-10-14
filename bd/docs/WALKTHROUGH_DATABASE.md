@@ -5,6 +5,7 @@ Este documento registra la evolución histórica del modelo de base de datos de 
 ---
 
 ## 📑 Índice de Versiones
+- [Versión 2.9 / v0.4.9.0 (M01: catálogo único de colores con hexadecimal, colores «sin base», resina de las bases y combos sin marca - 2026-10-14)](#-versión-29--v04900-2026-10-14)
 - [Versión 2.8 / v3.36.0 (M01: asociación color↔base, complementarios por categoría, combos excluidos de descuentos y miniaturas - 2026-10-13)](#-versión-28--v3360-2026-10-13)
 - [Versión 2.7 / v0.3.37.0 (M08: copia histórica de la orden, descuentos por línea y consecutivo - 2026-09-29)](#-versión-27--v03370-2026-09-29)
 - [Versión 2.6 / v0.3.34.0 (M08: estados, historial, notas internas y contactos de la orden - 2026-09-29)](#-versión-26--v03340-2026-09-29)
@@ -15,6 +16,66 @@ Este documento registra la evolución histórica del modelo de base de datos de 
 - [Versión 2.1 (E-Commerce Inmutable, Cotizaciones y Carrito con Variantes)](#-versión-21-2026-09-04)
 - [Versión 2.0 (Página FINAL del ER) - Reestructuración de Catálogo, Variantes y Combos](#-versión-20-2026-09-03)
 - [Versión 1.0 (Esquema Inicial Pre-Final) - Base de 21 Tablas](#-versión-10-2026-09-02)
+
+---
+
+## 📦 Versión 2.9 / v0.4.9.0 (2026-10-14)
+
+### 🎯 Resumen Ejecutivo
+Ajuste del modelo de **M01 Catálogo** a la especificación de requisitos v9.0 (corrección del informe de revisión del líder técnico). El color deja de pertenecer a una marca y pasa a un catálogo único, se registra con su hexadecimal en lugar del CIELAB, puede declararse «sin base» para los productos transparentes, la base de entonado declara su tipo de resina y un combo puede no tener marca. La cabecera del script pasa a **esquema 4.1**.
+- **Total Tablas:** Se mantiene en 50 tablas.
+- **Foco de la versión:** Catálogo (M01). Migración idempotente que conserva los colores existentes.
+
+---
+
+### 🛑 1. Tablas Deprecadas / Eliminadas
+Ninguna. Se retiran las columnas `color.cie_l`, `color.cie_a` y `color.cie_b` (sustituidas por `color.hexadecimal`) y `color.id_marca` con su FK `fk_color_marca` (el color ya no pertenece a una marca; M02 filtra por `color_base`).
+
+---
+
+### ✨ 2. Tablas Nuevas Creadas
+Ninguna.
+
+---
+
+### 🔄 3. Tablas Modificadas y Nuevas Relaciones
+- **`color`**:
+  - retira `id_marca` (`RF-CAT-05-01`, `CA-CAT-04-04`).
+  - añade `hexadecimal CHAR(7) NOT NULL` (`RF-CAT-05-02`), del que se deriva la familia cromática (`RF-CAT-05-03`).
+  - añade `sin_base BOOLEAN NOT NULL DEFAULT false` (`RF-CAT-12-13`).
+  - retira `cie_l`, `cie_a` y `cie_b` y la restricción `uq_color_nombre_marca`.
+- **`producto`**: `id_marca` pasa a `NULL` permitido para los combos de varias marcas (`RF-CAT-13-09`); el backend impide publicar sin marca un producto que no sea combo.
+- **`base`**: añade `id_tipo_resina INT` (nullable para no romper las bases existentes; el backend la exige al registrar y no asigna a un producto una base sin resina) (`RF-CAT-12-01/03`).
+- **Nuevas Relaciones:** `base.id_tipo_resina -> tipo_resina.id_tipo_resina` (`fk_base_tipo_resina`).
+- **Migración idempotente:**
+  - `ADD COLUMN IF NOT EXISTS` para `hexadecimal`, `sin_base` e `id_tipo_resina`.
+  - La función temporal `pg_temp.cielab_a_hexadecimal` convierte el CIELAB existente (CIELAB D65 → XYZ → sRGB, la misma fórmula del backend) antes de retirar las columnas.
+  - Si hay nombres de color repetidos (antes solo eran únicos por marca), la migración se detiene y los lista para que se renombren a mano.
+  - Verificado sobre una base 4.0 con sus marcas, bases y colores: los 30 hexadecimales convertidos coinciden con los del seed nuevo y una segunda ejecución no cambia nada.
+
+---
+
+### 🔒 4. Restricciones (CONSTRAINTS) y Tipos ENUM Agregados
+- **Nuevos ENUMs:** Ninguno.
+- **Nuevos CHECK:** `chk_color_hexadecimal CHECK (hexadecimal ~ '^#[0-9A-F]{6}$')`.
+- **Nuevos UNIQUE:** `uq_color_nombre ON color (lower(nombre))` y `uq_color_codigo ON color (lower(codigo)) WHERE codigo IS NOT NULL`.
+- **Nuevas FK:** `fk_base_tipo_resina`. Se retira `fk_color_marca` junto con `color.id_marca`.
+
+---
+
+### ⚡ 5. Nuevos Índices de Rendimiento
+- `CREATE INDEX IF NOT EXISTS idx_base_tipo_resina ON base(id_tipo_resina);`
+
+---
+
+### 💻 6. Impacto y Acciones Requeridas en Backend y Frontend
+#### Backend (Kysely / Express):
+- `src/core/db/types.ts`: `ColorTable` cambia CIELAB por `hexadecimal`, añade `sin_base` y retira `id_marca`; `BaseTable` añade `id_tipo_resina`; `ProductoTable.id_marca` pasa a `number | null`.
+- **M01:** `GET /api/catalogo/colores` (paginado y con búsqueda) sustituye a `/marcas/:idMarca/colores`; registrar un color pide `hexadecimal` y `sin_base`, no marca ni CIELAB; registrar una base pide `id_tipo_resina`.
+- **M02:** el filtro, la búsqueda por color y la faceta de colores usan las variantes vendibles y la carta entonable de `color_base` (reglas compartidas con M01); el filtro por marca deja fuera a los combos sin marca (`CA-CAT-13-10`).
+
+#### Frontend:
+- El formulario de colores debe pedir el hexadecimal (no CIELAB ni marca) y el de bases, el tipo de resina. La vista de colores por marca debe usar el catálogo único `/colores`. El formulario de productos debe permitir omitir la marca (solo para combos) y el listado debe tolerar `marca: null`.
 
 ---
 

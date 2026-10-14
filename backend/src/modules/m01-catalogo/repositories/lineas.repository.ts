@@ -64,7 +64,7 @@ export class LineasRepository {
       .execute();
   }
 
-  /** RF-CAT-11-03: productos que dejarán de verse si esta línea se desactiva. */
+  /** RF-CAT-11-03: productos que dependen de la línea (todos los vinculados, publicados o no). */
   async contarProductosAfectados(idLinea: number): Promise<number> {
     const fila = await this.db
       .selectFrom('producto')

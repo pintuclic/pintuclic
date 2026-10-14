@@ -3,9 +3,9 @@
 ## 1. Metadatos de la Implementación
 - **Versión:** `v3.36.0` (base de datos `v2.8`, esquema 4.0)
 - **Módulo de Origen:** `M01 Catálogo de productos`
-- **Fecha y Autor:** 2026-10-13 — Agente IA (Claude), a solicitud del equipo M01. Cambios de base de datos y la dependencia `sharp` autorizados por el líder técnico.
+- **Fecha y Autor:** 2026-10-13 — Ingri Julieth, con apoyo de un agente de IA (Claude Code). Cambios de base de datos y la dependencia `sharp` autorizados por el líder técnico.
 - **Fuente:** `Informe_M01_faltantes_errores_inconsistencias.docx` (6 de octubre de 2026), hallazgos de backend pendientes tras `v3.35.11`.
-- **Base de código:** rama `feature/m01-backend-catalogo-publico` con `backend/` y `bd/` sincronizados con `develop` (`395dfc9`).
+- **Base de código:** rama `feature/m01-backend-catalogo-publico`. *Corrección v0.4.9.0 (M01-17):* esta entrega **no** estaba sincronizada con `develop`; `395dfc9` no es ancestro de su commit (`b19d552`). La sincronización real se hizo en v0.4.9.0 sobre `develop` `eb22342`.
 
 ## 2. Historias de Usuario (HUs) Cubiertas
 | Hallazgo | HU / Requisito | Resultado |

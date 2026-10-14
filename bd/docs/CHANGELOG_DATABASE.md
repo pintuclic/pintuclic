@@ -10,6 +10,19 @@ Este documento constituye el registro histórico y oficial del versionamiento de
 
 ---
 
+## [v2.9 / v0.4.9.0] - 2026-10-14
+### Esquema 4.1 (50 Tablas) - M01 Catálogo: catálogo único de colores con hexadecimal, colores «sin base», resina de las bases y combos sin marca
+- **Alcance General:** Ajuste del modelo de M01 a la especificación de requisitos v9.0, con autorización del líder técnico:
+  - **Catálogo único de colores (`RF-CAT-05-01`, `CA-CAT-04-04`):** se elimina `color.id_marca` (M02, su último consumidor, filtra ahora por `color_base`); el nombre y el código del color son únicos en todo el catálogo (índices sobre `lower()`). Desactivar una marca ya no desactiva colores.
+  - **Hexadecimal en lugar de CIELAB (`RF-CAT-05-02/03`):** `color.hexadecimal CHAR(7)` obligatorio con formato `#RRGGBB`; se retiran `cie_l`, `cie_a` y `cie_b`. La familia cromática se deriva del hexadecimal.
+  - **Colores «sin base» (`RF-CAT-12-13`):** `color.sin_base` marca los colores que se preparan sin base (productos transparentes).
+  - **Resina de las bases (`RF-CAT-12-01/03`):** `base.id_tipo_resina` (FK a `tipo_resina`); el backend la exige al registrar y la compara con la del producto al asignar.
+  - **Combos sin marca (`RF-CAT-13-09`, `CA-CAT-13-10`):** `producto.id_marca` pasa a opcional; el backend solo publica sin marca un combo.
+  - **Migración idempotente:** convierte el CIELAB existente a hexadecimal con la misma fórmula del backend y aborta si hay nombres de color repetidos entre marcas. Validada sobre una base 4.0 con colores: los 30 hexadecimales resultantes coinciden con el seed nuevo.
+  - 🔗 **Detalle y DDL:** [WALKTHROUGH_DATABASE.md#📦-versión-29--v04900-2026-10-14](./WALKTHROUGH_DATABASE.md#-versión-29--v04900-2026-10-14)
+
+---
+
 ## [v2.8 / v3.36.0] - 2026-10-13
 ### Esquema 4.0 (50 Tablas) - M01 Catálogo: asociación color↔base, complementarios por categoría, combos excluidos de descuentos y miniaturas
 - **Alcance General:** Cierre de las brechas de datos de M01 del informe de faltantes, con autorización del líder técnico:

@@ -94,18 +94,26 @@ export interface MarcaLogotipo {
 // ------------------------------------------------------------------------------
 
 /**
- * Ficha de un color tal como se expone en el panel. Cada color pertenece a una
- * única marca (RF-CAT-05-01). `muestra_hex` se deriva del valor CIELAB para
- * pintar la muestra sin requerir imagen (RF-CAT-05-02).
+ * Ficha de un color del catálogo único (RF-CAT-05-01), sin marca. El
+ * hexadecimal pinta la muestra sin requerir imagen (RF-CAT-05-02) y de él se
+ * deriva la familia (RF-CAT-05-03). `sin_base`: RF-CAT-12-13.
  */
 export interface ColorDetalle {
   readonly id_color: number;
-  readonly id_marca: number;
   readonly nombre: string;
   readonly codigo: string | null;
-  readonly cielab: { readonly l: number; readonly a: number; readonly b: number };
-  readonly muestra_hex: string;
+  readonly hexadecimal: string;
+  readonly familia: string;
+  readonly sin_base: boolean;
   readonly estado: EnumEstadoGeneral;
+}
+
+/** Página del catálogo de colores (CA-CAT-05-05: miles de colores, consulta paginada). */
+export interface PaginaColores {
+  readonly items: ColorDetalle[];
+  readonly total: number;
+  readonly pagina: number;
+  readonly limite: number;
 }
 
 // ------------------------------------------------------------------------------
@@ -119,7 +127,8 @@ export interface ColorDetalle {
  */
 export interface ProductoDetalle {
   readonly id_producto: number;
-  readonly id_marca: number;
+  /** null solo en combos de varias marcas (RF-CAT-13-09). */
+  readonly id_marca: number | null;
   readonly id_linea: number | null;
   readonly id_tipo_resina: number | null;
   readonly nombre: string;
@@ -208,7 +217,6 @@ export interface ImpactoDesactivacionMarca {
   readonly requiere_confirmacion: true;
   readonly lineas_afectadas: number;
   readonly bases_afectadas: number;
-  readonly colores_afectados: number;
   readonly productos_afectados: number;
 }
 
@@ -234,8 +242,8 @@ export interface CategoriaPublica {
 export interface ProductoPublicoResumen {
   readonly id_producto: number;
   readonly nombre: string;
-  readonly id_marca: number;
-  readonly marca: string;
+  readonly id_marca: number | null;
+  readonly marca: string | null;
   readonly clase_color: EnumClaseColor;
   readonly precio_desde: number | null;
   readonly imagen_principal_url: string | null;
@@ -295,8 +303,9 @@ export interface VariantePublica {
  */
 export interface VarianteEntonada {
   readonly id_variante: number;
-  readonly id_base: number;
-  readonly base: string;
+  /** null para un color «sin base» sobre un producto transparente (RF-CAT-12-13). */
+  readonly id_base: number | null;
+  readonly base: string | null;
   readonly id_color: number;
   readonly id_presentacion: number;
   readonly precio_vigente: number;
@@ -307,7 +316,7 @@ export interface FichaProductoPublico {
   readonly id_producto: number;
   readonly nombre: string;
   readonly descripcion: string | null;
-  readonly id_marca: number;
+  readonly id_marca: number | null;
   readonly clase_color: EnumClaseColor;
   readonly rendimiento_min: number | null;
   readonly rendimiento_max: number | null;

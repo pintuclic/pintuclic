@@ -19,7 +19,7 @@ import {
   OptimizadorImagenes,
   TamanoImagen,
 } from '../interfaces/m01.interfaces';
-import { cielabAHex, clasificarFamiliaCromatica } from './colores.service';
+import { familiaCromatica } from './familia-cromatica';
 
 const MAX_COMPLEMENTARIOS = 4;
 
@@ -119,18 +119,13 @@ export class CatalogoPublicoService {
 
     const filas = await this.repo.listarColoresActivosDeProducto(idProducto, producto.clase_color);
 
-    let colores: ColorProductoPublico[] = filas.map((c) => {
-      const l = Number(c.cie_l);
-      const a = Number(c.cie_a);
-      const b = Number(c.cie_b);
-      return {
-        id_color: c.id_color,
-        nombre: c.nombre,
-        codigo_color: c.codigo ?? null,
-        muestra_hex: cielabAHex(l, a, b),
-        familia_color: clasificarFamiliaCromatica(l, a, b),
-      };
-    });
+    let colores: ColorProductoPublico[] = filas.map((c) => ({
+      id_color: c.id_color,
+      nombre: c.nombre,
+      codigo_color: c.codigo,
+      muestra_hex: c.hexadecimal,
+      familia_color: familiaCromatica(c.hexadecimal),
+    }));
 
     if (opciones.q) {
       const qLower = opciones.q.toLowerCase();
@@ -157,8 +152,12 @@ export class CatalogoPublicoService {
   /**
    * RF-CAT-12-05 / CA-CAT-12-04: determina la variante de base que se consume
    * cuando el cliente elige un color y una presentación de un producto
-   * entonable. Solo resuelve combinaciones declaradas (RF-CAT-12-04) con base y
-   * variante vendibles (RF-CAT-12-06).
+   * entonable. La base sale del catálogo de colores, no de quien prepara la
+   * mezcla (RF-CAT-12-12): solo se resuelven combinaciones declaradas
+   * (RF-CAT-12-04) con base y variante vendibles (RF-CAT-12-06), o un color «sin
+   * base» sobre una variante sin base (RF-CAT-12-13). Si el catálogo admite más
+   * de una base en esa presentación, no la determina: se rechaza para que el
+   * administrador corrija la configuración en lugar de adivinarla.
    */
   async resolverEntonado(idProducto: number, idColor: number, idPresentacion: number): Promise<VarianteEntonada> {
     const producto = await this.repo.obtenerProductoPublico(idProducto);
@@ -168,12 +167,20 @@ export class CatalogoPublicoService {
     if (producto.clase_color !== 'entonable') {
       throw new AppError('El producto no es entonable', 409, 'PRODUCTO_NO_ENTONABLE');
     }
-    const variante = await this.repo.resolverVarianteEntonada(idProducto, idColor, idPresentacion);
+    const candidatas = await this.repo.listarVariantesEntonables(idProducto, idColor, idPresentacion);
+    const [variante] = candidatas;
     if (!variante) {
       throw new AppError(
         'El color no puede prepararse en esa presentación del producto',
         404,
         'COLOR_NO_DISPONIBLE'
+      );
+    }
+    if (candidatas.length > 1) {
+      throw new AppError(
+        `El catálogo no determina una sola base para el color en esa presentación (${candidatas.map((c) => c.base).join(', ')})`,
+        409,
+        'BASE_AMBIGUA'
       );
     }
     return {
@@ -273,17 +280,6 @@ function aProductoPublicoResumen(p: FilaProductoResumenPublico): ProductoPublico
 }
 
 function aVariantePublica(v: FilaVariantePublica): VariantePublica {
-  let hex: string | null = null;
-  let familia: string | null = null;
-
-  if (v.id_color !== null && v.cie_l !== null && v.cie_l !== undefined) {
-    const l = Number(v.cie_l);
-    const a = Number(v.cie_a);
-    const b = Number(v.cie_b);
-    hex = cielabAHex(l, a, b);
-    familia = clasificarFamiliaCromatica(l, a, b);
-  }
-
   return {
     id_variante: v.id_variante,
     id_presentacion: v.id_presentacion,
@@ -292,8 +288,8 @@ function aVariantePublica(v: FilaVariantePublica): VariantePublica {
     id_color: v.id_color,
     color: v.color,
     codigo_color: v.codigo_color ?? null,
-    muestra_hex: hex,
-    familia_color: familia,
+    muestra_hex: v.hexadecimal,
+    familia_color: v.hexadecimal !== null ? familiaCromatica(v.hexadecimal) : null,
     id_base: v.id_base,
     base: v.base,
     precio_vigente: Number(v.precio_vigente),

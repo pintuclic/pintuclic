@@ -3,7 +3,8 @@ import { SubcategoriasService } from '../services/subcategorias.service';
 import { LineasService } from '../services/lineas.service';
 import { MarcasService } from '../services/marcas.service';
 import { BasesService } from '../services/bases.service';
-import { ColoresService, cielabAHex } from '../services/colores.service';
+import { ColoresService } from '../services/colores.service';
+import { familiaCromatica } from '../services/familia-cromatica';
 import { TipoResinasService } from '../services/resinas.service';
 import { ProductosService } from '../services/productos.service';
 import { PresentacionesService } from '../services/presentaciones.service';
@@ -23,9 +24,11 @@ import { CrearImagenDto } from '../dtos/imagenes.dto';
 import { CrearCategoriaDto } from '../dtos/categorias.dto';
 import { CrearMarcaDto } from '../dtos/marcas.dto';
 import { CrearColorDto } from '../dtos/colores.dto';
+import { CrearBaseDto } from '../dtos/bases.dto';
 import { CrearProductoDto } from '../dtos/productos.dto';
 import { CrearVarianteDto } from '../dtos/variantes.dto';
 import { MarcaResumen } from '../interfaces/m01.interfaces';
+import { AppError } from '../../../core/middlewares/errorHandler';
 import { reglasComercialesNoIntegradas, campanasNoIntegradas } from '../services/integraciones-pendientes';
 import {
   Categoria,
@@ -87,6 +90,16 @@ async function ejecutarPruebasM01(): Promise<void> {
       assert(false, descripcion);
     } catch {
       assert(true, descripcion);
+    }
+  }
+
+  /** Exige que la operación falle con el código de negocio esperado, no por cualquier motivo. */
+  async function assertLanzaCodigo(fn: () => Promise<unknown>, codigo: string, descripcion: string): Promise<void> {
+    try {
+      await fn();
+      assert(false, descripcion);
+    } catch (err) {
+      assert(err instanceof AppError && err.code === codigo, `${descripcion} [${codigo}]`);
     }
   }
 
@@ -225,7 +238,6 @@ async function ejecutarPruebasM01(): Promise<void> {
       if (m) marcas.set(id, { ...m, estado: 'inactivo' });
       await mockLineasRepo.desactivarLineasDeMarca(id);
       await mockBasesRepo.desactivarBasesDeMarca(id);
-      await mockColoresRepo.desactivarColoresDeMarca(id);
       await mockProductosRepo.desactivarProductosDeMarca(id);
     },
   };
@@ -276,7 +288,13 @@ async function ejecutarPruebasM01(): Promise<void> {
 
   const mockBasesRepo = {
     crear: async (data: NewBase): Promise<Base> => {
-      const base: Base = { id_base: seqBase++, id_marca: data.id_marca, nombre: data.nombre, estado: 'activo' };
+      const base: Base = {
+        id_base: seqBase++,
+        id_marca: data.id_marca,
+        nombre: data.nombre,
+        id_tipo_resina: data.id_tipo_resina ?? null,
+        estado: 'activo',
+      };
       bases.set(base.id_base, base);
       return base;
     },
@@ -305,6 +323,22 @@ async function ejecutarPruebasM01(): Promise<void> {
   };
 
   // ----------------------------------------------------------------------------
+  // Estado en memoria: color_base (HU-CAT-12 flujo 3)
+  // ----------------------------------------------------------------------------
+  const colorBases = new Map<number, Set<number>>();
+  const mockColorBasesRepo = {
+    asignar: async (idColor: number, idBase: number) => {
+      colorBases.set(idColor, (colorBases.get(idColor) ?? new Set()).add(idBase));
+    },
+    quitar: async (idColor: number, idBase: number) => {
+      colorBases.get(idColor)?.delete(idBase);
+    },
+    existe: async (idColor: number, idBase: number) => colorBases.get(idColor)?.has(idBase) ?? false,
+    listarBases: async (idColor: number) =>
+      [...(colorBases.get(idColor) ?? [])].map((idBase) => bases.get(idBase)).filter((b) => b !== undefined),
+  };
+
+  // ----------------------------------------------------------------------------
   // Estado en memoria: colores (HU-CAT-05)
   // ----------------------------------------------------------------------------
   const colores: Map<number, Color> = new Map();
@@ -314,29 +348,29 @@ async function ejecutarPruebasM01(): Promise<void> {
     crear: async (data: NewColor): Promise<Color> => {
       const color: Color = {
         id_color: seqColor++,
-        id_marca: data.id_marca,
         nombre: data.nombre,
         codigo: data.codigo ?? null,
-        cie_l: String(data.cie_l),
-        cie_a: String(data.cie_a),
-        cie_b: String(data.cie_b),
+        hexadecimal: data.hexadecimal,
+        sin_base: data.sin_base ?? false,
         estado: 'activo',
       };
       colores.set(color.id_color, color);
       return color;
     },
-    listarPorMarca: async (idMarca: number, busqueda?: string): Promise<Color[]> =>
-      Array.from(colores.values()).filter(
-        (c) =>
-          c.id_marca === idMarca &&
-          (!busqueda ||
-            c.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-            (c.codigo ?? '').toLowerCase().includes(busqueda.toLowerCase()))
-      ),
+    listar: async (filtro: { busqueda?: string; limite: number; offset: number }) => {
+      const q = filtro.busqueda?.toLowerCase();
+      const todos = Array.from(colores.values()).filter(
+        (c) => !q || c.nombre.toLowerCase().includes(q) || (c.codigo ?? '').toLowerCase().includes(q)
+      );
+      return { colores: todos.slice(filtro.offset, filtro.offset + filtro.limite), total: todos.length };
+    },
     obtenerPorId: async (id: number) => colores.get(id),
-    obtenerPorNombreYMarca: async (nombre: string, idMarca: number, excluirId?: number) =>
+    buscarDuplicado: async (nombre: string, codigo: string | null, excluirId?: number) =>
       Array.from(colores.values()).find(
-        (c) => c.nombre === nombre && c.id_marca === idMarca && c.id_color !== excluirId
+        (c) =>
+          c.id_color !== excluirId &&
+          (c.nombre.toLowerCase() === nombre.toLowerCase() ||
+            (codigo !== null && (c.codigo ?? '').toLowerCase() === codigo.toLowerCase()))
       ),
     actualizar: async (id: number, data: ColorUpdate) => {
       const actual = colores.get(id);
@@ -345,9 +379,8 @@ async function ejecutarPruebasM01(): Promise<void> {
         ...actual,
         ...(data.nombre !== undefined ? { nombre: data.nombre } : {}),
         ...(data.codigo !== undefined ? { codigo: data.codigo } : {}),
-        ...(data.cie_l !== undefined ? { cie_l: String(data.cie_l) } : {}),
-        ...(data.cie_a !== undefined ? { cie_a: String(data.cie_a) } : {}),
-        ...(data.cie_b !== undefined ? { cie_b: String(data.cie_b) } : {}),
+        ...(data.hexadecimal !== undefined ? { hexadecimal: data.hexadecimal } : {}),
+        ...(data.sin_base !== undefined ? { sin_base: data.sin_base } : {}),
       } as Color;
       colores.set(id, actualizado);
       return actualizado;
@@ -365,13 +398,6 @@ async function ejecutarPruebasM01(): Promise<void> {
         }
       }
     },
-    desactivarColoresDeMarca: async (idMarca: number) => {
-      for (const c of colores.values()) {
-        if (c.id_marca === idMarca) colores.set(c.id_color, { ...c, estado: 'inactivo' });
-      }
-    },
-    contarActivosPorMarca: async (idMarca: number) =>
-      Array.from(colores.values()).filter((c) => c.id_marca === idMarca && c.estado === 'activo').length,
   };
 
   // ----------------------------------------------------------------------------
@@ -408,11 +434,14 @@ async function ejecutarPruebasM01(): Promise<void> {
   const varianteStats: Map<number, { total: number; activas: number }> = new Map();
   let seqProducto = 1;
 
+  const productosCombo = new Set<number>();
+
   const mockProductosRepo = {
+    esCombo: async (idProducto: number) => productosCombo.has(idProducto),
     crear: async (data: NewProducto, idSubcategorias: number[]): Promise<Producto> => {
       const producto: Producto = {
         id_producto: seqProducto++,
-        id_marca: data.id_marca,
+        id_marca: data.id_marca ?? null,
         id_linea: data.id_linea ?? null,
         id_tipo_resina: data.id_tipo_resina ?? null,
         nombre: data.nombre,
@@ -674,6 +703,17 @@ async function ejecutarPruebasM01(): Promise<void> {
       .filter((p) => !filtros.busqueda || p.nombre.toLowerCase().includes(filtros.busqueda.toLowerCase()))
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
+  const variantesActivas = (idProducto: number) =>
+    Array.from(variantes.values()).filter((v) => v.id_producto === idProducto && v.estado === 'activo');
+  const variantesPreparables = (idProducto: number, idColor: number) =>
+    variantesActivas(idProducto).filter((v) =>
+      v.id_color !== null
+        ? false
+        : v.id_base !== null
+        ? bases.get(v.id_base)?.estado === 'activo' && (colorBases.get(idColor)?.has(v.id_base) ?? false)
+        : colores.get(idColor)?.sin_base === true
+    );
+
   const mockCatalogoPublicoRepo = {
     listarCategoriasConProductos: async () => {
       const filas: { id_categoria: number; categoria_nombre: string; id_subcategoria: number; subcategoria_nombre: string }[] = [];
@@ -702,16 +742,16 @@ async function ejecutarPruebasM01(): Promise<void> {
         if (p.clase_color === 'colores_fijos') {
           cantidad = new Set(pVars.filter(v => v.id_color !== null).map(v => v.id_color)).size;
         } else if (p.clase_color === 'entonable') {
-          if (pVars.some(v => v.id_base !== null && bases.get(v.id_base)?.estado === 'activo')) {
-             cantidad = Array.from(colores.values()).filter(c => c.id_marca === p.id_marca && c.estado === 'activo').length;
-          }
+          cantidad = Array.from(colores.values()).filter(
+            (c) => c.estado === 'activo' && variantesPreparables(p.id_producto, c.id_color).length > 0
+          ).length;
         }
         
         return {
           id_producto: p.id_producto,
           nombre: p.nombre,
           id_marca: p.id_marca,
-          marca: marcas.get(p.id_marca)?.nombre ?? '',
+          marca: p.id_marca !== null ? marcas.get(p.id_marca)?.nombre ?? null : null,
           clase_color: p.clase_color,
           precio_desde: precio !== null ? String(precio) : null,
           id_imagen_principal: Array.from(imagenes.values()).find(i => i.id_producto === p.id_producto && i.es_principal)?.id_imagen ?? null,
@@ -761,30 +801,31 @@ async function ejecutarPruebasM01(): Promise<void> {
             id_color: v.id_color,
             color: c?.nombre ?? null,
             codigo_color: c?.codigo ?? null,
-            cie_l: c?.cie_l ?? null,
-            cie_a: c?.cie_a ?? null,
-            cie_b: c?.cie_b ?? null,
+            hexadecimal: c?.hexadecimal ?? null,
             id_base: v.id_base,
             base: v.id_base !== null ? bases.get(v.id_base)?.nombre ?? null : null,
             precio_vigente: v.precio_vigente,
             existencia_referencial: v.existencia_referencial,
           };
         }),
-    listarColoresActivosDeProducto: async (idProducto: number, idMarca: number, claseColor: string) => {
+    listarColoresActivosDeProducto: async (idProducto: number, claseColor: string) => {
       if (claseColor === 'sin_color') return [];
-      const todos = Array.from(colores.values()).filter(c => c.estado === 'activo');
+      const todos = Array.from(colores.values()).filter((c) => c.estado === 'activo');
       if (claseColor === 'colores_fijos') {
-        const idColores = new Set(Array.from(variantes.values()).filter(v => v.id_producto === idProducto && v.estado === 'activo' && v.id_color !== null).map(v => v.id_color));
-        return todos.filter(c => idColores.has(c.id_color));
-      } else if (claseColor === 'entonable') {
-        const vars = Array.from(variantes.values()).filter(v => v.id_producto === idProducto && v.estado === 'activo');
-        if (vars.some(v => v.id_base !== null && bases.get(v.id_base)?.estado === 'activo')) {
-          return todos.filter(c => c.id_marca === idMarca);
-        }
-        return [];
+        const idColores = new Set(variantesActivas(idProducto).map((v) => v.id_color));
+        return todos.filter((c) => idColores.has(c.id_color));
       }
-      return [];
+      return todos.filter((c) => variantesPreparables(idProducto, c.id_color).length > 0);
     },
+    listarVariantesEntonables: async (idProducto: number, idColor: number, idPresentacion: number) =>
+      variantesPreparables(idProducto, idColor)
+        .filter((v) => v.id_presentacion === idPresentacion)
+        .map((v) => ({
+          id_variante: v.id_variante,
+          id_base: v.id_base,
+          base: v.id_base !== null ? bases.get(v.id_base)?.nombre ?? null : null,
+          precio_vigente: String(v.precio_vigente),
+        })),
     listarImagenesPublicas: async (idProducto: number) =>
       Array.from(imagenes.values())
         .filter((i) => i.id_producto === idProducto)
@@ -807,11 +848,11 @@ async function ejecutarPruebasM01(): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lineasService = new LineasService(mockLineasRepo as any, mockMarcasRepo as any, reglasComercialesNoIntegradas);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const marcasService = new MarcasService(mockMarcasRepo as any, mockLineasRepo as any, mockBasesRepo as any, mockColoresRepo as any, mockProductosRepo as any, campanasNoIntegradas);
+  const marcasService = new MarcasService(mockMarcasRepo as any, mockLineasRepo as any, mockBasesRepo as any, mockProductosRepo as any, campanasNoIntegradas);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const basesService = new BasesService(mockBasesRepo as any, mockMarcasRepo as any);
+  const basesService = new BasesService(mockBasesRepo as any, mockMarcasRepo as any, mockResinasRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const coloresService = new ColoresService(mockColoresRepo as any, mockMarcasRepo as any);
+  const coloresService = new ColoresService(mockColoresRepo as any, mockColorBasesRepo as any);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const resinasService = new TipoResinasService(mockResinasRepo as any);
   const productosService = new ProductosService(
@@ -1069,29 +1110,42 @@ async function ejecutarPruebasM01(): Promise<void> {
     assert('reactivado' in reactivacionMarca, 'La marca se reactiva correctamente');
 
     // --------------------------------------------------------------------------
-    // HU-CAT-12: Gestión de bases (solo el registro de bases; sin tipo de
-    // resina —excluido a petición del PO— y sin asignación a productos/colores
-    // —depende de HU-CAT-02/HU-CAT-05, aún no implementadas—).
+    // HU-CAT-12: Gestión de bases (registro con marca y tipo de resina)
     // --------------------------------------------------------------------------
+    const resinaAgua = await resinasService.crear({ nombre: 'Base Agua' });
+    assert(resinaAgua.estado === 'activo', 'RF-CAT-02-04: tipo de resina creado activo');
+    await assertLanza(() => resinasService.crear({ nombre: 'Base Agua' }), 'RF-CAT-02-04: rechaza tipo de resina duplicado');
+
+    const resinaAceite = await resinasService.crear({ nombre: 'Base Aceite' });
     const comex = await marcasService.crear({
       nombre: 'Comex',
       logotipo: CrearMarcaDto.parse({ nombre: 'Comex', logotipo: LOGO_PNG_1X1 }).logotipo,
     });
 
     await assertLanza(
-      () => basesService.crear({ nombre: 'Base A', id_marca: 9999 }),
+      () => basesService.crear({ nombre: 'Base A', id_marca: 9999, id_tipo_resina: resinaAgua.id_tipo_resina }),
       'RF-CAT-12-01: rechaza base con marca inexistente'
     );
 
-    const baseA = await basesService.crear({ nombre: 'Base A', id_marca: sika.id_marca });
+    const baseA = await basesService.crear({ nombre: 'Base A', id_marca: sika.id_marca, id_tipo_resina: resinaAgua.id_tipo_resina });
     assert(baseA.id_marca === sika.id_marca && baseA.estado === 'activo', 'RF-CAT-12-01: base creada activa y asociada a su marca');
 
     await assertLanza(
-      () => basesService.crear({ nombre: 'Base A', id_marca: sika.id_marca }),
+      () => basesService.crear({ nombre: 'Base A', id_marca: sika.id_marca, id_tipo_resina: resinaAgua.id_tipo_resina }),
       'RF-CAT-12-01: rechaza base duplicada dentro de la misma marca'
     );
 
-    const baseAotraMarca = await basesService.crear({ nombre: 'Base A', id_marca: comex.id_marca });
+    await assertLanza(
+      () => basesService.crear({ nombre: 'Base Z', id_marca: sika.id_marca, id_tipo_resina: 9999 }),
+      'CA-CAT-12-02: rechaza una base con un tipo de resina inexistente'
+    );
+    assert(
+      !CrearBaseDto.safeParse({ nombre: 'Base Z', id_marca: sika.id_marca }).success,
+      'RF-CAT-12-01: el DTO exige declarar el tipo de resina de la base'
+    );
+    assert(baseA.id_tipo_resina === resinaAgua.id_tipo_resina, 'RF-CAT-12-01: la base guarda su tipo de resina');
+
+    const baseAotraMarca = await basesService.crear({ nombre: 'Base A', id_marca: comex.id_marca, id_tipo_resina: resinaAgua.id_tipo_resina });
     assert(baseAotraMarca.id_base !== baseA.id_base, 'RF-CAT-12-01: admite el mismo nombre de base en una marca distinta');
 
     const desactivacionBase = await basesService.desactivar(baseA.id_base);
@@ -1113,96 +1167,59 @@ async function ejecutarPruebasM01(): Promise<void> {
     );
 
     // --------------------------------------------------------------------------
-    // HU-CAT-05: Gestión de colores (alcance aprobado: registro por marca +
-    // CIELAB obligatorio + muestra derivada; sin familias ni uso en producto).
+    // HU-CAT-05: Gestión de colores (catálogo único, sin marca; hexadecimal
+    // obligatorio del que se deriva la familia cromática).
     // --------------------------------------------------------------------------
-    await assertLanza(
-      () => coloresService.crear({ nombre: 'Rojo', id_marca: 9999, cielab: { l: 50, a: 60, b: 40 } }),
-      'RF-CAT-05-01: rechaza color con marca inexistente'
+    const blanco = await coloresService.crear(
+      CrearColorDto.parse({ nombre: 'Blanco Puro', codigo: 'CMX-01', hexadecimal: '#ffffff' })
     );
-
-    const blanco = await coloresService.crear({
-      nombre: 'Blanco Puro',
-      id_marca: comex.id_marca,
-      codigo: 'CMX-01',
-      cielab: { l: 100, a: 0, b: 0 },
-    });
     assert(
-      blanco.estado === 'activo' && blanco.id_marca === comex.id_marca,
-      'CA-CAT-05-01: color creado activo y asociado a su marca'
+      blanco.estado === 'activo' && blanco.hexadecimal === '#FFFFFF' && !blanco.sin_base,
+      'CA-CAT-05-01: color creado activo con su hexadecimal normalizado'
     );
-    assert(blanco.muestra_hex === '#FFFFFF', 'RF-CAT-05-02: la muestra visual se deriva del CIELAB (L=100 → blanco)');
+    assert(blanco.familia === familiaCromatica('#FFFFFF'), 'RF-CAT-05-03: la familia se deriva del hexadecimal');
 
-    const sinCodigo = await coloresService.crear({
-      nombre: 'Azul Marino',
-      id_marca: comex.id_marca,
-      cielab: { l: 30, a: 10, b: -45 },
-    });
+    const sinCodigo = await coloresService.crear(CrearColorDto.parse({ nombre: 'Azul Marino', hexadecimal: '#1D3A6B' }));
     assert(sinCodigo.codigo === null, 'CA-CAT-05-02: admite registrar un color sin código');
+    assert(sinCodigo.familia === 'azules', 'RF-CAT-05-03: un azul queda en la familia de azules');
 
     await assertLanza(
-      () => coloresService.crear({ nombre: 'Blanco Puro', id_marca: comex.id_marca, cielab: { l: 100, a: 0, b: 0 } }),
-      'CA-CAT-05-01: rechaza color duplicado dentro de la misma marca'
+      () => coloresService.crear(CrearColorDto.parse({ nombre: 'blanco puro', hexadecimal: '#FEFEFE' })),
+      'CA-CAT-05-01: el nombre del color es único en el catálogo (sin distinguir mayúsculas)'
     );
-
-    const blancoOtraMarca = await coloresService.crear({
-      nombre: 'Blanco Puro',
-      id_marca: interpinturas.id_marca,
-      cielab: { l: 100, a: 0, b: 0 },
-    });
+    await assertLanza(
+      () => coloresService.crear(CrearColorDto.parse({ nombre: 'Otro', codigo: 'cmx-01', hexadecimal: '#FEFEFE' })),
+      'CA-CAT-05-01: el código del color es único en el catálogo'
+    );
     assert(
-      blancoOtraMarca.id_color !== blanco.id_color,
-      'CA-CAT-05-01: admite el mismo nombre de color en una marca distinta'
+      !CrearColorDto.safeParse({ nombre: 'X' }).success && !CrearColorDto.safeParse({ nombre: 'X', hexadecimal: '#12345' }).success,
+      'RF-CAT-05-02: el DTO exige un hexadecimal #RRGGBB'
     );
+    assert(familiaCromatica('#808080') === 'grises' && familiaCromatica('#D32F2F') === 'rojos', 'RF-CAT-05-03: clasifica grises y rojos');
 
-    const sinCielabRechazado = !CrearColorDto.safeParse({ nombre: 'X', id_marca: comex.id_marca }).success;
-    assert(sinCielabRechazado, 'RF-CAT-05-02: el DTO Zod exige el valor CIELAB');
-
-    const cielabFueraRangoRechazado = !CrearColorDto.safeParse({
-      nombre: 'X',
-      id_marca: comex.id_marca,
-      cielab: { l: 150, a: 0, b: 0 },
-    }).success;
-    assert(cielabFueraRangoRechazado, 'RF-CAT-05-02: el DTO Zod rechaza L* fuera de rango');
-
-    assert(cielabAHex(0, 0, 0) === '#000000', 'RF-CAT-05-02: L=0 deriva la muestra negra');
-
-    const soloAzul = await coloresService.listarPorMarca(comex.id_marca, 'azul');
-    assert(soloAzul.length === 1 && soloAzul[0]?.nombre === 'Azul Marino', 'CA-CAT-05-05: la búsqueda filtra por nombre');
+    const soloAzul = await coloresService.listar({ q: 'azul', pagina: 1, limite: 50 });
+    assert(soloAzul.total === 1 && soloAzul.items[0]?.nombre === 'Azul Marino', 'CA-CAT-05-05: la búsqueda filtra por nombre');
 
     const desactivacionColor = await coloresService.desactivar(blanco.id_color);
     assert('desactivado' in desactivacionColor, 'RF-CAT-05-01: desactiva el color');
 
     const reactivacionColor = await coloresService.reactivar(blanco.id_color);
-    assert('reactivado' in reactivacionColor, 'RF-CAT-09-04: reactiva el color cuando su marca está activa');
+    assert('reactivado' in reactivacionColor, 'RF-CAT-09-04: reactiva el color');
 
     const acme = await marcasService.crear({
       nombre: 'Acme',
       logotipo: CrearMarcaDto.parse({ nombre: 'Acme', logotipo: LOGO_PNG_1X1 }).logotipo,
     });
-    const colorAcme = await coloresService.crear({
-      nombre: 'Verde Bosque',
-      id_marca: acme.id_marca,
-      cielab: { l: 55, a: -40, b: 35 },
-    });
+    const colorAcme = await coloresService.crear(CrearColorDto.parse({ nombre: 'Verde Bosque', hexadecimal: '#2E7D32' }));
     await marcasService.desactivar(acme.id_marca);
-    const colorTrasDesactivarMarca = await coloresService.obtenerPorId(colorAcme.id_color);
     assert(
-      colorTrasDesactivarMarca.estado === 'inactivo',
-      'RF-CAT-04-03: desactivar la marca también desactiva en cascada sus colores'
-    );
-    await assertLanza(
-      () => coloresService.reactivar(colorAcme.id_color),
-      'RF-CAT-09-04: rechaza reactivar color con marca inactiva'
+      (await coloresService.obtenerPorId(colorAcme.id_color)).estado === 'activo',
+      'CA-CAT-04-04: desactivar una marca no desactiva colores (el catálogo es único)'
     );
 
     // --------------------------------------------------------------------------
     // HU-CAT-02: Gestión de productos ('publicar' exige variante activa e imagen).
     // --------------------------------------------------------------------------
-    const resinaAgua = await resinasService.crear({ nombre: 'Base Agua' });
-    assert(resinaAgua.estado === 'activo', 'RF-CAT-02-04: tipo de resina creado activo');
-    await assertLanza(() => resinasService.crear({ nombre: 'Base Agua' }), 'RF-CAT-02-04: rechaza tipo de resina duplicado');
-
     const lineaComex = await lineasService.crear({ nombre: 'ComexLinea', id_marca: comex.id_marca });
 
     const sinSubcatRechazado = !CrearProductoDto.safeParse({
@@ -1322,8 +1339,8 @@ async function ejecutarPruebasM01(): Promise<void> {
     assert(galon.volumen === 3.785 && galon.estado === 'activo', 'RF-CAT-03-05: presentación creada con volumen numérico');
     await assertLanza(() => presentacionesService.crear({ nombre: 'Galón', volumen: 1 }), 'RF-CAT-03-05: rechaza presentación duplicada');
 
-    const baseComex = await basesService.crear({ nombre: 'Base Neutra', id_marca: comex.id_marca });
-    const baseInter = await basesService.crear({ nombre: 'Base Inter', id_marca: interpinturas.id_marca });
+    const baseComex = await basesService.crear({ nombre: 'Base Neutra', id_marca: comex.id_marca, id_tipo_resina: resinaAgua.id_tipo_resina });
+    const baseInter = await basesService.crear({ nombre: 'Base Inter', id_marca: interpinturas.id_marca, id_tipo_resina: resinaAgua.id_tipo_resina });
 
     const prodEntonable = await productosService.crear({
       nombre: 'Vinilo Tono',
@@ -1490,8 +1507,8 @@ async function ejecutarPruebasM01(): Promise<void> {
     // --------------------------------------------------------------------------
     // HU-CAT-12 flujo 2: asignar bases a un producto entonable
     // --------------------------------------------------------------------------
-    const baseComex2 = await basesService.crear({ nombre: 'Base Neutra 2', id_marca: comex.id_marca });
-    const baseComex3 = await basesService.crear({ nombre: 'Base Neutra 3', id_marca: comex.id_marca });
+    const baseComex2 = await basesService.crear({ nombre: 'Base Neutra 2', id_marca: comex.id_marca, id_tipo_resina: resinaAgua.id_tipo_resina });
+    const baseComex3 = await basesService.crear({ nombre: 'Base Neutra 3', id_marca: comex.id_marca, id_tipo_resina: resinaAgua.id_tipo_resina });
 
     const basesAsignadas = await productoBasesService.asignar(prodEntonable.id_producto, baseComex2.id_base);
     assert(
@@ -1565,8 +1582,8 @@ async function ejecutarPruebasM01(): Promise<void> {
       'RF-CAT-07-02: rechaza asociar una variante de otro producto'
     );
     await assertLanza(
-      () => imagenesService.crear(prodFijo.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1, id_color: blancoOtraMarca.id_color })),
-      'RF-CAT-07-02: rechaza asociar un color de otra marca'
+      () => imagenesService.crear(prodFijo.id_producto, CrearImagenDto.parse({ imagen: LOGO_PNG_1X1, id_color: 99999 })),
+      'RF-CAT-07-02: rechaza asociar un color inexistente'
     );
 
     const imgVar = await imagenesService.crear(
@@ -1595,8 +1612,7 @@ async function ejecutarPruebasM01(): Promise<void> {
       logotipo: CrearMarcaDto.parse({ nombre: 'CicloVida', logotipo: LOGO_PNG_1X1 }).logotipo,
     });
     await lineasService.crear({ nombre: 'LineaCiclo', id_marca: marcaCiclo.id_marca });
-    await basesService.crear({ nombre: 'BaseCiclo', id_marca: marcaCiclo.id_marca });
-    await coloresService.crear({ nombre: 'ColorCiclo', id_marca: marcaCiclo.id_marca, cielab: { l: 50, a: 0, b: 0 } });
+    await basesService.crear({ nombre: 'BaseCiclo', id_marca: marcaCiclo.id_marca, id_tipo_resina: resinaAgua.id_tipo_resina });
     const prodCiclo = await productosService.crear({
       nombre: 'ProdCiclo',
       id_marca: marcaCiclo.id_marca,
@@ -1617,9 +1633,8 @@ async function ejecutarPruebasM01(): Promise<void> {
     assert(
       impactoMarca.lineas_afectadas === 1 &&
         impactoMarca.bases_afectadas === 1 &&
-        impactoMarca.colores_afectados === 1 &&
         impactoMarca.productos_afectados === 1,
-      'RF-CAT-09-03: informa el impacto en cascada de la marca (líneas, bases, colores, productos)'
+      'RF-CAT-09-03: informa el impacto en cascada de la marca (líneas, bases, productos)'
     );
 
     await marcasService.desactivar(marcaCiclo.id_marca);
@@ -1668,7 +1683,7 @@ async function ejecutarPruebasM01(): Promise<void> {
           typeof v.precio_vigente === 'number' &&
           v.codigo_color === blanco.codigo &&
           v.muestra_hex === '#FFFFFF' &&
-          v.familia_color === 'Blanco / Off-white'
+          v.familia_color === familiaCromatica('#FFFFFF')
         ) &&
         ficha.imagenes.length > 0,
       'CA-CAT-06-02: la ficha pública trae variante, color navegable e imágenes'
@@ -1768,7 +1783,7 @@ async function ejecutarPruebasM01(): Promise<void> {
     );
 
     const colorCascada = await coloresService.crear(
-      { id_marca: comex.id_marca, nombre: 'Rojo Cascada', cielab: { l: 40, a: 60, b: 40 } }
+      CrearColorDto.parse({ nombre: 'Rojo Cascada', hexadecimal: '#B71C1C' })
     );
     const varFijaCascada = await mockVariantesRepo.crear({
       id_producto: prodFijo.id_producto,
@@ -1797,6 +1812,7 @@ async function ejecutarPruebasM01(): Promise<void> {
         const id_combo = combosPorProducto.get(idProducto)?.id_combo ?? combosPorProducto.size + 1;
         const combo = { id_combo, id_producto: idProducto, excluido_descuentos: excluidoDescuentos };
         combosPorProducto.set(idProducto, combo);
+        productosCombo.add(idProducto);
         return combo;
       },
       reservar: async (lineas: LineaExistencia[]) => {
@@ -1812,6 +1828,36 @@ async function ejecutarPruebasM01(): Promise<void> {
     assert(
       comboSinComponentes.id_producto === prodSinCat.id_producto && comboSinComponentes.componentes.length === 0,
       'CA-CAT-13-02: registra un combo sin declarar de qué productos se compone'
+    );
+    // RF-CAT-13-09: un combo de varias marcas puede no declarar marca; ningún otro producto.
+    const comboMixto = await productosService.crear({
+      nombre: 'Kit Pintor Multimarca',
+      clase_color: 'sin_color',
+      id_subcategorias: [interioresEsmaltes.id_subcategoria],
+    });
+    assert(comboMixto.id_marca === null, 'RF-CAT-13-09: registra un producto sin marca para armar un combo');
+    await assertLanzaCodigo(
+      () => productosService.publicar(comboMixto.id_producto),
+      'PRODUCTO_SIN_MARCA',
+      'RF-CAT-13-09: un producto sin marca que no es combo no se publica'
+    );
+    await assertLanzaCodigo(
+      () =>
+        productosService.crear({
+          nombre: 'Vinilo Sin Marca',
+          clase_color: 'entonable',
+          id_subcategorias: [interioresEsmaltes.id_subcategoria],
+          id_linea: lineaComex.id_linea,
+          id_tipo_resina: resinaAgua.id_tipo_resina,
+        }),
+      'LINEA_DE_OTRA_MARCA',
+      'RF-CAT-11-02: una pintura sin marca no puede usar la línea de una marca'
+    );
+    await combosService.definir(comboMixto.id_producto, DefinirComboDto.parse({ componentes: [] }));
+    await assertLanzaCodigo(
+      () => productosService.publicar(comboMixto.id_producto),
+      'PRODUCTO_SIN_VARIANTE_ACTIVA',
+      'RF-CAT-13-09: ya como combo, la falta de marca no impide publicarlo (solo exige variante e imagen)'
     );
     await assertLanza(
       () => combosService.definir(99999, DefinirComboDto.parse({ componentes: [] })),
@@ -1868,23 +1914,11 @@ async function ejecutarPruebasM01(): Promise<void> {
     // --------------------------------------------------------------------------
     // HU-CAT-12 flujo 3: bases sobre las que se prepara cada color (RF-CAT-12-04)
     // --------------------------------------------------------------------------
-    const colorBases = new Map<number, Set<number>>();
-    const mockColorBasesRepo = {
-      asignar: async (idColor: number, idBase: number) => {
-        colorBases.set(idColor, (colorBases.get(idColor) ?? new Set()).add(idBase));
-      },
-      quitar: async (idColor: number, idBase: number) => {
-        colorBases.get(idColor)?.delete(idBase);
-      },
-      existe: async (idColor: number, idBase: number) => colorBases.get(idColor)?.has(idBase) ?? false,
-      listarBases: async (idColor: number) =>
-        [...(colorBases.get(idColor) ?? [])].map((idBase) => bases.get(idBase)).filter((b) => b !== undefined),
-    };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const colorBasesService = new ColorBasesService(mockColorBasesRepo as any, mockColoresRepo as any, mockBasesRepo as any);
 
-    const colorEntonable = await coloresService.crear({ nombre: 'Azul Entonable', id_marca: comex.id_marca, cielab: { l: 40, a: 10, b: -50 } });
-    const basePastel = await basesService.crear({ nombre: 'Base Pastel', id_marca: comex.id_marca });
+    const colorEntonable = await coloresService.crear(CrearColorDto.parse({ nombre: 'Azul Entonable', hexadecimal: '#3949AB' }));
+    const basePastel = await basesService.crear({ nombre: 'Base Pastel', id_marca: comex.id_marca, id_tipo_resina: resinaAgua.id_tipo_resina });
     const basesDelColor = await colorBasesService.asignar(colorEntonable.id_color, basePastel.id_base);
     assert(
       basesDelColor.length === 1 && basesDelColor[0]?.id_base === basePastel.id_base,
@@ -1894,9 +1928,16 @@ async function ejecutarPruebasM01(): Promise<void> {
       () => colorBasesService.asignar(colorEntonable.id_color, basePastel.id_base),
       'RF-CAT-12-04: no repite una combinación color↔base ya declarada'
     );
+    const colorTransparente = await coloresService.crear(
+      CrearColorDto.parse({ nombre: 'Natural Transparente', hexadecimal: '#F5E6C8', sin_base: true })
+    );
     await assertLanza(
-      () => colorBasesService.asignar(colorEntonable.id_color, baseA.id_base),
-      'RF-CAT-12-03: rechaza asociar el color a una base de otra marca'
+      () => colorBasesService.asignar(colorTransparente.id_color, basePastel.id_base),
+      'RF-CAT-12-13: un color «sin base» no admite bases'
+    );
+    await assertLanza(
+      () => coloresService.actualizar(colorEntonable.id_color, { sin_base: true }),
+      'RF-CAT-12-13: no declara «sin base» un color que ya tiene bases'
     );
     await assertLanza(
       () => colorBasesService.asignar(colorEntonable.id_color, baseComex.id_base),
@@ -1939,6 +1980,75 @@ async function ejecutarPruebasM01(): Promise<void> {
     await assertLanza(
       () => catalogoPublicoService.resolverEntonado(prodSinCat.id_producto, colorEntonable.id_color, galon.id_presentacion),
       'RF-CAT-12-05: un producto que no es entonable no resuelve base consumida'
+    );
+
+    // --------------------------------------------------------------------------
+    // RF-CAT-12-03: la base asignada debe ser de la resina del producto
+    // --------------------------------------------------------------------------
+    const baseAceite = await basesService.crear({ nombre: 'Base Aceite', id_marca: comex.id_marca, id_tipo_resina: resinaAceite.id_tipo_resina });
+    await assertLanzaCodigo(
+      () => productoBasesService.asignar(prodEntonable.id_producto, baseAceite.id_base),
+      'BASE_DE_OTRA_RESINA',
+      'CA-CAT-12-03: rechaza una base de aceite en un producto base agua'
+    );
+    const baseHeredada = await mockBasesRepo.crear({ nombre: 'Base Previa', id_marca: comex.id_marca });
+    await assertLanzaCodigo(
+      () => productoBasesService.asignar(prodEntonable.id_producto, baseHeredada.id_base),
+      'BASE_SIN_RESINA',
+      'RF-CAT-12-03: una base anterior sin resina no se asigna hasta declararla'
+    );
+    const resinaInactiva = await resinasService.crear({ nombre: 'Resina Retirada' });
+    await mockResinasRepo.cambiarEstado(resinaInactiva.id_tipo_resina, 'inactivo');
+    await assertLanzaCodigo(
+      () => basesService.actualizar(baseHeredada.id_base, { id_tipo_resina: resinaInactiva.id_tipo_resina }),
+      'RESINA_INACTIVA',
+      'CA-CAT-12-02: no declara en la base un tipo de resina inactivo'
+    );
+
+    // --------------------------------------------------------------------------
+    // RF-CAT-12-12/13: resolución de la base consumida por la carta
+    // --------------------------------------------------------------------------
+    await assertLanzaCodigo(
+      () =>
+        variantesService.crear({
+          id_producto: prodEntonable.id_producto,
+          id_presentacion: galon.id_presentacion,
+          precio_vigente: 1,
+        }),
+      'VARIANTE_FORMA_MIXTA',
+      'RF-CAT-12-13: un entonable con bases no admite variantes sin base'
+    );
+
+    const productoPublicado = productos.get(prodEntonable.id_producto);
+    if (productoPublicado) productos.set(productoPublicado.id_producto, { ...productoPublicado, publicado: true });
+    const nuevaBaseEnGalon = async (nombre: string): Promise<number> => {
+      const base = await basesService.crear({ nombre, id_marca: comex.id_marca, id_tipo_resina: resinaAgua.id_tipo_resina });
+      await productoBasesService.asignar(prodEntonable.id_producto, base.id_base);
+      await variantesService.crear({
+        id_producto: prodEntonable.id_producto,
+        id_presentacion: galon.id_presentacion,
+        id_base: base.id_base,
+        precio_vigente: 95000,
+      });
+      return base.id_base;
+    };
+    const baseTintaA = await nuevaBaseEnGalon('Base Tinta A');
+    const baseTintaB = await nuevaBaseEnGalon('Base Tinta B');
+
+    await colorBasesService.asignar(colorEntonable.id_color, baseTintaA);
+    const resuelta = await catalogoPublicoService.resolverEntonado(prodEntonable.id_producto, colorEntonable.id_color, galon.id_presentacion);
+    assert(resuelta.id_base === baseTintaA, 'RF-CAT-12-12: con una sola base declarada, la carta resuelve esa base');
+
+    await colorBasesService.asignar(colorEntonable.id_color, baseTintaB);
+    await assertLanzaCodigo(
+      () => catalogoPublicoService.resolverEntonado(prodEntonable.id_producto, colorEntonable.id_color, galon.id_presentacion),
+      'BASE_AMBIGUA',
+      'RF-CAT-12-12: con dos bases posibles no elige una al azar'
+    );
+    await assertLanzaCodigo(
+      () => catalogoPublicoService.resolverEntonado(prodEntonable.id_producto, colorTransparente.id_color, galon.id_presentacion),
+      'COLOR_NO_DISPONIBLE',
+      'RF-CAT-12-13: un color «sin base» no se prepara en un producto con bases'
     );
 
     // --------------------------------------------------------------------------

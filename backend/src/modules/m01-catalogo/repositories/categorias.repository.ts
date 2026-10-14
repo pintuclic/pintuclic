@@ -1,4 +1,5 @@
 import { Kysely } from 'kysely';
+import { dejaDeVerse } from './elegibilidad-publica';
 import { Database, Categoria, NewCategoria, CategoriaUpdate } from '../../../core/db/types';
 
 // ==============================================================================
@@ -72,45 +73,18 @@ export class CategoriasRepository {
   }
 
   /**
-   * Cuenta los productos activos que dejarán de verse en el catálogo público si
-   * esta categoría se desactiva (RF-CAT-01-04, CA-CAT-01-05/06): los que hoy
-   * están en alguna de sus subcategorías activas (producto_subcategoria) y no
-   * conservan ninguna otra subcategoría activa bajo otra categoría activa.
+   * RF-CAT-01-04 / CA-CAT-01-05: productos que dejarán de verse en el catálogo
+   * público si esta categoría y sus subcategorías se desactivan (M01-02).
    */
   async contarProductosAfectados(idCategoria: number): Promise<number> {
     const fila = await this.db
       .selectFrom('producto as p')
       .select(({ fn }) => fn.countAll<string>().as('total'))
-      .where('p.estado', '=', 'activo')
-      .where((eb) =>
-        eb.exists(
-          eb
-            .selectFrom('producto_subcategoria as ps')
-            .innerJoin('subcategorias as s', 's.id_subcategoria', 'ps.id_subcategoria')
-            .whereRef('ps.id_producto', '=', 'p.id_producto')
-            .where('s.id_categoria', '=', idCategoria)
-            .where('s.estado', '=', 'activo')
-            .select('ps.id_producto')
-        )
-      )
-      .where((eb) =>
-        eb.not(
-          eb.exists(
-            eb
-              .selectFrom('producto_subcategoria as ps2')
-              .innerJoin('subcategorias as s2', 's2.id_subcategoria', 'ps2.id_subcategoria')
-              .innerJoin('categoria as c2', 'c2.id_categoria', 's2.id_categoria')
-              .whereRef('ps2.id_producto', '=', 'p.id_producto')
-              .where('s2.id_categoria', '!=', idCategoria)
-              .where('s2.estado', '=', 'activo')
-              .where('c2.estado', '=', 'activo')
-              .select('ps2.id_producto')
-          )
-        )
-      )
+      .where((eb) => dejaDeVerse(eb, { idCategoria }))
       .executeTakeFirst();
     return Number(fila?.total ?? 0);
   }
+
 
   /** Desactiva en cascada todas las subcategorías activas de la categoría (RF-CAT-01-04). */
   async desactivarSubcategoriasDe(idCategoria: number): Promise<void> {

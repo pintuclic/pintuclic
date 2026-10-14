@@ -26,7 +26,9 @@ const subcategoriasSchema = z
 
 export const CrearProductoDto = z.object({
   nombre: nombreProductoSchema,
-  id_marca: idPositivo,
+  // Opcional solo para combos de varias marcas (RF-CAT-13-09); el servicio exige
+  // la marca para publicar cualquier otro producto.
+  id_marca: idPositivo.optional(),
   clase_color: claseColorSchema,
   id_subcategorias: subcategoriasSchema,
   id_linea: idPositivo.optional(),

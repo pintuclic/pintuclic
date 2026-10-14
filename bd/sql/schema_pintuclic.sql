@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- PROYECTO: PINTUCLIC
 -- DESCRIPCIÓN: Script DDL para PostgreSQL con tipos ENUM tipificados
--- VERSIÓN: 4.0 (v3.9 + asociación color↔base, complementarios por categoría, combos excluidos de descuentos y miniaturas de imágenes - M01)
+-- VERSIÓN: 4.1 (v4.0 + catálogo único de colores con hexadecimal, colores «sin base», tipo de resina de las bases y marca opcional en combos - M01)
 -- MOTOR: PostgreSQL 15+ (usa UNIQUE NULLS NOT DISTINCT; compatible con PostgreSQL 18)
 -- CODIFICACIÓN: UTF-8
 -- TOTAL TABLAS: 50
@@ -369,13 +369,14 @@ CREATE TABLE IF NOT EXISTS base (
     id_base SERIAL PRIMARY KEY,
     id_marca INT NOT NULL,
     nombre VARCHAR(100) NOT NULL,
+    id_tipo_resina INT,
     estado enum_estado_general NOT NULL DEFAULT 'activo',
     CONSTRAINT fk_base_marca FOREIGN KEY (id_marca)
         REFERENCES marca (id_marca) ON UPDATE CASCADE ON DELETE RESTRICT,
     CONSTRAINT uq_base_nombre_marca UNIQUE (id_marca, nombre)
 );
 
-COMMENT ON TABLE base IS 'Base sobre la que se prepara cada color de un producto entonable (HU-CAT-12). El tipo de resina que pide RF-CAT-12-01 se excluyó a petición explícita del Product Owner. La asignación de bases a productos entonables (RF-CAT-12-02/03) y la asociación color↔base (RF-CAT-12-04) quedan pendientes: dependen de que existan producto (HU-CAT-02) y color (HU-CAT-05), y esta última regla además está marcada como no definida en la especificación (RF-CAT-12-12).';
+COMMENT ON TABLE base IS 'Base de entonado de una marca (HU-CAT-12, RF-CAT-12-01), con su tipo de resina: un vinilo se prepara sobre bases de agua y un esmalte sobre bases de aceite (RF-CAT-12-03). Los productos entonables declaran qué bases ofrecen en producto_base y los colores sobre qué bases se preparan en color_base (RF-CAT-12-04).';
 COMMENT ON CONSTRAINT uq_base_nombre_marca ON base IS 'Impide nombres de base duplicados dentro de la misma marca (RF-CAT-12-01)';
 
 -- Tabla: tipo_resina (catálogo administrable - RF-CAT-02-04)
@@ -387,10 +388,22 @@ CREATE TABLE IF NOT EXISTS tipo_resina (
 
 COMMENT ON TABLE tipo_resina IS 'Catálogo administrable de tipos de resina (RF-CAT-02-04). Reemplaza cualquier lista fija en el código.';
 
+-- Migración (bases anteriores a v4.1): tipo de resina de la base (M01 - RF-CAT-12-01/03).
+-- La FK se declara aquí porque tipo_resina se crea después de base.
+ALTER TABLE base ADD COLUMN IF NOT EXISTS id_tipo_resina INT;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_base_tipo_resina') THEN
+        ALTER TABLE base ADD CONSTRAINT fk_base_tipo_resina FOREIGN KEY (id_tipo_resina)
+            REFERENCES tipo_resina (id_tipo_resina) ON UPDATE CASCADE ON DELETE RESTRICT;
+    END IF;
+END $$;
+COMMENT ON COLUMN base.id_tipo_resina IS 'Tipo de resina de la base (RF-CAT-12-01). Obligatorio al registrarla; nulo solo en bases previas a v4.1, que no pueden asignarse a productos hasta declararlo (RF-CAT-12-03).';
+
 -- Tabla: producto
 CREATE TABLE IF NOT EXISTS producto (
     id_producto SERIAL PRIMARY KEY,
-    id_marca INT NOT NULL,
+    id_marca INT,
     id_linea INT,
     id_tipo_resina INT,
     nombre VARCHAR(150) NOT NULL,
@@ -454,28 +467,71 @@ COMMENT ON TABLE producto_base IS 'Bases que ofrece un producto entonable (HU-CA
 -- Tabla: color
 CREATE TABLE IF NOT EXISTS color (
     id_color SERIAL PRIMARY KEY,
-    id_marca INT NOT NULL,
     nombre VARCHAR(100) NOT NULL,
     codigo VARCHAR(60),
-    cie_l NUMERIC(6, 3) NOT NULL,
-    cie_a NUMERIC(6, 3) NOT NULL,
-    cie_b NUMERIC(6, 3) NOT NULL,
+    hexadecimal CHAR(7) NOT NULL,
+    sin_base BOOLEAN NOT NULL DEFAULT false,
     estado enum_estado_general NOT NULL DEFAULT 'activo',
-    CONSTRAINT fk_color_marca FOREIGN KEY (id_marca)
-        REFERENCES marca (id_marca) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT uq_color_nombre_marca UNIQUE (id_marca, nombre),
-    CONSTRAINT chk_color_cie_l CHECK (cie_l >= 0 AND cie_l <= 100),
-    CONSTRAINT chk_color_cie_a CHECK (cie_a >= -128 AND cie_a <= 128),
-    CONSTRAINT chk_color_cie_b CHECK (cie_b >= -128 AND cie_b <= 128)
+    CONSTRAINT chk_color_hexadecimal CHECK (hexadecimal ~ '^#[0-9A-F]{6}$')
 );
 
-COMMENT ON TABLE color IS 'Catálogo de colores de una marca (HU-CAT-05). Cada color pertenece a la marca que efectivamente lo ofrece (RF-CAT-05-01) y almacena su valor cromático CIELAB obligatorio (RF-CAT-05-02), del que se deriva su muestra visual sin requerir imagen. Diferidos (dependen de otras HU): familias cromáticas administrables (RF-CAT-05-03), uso del color en carta/variantes (RF-CAT-05-04/05/06 → HU-CAT-02/03). La asociación color↔base vive en color_base (RF-CAT-12-04).';
-COMMENT ON COLUMN color.id_marca IS 'Marca dueña del color (RF-CAT-05-01, CA-CAT-05-01)';
-COMMENT ON COLUMN color.codigo IS 'Código del color cuando exista; opcional (RF-CAT-05-01, CA-CAT-05-02)';
-COMMENT ON COLUMN color.cie_l IS 'Componente L* (luminosidad, 0..100) del valor CIELAB (RF-CAT-05-02)';
-COMMENT ON COLUMN color.cie_a IS 'Componente a* (verde↔rojo) del valor CIELAB (RF-CAT-05-02)';
-COMMENT ON COLUMN color.cie_b IS 'Componente b* (azul↔amarillo) del valor CIELAB (RF-CAT-05-02)';
-COMMENT ON CONSTRAINT uq_color_nombre_marca ON color IS 'Impide nombres de color duplicados dentro de la misma marca; admite el mismo nombre entre marcas distintas (RF-CAT-05-01, CA-CAT-05-01)';
+-- Migración (bases anteriores a v4.1): un combo puede reunir productos de varias marcas y no declarar ninguna (M01 - RF-CAT-13-09).
+ALTER TABLE producto ALTER COLUMN id_marca DROP NOT NULL;
+COMMENT ON COLUMN producto.id_marca IS 'Marca del producto. Obligatoria salvo en los combos, que pueden reunir varias marcas (RF-CAT-13-09): sin marca no entran en el filtro, el patrocinio ni la estadística de ninguna marca (CA-CAT-13-10). El backend impide publicar un producto sin marca que no sea combo.';
+
+-- Migración (bases anteriores a v4.1): catálogo único de colores con hexadecimal (M01 - RF-CAT-05-01/02, RF-CAT-12-13).
+ALTER TABLE color ADD COLUMN IF NOT EXISTS hexadecimal CHAR(7);
+ALTER TABLE color ADD COLUMN IF NOT EXISTS sin_base BOOLEAN NOT NULL DEFAULT false;
+
+-- Conversión CIELAB (D65) -> sRGB #RRGGBB, la misma fórmula que usaba el backend,
+-- para conservar la muestra de los colores ya registrados.
+CREATE OR REPLACE FUNCTION pg_temp.cielab_a_hexadecimal(l NUMERIC, a NUMERIC, b NUMERIC) RETURNS TEXT AS $$
+DECLARE
+    fy DOUBLE PRECISION := (l + 16) / 116.0;
+    fx DOUBLE PRECISION := a / 500.0 + (l + 16) / 116.0;
+    fz DOUBLE PRECISION := (l + 16) / 116.0 - b / 200.0;
+    x DOUBLE PRECISION; y DOUBLE PRECISION; z DOUBLE PRECISION;
+    r DOUBLE PRECISION; g DOUBLE PRECISION; bl DOUBLE PRECISION;
+BEGIN
+    x := 0.95047 * (CASE WHEN fx ^ 3 > 0.008856 THEN fx ^ 3 ELSE (fx - 16 / 116.0) / 7.787 END);
+    y := 1.00000 * (CASE WHEN fy ^ 3 > 0.008856 THEN fy ^ 3 ELSE (fy - 16 / 116.0) / 7.787 END);
+    z := 1.08883 * (CASE WHEN fz ^ 3 > 0.008856 THEN fz ^ 3 ELSE (fz - 16 / 116.0) / 7.787 END);
+    r := x * 3.2406 + y * -1.5372 + z * -0.4986;
+    g := x * -0.9689 + y * 1.8758 + z * 0.0415;
+    bl := x * 0.0557 + y * -0.2040 + z * 1.0570;
+    r := CASE WHEN r > 0.0031308 THEN 1.055 * r ^ (1 / 2.4) - 0.055 ELSE 12.92 * r END;
+    g := CASE WHEN g > 0.0031308 THEN 1.055 * g ^ (1 / 2.4) - 0.055 ELSE 12.92 * g END;
+    bl := CASE WHEN bl > 0.0031308 THEN 1.055 * bl ^ (1 / 2.4) - 0.055 ELSE 12.92 * bl END;
+    RETURN '#' || upper(
+        lpad(to_hex(round(greatest(0, least(1, r)) * 255)::INT), 2, '0') ||
+        lpad(to_hex(round(greatest(0, least(1, g)) * 255)::INT), 2, '0') ||
+        lpad(to_hex(round(greatest(0, least(1, bl)) * 255)::INT), 2, '0'));
+END $$ LANGUAGE plpgsql IMMUTABLE;
+
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'color' AND column_name = 'cie_l') THEN
+        EXECUTE 'UPDATE color SET hexadecimal = pg_temp.cielab_a_hexadecimal(cie_l, cie_a, cie_b) WHERE hexadecimal IS NULL';
+        ALTER TABLE color DROP COLUMN cie_l, DROP COLUMN cie_a, DROP COLUMN cie_b;
+    END IF;
+    IF EXISTS (SELECT 1 FROM color WHERE lower(nombre) IN (SELECT lower(nombre) FROM color GROUP BY lower(nombre) HAVING count(*) > 1)) THEN
+        RAISE EXCEPTION 'Migración v4.1: hay colores con el mismo nombre en distintas marcas; unifíquelos antes de pasar al catálogo único (RF-CAT-05-01).';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_color_hexadecimal') THEN
+        ALTER TABLE color ADD CONSTRAINT chk_color_hexadecimal CHECK (hexadecimal ~ '^#[0-9A-F]{6}$');
+    END IF;
+END $$;
+ALTER TABLE color ALTER COLUMN hexadecimal SET NOT NULL;
+ALTER TABLE color DROP CONSTRAINT IF EXISTS uq_color_nombre_marca;
+-- El color deja de pertenecer a una marca (RF-CAT-05-01); su FK cae con la columna.
+ALTER TABLE color DROP COLUMN IF EXISTS id_marca;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_color_nombre ON color (lower(nombre));
+CREATE UNIQUE INDEX IF NOT EXISTS uq_color_codigo ON color (lower(codigo)) WHERE codigo IS NOT NULL;
+
+COMMENT ON TABLE color IS 'Catálogo único de colores del sistema (HU-CAT-05, RF-CAT-05-01): no pertenecen a ninguna marca; el mismo color sirve como carta de los productos entonables y como variante de los de colores fijos (RF-CAT-05-04). Su muestra visual se genera del hexadecimal obligatorio (RF-CAT-05-02); la imagen es opcional (imagen.id_color, RF-CAT-07-02). La familia cromática se deriva del tono del hexadecimal (RF-CAT-05-03). Las bases sobre las que se prepara viven en color_base, o se declara sin_base (RF-CAT-12-12/13).';
+COMMENT ON COLUMN color.codigo IS 'Código del color cuando exista; opcional y único en el catálogo (RF-CAT-05-01, CA-CAT-05-02)';
+COMMENT ON COLUMN color.hexadecimal IS 'Valor hexadecimal #RRGGBB obligatorio, del que se genera la muestra visual (RF-CAT-05-02, CA-CAT-05-02/04).';
+COMMENT ON COLUMN color.sin_base IS 'El color se ofrece sobre productos transparentes que no se preparan sobre ninguna base (RF-CAT-12-13, CA-CAT-12-10). Excluyente con color_base.';
 
 -- Tabla: color_base (HU-CAT-12 flujo 3 - RF-CAT-12-04: bases sobre las que se prepara cada color)
 CREATE TABLE IF NOT EXISTS color_base (
@@ -1209,6 +1265,7 @@ CREATE INDEX IF NOT EXISTS idx_producto_cat_complementaria ON producto(id_catego
 CREATE INDEX IF NOT EXISTS idx_prodsubcat_subcat ON producto_subcategoria(id_subcategoria);
 CREATE INDEX IF NOT EXISTS idx_prodbase_base ON producto_base(id_base);
 CREATE INDEX IF NOT EXISTS idx_colorbase_base ON color_base(id_base);
+CREATE INDEX IF NOT EXISTS idx_base_tipo_resina ON base(id_tipo_resina);
 CREATE INDEX IF NOT EXISTS idx_categoria_complementaria ON categoria(id_categoria_complementaria);
 CREATE INDEX IF NOT EXISTS idx_combo_producto ON combo(id_producto);
 CREATE INDEX IF NOT EXISTS idx_tonos_color ON tonos(id_color);

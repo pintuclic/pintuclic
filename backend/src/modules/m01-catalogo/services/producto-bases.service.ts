@@ -6,11 +6,10 @@ import { Base } from '../../../core/db/types';
 
 // ==============================================================================
 // M01 - SERVICIO DE PRODUCTO_BASE (HU-CAT-12 flujo 2)
-// Declara qué bases ofrece un producto entonable. La base debe ser de la marca
-// del producto (RF-CAT-12-03). Solo aplica a productos de clase 'entonable'
-// (RF-CAT-12-02). El "tipo de resina" que menciona RF-CAT-12-03 no existe en el
-// modelo (excluido por el PO en HU-CAT-12), por lo que la comparación se limita
-// a la marca.
+// Declara qué bases ofrece un producto entonable (RF-CAT-12-02). La base debe
+// ser de la marca del producto y de su mismo tipo de resina: un vinilo se
+// prepara sobre bases de agua y un esmalte sobre bases de aceite (RF-CAT-12-03,
+// CA-CAT-12-03).
 // ==============================================================================
 
 export class ProductoBasesService {
@@ -32,6 +31,12 @@ export class ProductoBasesService {
     }
     if (base.id_marca !== producto.id_marca) {
       throw new AppError('La base no pertenece a la marca del producto', 409, 'BASE_DE_OTRA_MARCA');
+    }
+    if (base.id_tipo_resina === null) {
+      throw new AppError('La base no declara su tipo de resina: regístrelo antes de asignarla', 409, 'BASE_SIN_RESINA');
+    }
+    if (base.id_tipo_resina !== producto.id_tipo_resina) {
+      throw new AppError('La base es de un tipo de resina distinto al del producto', 409, 'BASE_DE_OTRA_RESINA');
     }
     if (base.estado !== 'activo') {
       throw new AppError('La base indicada está inactiva', 409, 'BASE_INACTIVA');

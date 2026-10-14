@@ -26,8 +26,8 @@ export class ImagenesService {
   ) {}
 
   async crear(idProducto: number, dto: CrearImagenDto): Promise<ImagenDetalle> {
-    const producto = await this.exigirProducto(idProducto);
-    await this.validarAsociaciones(idProducto, producto, dto.id_variante ?? null, dto.id_color ?? null);
+    await this.exigirProducto(idProducto);
+    await this.validarAsociaciones(idProducto, dto.id_variante ?? null, dto.id_color ?? null);
 
     const versiones = await this.optimizador.generarVersiones(dto.imagen.buffer);
     if (dto.es_principal) {
@@ -64,11 +64,11 @@ export class ImagenesService {
 
   async actualizar(id: number, dto: ActualizarImagenDto): Promise<ImagenDetalle> {
     const meta = await this.exigirImagen(id);
-    const producto = await this.exigirProducto(meta.id_producto);
+    await this.exigirProducto(meta.id_producto);
 
     const idVariante = dto.id_variante !== undefined ? dto.id_variante : meta.id_variante;
     const idColor = dto.id_color !== undefined ? dto.id_color : meta.id_color;
-    await this.validarAsociaciones(meta.id_producto, producto, idVariante, idColor);
+    await this.validarAsociaciones(meta.id_producto, idVariante, idColor);
 
     const versiones = dto.imagen !== undefined ? await this.optimizador.generarVersiones(dto.imagen.buffer) : undefined;
     if (dto.es_principal === true) {
@@ -113,10 +113,9 @@ export class ImagenesService {
     return imagen;
   }
 
-  /** RF-CAT-07-02: la variante debe ser del producto y el color, de su marca. */
+  /** RF-CAT-07-02: la variante debe ser del producto; el color, del catálogo único (RF-CAT-05-01). */
   private async validarAsociaciones(
     idProducto: number,
-    producto: Producto,
     idVariante: number | null,
     idColor: number | null
   ): Promise<void> {
@@ -133,9 +132,6 @@ export class ImagenesService {
       const color = await this.coloresRepo.obtenerPorId(idColor);
       if (!color) {
         throw new AppError('El color indicado no existe', 404, 'COLOR_NO_ENCONTRADO');
-      }
-      if (color.id_marca !== producto.id_marca) {
-        throw new AppError('El color no pertenece a la marca del producto', 409, 'COLOR_DE_OTRA_MARCA');
       }
     }
   }

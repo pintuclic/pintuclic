@@ -14,6 +14,7 @@
 
 | Versión | Fecha | Tablas Nuevas | Tablas Deprecadas | Cambios Destacados | Detalle Completo |
 | :---: | :---: | :--- | :--- | :--- | :--- |
+| **v2.9 / v0.4.9.0** (esquema 4.1) | 2026-10-14 | Ninguna | Ninguna | M01 Catálogo: catálogo único de colores (se retira `color.id_marca`, nombre y código únicos), `color.hexadecimal` en lugar de CIELAB (RF-CAT-05-02/03), `color.sin_base` para productos transparentes (RF-CAT-12-13), `base.id_tipo_resina` (RF-CAT-12-01/03) y `producto.id_marca` opcional para combos (RF-CAT-13-09). Migración idempotente que convierte el CIELAB existente. Total 50 tablas. | [Ver v2.9](./WALKTHROUGH_DATABASE.md#-versión-29--v04900-2026-10-14) |
 | **v2.8 / v3.36.0** (esquema 4.0) | 2026-10-13 | `color_base` (1) | Ninguna | M01 Catálogo: combinaciones color↔base para el entonado (RF-CAT-12-04/05/06), `categoria.id_categoria_complementaria` para heredar complementarios (RF-CAT-08-01), `combo.excluido_descuentos` (RF-CAT-13-01), `UNIQUE (id_producto)` en `combo` e `imagen.miniatura`/`optimizada` en WebP (RNF-CAT-07-01). Migración idempotente para bases existentes. Total 50 tablas. | [Ver v2.8](./WALKTHROUGH_DATABASE.md#-versión-28--v3360-2026-10-13) |
 | **v2.7 / v0.3.37.0** (esquema 3.9) | 2026-09-29 | `linea_orden_descuento`, `consecutivo` (2) | Ninguna | M08 Orden de venta: copia histórica completa. `orden` añade solicitud SOL de origen, modo y costo de entrega, base, importe y tasa de IVA (dirección opcional en recogida). `linea_orden` añade color solicitado, precio inicial, referencia a la variante sin FK, entonado y base consumida, y pasa a `ON DELETE RESTRICT`. Descuentos por línea en orden y consecutivo sin huecos para `PC-AAAA-NNNNN`. Nuevo `enum_modo_entrega`. Total 49 tablas. | [Ver v2.7](./WALKTHROUGH_DATABASE.md#-versión-27--v03370-2026-09-29) |
 | **v2.6 / v0.3.34.0** (esquema 3.8) | 2026-09-29 | `historial_estado_orden`, `nota_orden`, `contacto_orden` (3) | Ninguna | M08 Orden de venta: `enum_estado_orden` pasa al ciclo de HU-ORD-03 (`orden_confirmada` … `devuelto`) con migración idempotente para bases existentes (`pagado` → `orden_confirmada`, `enviado` → `despachado`); `orden.estado` nace en `orden_confirmada`; historial de transiciones con autor, notas internas y registro de contactos. Total 47 tablas. | [Ver v2.6](./WALKTHROUGH_DATABASE.md#-versión-26--v03340-2026-09-29) |
@@ -96,15 +97,14 @@ erDiagram
     Bases {
         int id_base PK
         int id_marca FK
+        int id_tipo_resina FK "v4.1, RF-CAT-12-01"
         string nombre
     }
     Color {
         int UniqueID PK
-        int id_marca FK
         string nombre
-        float cie_l
-        float cie_a
-        float cie_b
+        string hexadecimal "v4.1, RF-CAT-05-02"
+        boolean sin_base "v4.1, RF-CAT-12-13"
     }
     Color_Base {
         int id_color PK, FK "v4.0, RF-CAT-12-04"
@@ -415,10 +415,10 @@ erDiagram
 | **`subcategorias`** | `id_subcategoria` | `id_categoria` $\rightarrow$ `categoria` | Nivel 2 de agrupación. |
 | **`sub_subcategorias`** | `id_sub_subcategoria` | `id_subcategoria` $\rightarrow$ `subcategorias` | Nivel 3 de agrupación. |
 | **`linea`** | `id_linea` | `id_sub_subcategoria` $\rightarrow$ `sub_subcategorias` | Nivel 4: Línea de marca (e.g. Viniltex, Koraza). |
-| **`producto`** | `id_producto` | `id_linea` $\rightarrow$ `linea` | Entidad base del producto. |
+| **`producto`** | `id_producto` | `id_marca` $\rightarrow$ `marca` (opcional solo en combos, v4.1), `id_linea` $\rightarrow$ `linea` | Entidad base del producto. |
 | **`variante`** | `id_variante` | `id_producto` $\rightarrow$ `producto` | SKU vendible con `precio_vigente`, `estado` comercial y presentación. |
-| **`base`** | `id_base` | `id_marca` $\rightarrow$ `marca` | Base de entonado de una marca; la variante entonable la referencia (`variante.id_base`). |
-| **`color`** | `id_color` | `id_marca` $\rightarrow$ `marca` | Color de la carta de una marca con su valor CIELAB. |
+| **`base`** | `id_base` | `id_marca` $\rightarrow$ `marca`, `id_tipo_resina` $\rightarrow$ `tipo_resina` | Base de entonado de una marca y de un tipo de resina (v4.1, RF-CAT-12-01); la variante entonable la referencia (`variante.id_base`). |
+| **`color`** | `id_color` | Ninguna | Color del catálogo único con su hexadecimal y la marca «sin base» (v4.1, RF-CAT-05-01/02, RF-CAT-12-13). Nombre y código únicos. |
 | **`color_base`** | (`id_color`, `id_base`) | `id_color` $\rightarrow$ `color`, `id_base` $\rightarrow$ `base` | Bases sobre las que puede prepararse cada color (v4.0, RF-CAT-12-04). La carta entonable y la base consumida se resuelven desde aquí. |
 | **`tonos`** | `id_tono` | `id_color` $\rightarrow$ `color` | Tonos/matices derivados con `nombre`, `hexagesimal` y precio adicional. |
 | **`caracteristica`** | `id_caracteristica` | `id_variante` $\rightarrow$ `variante` | Ficha técnica o especificaciones de la variante. |

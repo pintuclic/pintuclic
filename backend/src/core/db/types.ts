@@ -184,12 +184,15 @@ export interface BaseTable {
   id_base: Generated<number>;
   id_marca: number;
   nombre: string;
+  // Tipo de resina de la base (RF-CAT-12-01/03); nulo solo en bases previas a v4.1.
+  id_tipo_resina: number | null;
   estado: Generated<EnumEstadoGeneral>;
 }
 
 export interface ProductoTable {
   id_producto: Generated<number>;
-  id_marca: number;
+  // Opcional solo en combos, que pueden reunir varias marcas (RF-CAT-13-09).
+  id_marca: number | null;
   id_linea: number | null;
   id_tipo_resina: number | null;
   nombre: string;
@@ -222,14 +225,12 @@ export interface ProductoBaseTable {
 
 export interface ColorTable {
   id_color: Generated<number>;
-  id_marca: number;
   nombre: string;
   codigo: string | null;
-  // CIELAB (RF-CAT-05-02). El driver de PostgreSQL devuelve NUMERIC como string;
-  // se admite number|string al insertar/actualizar.
-  cie_l: ColumnType<string, number | string, number | string>;
-  cie_a: ColumnType<string, number | string, number | string>;
-  cie_b: ColumnType<string, number | string, number | string>;
+  // Hexadecimal #RRGGBB obligatorio (RF-CAT-05-02).
+  hexadecimal: string;
+  // Color que no se prepara sobre ninguna base (RF-CAT-12-13).
+  sin_base: Generated<boolean>;
   estado: Generated<EnumEstadoGeneral>;
 }
 

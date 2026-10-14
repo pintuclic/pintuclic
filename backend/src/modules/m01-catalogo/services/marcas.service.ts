@@ -1,7 +1,6 @@
 import { MarcasRepository } from '../repositories/marcas.repository';
 import { LineasRepository } from '../repositories/lineas.repository';
 import { BasesRepository } from '../repositories/bases.repository';
-import { ColoresRepository } from '../repositories/colores.repository';
 import { ProductosRepository } from '../repositories/productos.repository';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { CrearMarcaDto, ActualizarMarcaDto } from '../dtos/marcas.dto';
@@ -26,7 +25,6 @@ export class MarcasService {
     private readonly repo: MarcasRepository,
     private readonly lineasRepo: LineasRepository,
     private readonly basesRepo: BasesRepository,
-    private readonly coloresRepo: ColoresRepository,
     private readonly productosRepo: ProductosRepository,
     private readonly campanas: CascadaCampanas
   ) {}
@@ -88,8 +86,9 @@ export class MarcasService {
 
   /**
    * RF-CAT-04-03 / HU-CAT-09: desactiva la marca y, en cascada, sus líneas,
-   * bases, colores, productos y campañas. El diagrama de esta HU no pide
-   * confirmación previa (a diferencia de categoría/línea).
+   * bases, productos y campañas. Los colores no dependen de la marca: son un
+   * catálogo único que otras marcas siguen usando (CA-CAT-04-04). El diagrama
+   * de esta HU no pide confirmación previa (a diferencia de categoría/línea).
    *
    * Todas las escrituras, incluida la cascada de campañas (puerto
    * `CascadaCampanas`), se ejecutan en una única transacción: si una falla no
@@ -108,17 +107,15 @@ export class MarcasService {
   /** RF-CAT-09-03: informa, antes de desactivar, qué elementos de la marca quedarán ocultos. */
   async impactoDesactivacion(id: number): Promise<ImpactoDesactivacionMarca> {
     await this.obtenerPorId(id);
-    const [lineas, bases, colores, productos] = await Promise.all([
+    const [lineas, bases, productos] = await Promise.all([
       this.lineasRepo.contarActivasPorMarca(id),
       this.basesRepo.contarActivasPorMarca(id),
-      this.coloresRepo.contarActivosPorMarca(id),
       this.productosRepo.contarActivosPorMarca(id),
     ]);
     return {
       requiere_confirmacion: true,
       lineas_afectadas: lineas,
       bases_afectadas: bases,
-      colores_afectados: colores,
       productos_afectados: productos,
     };
   }

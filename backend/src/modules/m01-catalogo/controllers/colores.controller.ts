@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { sendSuccess } from '../../../core/utils/apiResponse';
 import { AppError } from '../../../core/middlewares/errorHandler';
 import { ColoresService } from '../services/colores.service';
-import { CrearColorDto, ActualizarColorDto } from '../dtos/colores.dto';
+import { CrearColorDto, ActualizarColorDto, ListarColoresQueryDto } from '../dtos/colores.dto';
 
 // ==============================================================================
 // M01 - CONTROLADOR DE COLORES (HU-CAT-05)
@@ -25,10 +25,8 @@ export class ColoresController {
     sendSuccess(res, color, 'Color creado exitosamente', 201);
   };
 
-  listarPorMarca = async (req: Request, res: Response): Promise<void> => {
-    const busqueda = typeof req.query.q === 'string' && req.query.q.trim() !== '' ? req.query.q.trim() : undefined;
-    const colores = await this.service.listarPorMarca(idDeParametro(req, 'idMarca'), busqueda);
-    sendSuccess(res, colores);
+  listar = async (req: Request, res: Response): Promise<void> => {
+    sendSuccess(res, await this.service.listar(ListarColoresQueryDto.parse(req.query)));
   };
 
   obtener = async (req: Request, res: Response): Promise<void> => {

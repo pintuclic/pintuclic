@@ -80,9 +80,9 @@ const combosRepo = new CombosRepository(db);
 const categoriasService = new CategoriasService(categoriasRepo);
 const subcategoriasService = new SubcategoriasService(subcategoriasRepo, categoriasRepo);
 const lineasService = new LineasService(lineasRepo, marcasRepo, reglasComercialesNoIntegradas);
-const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo, coloresRepo, productosRepo, campanasNoIntegradas);
-const basesService = new BasesService(basesRepo, marcasRepo);
-const coloresService = new ColoresService(coloresRepo, marcasRepo);
+const marcasService = new MarcasService(marcasRepo, lineasRepo, basesRepo, productosRepo, campanasNoIntegradas);
+const basesService = new BasesService(basesRepo, marcasRepo, resinasRepo);
+const coloresService = new ColoresService(coloresRepo, colorBasesRepo);
 const resinasService = new TipoResinasService(resinasRepo);
 const productosService = new ProductosService(productosRepo, marcasRepo, lineasRepo, resinasRepo, subcategoriasRepo, categoriasRepo);
 const presentacionesService = new PresentacionesService(presentacionesRepo);
@@ -369,9 +369,9 @@ catalogoRoutes.post(
 );
 
 catalogoRoutes.get(
-  '/marcas/:idMarca/colores',
+  '/colores',
   ...guardas.protegido('catalogo.ver'),
-  (req, res, next) => { void coloresCtrl.listarPorMarca(req, res).catch(next); }
+  (req, res, next) => { void coloresCtrl.listar(req, res).catch(next); }
 );
 
 catalogoRoutes.get(

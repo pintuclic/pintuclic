@@ -13,7 +13,9 @@ import { VarianteDetalle, ResultadoDesactivacion, ResultadoReactivacion } from '
 // M01 - SERVICIO DE VARIANTES (HU-CAT-03)
 // Reglas: la forma de la variante depende de la clase del producto
 // (RF-CAT-03-02); no hay dos variantes idénticas del mismo producto
-// (RF-CAT-03-03); base/color deben ser de la marca del producto; el código de
+// (RF-CAT-03-03); la base debe ser de la marca del producto y el color, del
+// catálogo único (RF-CAT-05-01); un entonable transparente se vende sin base
+// (RF-CAT-12-13) y no mezcla esa forma con variantes de base; el código de
 // proveedor es único (RF-CAT-03-06); no hay borrado físico, solo desactivación
 // (RF-CAT-03-01).
 // ==============================================================================
@@ -35,6 +37,7 @@ export class VariantesService {
     const idBase = dto.id_base ?? null;
     const idColor = dto.id_color ?? null;
     this.validarForma(producto.clase_color, idBase, idColor);
+    await this.exigirFormaEntonableCoherente(producto, idBase);
     await this.validarBaseYColor(producto.id_marca, idBase, idColor);
     await this.exigirBaseDeclarada(producto.clase_color, producto.id_producto, idBase);
 
@@ -74,6 +77,7 @@ export class VariantesService {
     const idColor = dto.id_color !== undefined ? dto.id_color : actual.id_color;
 
     this.validarForma(producto.clase_color, idBase, idColor);
+    await this.exigirFormaEntonableCoherente(producto, idBase, id);
     await this.validarBaseYColor(producto.id_marca, idBase, idColor);
     await this.exigirBaseDeclarada(producto.clase_color, producto.id_producto, idBase);
     if (dto.id_presentacion !== undefined) {
@@ -172,12 +176,13 @@ export class VariantesService {
     }
   }
 
-  /** RF-CAT-03-02 / CA-CAT-03-03/04: la forma de la variante depende de la clase del producto. */
+  /**
+   * RF-CAT-03-02 / CA-CAT-03-03/04: la forma de la variante depende de la clase
+   * del producto. Un entonable se identifica por base, o por ninguna si es
+   * transparente (RF-CAT-12-13); nunca por color.
+   */
   private validarForma(clase: EnumClaseColor, idBase: number | null, idColor: number | null): void {
     if (clase === 'entonable') {
-      if (idBase === null) {
-        throw new AppError('Una variante de un producto entonable requiere una base', 422, 'VARIANTE_REQUIERE_BASE');
-      }
       if (idColor !== null) {
         throw new AppError('Una variante entonable se identifica por base, no por color', 409, 'VARIANTE_ENTONABLE_SIN_COLOR');
       }
@@ -196,8 +201,26 @@ export class VariantesService {
     }
   }
 
-  /** RF-CAT-03-03 / CA-CAT-03-06: base/color deben ser de la marca del producto y estar activos. */
-  private async validarBaseYColor(idMarca: number, idBase: number | null, idColor: number | null): Promise<void> {
+  /**
+   * RF-CAT-12-13: un entonable es transparente (variantes sin base) o se prepara
+   * sobre bases; mezclar ambas formas haría que la carta resolviera los colores
+   * de dos maneras para el mismo producto.
+   */
+  private async exigirFormaEntonableCoherente(producto: Producto, idBase: number | null, excluirId?: number): Promise<void> {
+    if (producto.clase_color !== 'entonable') return;
+    const variantes = await this.repo.listarPorProducto(producto.id_producto);
+    const mezcla = variantes.some((v) => v.id_variante !== excluirId && (v.id_base === null) !== (idBase === null));
+    if (mezcla) {
+      throw new AppError(
+        'Un producto entonable no puede combinar variantes con base y variantes sin base (transparentes)',
+        409,
+        'VARIANTE_FORMA_MIXTA'
+      );
+    }
+  }
+
+  /** RF-CAT-03-03 / CA-CAT-03-06: la base debe ser de la marca del producto y estar activa; el color, activo. */
+  private async validarBaseYColor(idMarca: number | null, idBase: number | null, idColor: number | null): Promise<void> {
     if (idBase !== null) {
       const base = await this.basesRepo.obtenerPorId(idBase);
       if (!base) {
@@ -214,9 +237,6 @@ export class VariantesService {
       const color = await this.coloresRepo.obtenerPorId(idColor);
       if (!color) {
         throw new AppError('El color indicado no existe', 404, 'COLOR_NO_ENCONTRADO');
-      }
-      if (color.id_marca !== idMarca) {
-        throw new AppError('El color no pertenece a la marca del producto', 409, 'COLOR_DE_OTRA_MARCA');
       }
       if (color.estado !== 'activo') {
         throw new AppError('El color indicado está inactivo', 409, 'COLOR_INACTIVO');
