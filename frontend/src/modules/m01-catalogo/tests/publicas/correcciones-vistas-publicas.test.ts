@@ -153,16 +153,17 @@ describe('1 · calculadora → carrito: se agrega la cantidad calculada', () => 
     expect(wrapper.emitted('agregar')).toEqual([[7]]);
   });
 
-  it('la ficha agrega la cantidad recomendada, limitada a las existencias, y lo explica', async () => {
+  it('la ficha agrega toda la cantidad recomendada aunque supere la existencia referencial (venta sin stock)', async () => {
     const { wrapper } = await montarFicha();
     const carrito = useCartStore();
     const agregar = vi.spyOn(carrito, 'addToCart').mockResolvedValue(undefined as never);
 
+    // La variante tiene 3 en existencia: ya no se recorta a 3 (el límite es solo para combos, RF-CAT-13-02).
     wrapper.findComponent({ name: 'CalculadoraPinturaPublica' }).vm.$emit('agregar', 5);
     await flushPromises();
 
-    expect(agregar).toHaveBeenCalledWith(expect.objectContaining({ variantId: 90 }), 3);
-    expect(wrapper.text()).toContain('La calculadora recomienda 5 unidades, pero solo hay 3 disponibles; se agregaron 3.');
+    expect(agregar).toHaveBeenCalledWith(expect.objectContaining({ variantId: 90 }), 5);
+    expect(wrapper.text()).not.toContain('disponibles');
     wrapper.unmount();
   });
 });

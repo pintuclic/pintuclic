@@ -75,10 +75,10 @@ describe('catálogo público: panel de filtros, contador y paginación', () => {
     }));
   });
 
-  it('solo muestra las seis secciones acordadas (sin colores ni disponibilidad)', async () => {
+  it('muestra las secciones de filtro de RF-BUS-02-01, con color (sin disponibilidad)', async () => {
     const { wrapper } = await montarCatalogo();
     const titulos = wrapper.findAll('aside h3').map((h) => h.text().trim());
-    expect(titulos).toEqual(['Categorías', 'Marcas', 'Línea comercial', 'Tipo de resina', 'Presentación', 'Rango de precio']);
+    expect(titulos).toEqual(['Categorías', 'Marcas', 'Línea comercial', 'Tipo de resina', 'Color', 'Presentación', 'Rango de precio']);
     expect(wrapper.text()).not.toContain('Colores disponibles');
     expect(wrapper.text()).not.toContain('Disponibilidad');
     expect(wrapper.text()).not.toContain('Con existencia');

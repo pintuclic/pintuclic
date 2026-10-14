@@ -180,8 +180,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import {
   Calculator,
   ChevronRight,
@@ -211,6 +211,21 @@ const menuCategoriasAbierto = ref(false);
 const terminoBusqueda = ref('');
 const mensaje = ref<string | null>(null);
 const router = useRouter();
+const route = useRoute();
+
+/**
+ * CA-BUS-01-07: el catálogo trae aquí al visitante cuando la búsqueda no está disponible.
+ * Se informa sin detalles técnicos y se limpia la URL para que recargar no repita el aviso.
+ */
+watch(
+  () => route.query.aviso,
+  (aviso) => {
+    if (aviso !== 'busqueda-no-disponible') return;
+    mensaje.value = 'La búsqueda de productos no está disponible en este momento. Puedes seguir explorando desde el inicio e intentarlo de nuevo en unos minutos.';
+    void router.replace({ query: {} });
+  },
+  { immediate: true },
+);
 
 const {
   cargarInicio,

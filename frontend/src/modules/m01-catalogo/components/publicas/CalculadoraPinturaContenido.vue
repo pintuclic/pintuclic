@@ -524,7 +524,7 @@ const props = withDefaults(
     producto?: FichaProductoPublico | null;
     /** Presentación elegida en la ficha: define en qué unidades se agrega la recomendación. */
     presentacion?: { nombre: string; volumen: string | number | null } | null;
-    /** Unidades que la ficha permite agregar de esa presentación (existencias); null = sin límite. */
+    /** Tope de unidades que se pueden agregar (p. ej. un combo con existencia limitada); null = sin límite. */
     maximoUnidades?: number | null;
     mostrarVolver?: boolean;
     compacto?: boolean;

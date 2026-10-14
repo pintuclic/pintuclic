@@ -25,11 +25,17 @@ function condiciones(filtros?: FiltrosVariante | null): Condicion[] {
   return lista;
 }
 
+/** true si la variante cumple todos los filtros activos (o no hay filtros). */
+export function cumpleTodosLosFiltros(variante: VariantePublica, filtros?: FiltrosVariante | null): boolean {
+  return condiciones(filtros).every((condicion) => condicion(variante));
+}
+
 /**
  * Variantes que cumplen el máximo posible de filtros. Se intenta con todos; si ninguna variante
  * los cumple a la vez (la búsqueda puede devolver un producto que cumple cada filtro con una
  * variante distinta), se van soltando los de menor prioridad: primero el precio, luego la
- * presentación. Así la tarjeta muestra la variante más cercana a lo filtrado.
+ * presentación. Así la tarjeta muestra la variante más cercana a lo filtrado, y lo avisa
+ * (`cumpleTodosLosFiltros`) en lugar de presentarla como si cumpliera todo.
  */
 function cumplenFiltros(variantes: readonly VariantePublica[], filtros?: FiltrosVariante | null): readonly VariantePublica[] {
   const activas = condiciones(filtros);

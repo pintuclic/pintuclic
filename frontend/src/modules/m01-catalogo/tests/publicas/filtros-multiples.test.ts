@@ -154,21 +154,58 @@ describe('selección múltiple', () => {
     wrapper.unmount();
   });
 
-  it('varias subcategorías o varias categorías completas, sin mezclar ambos tipos', async () => {
+  it('varias subcategorías y categorías completas se combinan (AND entre grupos, M02-11)', async () => {
     const { wrapper, router } = await montar('/catalogo?subcategoria=1');
     await marcar(wrapper, 'categorias', 'Maderas');
     expect(router.currentRoute.value.query).toEqual({ subcategoria: '1,3' });
     expect(buscarMock.mock.lastCall?.[0]).toMatchObject({ subcategoria: [1, 3], categoria: [] });
     expect(wrapper.find('main h1').text()).toBe('Varias subcategorías');
 
+    // Elegir una categoría completa ya no borra las subcategorías (antes se excluían).
     const todaCategoria = wrapper.findAll('#filtro-categorias-contenido label').filter((l) => l.text().startsWith('Toda la categoría'));
-    await todaCategoria[1].find('input').trigger('change');
-    await flushPromises();
-    expect(router.currentRoute.value.query).toEqual({ categoria: '2' });
     await todaCategoria[0].find('input').trigger('change');
     await flushPromises();
-    expect(router.currentRoute.value.query).toEqual({ categoria: '2,1' });
-    expect(buscarMock.mock.lastCall?.[0]).toMatchObject({ categoria: [2, 1], subcategoria: [] });
+    expect(router.currentRoute.value.query).toEqual({ categoria: '1', subcategoria: '1,3' });
+    expect(buscarMock.mock.lastCall?.[0]).toMatchObject({ categoria: [1], subcategoria: [1, 3] });
+
+    // Quitar uno conserva el otro grupo (CA-BUS-02-05).
+    await marcar(wrapper, 'categorias', 'Maderas');
+    expect(router.currentRoute.value.query).toEqual({ categoria: '1', subcategoria: '1' });
+    wrapper.unmount();
+  });
+
+  it('un enlace con categoría y subcategoría conserva ambas', async () => {
+    const { wrapper } = await montar('/catalogo?categoria=2&subcategoria=1');
+    expect(buscarMock.mock.lastCall?.[0]).toMatchObject({ categoria: [2], subcategoria: [1] });
+    expect(wrapper.findAll('[aria-label="Filtros activos"] button').map((b) => b.text())).toEqual(
+      expect.arrayContaining(['Categoría: Preparación y Protección', 'Interiores y Exteriores']),
+    );
+    wrapper.unmount();
+  });
+
+  it('solo ofrece las categorías y subcategorías con resultados para los filtros actuales (M02-14)', async () => {
+    facetasMock.mockImplementation(async (f) => ({
+      ...facetasApi(f),
+      categorias: [{ id: 1, nombre: 'Pinturas Arquitectónicas', cantidad: 5 }],
+      subcategorias: [{ id: 3, nombre: 'Maderas', cantidad: 5 }],
+    }));
+    const { wrapper } = await montar('/catalogo?marca=3');
+    const opciones = wrapper.findAll('#filtro-categorias-contenido label').map((l) => l.text());
+    expect(opciones.some((t) => t.startsWith('Maderas'))).toBe(true);
+    expect(opciones.some((t) => t.startsWith('Interiores y Exteriores'))).toBe(false);
+    expect(opciones.some((t) => t.startsWith('Anticorrosivos'))).toBe(false);
+    expect(wrapper.find('#filtro-categorias-contenido').text()).not.toContain('Preparación y Protección');
+    wrapper.unmount();
+  });
+
+  it('si fallan las facetas no ofrece opciones viejas; las marcadas siguen para poder quitarlas', async () => {
+    facetasMock.mockRejectedValue(new Error('caída'));
+    const { wrapper } = await montar('/catalogo?marca=3&subcategoria=1');
+    expect(wrapper.find('#error-facetas').exists()).toBe(true);
+    const categorias = wrapper.findAll('#filtro-categorias-contenido label').map((l) => l.text());
+    expect(categorias.filter((t) => t !== 'Todos los productos')).toEqual([expect.stringMatching(/^Interiores y Exteriores/)]);
+    const marcas = wrapper.findAll('#filtro-marcas-contenido label').map((l) => l.text());
+    expect(marcas).toEqual([expect.stringMatching(/^(Marca Alfa|Marca 3)/)]);
     wrapper.unmount();
   });
 

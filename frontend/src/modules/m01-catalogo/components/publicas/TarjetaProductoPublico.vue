@@ -42,6 +42,10 @@
           {{ precioMinimo === null ? 'Consultar precio' : formatearPrecioConSufijo(precioMinimo) }}
         </span>
       </div>
+      <!-- La búsqueda devuelve el producto porque cada filtro lo cumple alguna variante, pero ninguna los cumple todos -->
+      <p v-if="coincidenciaParcial" class="mt-1 text-xs leading-4 text-neutral-dark" data-coincidencia-parcial>
+        Ninguna opción cumple todos los filtros; elígela en el producto.
+      </p>
 
       <!-- Fila de Acciones -->
       <div class="mt-auto pt-3 grid grid-cols-[1fr_auto] gap-2">
@@ -55,7 +59,7 @@
         <button
           type="button"
           class="grid h-11 w-11 place-items-center rounded-button bg-conversion-hover hover:bg-conversion-accent text-white shadow-sm transition-all active:scale-95 cursor-pointer shrink-0 sm:h-9 sm:w-9"
-          aria-label="Agregar producto al carrito"
+          :aria-label="coincidenciaParcial ? 'Elegir una opción en el producto' : 'Agregar producto al carrito'"
           @click="emit('agregar', producto.id_producto)"
         >
           <ShoppingCart :size="20" class="sm:h-4 sm:w-4" aria-hidden="true" />
@@ -67,7 +71,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { seleccionarVarianteCompraRapida, type FiltrosVariante } from '../../services/publicas/seleccion-variante';
+import { cumpleTodosLosFiltros, seleccionarVarianteCompraRapida, type FiltrosVariante } from '../../services/publicas/seleccion-variante';
 import { PackageOpen, ShoppingCart } from 'lucide-vue-next';
 import { formatearPrecioConSufijo } from '@/core/utils/moneda';
 import type { ProductoDestacadoPublico } from '../../interfaces/publicas/catalogo-publico.interface';
@@ -111,6 +115,11 @@ const muestraColorEfectiva = computed(() => {
 });
 
 const precioMinimo = computed(() => varianteMostrada.value?.precio_vigente ?? null);
+
+/** Con filtros activos, la variante mostrada no los cumple todos: se avisa en lugar de ocultarlo. */
+const coincidenciaParcial = computed(() =>
+  !!props.filtrosVariante && !!varianteMostrada.value && !cumpleTodosLosFiltros(varianteMostrada.value, props.filtrosVariante),
+);
 
 const descripcionClaseColor = computed(() => {
   if (props.producto.clase_color === 'entonable') return 'Disponible en múltiples colores y presentaciones.';

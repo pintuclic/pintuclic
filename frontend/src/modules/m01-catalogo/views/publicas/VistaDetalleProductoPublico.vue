@@ -272,7 +272,6 @@
       :abierta="calculadoraAbierta"
       :producto="producto"
       :presentacion="presentacionCalculadora"
-      :maximo-unidades="cantidadMaxima"
       @cerrar="calculadoraAbierta = false"
       @agregar="agregarDesdeCalculadora"
     />
@@ -329,15 +328,12 @@ const calculadoraAbierta = ref(false);
 const descripcionAbierta = ref(true);
 const mensaje = ref<string | null>(null);
 const cantidad = ref(1);
-/** Tope del carrito por línea (M05 rechaza más de 999) y existencias de la variante elegida. */
-const CANTIDAD_MAXIMA_POR_LINEA = 999;
-const cantidadMaxima = computed(() =>
-  Math.max(1, Math.min(CANTIDAD_MAXIMA_POR_LINEA, varianteSeleccionada.value?.existencia_referencial ?? CANTIDAD_MAXIMA_POR_LINEA)),
-);
-// Al cambiar de presentación o color, la cantidad no puede quedar por encima del nuevo tope.
-watch(cantidadMaxima, (maxima) => {
-  if (cantidad.value > maxima) cantidad.value = maxima;
-});
+/**
+ * Tope por línea del carrito (M05 rechaza más de 999). La existencia referencial no limita la
+ * compra: los productos se venden aunque no haya existencias; el límite por existencia es
+ * exclusivo de los combos (RF-CAT-13-02), que la API pública aún no identifica.
+ */
+const cantidadMaxima = 999;
 const indiceGaleria = ref(0);
 const modoVista = ref<'ambientes' | 'envase'>('ambientes');
 
@@ -488,15 +484,10 @@ const presentacionCalculadora = computed(() =>
 async function agregarDesdeCalculadora(unidades: number): Promise<void> {
   calculadoraAbierta.value = false;
   const solicitadas = Math.max(1, Math.round(unidades));
-  cantidad.value = Math.min(solicitadas, cantidadMaxima.value);
+  cantidad.value = Math.min(solicitadas, cantidadMaxima);
   await agregarAlCarrito();
-  if (solicitadas > cantidadMaxima.value && !cartStore.error) {
-    const maxima = cantidadMaxima.value;
-    mostrarMensaje(
-      maxima === 1
-        ? `La calculadora recomienda ${solicitadas} unidades, pero solo hay 1 disponible; se agregó 1.`
-        : `La calculadora recomienda ${solicitadas} unidades, pero solo hay ${maxima} disponibles; se agregaron ${maxima}.`,
-    );
+  if (solicitadas > cantidadMaxima && !cartStore.error) {
+    mostrarMensaje(`La calculadora recomienda ${solicitadas} unidades; se agregaron ${cantidadMaxima}, el máximo por producto en el carrito.`);
   }
 }
 

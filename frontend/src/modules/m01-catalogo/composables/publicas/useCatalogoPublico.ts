@@ -40,9 +40,11 @@ function idsDesdeQuery(valor: unknown): number[] {
   return [...new Set(ids)];
 }
 
-function numeroPositivo(valor: unknown): number | undefined {
+/** Número de la URL tal cual (0 y negativos incluidos) para validarlo igual que en el panel. */
+function numeroDeQuery(valor: unknown): number | undefined {
+  if (typeof valor !== 'string' || valor.trim() === '') return undefined;
   const n = Number(valor);
-  return valor !== undefined && valor !== null && valor !== '' && Number.isFinite(n) && n > 0 ? n : undefined;
+  return Number.isFinite(n) ? n : undefined;
 }
 
 /** Forma canónica (solo claves del catálogo, valores en texto) para comparar URL y estado. */
@@ -73,8 +75,8 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
   /** Filtros de la última consulta de facetas: orden y página no las cambian. */
   let claveFacetas: string | null = null;
   /**
-   * Subcategorías (OR) o categorías completas (OR). Son excluyentes entre sí: la API
-   * combina ambos grupos con AND, así que mezclarlos no daría la unión esperada.
+   * Subcategorías (OR) y categorías completas (OR). Se pueden combinar: la API aplica ambos
+   * grupos con AND, como el resto de filtros (RF-BUS-02-01, CA-BUS-02-05).
    */
   const subcategoriasSeleccionadas = ref<number[]>([]);
   const categoriasSeleccionadas = ref<number[]>([]);
@@ -87,8 +89,10 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
   const precioMax = ref<number | undefined>();
   /** Fallo al cargar las opciones de filtro: los resultados siguen visibles (RF-BUS-01-06). */
   const errorFacetas = ref<string | null>(null);
-  /** La última URL leída traía un rango de precio inválido que se descartó. */
-  const rangoPrecioDescartado = ref(false);
+  /** true cuando las facetas corresponden a los filtros vigentes (no antes de la primera carga ni tras un fallo). */
+  const facetasVigentes = ref(false);
+  /** Motivo por el que se descartó el rango de precio de la última URL leída (null = válido o ausente). */
+  const rangoPrecioDescartado = ref<string | null>(null);
   const orden = ref<OrdenBusqueda>('relevancia');
   /** Cuenta las navegaciones que llegan desde fuera del catálogo (menú del header, atrás/adelante). */
   const navegacionesExternas = ref(0);
@@ -140,23 +144,29 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     const solicitud = ++solicitudFacetas;
     const sin = (omitir: Partial<FiltrosBusquedaFrontend>) => BusquedaService.facetas({ ...base, ...omitir });
     const parciales: Promise<Partial<FacetasBusquedaFrontend>>[] = [];
-    if (categoriasSeleccionadas.value.length || subcategoriasSeleccionadas.value.length) {
-      parciales.push(sin({ categoria: [], subcategoria: [] }).then((f) => ({ categorias: f.categorias, subcategorias: f.subcategorias })));
-    }
+    // Categorías y subcategorías son grupos distintos: cada uno se cuenta sin su propio filtro
+    // pero con el del otro (con una categoría elegida solo se ofrecen subcategorías que den resultados).
+    if (categoriasSeleccionadas.value.length) parciales.push(sin({ categoria: [] }).then((f) => ({ categorias: f.categorias })));
+    if (subcategoriasSeleccionadas.value.length) parciales.push(sin({ subcategoria: [] }).then((f) => ({ subcategorias: f.subcategorias })));
     if (base.marca?.length) parciales.push(sin({ marca: [] }).then((f) => ({ marcas: f.marcas })));
     if (base.linea?.length) parciales.push(sin({ linea: [] }).then((f) => ({ lineas: f.lineas })));
     if (base.resina?.length) parciales.push(sin({ resina: [] }).then((f) => ({ resinas: f.resinas })));
     if (base.presentacion?.length) parciales.push(sin({ presentacion: [] }).then((f) => ({ presentaciones: f.presentaciones })));
+    if (base.color?.length) parciales.push(sin({ color: [] }).then((f) => ({ colores: f.colores })));
     try {
       const [completa, ...porGrupo] = await Promise.all([BusquedaService.facetas(base), ...parciales]);
       if (solicitud !== solicitudFacetas) return;
       facetas.value = Object.assign({}, completa, ...porGrupo);
+      facetasVigentes.value = true;
       errorFacetas.value = null;
     } catch {
       // Si fallan las facetas no se interrumpe la navegación: se avisa y se puede reintentar
-      // (también se reintentan solas en el próximo cambio de filtros).
+      // (también se reintentan solas en el próximo cambio de filtros). Las opciones anteriores
+      // corresponden a otros filtros: no se ofrecen; solo quedan las marcadas, para quitarlas.
       if (solicitud === solicitudFacetas) {
         claveFacetas = null;
+        facetasVigentes.value = false;
+        facetas.value = { categorias: [], subcategorias: [], marcas: [], lineas: [], resinas: [], colores: [], presentaciones: [] };
         errorFacetas.value = 'No pudimos actualizar las opciones de los filtros.';
       }
     }
@@ -190,6 +200,9 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     } catch {
       if (solicitud === solicitudProductos) {
         error.value = 'No fue posible cargar el catálogo público. Intenta nuevamente.';
+        // CA-BUS-01-07: si la búsqueda no está disponible, se lleva al inicio con un aviso sin
+        // detalles técnicos (el inicio usa otro servicio y sigue accesible).
+        void router.push({ path: '/', query: { aviso: 'busqueda-no-disponible' } });
       }
     } finally {
       if (solicitud === solicitudProductos) {
@@ -256,20 +269,18 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     aplicar();
   }
 
-  /** Suma o quita una subcategoría (OR entre ellas); elegir subcategorías quita las categorías completas. */
+  /** Suma o quita una subcategoría (OR entre ellas); las categorías elegidas se conservan (AND). */
   function alternarSubcategoria(id: number): void {
     const actuales = subcategoriasSeleccionadas.value;
     subcategoriasSeleccionadas.value = actuales.includes(id) ? actuales.filter((s) => s !== id) : [...actuales, id];
-    categoriasSeleccionadas.value = [];
     pagina.value = 1;
     aplicar();
   }
 
-  /** Suma o quita una categoría completa (OR entre ellas); quita las subcategorías elegidas. */
+  /** Suma o quita una categoría completa (OR entre ellas); las subcategorías elegidas se conservan (AND). */
   function alternarCategoria(id: number): void {
     const actuales = categoriasSeleccionadas.value;
     categoriasSeleccionadas.value = actuales.includes(id) ? actuales.filter((c) => c !== id) : [...actuales, id];
-    subcategoriasSeleccionadas.value = [];
     pagina.value = 1;
     aplicar();
   }
@@ -355,9 +366,9 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     termino.value = typeof query.q === 'string' ? query.q : '';
     terminoAplicado.value = terminoNormalizado(termino.value);
 
-    // Si una URL trae ambos, manda la subcategoría (comportamiento previo); nunca se combinan.
+    // Categorías y subcategorías se recuperan juntas: la API las combina con AND.
     subcategoriasSeleccionadas.value = idsDesdeQuery(query.subcategoria);
-    categoriasSeleccionadas.value = subcategoriasSeleccionadas.value.length ? [] : idsDesdeQuery(query.categoria);
+    categoriasSeleccionadas.value = idsDesdeQuery(query.categoria);
 
     const ordenRaw = query.orden as OrdenBusqueda;
     orden.value = ORDENES.includes(ordenRaw) ? ordenRaw : 'relevancia';
@@ -370,15 +381,15 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     resinasSeleccionadas.value = idsDesdeQuery(query.resina);
     coloresSeleccionados.value = idsDesdeQuery(query.color);
     presentacionesSeleccionadas.value = idsDesdeQuery(query.presentacion);
-    // Un enlace con el rango invertido no llega a la API (respondería 400 y se vería como
-    // un fallo de carga): se descarta y se avisa (CA-BUS-02-06).
+    // El rango del enlace se valida con las mismas reglas que el panel (máximo 0, negativos,
+    // mínimo mayor que máximo): si no es válido no llega a la API y se avisa (CA-BUS-02-06).
     const rango = rangoPrecioPublicoSchema.safeParse({
-      min: numeroPositivo(query.precioMin),
-      max: numeroPositivo(query.precioMax),
+      min: numeroDeQuery(query.precioMin),
+      max: numeroDeQuery(query.precioMax),
     });
     precioMin.value = rango.success ? rango.data.min : undefined;
     precioMax.value = rango.success ? rango.data.max : undefined;
-    rangoPrecioDescartado.value = !rango.success;
+    rangoPrecioDescartado.value = rango.success ? null : rango.error.issues[0]?.message ?? 'Rango de precio no válido.';
   }
 
   // Navegación externa (buscador del header, Inicio → catálogo, atrás/adelante): si la URL
@@ -426,6 +437,7 @@ export function useCatalogoPublico(servicio: CatalogoPublicoGateway = CatalogoPu
     limitePagina: LIMITE_PAGINA,
     // Estados y acciones avanzadas M02
     facetas,
+    facetasVigentes,
     errorFacetas,
     reintentarFacetas,
     marcasSeleccionadas,

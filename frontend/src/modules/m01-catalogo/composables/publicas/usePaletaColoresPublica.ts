@@ -7,7 +7,14 @@ import type {
 } from '../../interfaces/publicas/catalogo-publico.interface';
 import { CatalogoPublicoService, enriquecerProductosPublicos } from '../../services/publicas/catalogo-publico.service';
 
-const LIMITE_PRODUCTOS = 20;
+/**
+ * La paleta reúne los colores de las variantes de todo el catálogo (antes, solo de los 20
+ * primeros productos). Se pide en páginas del máximo que admite la API, con un tope de
+ * páginas para acotar las consultas de fichas. Pendiente de backend: un listado de colores
+ * propio, que incluya las cartas de los productos entonables (M01-16).
+ */
+export const PRODUCTOS_POR_PAGINA_PALETA = 100;
+export const MAXIMO_PAGINAS_PALETA = 3;
 
 export function usePaletaColoresPublica(servicio: CatalogoPublicoGateway = CatalogoPublicoService) {
   const productos = ref<ProductoDestacadoPublico[]>([]);
@@ -79,8 +86,14 @@ export function usePaletaColoresPublica(servicio: CatalogoPublicoGateway = Catal
     try {
       // Las categorías ya no se piden aquí (el menú vive en el encabezado): un fallo de ese
       // servicio no impide cargar la paleta.
-      const pagina = await servicio.listarProductos({ pagina: 1, limite: LIMITE_PRODUCTOS });
-      productos.value = await enriquecerProductosPublicos(pagina.items, servicio);
+      const primera = await servicio.listarProductos({ pagina: 1, limite: PRODUCTOS_POR_PAGINA_PALETA });
+      const paginas = Math.min(MAXIMO_PAGINAS_PALETA, Math.ceil(primera.total / PRODUCTOS_POR_PAGINA_PALETA));
+      const resto = await Promise.all(
+        Array.from({ length: Math.max(0, paginas - 1) }, (_, i) =>
+          servicio.listarProductos({ pagina: i + 2, limite: PRODUCTOS_POR_PAGINA_PALETA })),
+      );
+      const resumenes = [primera, ...resto].flatMap((pagina) => pagina.items);
+      productos.value = await enriquecerProductosPublicos(resumenes, servicio);
       colorSeleccionadoId.value = colores.value[0]?.id_color ?? null;
     } catch {
       error.value = 'No pudimos cargar la paleta pública en este momento.';

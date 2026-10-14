@@ -167,8 +167,8 @@ describe('rango de precio: negativos y enlaces inválidos', () => {
   });
 });
 
-describe('ficha: la cantidad no supera las existencias de la variante', () => {
-  it('el botón «+» se detiene en las existencias disponibles', async () => {
+describe('ficha: la existencia referencial no limita la cantidad (venta sin stock)', () => {
+  it('el botón «+» supera las existencias de la variante', async () => {
     setActivePinia(createPinia());
     const router = routerPublico();
     await router.push('/productos/9');
@@ -192,9 +192,10 @@ describe('ficha: la cantidad no supera las existencias de la variante', () => {
     const mas = wrapper.find('button[aria-label="Aumentar cantidad"]');
     for (let i = 0; i < 6; i++) await mas.trigger('click');
 
+    // La variante tiene 3 en existencia: antes el «+» se bloqueaba en 3.
     const cantidad = mas.element.previousElementSibling?.textContent?.trim();
-    expect(cantidad).toBe('3');
-    expect(mas.attributes('disabled')).toBeDefined();
+    expect(cantidad).toBe('7');
+    expect(mas.attributes('disabled')).toBeUndefined();
     wrapper.unmount();
   });
 });

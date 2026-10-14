@@ -125,13 +125,14 @@
               <OpcionFiltroPublico tipo="checkbox" nombre="Todos los productos" :seleccionado="!categoriasSeleccionadas.length && !subcategoriasSeleccionadas.length" @cambiar="seleccionarSubcategoria(undefined)" />
               <!--
                 Jerarquía: categoría principal y, con sangría, «Toda la categoría» y sus subcategorías.
-                Varias subcategorías o varias categorías completas (OR); ambos tipos no se mezclan
-                porque la API los combina con AND.
+                Varias categorías completas o varias subcategorías (OR dentro de cada grupo); ambos
+                grupos se combinan con AND. Solo se ofrecen las que dan resultados (RF-BUS-02-02).
               -->
-              <div v-for="categoria in categorias" :key="categoria.id_categoria" class="pt-2">
+              <div v-for="categoria in categoriasVisibles" :key="categoria.id_categoria" class="pt-2">
                 <p class="px-2 pb-1 pt-1 text-[11px] font-bold uppercase leading-4 tracking-wide text-corporate">{{ categoria.nombre }}</p>
                 <div class="ml-2.5 space-y-0.5 border-l-2 border-neutral-light pl-1.5">
                   <OpcionFiltroPublico
+                    v-if="categoria.mostrarCompleta"
                     tipo="checkbox"
                     nombre="Toda la categoría"
                     :cantidad="conteoCategoria(categoria.id_categoria)"
@@ -161,6 +162,18 @@
               :seleccionados="seccion.seleccionados.value.length"
               @alternar="alternar(seccion.clave)"
             >
+              <!-- Hay decenas de colores: se buscan por nombre dentro de la sección -->
+              <label v-if="seccion.clave === 'colores'" class="mx-2 mb-2 mt-1 flex items-center gap-2 rounded-input border border-neutral-light bg-neutral-white px-2.5 focus-within:border-action focus-within:ring-1 focus-within:ring-action">
+                <Search :size="14" class="shrink-0 text-neutral-medium" aria-hidden="true" />
+                <input
+                  v-model="textoColor"
+                  type="search"
+                  maxlength="60"
+                  placeholder="Buscar color"
+                  aria-label="Buscar color en el filtro"
+                  class="h-9 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-neutral-medium"
+                />
+              </label>
               <p v-if="!seccion.valores.value.length" class="px-2 py-2 text-xs text-neutral-medium">Sin opciones para los filtros actuales.</p>
               <OpcionFiltroPublico
                 v-for="valor in seccion.valores.value"
@@ -375,14 +388,14 @@ import PaginacionCatalogoPublico from '../../components/publicas/PaginacionCatal
 import { PRODUCTOS_POR_FILA, PRODUCTOS_POR_FILA_REPARTIDA, useCatalogoPublico } from '../../composables/publicas/useCatalogoPublico';
 import { rangoPrecioPublicoSchema } from '../../dtos/publicas/catalogo-publico.dto';
 import { obtenerMuestraColorCoincidente } from '../../composables/publicas/useColorCoincidenteBusqueda';
-import { seleccionarVarianteCompraRapida, type FiltrosVariante } from '../../services/publicas/seleccion-variante';
+import { cumpleTodosLosFiltros, seleccionarVarianteCompraRapida, type FiltrosVariante } from '../../services/publicas/seleccion-variante';
 import { CatalogoPublicoService } from '../../services/publicas/catalogo-publico.service';
 import { useCartStore } from '@/modules/m05-carrito-compras/store/cart.store';
 import { formatearPrecio } from '@/core/utils/moneda';
 import type { FacetaValorFrontend, OrdenBusqueda } from '@/modules/m02-busqueda/interfaces/busqueda.interface';
 import fondoProyectoCalculadora from '../../assets/storefront/fondo-proyecto-calculadora.jpeg';
 
-type ClaveSeccion = 'categorias' | 'marcas' | 'lineas' | 'resinas' | 'presentaciones' | 'precio';
+type ClaveSeccion = 'categorias' | 'marcas' | 'lineas' | 'resinas' | 'colores' | 'presentaciones' | 'precio';
 
 interface ChipFiltro {
   clave: string;
@@ -422,6 +435,7 @@ const {
   totalPaginas,
   limitePagina,
   facetas,
+  facetasVigentes,
   errorFacetas,
   reintentarFacetas,
   marcasSeleccionadas,
@@ -451,9 +465,10 @@ watch([precioMin, precioMax], ([min, max]) => {
   errorPrecio.value = null;
   campoErrorPrecio.value = null;
 });
-// Un enlace con el mínimo mayor que el máximo se ignora: se explica en lugar de fallar la carga.
-watch(rangoPrecioDescartado, (descartado) => {
-  if (descartado) mostrarMensaje('El rango de precio del enlace no era válido (mínimo mayor que máximo) y no se aplicó.');
+// Un enlace con un rango inválido se ignora: se explica (con el mismo motivo que daría el panel)
+// en lugar de fallar la carga.
+watch(rangoPrecioDescartado, (motivo) => {
+  if (motivo) mostrarMensaje(`El rango de precio del enlace no era válido y no se aplicó: ${motivo}`);
 }, { immediate: true });
 
 /** Resultados atenuados mientras llega una consulta nueva (la primera usa esqueletos). */
@@ -522,11 +537,21 @@ function resumenGrupo(grupo: string, seleccion: number[], todos: string): string
   return resumenNombres(seleccion.map((id) => nombreValor(grupo, id, '')), todos);
 }
 
+/** Texto para buscar dentro del filtro de color; los colores marcados siguen visibles. */
+const textoColor = ref('');
+const coloresOfrecidos = computed(() => {
+  const valores = valoresConSeleccion('color', 'Color', facetas.value.colores, coloresSeleccionados.value);
+  const texto = textoColor.value.trim().toLocaleLowerCase('es');
+  if (!texto) return valores;
+  return valores.filter((v) => coloresSeleccionados.value.includes(v.id) || v.nombre.toLocaleLowerCase('es').includes(texto));
+});
+
 /** Secciones de faceta con datos reales de la API (sin listas estáticas). */
 const seccionesFaceta: { clave: ClaveSeccion; grupo: string; titulo: string; todos: string; valores: Ref<FacetaValorFrontend[]>; seleccionados: Ref<number[]> }[] = [
   { clave: 'marcas', grupo: 'marca', titulo: 'Marcas', todos: 'Todas las marcas', valores: computed(() => valoresConSeleccion('marca', 'Marca', facetas.value.marcas, marcasSeleccionadas.value)), seleccionados: marcasSeleccionadas },
   { clave: 'lineas', grupo: 'linea', titulo: 'Línea comercial', todos: 'Todas las líneas', valores: computed(() => valoresConSeleccion('linea', 'Línea', facetas.value.lineas, lineasSeleccionadas.value)), seleccionados: lineasSeleccionadas },
   { clave: 'resinas', grupo: 'resina', titulo: 'Tipo de resina', todos: 'Todas las resinas', valores: computed(() => valoresConSeleccion('resina', 'Resina', facetas.value.resinas, resinasSeleccionadas.value)), seleccionados: resinasSeleccionadas },
+  { clave: 'colores', grupo: 'color', titulo: 'Color', todos: 'Todos los colores', valores: coloresOfrecidos, seleccionados: coloresSeleccionados },
   { clave: 'presentaciones', grupo: 'presentacion', titulo: 'Presentación', todos: 'Todas las presentaciones', valores: computed(() => valoresConSeleccion('presentacion', 'Presentación', facetas.value.presentaciones, presentacionesSeleccionadas.value)), seleccionados: presentacionesSeleccionadas },
 ];
 
@@ -542,10 +567,10 @@ const nombresCategorias = computed(() => {
 
 const resumenCategorias = computed(() => {
   const { categorias: cats, subcategorias: subs } = nombresCategorias.value;
-  if (subcategoriasSeleccionadas.value.length) {
-    return resumenNombres(subcategoriasSeleccionadas.value.map((id) => subs.get(id)?.nombre ?? `Subcategoría ${id}`), 'Todos los productos');
-  }
-  return resumenNombres(categoriasSeleccionadas.value.map((id) => cats.get(id) ?? `Categoría ${id}`), 'Todos los productos');
+  return resumenNombres([
+    ...categoriasSeleccionadas.value.map((id) => cats.get(id) ?? `Categoría ${id}`),
+    ...subcategoriasSeleccionadas.value.map((id) => subs.get(id)?.nombre ?? `Subcategoría ${id}`),
+  ], 'Todos los productos');
 });
 
 const etiquetaPrecio = computed(() => {
@@ -562,6 +587,25 @@ function conteoCategoria(id: number): number | null {
 function conteoSubcategoria(id: number): number | null {
   return facetas.value.subcategorias.find((s) => s.id === id)?.cantidad ?? null;
 }
+
+/**
+ * Categorías y subcategorías que se ofrecen (RF-BUS-02-02): con facetas vigentes, solo las que
+ * dan resultados con los filtros actuales; si las facetas fallaron, solo las marcadas (para poder
+ * quitarlas); mientras llega la primera respuesta, el árbol completo sin conteos.
+ */
+const categoriasVisibles = computed(() => {
+  const ofrecer = (cantidad: number | null, seleccionada: boolean): boolean => {
+    if (seleccionada) return true;
+    if (errorFacetas.value) return false;
+    return !facetasVigentes.value || (cantidad ?? 0) > 0;
+  };
+  return categorias.value.flatMap((categoria) => {
+    const subcategorias = categoria.subcategorias.filter((s) =>
+      ofrecer(conteoSubcategoria(s.id_subcategoria), subcategoriasSeleccionadas.value.includes(s.id_subcategoria)));
+    const mostrarCompleta = ofrecer(conteoCategoria(categoria.id_categoria), categoriasSeleccionadas.value.includes(categoria.id_categoria));
+    return mostrarCompleta || subcategorias.length ? [{ ...categoria, subcategorias, mostrarCompleta }] : [];
+  });
+});
 
 /**
  * Filtros aplicados que la variante de cada tarjeta debe cumplir (precio, presentación y color).
@@ -640,10 +684,7 @@ const seleccionActual = computed<{ categoria: string; subcategoria: string | nul
   return null;
 });
 
-/**
- * Filtros activos como chips. Incluye el color si llega por URL (el panel ya no lo
- * muestra, pero sigue aplicándose y debe poder quitarse).
- */
+/** Filtros activos como chips removibles. */
 const chipsFiltros = computed<ChipFiltro[]>(() => {
   const chips: ChipFiltro[] = [];
   if (terminoAplicado.value) {
@@ -707,6 +748,12 @@ async function agregarAlCarrito(idProducto: number): Promise<void> {
 
   if (!variante) {
     mostrarMensaje('No hay variantes disponibles para este producto.');
+    return;
+  }
+  // Ninguna variante cumple todos los filtros a la vez: no se agrega otra en silencio; en la
+  // ficha se elige la opción (la tarjeta ya lo avisa).
+  if (!cumpleTodosLosFiltros(variante, filtrosVarianteActivos.value)) {
+    verProducto(idProducto);
     return;
   }
 
