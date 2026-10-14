@@ -7,6 +7,17 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.9.7] - 2026-10-14
+### M01 - Revisión de filtros M02 y venta sin existencias (Frontend)
+- **Alcance General:** **Patch (v0.4.9.7)**: se aplica lo viable desde el frontend de los informes de revisión M01 y M02 del 13/10/2026.
+- **Filtros:** vuelve la sección Color, con buscador (M02-03); categoría y subcategoría se combinan (M02-11); solo se ofrecen categorías con resultados y no se ofrecen opciones viejas si fallan las facetas (M02-14); el precio de la URL se valida como en el panel (M02-12).
+- **Tarjeta:** si ninguna variante cumple todos los filtros, se avisa y la compra rápida abre la ficha (M02-12 B).
+- **Búsqueda caída:** se lleva al inicio con un aviso sin detalles técnicos (M02-13).
+- **Venta sin existencias:** la ficha y la calculadora ya no limitan la cantidad por la existencia referencial; el límite es exclusivo de los combos (RF-CAT-13-02).
+- **Paleta:** reúne los colores de todo el catálogo, no solo de 20 productos (M01-16, parcial).
+- **Verificación:** vitest del frontend 176/176; ESLint M01 limpio; `vue-tsc` solo con los 2 errores previos de M05; comprobado en Docker.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.9.7_M01_revision_filtros_y_venta_sin_stock_frontend.md](./walkthroughs/M01/walkthrough_v0.4.9.7_M01_revision_filtros_y_venta_sin_stock_frontend.md)
+---
 ## [v0.4.9.6] - 2026-10-13
 ### M01 - Aviso de existencias en la calculadora (Frontend)
 - **Alcance General:** **Patch (v0.4.9.6)** por la auditoría de agregar desde la calculadora.
