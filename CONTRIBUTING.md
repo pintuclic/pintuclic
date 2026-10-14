@@ -36,7 +36,12 @@ Solo se avanza **un** segmento por PR; los saltos (ej. `0.4.9.0` o `0.4.8.1` des
 - El dato `X` en la tabla versión no significa que es literalmente `1.X.3` eso es erroneo, la `X` solo es un ejemplo como van separadas los datos de las versiones. 
 - El nombre de pull request debe tener el formato `tipo(scope) [X.Y.Z.W]: mensaje` (Obligatorio), por ejemplo `fix(carrito) [0.4.7.4]: corregir cálculo del envío`. La versión declarada debe ser el siguiente paso exacto de la tabla de versiones.
 - Dentro de la descripción va detalladamente el por qué del cambio de versión, por ejemplo: hago un arreglo de carrusel que dañaba la web, veo que en `develop` la versión vigente es `0.4.7.3`, entonces corresponde un `Patch` y la versión será `0.4.7.4` (solo cambia el cuarto segmento).
-- La PR debe actualizar `.github/version.txt` con el mismo número del título y agregar la entrada `## [vX.Y.Z.W]` en `docs/CHANGELOG.md`; el workflow `PR Title Lint` bloquea el merge si algo no coincide.
+- La PR debe actualizar `.github/version.txt` con el mismo número del título y agregar en `docs/CHANGELOG.md` la entrada con la fecha y el autor real de la entrega; el workflow `PR Title Lint` bloquea el merge si algo no coincide:
+```
+## [v0.4.8.0] - 2026-10-14
+- **Autor:** Nombre Apellido (@usuario)
+```
+El autor es la persona que realiza la entrega (nunca la IA).
 
 #### Recomendaciones para pull request
 - Al hacer pull request debes partir de la versión que está en la rama `develop` (`.github/version.txt`); si el número del título no es el siguiente paso exacto de la tabla, el lint rechaza la PR.

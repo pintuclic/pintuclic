@@ -102,10 +102,11 @@ Al completar la implementación, **DEBES SI O SI**:
    - Criterios de Aceptación verificados.
    - **Resumen conceptual de dependencias externas** (qué necesita este código de otros módulos para operar al 100% en producción y a quién habilita).
    - Lista de archivos creados/modificados dentro del módulo asignado.
+2. **Autoría real:** el campo **Autor / Responsable** del walkthrough debe registrar a la persona real de la entrega con su `@usuario`; si un agente de IA asistió, se documenta como apoyo, nunca como autor.
 
 ### Paso 10: Actualización de Versión, Commits y Push al Repositorio
 Siguiendo el esquema de [CONTRIBUTING.md](CONTRIBUTING.md) y la [Guía de Commits y Push](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md):
-1. **Versión Obligatoria en el Título de la PR:** declarar la versión con el formato `tipo(scope) [X.Y.Z.W]: mensaje` (ver [CONTRIBUTING.md](CONTRIBUTING.md)), dejar `.github/version.txt` con ese mismo número y agregar la entrada `## [vX.Y.Z.W]` en [docs/CHANGELOG.md](./docs/CHANGELOG.md). El workflow `PR Title Lint` bloquea el merge si el formato, el siguiente paso de la tabla, el archivo o la entrada no coinciden. El tag y el Release se publican automáticamente al fusionar hacia `main` o `develop` mediante `.github/workflows/version.yml`.
+1. **Versión Obligatoria en el Título de la PR:** declarar la versión con el formato `tipo(scope) [X.Y.Z.W]: mensaje` (ver [CONTRIBUTING.md](CONTRIBUTING.md)), dejar `.github/version.txt` con ese mismo número y agregar en [docs/CHANGELOG.md](./docs/CHANGELOG.md) la entrada `## [vX.Y.Z.W] - AAAA-MM-DD` con la línea `- **Autor:** Nombre (@usuario)` (la persona real que realiza la entrega, nunca la IA). El workflow `PR Title Lint` bloquea el merge si el formato, el siguiente paso de la tabla, el archivo, la fecha o el autor no coinciden. El tag y el Release se publican automáticamente al fusionar hacia `main` o `develop` mediante `.github/workflows/version.yml`.
 2. **Verificación Previa Obligatoria:** Comprobar que TypeScript compila sin errores (`npx tsc --noEmit`), que ESLint no arroja errores ni advertencias (`npm run lint`), que las pruebas unitarias pasan al 100% y que solo se modificaron archivos del módulo asignado.
 3. **Formato del Commit:** Crear commits atómicos utilizando el estándar Conventional Commits (`tipo(modulo): descripcion`, ej: `feat(M04): implementar registro con verificacion HU-CUE-01` o `fix(M04): corregir expiracion de tokens`).
 4. **Push Seguro:** Ejecutar `git push origin <rama_asignada>` únicamente sobre la rama de trabajo correspondiente. Nunca hacer push forzado (`--force`) sobre ramas compartidas.
@@ -135,6 +136,8 @@ Siguiendo el esquema de [CONTRIBUTING.md](CONTRIBUTING.md) y la [Guía de Commit
 
 ### Version
 - El esquema oficial de versiones es el de [CONTRIBUTING.md](CONTRIBUTING.md), de cuatro segmentos (`Mayor`, `Minior estable`, `Minior-feat`, `Patch`).
-- En CADA entrega, el agente de IA DEBE declarar la versión en el título de la PR (`tipo(scope) [X.Y.Z.W]: mensaje`), dejar `.github/version.txt` con ese mismo número y agregar la entrada `## [vX.Y.Z.W]` en [docs/CHANGELOG.md](./docs/CHANGELOG.md). El workflow `PR Title Lint` bloquea la PR si algo no coincide.
+- En CADA entrega, el agente de IA DEBE declarar la versión en el título de la PR (`tipo(scope) [X.Y.Z.W]: mensaje`), dejar `.github/version.txt` con ese mismo número y agregar en [docs/CHANGELOG.md](./docs/CHANGELOG.md) la entrada `## [vX.Y.Z.W] - AAAA-MM-DD` con la línea `- **Autor:** Nombre (@usuario)`.
+- El **autor registrado es la persona real** que realiza/publica la entrega (el humano responsable), con su `@usuario` de GitHub. Queda **prohibido** registrarse como `Agente de IA` o mencionar a la IA en el CHANGELOG.
+- El workflow `PR Title Lint` bloquea la PR si el formato, el siguiente paso de la tabla, `.github/version.txt`, la fecha o el autor no coinciden.
 - El tag y el Release se publican automáticamente cuando la PR se fusiona hacia `main` o `develop` mediante `.github/workflows/version.yml`; está prohibido crearlos a mano.
 - La versión del proyecto vive únicamente en `.github/version.txt`; no se duplica en otros archivos de código.

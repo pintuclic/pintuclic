@@ -108,6 +108,49 @@ export function changelogHasVersion(version, content) {
   return String(content ?? '').includes(`## [v${version}]`);
 }
 
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Extrae el bloque de la entrada de la version indicada dentro del changelog.
+ * @param {string} version
+ * @param {string} content
+ * @returns {string | null}
+ */
+export function extractChangelogEntry(version, content) {
+  const text = String(content ?? '');
+  const start = new RegExp(`^## \\[v${escapeRegex(version)}\\]`, 'm').exec(text);
+  if (!start) return null;
+  const rest = text.slice(start.index);
+  const next = /^## \[/m.exec(rest.slice(1));
+  return next ? rest.slice(0, 1 + next.index) : rest;
+}
+
+/**
+ * Valida la entrada del changelog: encabezado con fecha AAAA-MM-DD y autor real.
+ * @param {string} version
+ * @param {string} content
+ * @returns {{ ok: boolean, errors: string[] }}
+ */
+export function validateChangelogEntry(version, content) {
+  const errors = [];
+  const entry = extractChangelogEntry(version, content);
+  if (!entry) {
+    errors.push(`Falta la entrada "## [v${version}] - AAAA-MM-DD" en ${CHANGELOG_FILE}.`);
+    return { ok: false, errors };
+  }
+  const heading = entry.split('\n', 1)[0].trim();
+  const headingRe = new RegExp(`^## \\[v${escapeRegex(version)}\\] - \\d{4}-\\d{2}-\\d{2}$`);
+  if (!headingRe.test(heading)) {
+    errors.push(`El encabezado de la entrada debe ser "## [v${version}] - AAAA-MM-DD" con la fecha real de la entrega.`);
+  }
+  if (!/^- \*\*Autor:\*\* .+\(@[A-Za-z0-9-]+\)\s*$/m.test(entry)) {
+    errors.push('La entrada debe incluir "- **Autor:** Nombre (@usuario)" con la persona real de la entrega (nunca la IA).');
+  }
+  return { ok: errors.length === 0, errors };
+}
+
 /**
  * Validacion completa usada por el lint y reutilizada por el bot.
  * @param {{ title: string, base: string, fileVersion: string, changelogContent?: string | null }} input
@@ -132,8 +175,8 @@ export function validateInput({ title, base, fileVersion, changelogContent = nul
   if (fileVersion !== version) {
     errors.push(`${VERSION_FILE} contiene "${fileVersion}" y el titulo declara "${version}"; deben coincidir.`);
   }
-  if (changelogContent !== null && !changelogHasVersion(version, changelogContent)) {
-    errors.push(`Falta la entrada "## [v${version}]" en ${CHANGELOG_FILE}.`);
+  if (changelogContent !== null) {
+    errors.push(...validateChangelogEntry(version, changelogContent).errors);
   }
   return { ok: errors.length === 0, errors, version, row };
 }
@@ -381,8 +424,9 @@ function cmdRelease() {
         summary.push(`#${pr.number}: omitida (${VERSION_FILE} no coincide).`);
         continue;
       }
-      if (!changelogHasVersion(version, readChangelogAt(sha))) {
-        warn(`#${pr.number}: falta la entrada "## [v${version}]" en ${CHANGELOG_FILE}; el Release se publica igualmente.`);
+      const changelogErrors = validateChangelogEntry(version, readChangelogAt(sha)).errors;
+      if (changelogErrors.length > 0) {
+        warn(`#${pr.number}: ${changelogErrors.join(' ')} El Release se publica igualmente.`);
       }
       createTag(tag, `Release ${tag} — ${parsed.value.message} (#${pr.number} por @${pr.login})`, sha);
       pending.push({ tag, version, notes: releaseNotes({ branch, prs: [pr] }), promote: isMain });

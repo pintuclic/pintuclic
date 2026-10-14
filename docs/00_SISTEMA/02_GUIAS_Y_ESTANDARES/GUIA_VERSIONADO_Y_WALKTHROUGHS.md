@@ -30,8 +30,8 @@ El tipo de versión que se utiliza es semántica y está conformado por cuatro s
 La versión se declara en el título de la PR y el bot publica el tag y el Release cuando la PR se fusiona. El workflow `.github/workflows/pr-title-lint.yml` valida cada PR antes del merge y `.github/workflows/version.yml` publica el tag `vX.Y.Z.W` con el Release (que adjunta automáticamente el zip del código fuente).
 
 - **Fuente de la versión (título de la PR):** el título debe cumplir `tipo(scope) [X.Y.Z.W]: mensaje`. La versión declarada debe ser el siguiente paso exacto de la tabla (solo avanza un segmento) y `.github/version.txt` de la PR debe contener el mismo número.
-- **Entrada del CHANGELOG:** la PR debe agregar la entrada `## [vX.Y.Z.W]` en [docs/CHANGELOG.md](../../CHANGELOG.md).
-- **Lint bloqueante (`pr-title-lint.yml`):** si el título no cumple el formato, la versión no es la siguiente de la tabla, `version.txt` no coincide o falta la entrada del CHANGELOG, el merge queda bloqueado.
+- **Entrada del CHANGELOG:** la PR debe agregar en [docs/CHANGELOG.md](../../CHANGELOG.md) la entrada `## [vX.Y.Z.W] - AAAA-MM-DD` con la línea `- **Autor:** Nombre (@usuario)` de la persona real que realiza la entrega (nunca la IA).
+- **Lint bloqueante (`pr-title-lint.yml`):** si el título no cumple el formato, la versión no es la siguiente de la tabla, `version.txt` no coincide o la entrada del CHANGELOG no trae la fecha o el autor real, el merge queda bloqueado.
 - **Publicación (`version.yml`):** al recibir un `push` a `main` o `develop`, el bot resuelve la PR del commit fusionado, revalida versión y archivo, crea el tag anotado `vX.Y.Z.W` sobre ese commit y publica el Release. Los rulesets protegen `main`/`develop`: el bot **no crea commits**, solo tags y Releases.
 - **Notas del Release:** listan únicamente las PRs (`- #N Título — por @autor`), cada una una sola vez; no incluyen listas de commits ni repiten la versión.
 - **Canales de publicación:**
@@ -52,7 +52,7 @@ La versión se declara en el título de la PR y el bot publica el tag y el Relea
 ### 1.3 Reglas Obligatorias
 
 - **Fuente única:** toda versión se deriva de `.github/version.txt`; queda prohibido declarar la versión del proyecto en otros archivos de código o documentación.
-- **Título obligatorio:** cada PR debe declarar la versión en el título (`tipo(scope) [X.Y.Z.W]: mensaje`), actualizar `.github/version.txt` con ese mismo número y registrar la entrada `## [vX.Y.Z.W]` en [docs/CHANGELOG.md](../../CHANGELOG.md); los registros históricos no se reescriben. El lint bloquea la PR si algo no coincide.
+- **Título obligatorio:** cada PR debe declarar la versión en el título (`tipo(scope) [X.Y.Z.W]: mensaje`), actualizar `.github/version.txt` con ese mismo número y registrar la entrada `## [vX.Y.Z.W] - AAAA-MM-DD` con `- **Autor:** Nombre (@usuario)` (la persona real de la entrega) en [docs/CHANGELOG.md](../../CHANGELOG.md); los registros históricos no se reescriben. El lint bloquea la PR si algo no coincide.
 - **Agentes IA:** los agentes de IA declaran la versión en el título de la PR y actualizan `.github/version.txt` y el CHANGELOG en cada entrega, aplicando el esquema de [CONTRIBUTING.md](../../../CONTRIBUTING.md); está prohibido crear tags o Releases a mano.
 - **Publicación:** el tag y el Release con el zip se generan automáticamente con `.github/workflows/version.yml` al fusionar la PR hacia `main` o `develop`; el bot no crea commits en las ramas protegidas.
 

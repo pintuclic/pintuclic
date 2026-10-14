@@ -8,6 +8,7 @@ import {
   parseTitle,
   parseVersion,
   releaseNotes,
+  validateChangelogEntry,
   validateInput,
   ZERO_VERSION,
 } from './versioning.mjs';
@@ -98,12 +99,34 @@ test('changelogHasVersion detecta la entrada exacta', () => {
   assert.equal(changelogHasVersion('0.4.8.0', ''), false);
 });
 
+test('validateChangelogEntry exige encabezado con fecha real y autor con @usuario', () => {
+  const valid = '## [v0.4.8.0] - 2026-10-14\n- **Autor:** Mapachuelo (@Mapachuelo)\n### Core\n';
+  assert.deepEqual(validateChangelogEntry('0.4.8.0', valid), { ok: true, errors: [] });
+
+  const withoutAuthor = '## [v0.4.8.0] - 2026-10-14\n### Core\n';
+  const authorErrors = validateChangelogEntry('0.4.8.0', withoutAuthor);
+  assert.equal(authorErrors.ok, false);
+  assert.ok(authorErrors.errors.some((error) => error.includes('Autor')));
+
+  const invalidDate = '## [v0.4.8.0] - 14/10/2026\n- **Autor:** Mapachuelo (@Mapachuelo)\n';
+  const dateErrors = validateChangelogEntry('0.4.8.0', invalidDate);
+  assert.equal(dateErrors.ok, false);
+  assert.ok(dateErrors.errors.some((error) => error.includes('AAAA-MM-DD')));
+
+  const authorWithoutHandle = '## [v0.4.8.0] - 2026-10-14\n- **Autor:** Mapachuelo\n';
+  assert.equal(validateChangelogEntry('0.4.8.0', authorWithoutHandle).ok, false);
+
+  const missingEntry = validateChangelogEntry('0.4.8.0', '## [v0.4.7.3] - 2026-10-10\n');
+  assert.equal(missingEntry.ok, false);
+  assert.ok(missingEntry.errors.some((error) => error.includes('v0.4.8.0')));
+});
+
 test('validateInput acepta una PR coherente', () => {
   const result = validateInput({
     title: 'feat(core) [0.4.8.0]: versionado automatico por PRs',
     base: '0.4.7.3',
     fileVersion: '0.4.8.0',
-    changelogContent: '## [v0.4.8.0] - 2026-10-14\n',
+    changelogContent: '## [v0.4.8.0] - 2026-10-14\n- **Autor:** Mapachuelo (@Mapachuelo)\n',
   });
   assert.equal(result.ok, true);
   assert.equal(result.row, 'minior-feat');
@@ -115,7 +138,7 @@ test('validateInput rechaza saltos, desajustes y changelog ausente', () => {
     title: 'feat(core) [0.4.9.0]: salto invalido',
     base: '0.4.7.3',
     fileVersion: '0.4.9.0',
-    changelogContent: '## [v0.4.9.0] - 2026-10-14\n',
+    changelogContent: '## [v0.4.9.0] - 2026-10-14\n- **Autor:** Mapachuelo (@Mapachuelo)\n',
   });
   assert.equal(jump.ok, false);
   assert.ok(jump.errors.some((error) => error.includes('siguiente paso')));
@@ -124,7 +147,7 @@ test('validateInput rechaza saltos, desajustes y changelog ausente', () => {
     title: 'feat(core) [0.4.8.0]: archivo desajustado',
     base: '0.4.7.3',
     fileVersion: '0.4.7.3',
-    changelogContent: '## [v0.4.8.0] - 2026-10-14\n',
+    changelogContent: '## [v0.4.8.0] - 2026-10-14\n- **Autor:** Mapachuelo (@Mapachuelo)\n',
   });
   assert.equal(mismatch.ok, false);
   assert.ok(mismatch.errors.some((error) => error.includes('version.txt')));

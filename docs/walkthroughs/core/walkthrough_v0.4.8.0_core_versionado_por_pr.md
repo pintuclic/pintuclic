@@ -5,7 +5,7 @@
 * **Versión Generada:** `v0.4.8.0`
 * **Módulo de Origen:** `Core / Infraestructura (CI - versionado y releases)`
 * **Fecha de Entrega:** `14/10/2026`
-* **Autor / Responsable:** `Agente de IA`
+* **Autor / Responsable:** `Mapachuelo (@Mapachuelo)`
 * **Estado de la Implementación:** `✅ COMPLETO`
 
 ---
@@ -35,7 +35,8 @@ commits de `### Cambios`) y el cuerpo repetía la versión del título.
 - **Tabla de versiones (`CONTRIBUTING.md`):** solo se avanza un segmento por PR.
   - `[1.0.0.0]` → Mayor (1º) · `[0.5.0.0]` → Minior estable (2º) · `[0.4.8.0]` → Minior-feat (3º) · `[0.4.7.4]` → Patch (4º) — ejemplos partiendo de `0.4.7.3`.
 - **Coincidencia obligatoria:** versión del título = `.github/version.txt` = entrada del CHANGELOG. El bot no publica si el commit fusionado no cumple (protege la fuente única).
-- **Lint bloqueante:** `pr-title-lint.yml` rechaza títulos fuera de formato, saltos de versión, archivo desajustado o CHANGELOG ausente; también ejecuta las pruebas del motor.
+- **Autoría y fecha:** la entrada debe ser `## [vX.Y.Z.W] - AAAA-MM-DD` con la línea `- **Autor:** Nombre (@usuario)` de la persona real que realiza la entrega; la IA nunca se registra como autora ni se menciona en el CHANGELOG.
+- **Lint bloqueante:** `pr-title-lint.yml` rechaza títulos fuera de formato, saltos de versión, archivo desajustado, CHANGELOG ausente, fecha inválida o autor faltante; también ejecuta las pruebas del motor.
 - **Un solo disparo por merge:** el bot escucha `push` a `main`/`develop` (se eliminó el evento `pull_request`), resuelve la PR del commit vía API (squash, rebase o forks) y publica una única vez.
 - **Canales:** `develop` publica pre-release; `main` publica estable o promueve el pre-release del mismo tag. La ejecución manual (`workflow_dispatch`) solo republica la versión vigente de `version.txt` (reintentos/recuperación).
 - **Idempotencia:** reruns, tags y Releases existentes no se duplican; se omiten o se promueven.
@@ -60,6 +61,7 @@ commits de `### Cambios`) y el cuerpo repetía la versión del título.
 | **CA-INF-05** | **Dado** una PR fusionada con versión válida, **Cuando** corre el bot, **Entonces** crea el tag `vX.Y.Z.W` sobre el commit fusionado y publica el Release con notas que listan la PR una sola vez. | Revisión del flujo + notas generadas por `releaseNotes` | ✅ **CUMPLIDO** |
 | **CA-INF-06** | **Dado** un rerun, un tag existente o un Release ya publicado, **Cuando** corre el bot, **Entonces** no duplica nada y asegura/promueve el Release. | Ramas de idempotencia en `release` + `tagExists`/`releaseExists` | ✅ **CUMPLIDO** |
 | **CA-INF-07** | **Dado** un push sin PR asociada (push directo), **Cuando** corre el bot, **Entonces** se omite con advertencia y sin fallar. | `resolvePrs` + resumen del workflow | ✅ **CUMPLIDO** |
+| **CA-INF-09** | **Dado** una entrada sin `- **Autor:**` o con fecha fuera de `AAAA-MM-DD`, **Cuando** corre el lint, **Entonces** el merge queda bloqueado; el bot avisa si el commit fusionado no los trae. | `validateChangelogEntry` + CLI `validate` | ✅ **CUMPLIDO** |
 | **CA-INF-08** | **Dado** el merge de esta misma entrega, **Cuando** llegue a `develop`, **Entonces** se crea el pre-release `v0.4.8.0` sin commits adicionales. | ⏳ **PENDIENTE (primera corrida real)** | ⏳ **PENDIENTE** |
 
 ---
@@ -88,7 +90,7 @@ commits de `### Cambios`) y el cuerpo repetía la versión del título.
 | :---: | :--- | :--- |
 | **[NUEVO]** | `.github/scripts/versioning.mjs` | Motor de versionado: parseo del título, tabla de segmentos, validaciones, notas del Release y orquestación de tag/Release (sin dependencias). |
 | **[NUEVO]** | `.github/scripts/versioning.test.mjs` | 10 pruebas `node --test` del motor. |
-| **[NUEVO]** | `.github/workflows/pr-title-lint.yml` | Lint bloqueante del título, `version.txt`, CHANGELOG y pruebas del motor. |
+| **[NUEVO]** | `.github/workflows/pr-title-lint.yml` | Lint bloqueante del título, `version.txt`, CHANGELOG (fecha y autor reales) y pruebas del motor. |
 | **[MODIFICADO]** | `.github/workflows/version.yml` | Disparo único por `push` a `main`/`develop`; tag + Release desde el motor; sin commits. |
 | **[MODIFICADO]** | `.github/version.txt` | Declara `0.4.8.0`. |
 | **[MODIFICADO]** | `docs/CHANGELOG.md` | Entrada `## [v0.4.8.0]`. |
@@ -101,5 +103,5 @@ commits de `### Cambios`) y el cuerpo repetía la versión del título.
 
 ## 7. DICTAMEN FINAL
 
-* **Pruebas de Calidad Superadas (QA Gate):** `✅ SÍ` — 10/10 pruebas del motor en verde; casos reales del CLI `validate` verificados (válido y bloqueantes); YAML validado.
+* **Pruebas de Calidad Superadas (QA Gate):** `✅ SÍ` — 11/11 pruebas del motor en verde (incluye autor y fecha del CHANGELOG); casos reales del CLI `validate` verificados (válido y bloqueantes); YAML validado.
 * **Apego al Diagrama de Flujo:** `N/A — cambio de infraestructura CI, sin diagrama funcional asociado`
