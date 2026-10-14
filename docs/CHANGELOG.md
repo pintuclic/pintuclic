@@ -37,9 +37,7 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **Canales sin cambios:** `develop` publica pre-release y `main` publica/promueve el release estable; el `bump` manual (`workflow_dispatch`) conserva su lógica.
 - **Verificación:** YAML validado con parser; lógica de resolución probada con 6 casos (título con/sin versión, sin prefijo `v`, versión menor, mismatch, fallback a `version.txt`) y parseo de PR asociada simulado con `[]` y payload real.
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.4.7.1_core_tag_release_desde_pr.md](./walkthroughs/core/walkthrough_v0.4.7.1_core_tag_release_desde_pr.md)
-<<<<<<< HEAD
 ---
-=======
 
 ---
 
