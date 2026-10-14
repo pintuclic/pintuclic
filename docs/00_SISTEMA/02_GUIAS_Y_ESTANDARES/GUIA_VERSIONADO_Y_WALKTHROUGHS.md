@@ -21,42 +21,40 @@ El tipo de versión que se utiliza es semántica y está conformado por cuatro s
 
 ### 1.1 Fuente Única de Verdad
 
-- La versión del proyecto reside exclusivamente en `.github/version.txt`, en una sola línea con formato `X.Y.Z.W` (cuatro números separados por punto, sin prefijo `v`).
+- La versión del proyecto reside exclusivamente en `.github/version.txt`, en una sola línea con formato `X.Y.Z.W` (cuatro números separados por punto, sin prefijo `v`). El archivo debe coincidir con la versión declarada en el título de la PR.
 - Ningún otro archivo, documento o commit define la versión del proyecto. La metadata `version` de cada `package.json` es de npm y no representa la versión del release.
 - **Excepción vigente (`backend/`):** el backend no se modifica en esta migración; el campo informativo `version` de su respuesta raíz (`backend/src/index.ts`) no representa la versión del release y se conserva tal cual.
 
-### 1.2 Empaquetado Automático con GitHub Actions
+### 1.2 Publicación Automática con GitHub Actions
 
-Para crear un Release y separar las versiones por paquetes, GitHub Actions requiere el cambio de valor de `.github/version.txt` y utiliza los servidores de GitHub para su respectivo empaquetado. El workflow `.github/workflows/version.yml` crea el tag `vX.Y.Z.W` y el Release, que adjunta automáticamente el zip del código fuente.
+La versión se declara en el título de la PR y el bot publica el tag y el Release cuando la PR se fusiona. El workflow `.github/workflows/pr-title-lint.yml` valida cada PR antes del merge y `.github/workflows/version.yml` publica el tag `vX.Y.Z.W` con el Release (que adjunta automáticamente el zip del código fuente).
 
-- **Bump manual:** `Actions > Version > Run workflow`, con dos entradas:
-  - `bump`: segmento a incrementar (`build` por defecto).
-  - `version`: versión exacta opcional `X.Y.Z.W`; si se indica, tiene prioridad sobre `bump`.
-- **Disparo por llegada a `main`/`develop`:** cualquier cambio de `.github/version.txt` que llegue a `main` o `develop` (merge o push) dispara el empaquetado.
-- **Disparo por PR fusionada:** al fusionar una PR hacia `main` o `develop` (evento `pull_request` cerrado y mergeado) el workflow toma la **versión solicitada en el título de la PR** (`vX.Y.Z.W`) como fuente prioritaria del tag. Si el título difiere de `.github/version.txt`, se publica la del título y se registra una advertencia; si la versión pedida es menor que la vigente, no se publica. Si el título no trae versión, se usa `version.txt` (o lo cubre el push de ese archivo).
-- **Mención del autor (`@`):** las notas del Release incluyen el número de PR, su enlace y la mención (`@usuario`) de quien abrió la PR. En el camino `push` la PR se resuelve desde el commit de merge vía API, por lo que la mención también aplica cuando la PR proviene de un fork (el token del evento `pull_request` en forks no puede crear tags; el push a `main`/`develop` sí).
-
+- **Fuente de la versión (título de la PR):** el título debe cumplir `tipo(scope) [X.Y.Z.W]: mensaje`. La versión declarada debe ser el siguiente paso exacto de la tabla (solo avanza un segmento) y `.github/version.txt` de la PR debe contener el mismo número.
+- **Entrada del CHANGELOG:** la PR debe agregar la entrada `## [vX.Y.Z.W]` en [docs/CHANGELOG.md](../../CHANGELOG.md).
+- **Lint bloqueante (`pr-title-lint.yml`):** si el título no cumple el formato, la versión no es la siguiente de la tabla, `version.txt` no coincide o falta la entrada del CHANGELOG, el merge queda bloqueado.
+- **Publicación (`version.yml`):** al recibir un `push` a `main` o `develop`, el bot resuelve la PR del commit fusionado, revalida versión y archivo, crea el tag anotado `vX.Y.Z.W` sobre ese commit y publica el Release. Los rulesets protegen `main`/`develop`: el bot **no crea commits**, solo tags y Releases.
+- **Notas del Release:** listan únicamente las PRs (`- #N Título — por @autor`), cada una una sola vez; no incluyen listas de commits ni repiten la versión.
 - **Canales de publicación:**
   - `develop`: publica el Release como **pre-release**.
   - `main`: publica el Release **estable** (`latest`) o promueve a estable el pre-release existente del mismo tag.
+- **Ejecución manual:** `Actions > Version > Run workflow` republica la versión vigente de `.github/version.txt` (reintentos o recuperación); no modifica archivos.
 - **Idempotencia:** los reruns no duplican tag ni Release; se omiten o se promueven.
-- En ramas distintas de `main`/`develop`, el bump solo actualiza `version.txt`, sin tag ni Release.
 
-#### Equivalencia entre el nombre del segmento y el input del workflow
+#### Equivalencia entre el nombre del segmento y la versión declarada
 
-| Posición | Nombre del segmento | Input `bump` |
+| Posición | Nombre del segmento | Ejemplo desde `0.4.7.3` |
 | :--- | :--- | :--- |
-| 1º | Mayor | `major` |
-| 2º | Minior estable | `minor` |
-| 3º | Minior-feat | `patch` |
-| 4º | Patch | `build` |
+| 1º | Mayor | `1.0.0.0` |
+| 2º | Minior estable | `0.5.0.0` |
+| 3º | Minior-feat | `0.4.8.0` |
+| 4º | Patch | `0.4.7.4` |
 
 ### 1.3 Reglas Obligatorias
 
 - **Fuente única:** toda versión se deriva de `.github/version.txt`; queda prohibido declarar la versión del proyecto en otros archivos de código o documentación.
-- **Actualización obligatoria:** cada entrega DEBE actualizar `.github/version.txt` con la nueva versión de cuatro segmentos y registrar la entrada correspondiente en [docs/CHANGELOG.md](../../CHANGELOG.md) con el mismo `vX.Y.Z.W`; los registros históricos no se reescriben.
-- **Agentes IA:** los agentes de IA SÍ actualizan `.github/version.txt` y el CHANGELOG en cada entrega, aplicando el esquema de [CONTRIBUTING.md](../../../CONTRIBUTING.md) (antes solo lo notificaban al usuario).
-- **Publicación:** el tag y el Release con el zip se generan automáticamente con `.github/workflows/version.yml` cuando el cambio de `.github/version.txt` llega a `main` o `develop`; la versión no se duplica en otros archivos ni se crean commits manuales de versión.
+- **Título obligatorio:** cada PR debe declarar la versión en el título (`tipo(scope) [X.Y.Z.W]: mensaje`), actualizar `.github/version.txt` con ese mismo número y registrar la entrada `## [vX.Y.Z.W]` en [docs/CHANGELOG.md](../../CHANGELOG.md); los registros históricos no se reescriben. El lint bloquea la PR si algo no coincide.
+- **Agentes IA:** los agentes de IA declaran la versión en el título de la PR y actualizan `.github/version.txt` y el CHANGELOG en cada entrega, aplicando el esquema de [CONTRIBUTING.md](../../../CONTRIBUTING.md); está prohibido crear tags o Releases a mano.
+- **Publicación:** el tag y el Release con el zip se generan automáticamente con `.github/workflows/version.yml` al fusionar la PR hacia `main` o `develop`; el bot no crea commits en las ramas protegidas.
 
 ---
 

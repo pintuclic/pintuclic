@@ -1,0 +1,49 @@
+name: PR Title Lint
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Validar titulo y version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Validar titulo, version.txt y changelog
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          BASE_VERSION=$(git show "${BASE_SHA}:.github/version.txt" 2>/dev/null | tr -d '[:space:]' || true)
+          if [ -z "$BASE_VERSION" ]; then
+            BASE_VERSION="0.0.0.0"
+          fi
+          HEAD_VERSION=$(tr -d '[:space:]' < .github/version.txt)
+          echo "Version base (${BASE_SHA:0:7}): $BASE_VERSION"
+          echo "Version declarada en la PR: $HEAD_VERSION"
+          node .github/scripts/versioning.mjs validate \
+            --title "$PR_TITLE" \
+            --base "$BASE_VERSION" \
+            --file-version "$HEAD_VERSION" \
+            --changelog-file docs/CHANGELOG.md
+
+      - name: Pruebas del motor de versionado
+        run: node --test .github/scripts/versioning.test.mjs

@@ -105,7 +105,7 @@ Al completar la implementación, **DEBES SI O SI**:
 
 ### Paso 10: Actualización de Versión, Commits y Push al Repositorio
 Siguiendo el esquema de [CONTRIBUTING.md](CONTRIBUTING.md) y la [Guía de Commits y Push](./docs/00_SISTEMA/02_GUIAS_Y_ESTANDARES/GUIA_GIT_COMMITS_Y_PUSH.md):
-1. **Actualización de Versión Obligatoria:** antes del commit de la entrega, actualizar `.github/version.txt` con la nueva versión de cuatro segmentos (`Mayor`, `Minior estable`, `Minior-feat`, `Patch`) y agregar la entrada correspondiente en [docs/CHANGELOG.md](./docs/CHANGELOG.md) con el mismo `vX.Y.Z.W`. El tag y el Release se generan automáticamente cuando el cambio llega a `main` o `develop`.
+1. **Versión Obligatoria en el Título de la PR:** declarar la versión con el formato `tipo(scope) [X.Y.Z.W]: mensaje` (ver [CONTRIBUTING.md](CONTRIBUTING.md)), dejar `.github/version.txt` con ese mismo número y agregar la entrada `## [vX.Y.Z.W]` en [docs/CHANGELOG.md](./docs/CHANGELOG.md). El workflow `PR Title Lint` bloquea el merge si el formato, el siguiente paso de la tabla, el archivo o la entrada no coinciden. El tag y el Release se publican automáticamente al fusionar hacia `main` o `develop` mediante `.github/workflows/version.yml`.
 2. **Verificación Previa Obligatoria:** Comprobar que TypeScript compila sin errores (`npx tsc --noEmit`), que ESLint no arroja errores ni advertencias (`npm run lint`), que las pruebas unitarias pasan al 100% y que solo se modificaron archivos del módulo asignado.
 3. **Formato del Commit:** Crear commits atómicos utilizando el estándar Conventional Commits (`tipo(modulo): descripcion`, ej: `feat(M04): implementar registro con verificacion HU-CUE-01` o `fix(M04): corregir expiracion de tokens`).
 4. **Push Seguro:** Ejecutar `git push origin <rama_asignada>` únicamente sobre la rama de trabajo correspondiente. Nunca hacer push forzado (`--force`) sobre ramas compartidas.
@@ -135,5 +135,6 @@ Siguiendo el esquema de [CONTRIBUTING.md](CONTRIBUTING.md) y la [Guía de Commit
 
 ### Version
 - El esquema oficial de versiones es el de [CONTRIBUTING.md](CONTRIBUTING.md), de cuatro segmentos (`Mayor`, `Minior estable`, `Minior-feat`, `Patch`).
-- En CADA entrega, el agente de IA DEBE actualizar `.github/version.txt` con la nueva versión y agregar su entrada en [docs/CHANGELOG.md](./docs/CHANGELOG.md); el paquete (tag y Release) se genera automáticamente cuando el cambio llega a `main` o `develop` mediante `.github/workflows/version.yml`.
+- En CADA entrega, el agente de IA DEBE declarar la versión en el título de la PR (`tipo(scope) [X.Y.Z.W]: mensaje`), dejar `.github/version.txt` con ese mismo número y agregar la entrada `## [vX.Y.Z.W]` en [docs/CHANGELOG.md](./docs/CHANGELOG.md). El workflow `PR Title Lint` bloquea la PR si algo no coincide.
+- El tag y el Release se publican automáticamente cuando la PR se fusiona hacia `main` o `develop` mediante `.github/workflows/version.yml`; está prohibido crearlos a mano.
 - La versión del proyecto vive únicamente en `.github/version.txt`; no se duplica en otros archivos de código.

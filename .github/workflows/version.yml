@@ -3,30 +3,12 @@ name: Version
 on:
   workflow_dispatch:
     inputs:
-      bump:
-        description: "Segmento a incrementar (se ignora si indicas una version exacta)"
-        required: true
-        default: build
-        type: choice
-        options:
-          - build
-          - patch
-          - minor
-          - major
       version:
-        description: "Version exacta opcional con formato X.Y.Z.W (ej. 0.3.29.0)"
+        description: "Version a republicar (por defecto la de .github/version.txt)"
         required: false
         default: ""
         type: string
   push:
-    branches:
-      - main
-      - develop
-    paths:
-      - .github/version.txt
-  pull_request:
-    types:
-      - closed
     branches:
       - main
       - develop
@@ -40,329 +22,30 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  bump:
-    name: Actualizar version
-    if: github.event_name == 'workflow_dispatch'
+  release:
+    name: Publicar version
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Calcular nueva version
-        id: version
-        env:
-          BUMP: ${{ inputs.bump }}
-          EXPLICIT_VERSION: ${{ inputs.version }}
-        run: |
-          set -euo pipefail
-          FILE=".github/version.txt"
-          if [ ! -f "$FILE" ]; then
-            echo "No existe $FILE en esta rama; crealo antes de versionar." >&2
-            exit 1
-          fi
-          CURRENT=$(tr -d '[:space:]' < "$FILE")
-          if ! printf '%s' "$CURRENT" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "La version actual '$CURRENT' no cumple el formato MAJOR.MINOR.PATCH.BUILD" >&2
-            exit 1
-          fi
-          IFS='.' read -r MAJOR MINOR PATCH BUILD <<< "$CURRENT"
-          if [ -n "$EXPLICIT_VERSION" ]; then
-            NEXT="$EXPLICIT_VERSION"
-            if ! printf '%s' "$NEXT" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
-              echo "La version indicada '$NEXT' no cumple el formato MAJOR.MINOR.PATCH.BUILD" >&2
-              exit 1
-            fi
-            if [ "$NEXT" = "$CURRENT" ]; then
-              echo "La version indicada '$NEXT' es igual a la actual; no hay nada que versionar." >&2
-              exit 1
-            fi
-            if [ "$(printf '%s\n%s\n' "$CURRENT" "$NEXT" | sort -V | head -1)" != "$CURRENT" ]; then
-              echo "La version indicada '$NEXT' es menor que la actual '$CURRENT'." >&2
-              exit 1
-            fi
-            ORIGIN="version exacta"
-          else
-            case "$BUMP" in
-              major) NEXT="$((MAJOR + 1)).0.0.0" ;;
-              minor) NEXT="$MAJOR.$((MINOR + 1)).0.0" ;;
-              patch) NEXT="$MAJOR.$MINOR.$((PATCH + 1)).0" ;;
-              build) NEXT="$MAJOR.$MINOR.$PATCH.$((BUILD + 1))" ;;
-              *)
-                echo "Segmento de incremento invalido: '$BUMP'" >&2
-                exit 1
-                ;;
-            esac
-            ORIGIN="incremento $BUMP"
-          fi
-          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
-          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
-          echo "Version actual: $CURRENT"
-          echo "Version nueva: $NEXT ($ORIGIN)"
-
-      - name: Actualizar .github/version.txt
-        env:
-          VERSION: ${{ steps.version.outputs.next }}
-        run: |
-          set -euo pipefail
-          printf '%s\n' "$VERSION" > .github/version.txt
-          cat .github/version.txt
-
-      - name: Commit y push de la version
-        env:
-          VERSION: ${{ steps.version.outputs.next }}
-        run: |
-          set -euo pipefail
-          git config user.name "pintuclic-version-bot"
-          git config user.email "pintuclic-version-bot@users.noreply.github.com"
-          git add .github/version.txt
-          git commit -m "chore(release): [$VERSION] actualizar version"
-          git push origin "HEAD:${{ github.ref_name }}"
-
-  package:
-    name: Publicar release
-    needs:
-      - bump
-    if: >-
-      always() &&
-      (
-        (github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'develop')) ||
-        (github.event_name == 'pull_request' && github.event.pull_request.merged == true &&
-          (github.event.pull_request.base.ref == 'main' || github.event.pull_request.base.ref == 'develop')) ||
-        (github.event_name == 'workflow_dispatch' && needs.bump.result == 'success' &&
-          (github.ref_name == 'main' || github.ref_name == 'develop'))
-      )
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      BRANCH: ${{ github.event.pull_request.base.ref || github.ref_name }}
+    timeout-minutes: 15
     concurrency:
       group: version-package
       cancel-in-progress: false
+    env:
+      BRANCH: ${{ github.ref_name }}
+      EVENT_NAME: ${{ github.event_name }}
+      BEFORE_COMMIT: ${{ github.event.before }}
+      AFTER_COMMIT: ${{ github.event.after }}
+      INPUT_VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.merge_commit_sha || github.ref }}
 
-      - name: Resolver PR de origen
-        id: pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          EVENT_NAME: ${{ github.event_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
+      - name: Configurar identidad de git
         run: |
-          set -euo pipefail
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            NUM="${PR_NUMBER:-}"
-            AUTHOR="${PR_AUTHOR:-}"
-            URL="${PR_URL:-}"
-            TITLE="${PR_TITLE:-}"
-          else
-            HEAD_SHA=$(git rev-parse HEAD)
-            RESPONSE=$(gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/pulls" 2>/dev/null || echo '[]')
-            NUM=$(printf '%s' "$RESPONSE" | jq -r '.[0].number // empty')
-            AUTHOR=$(printf '%s' "$RESPONSE" | jq -r '.[0].user.login // empty')
-            URL=$(printf '%s' "$RESPONSE" | jq -r '.[0].html_url // empty')
-            TITLE=$(printf '%s' "$RESPONSE" | jq -r '.[0].title // empty')
-          fi
-          TITLE=$(printf '%s' "$TITLE" | tr '\r\n' ' ')
-          {
-            echo "number=$NUM"
-            echo "author=$AUTHOR"
-            echo "url=$URL"
-            echo "title=$TITLE"
-          } >> "$GITHUB_OUTPUT"
-          if [ -n "$NUM" ]; then
-            echo "PR de origen: #$NUM por @$AUTHOR"
-          else
-            echo "Sin PR asociada en esta ejecucion."
-          fi
-
-      - name: Leer y validar version
-        id: version
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          PR_TITLE: ${{ steps.pr.outputs.title }}
-        run: |
-          set -euo pipefail
-          FILE=".github/version.txt"
-          if [ ! -f "$FILE" ]; then
-            echo "No existe $FILE en esta rama; no hay version que publicar." >&2
-            exit 1
-          fi
-          CURRENT=$(tr -d '[:space:]' < "$FILE")
-          if ! printf '%s' "$CURRENT" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "La version '$CURRENT' de $FILE no cumple el formato MAJOR.MINOR.PATCH.BUILD" >&2
-            exit 1
-          fi
-          TITLE_VERSION=""
-          if [ -n "${PR_TITLE:-}" ]; then
-            TITLE_VERSION=$(printf '%s' "$PR_TITLE" | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1 | sed 's/^v//' || true)
-          fi
-          if [ "$EVENT_NAME" = "pull_request" ] && [ -z "$TITLE_VERSION" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "La PR no solicita version en el titulo; no se publica desde este evento (el push de $FILE lo cubre si aplica)."
-            exit 0
-          fi
-          if [ -n "$TITLE_VERSION" ]; then
-            VERSION="$TITLE_VERSION"
-            SOURCE="titulo de la PR"
-            if [ "$VERSION" != "$CURRENT" ]; then
-              echo "::warning::La version solicitada en el titulo ($VERSION) no coincide con $FILE ($CURRENT); se publica la del titulo."
-            fi
-            if [ "$(printf '%s\n%s\n' "$CURRENT" "$VERSION" | sort -V | head -1)" != "$CURRENT" ]; then
-              echo "skip=true" >> "$GITHUB_OUTPUT"
-              echo "La version solicitada ($VERSION) es menor que la actual ($CURRENT); se omite para no degradar el release."
-              exit 0
-            fi
-          else
-            VERSION="$CURRENT"
-            SOURCE="$FILE"
-          fi
-          echo "skip=false" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
-          echo "source=$SOURCE" >> "$GITHUB_OUTPUT"
-          echo "Version a publicar: $VERSION (origen: $SOURCE)"
-
-      - name: Crear tag si no existe
-        if: steps.version.outputs.skip != 'true'
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          PR_NUMBER: ${{ steps.pr.outputs.number }}
-          PR_AUTHOR: ${{ steps.pr.outputs.author }}
-        run: |
-          set -euo pipefail
-          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
-            echo "El tag v$VERSION ya existe; no se sobreescribe."
-            exit 0
-          fi
           git config user.name "pintuclic-version-bot"
           git config user.email "pintuclic-version-bot@users.noreply.github.com"
-          MESSAGE="Release v$VERSION"
-          if [ -n "$PR_NUMBER" ]; then
-            MESSAGE="$MESSAGE (#$PR_NUMBER por @$PR_AUTHOR)"
-          fi
-          git tag -a "v$VERSION" -m "$MESSAGE"
-          git push origin "v$VERSION"
 
-      - name: Generar notas del release
-        id: notes
-        if: steps.version.outputs.skip != 'true'
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          VERSION_SOURCE: ${{ steps.version.outputs.source }}
-          PR_NUMBER: ${{ steps.pr.outputs.number }}
-          PR_AUTHOR: ${{ steps.pr.outputs.author }}
-          PR_URL: ${{ steps.pr.outputs.url }}
-        run: |
-          set -euo pipefail
-          NOTES=$(mktemp)
-          {
-            echo "## v$VERSION"
-            echo
-            if [ "$BRANCH" = "develop" ]; then
-              echo "Canal: develop (pre-release)"
-            else
-              echo "Canal: main (estable)"
-            fi
-            if [ "$VERSION_SOURCE" = "titulo de la PR" ]; then
-              echo "Version solicitada en el titulo de la PR fusionada."
-            fi
-            echo
-            if [ -n "$PR_NUMBER" ]; then
-              echo "### Pull Request"
-              echo
-              echo "- #$PR_NUMBER por @$PR_AUTHOR"
-              if [ -n "$PR_URL" ]; then
-                echo "- $PR_URL"
-              fi
-              echo
-            fi
-            echo "### Cambios"
-            PREV=$(git describe --tags --abbrev=0 --exclude "v$VERSION" 2>/dev/null || true)
-            if [ -n "$PREV" ]; then
-              git log --oneline "$PREV..HEAD" | sed 's/^/- /'
-            else
-              git log --oneline -20 | sed 's/^/- /'
-            fi
-          } > "$NOTES"
-          echo "file=$NOTES" >> "$GITHUB_OUTPUT"
-
-      - name: Publicar pre-release en develop
-        if: steps.version.outputs.skip != 'true' && env.BRANCH == 'develop'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.version }}
-          NOTES: ${{ steps.notes.outputs.file }}
-        run: |
-          set -euo pipefail
-          if gh release view "v$VERSION" >/dev/null 2>&1; then
-            echo "El Release v$VERSION ya existe; no se modifica en develop."
-            exit 0
-          fi
-          gh release create "v$VERSION" \
-            --title "v$VERSION (pre-release)" \
-            --notes-file "$NOTES" \
-            --prerelease
-
-      - name: Publicar o promover release estable en main
-        if: steps.version.outputs.skip != 'true' && env.BRANCH == 'main'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.version }}
-          NOTES: ${{ steps.notes.outputs.file }}
-        run: |
-          set -euo pipefail
-          if gh release view "v$VERSION" >/dev/null 2>&1; then
-            echo "El Release v$VERSION existe; se promueve a estable."
-            gh release edit "v$VERSION" \
-              --title "v$VERSION" \
-              --notes-file "$NOTES" \
-              --prerelease=false
-            gh release edit "v$VERSION" --latest
-            exit 0
-          fi
-          gh release create "v$VERSION" \
-            --title "v$VERSION" \
-            --notes-file "$NOTES" \
-            --latest
-
-      - name: Resumen
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          VERSION_SOURCE: ${{ steps.version.outputs.source }}
-          SKIP: ${{ steps.version.outputs.skip }}
-          PR_NUMBER: ${{ steps.pr.outputs.number }}
-          PR_AUTHOR: ${{ steps.pr.outputs.author }}
-        run: |
-          {
-            if [ "$SKIP" = "true" ]; then
-              echo "### Version: sin publicacion"
-              echo
-              echo "- Rama: $BRANCH"
-              echo "- Motivo: no hay version aplicable en esta ejecucion (ver log del paso 'Leer y validar version')"
-            else
-              CHANNEL="pre-release"
-              if [ "$BRANCH" = "main" ]; then
-                CHANNEL="estable"
-              fi
-              echo "### Release v$VERSION"
-              echo
-              echo "- Rama: $BRANCH"
-              echo "- Canal: $CHANNEL"
-              echo "- Origen de la version: $VERSION_SOURCE"
-              echo "- Tag: v$VERSION"
-              if [ -n "$PR_NUMBER" ]; then
-                echo "- PR: #$PR_NUMBER por @$PR_AUTHOR"
-              fi
-              echo "- GitHub adjunta el zip del codigo fuente automaticamente"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Crear tag y publicar Release
+        run: node .github/scripts/versioning.mjs release
