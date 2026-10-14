@@ -5,9 +5,10 @@
 * **Versión Generada:** `v0.4.9.0` (base de datos `v2.9`, esquema 4.1)
 * **Módulo de Origen:** `M01 Catálogo de productos` y `M02 Búsqueda` (Backend + Base de datos)
 * **Fecha de Entrega:** `14/10/2026`
-* **Autor / Responsable:** `Ingri Julieth (@TU_USUARIO_GITHUB)`, con apoyo de un agente de IA (Claude Code)
+* **Autor / Responsable:** `Ingri Julieth (@ingrijuliethgascatenorio-bot)`, con apoyo de un agente de IA (Claude Code)
 * **Fuentes:** `Informe_M01_revision_backend_b19d552.pdf` (revisión del líder técnico) y `Pintu_Clic_Analisis_Requisitos_Tanda1` v9.0 (M01)
 * **Base de código:** rama `feature/m01-backend-catalogo-publico` sincronizada con `develop` `eb22342`
+* **Entrega relacionada:** [M02 v0.4.9.0](../M02/walkthrough_v0.4.9.0_M02_visibilidad_catalogo_y_combos_sin_marca_backend.md) y [Base de datos v2.9](../DATABASE/walkthrough_v0.4.9.0_DATABASE_esquema_4.1_catalogo_backend.md)
 * **Estado de la Implementación:** `✅ COMPLETO` (con los pendientes de la sección 6)
 
 ---

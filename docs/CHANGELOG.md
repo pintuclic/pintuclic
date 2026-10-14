@@ -8,7 +8,7 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 
 ---
 ## [v0.4.9.0] - 2026-10-14
-- **Autor:** Ingri Gasca (ingrijuliethgascatenorio-bot)
+- **Autor:** Ingri Gasca (@ingrijuliethgascatenorio-bot)
 ### Módulo: M01 Catálogo y M02 Búsqueda — Corrección de la revisión del líder y ajuste a requisitos v9.0 (Backend + BD v2.9)
 - **Alcance General:** Incremento **Minor-feat (v0.4.9.0)** sobre Backend M01, Backend M02 y base de datos (esquema 4.1), según `Informe_M01_revision_backend_b19d552` y la especificación v9.0.
 - **Visibilidad única (M01-02/08/09):** nueva `elegibilidad-publica.ts`. El precio «desde», los colores, el agotado de combos y el aviso de desactivar categorías usan solo variantes vendibles y productos visibles.
@@ -21,6 +21,8 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **Documentación (M01-17):** corregidas la afirmación de sincronización con `develop` y la autoría de los walkthroughs de backend v3.35.11 y v3.36.0.
 - **Verificación:** `tsc` y `eslint` sin errores. Unitarias M01 167/167 y M02 26/26; integración contra PostgreSQL M01 56/56 y M02 14/14 (nueva); sin regresiones en M04, M05, M08 ni M18.
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/M01/walkthrough_v0.4.9.0_M01_correccion_revision_lider_backend.md](./walkthroughs/M01/walkthrough_v0.4.9.0_M01_correccion_revision_lider_backend.md)
+- 🔗 **Walkthrough M02:** [walkthroughs/M02/walkthrough_v0.4.9.0_M02_visibilidad_catalogo_y_combos_sin_marca_backend.md](./walkthroughs/M02/walkthrough_v0.4.9.0_M02_visibilidad_catalogo_y_combos_sin_marca_backend.md)
+- 🔗 **Walkthrough Base de Datos (v2.9):** [walkthroughs/DATABASE/walkthrough_v0.4.9.0_DATABASE_esquema_4.1_catalogo_backend.md](./walkthroughs/DATABASE/walkthrough_v0.4.9.0_DATABASE_esquema_4.1_catalogo_backend.md)
 
 ---
 ## [v0.4.8.0] - 2026-10-14
