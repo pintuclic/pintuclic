@@ -9,7 +9,8 @@ import { EnumClaseColor } from '../../../core/db/types';
 export interface ProductoBusqueda {
   readonly id_producto: number;
   readonly nombre: string;
-  readonly id_marca: number;
+  /** null en combos de varias marcas (RF-CAT-13-09). */
+  readonly id_marca: number | null;
   readonly clase_color: EnumClaseColor;
 }
 

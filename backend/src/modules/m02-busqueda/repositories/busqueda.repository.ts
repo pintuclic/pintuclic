@@ -1,5 +1,11 @@
-import { Kysely, sql, SqlBool, RawBuilder } from 'kysely';
+import { Expression, Kysely, sql, SqlBool, RawBuilder } from 'kysely';
 import { Database, EnumClaseColor } from '../../../core/db/types';
+import {
+  EbProducto,
+  productoElegible,
+  variantesPreparables,
+  variantesVendibles,
+} from '../../m01-catalogo/repositories/elegibilidad-publica';
 import { FiltrosBusqueda, OrdenBusqueda, TerminoSinResultado, FacetasBusqueda, FacetaValor } from '../interfaces/m02.interfaces';
 
 interface FilaFaceta {
@@ -10,8 +16,10 @@ interface FilaFaceta {
 
 // ==============================================================================
 // M02 - REPOSITORIO DE BÚSQUEDA Y FILTROS (HU-BUS-01, HU-BUS-02)
-// Búsqueda en servidor (RF-BUS-01-02), sin autenticación, sobre productos
-// activos+publicados. Insensible a mayúsculas y acentos y tolerante a errores
+// Búsqueda en servidor (RF-BUS-01-02), sin autenticación, sobre los productos
+// que el catálogo muestra al visitante: la regla de visibilidad, las variantes
+// vendibles y los colores preparables son los de M01 (RF-CAT-09-02,
+// RF-CAT-12-04), para que buscar y navegar no contradigan la ficha. Insensible a mayúsculas y acentos y tolerante a errores
 // tipográficos (RF-BUS-01-03) usando `unaccent` + `pg_trgm` (word_similarity).
 // El producto aparece una sola vez porque se filtra la tabla `producto` con
 // subconsultas EXISTS, sin joins que multipliquen filas (RF-BUS-01-04 / RF-BUS-02-03).
@@ -27,7 +35,7 @@ const UMBRAL_SIMILITUD = 0.3;
 export interface FilaProductoBusqueda {
   id_producto: number;
   nombre: string;
-  id_marca: number;
+  id_marca: number | null;
   clase_color: EnumClaseColor;
 }
 
@@ -44,12 +52,10 @@ export class BusquedaRepository {
   ): Promise<FilaProductoBusqueda[]> {
     let q = this.base(termino, filtros).select(['p.id_producto', 'p.nombre', 'p.id_marca', 'p.clase_color']);
 
-    // ponytail: precio del producto = mínimo de sus variantes activas (precio base).
-    // El precio final tras descuentos/IVA y por empresa depende de M06 (CA-BUS-03-05).
-    const precioProducto = sql<number>`(
-      select min(v.precio_vigente) from variante v
-      where v.id_producto = p.id_producto and v.estado = 'activo'
-    )`;
+    // ponytail: precio del producto = mínimo de sus variantes vendibles (el «desde»
+    // de M01). El precio final tras descuentos/IVA y por empresa depende de M06 (CA-BUS-03-05).
+    const precioProducto = (eb: EbProducto) =>
+      variantesVendibles(eb.ref('p.id_producto')).select(({ fn }) => fn.min('vv.precio_vigente').as('precio'));
 
     // Todos los criterios cierran con nombre asc como desempate estable para que
     // consultas idénticas mantengan el orden entre páginas (RF-BUS-03-03 / CA-BUS-03-03).
@@ -88,9 +94,7 @@ export class BusquedaRepository {
    * Facetas del catálogo (HU-BUS-02, RF-BUS-02-02): por cada dimensión, los valores
    * que producen resultados con su conteo de productos, aplicando término + filtros
    * vigentes (conjuntivo). Cada dimensión se agrega sobre la misma base filtrada.
-   * ponytail: color solo cuenta preparados (variante con ese color); los entonables
-   * quedan fuera del conteo — ampliar a la carta de la marca si se requiere paridad
-   * exacta con el filtro de color.
+   * Presentaciones y colores cuentan con el mismo criterio que sus filtros.
    */
   async facetas(termino: string | undefined, filtros: FiltrosBusqueda | undefined): Promise<FacetasBusqueda> {
     const t = termino;
@@ -126,16 +130,24 @@ export class BusquedaRepository {
         .groupBy(['c.id_categoria', 'c.nombre'])
         .execute(),
       this.base(t, f)
-        .innerJoin('variante as v', 'v.id_producto', 'p.id_producto')
-        .innerJoin('presentacion as pr', 'pr.id_presentacion', 'v.id_presentacion')
-        .where('v.estado', '=', 'activo')
+        .innerJoin('presentacion as pr', (join) =>
+          join.on((eb) =>
+            eb.exists(
+              variantesVendibles(eb.ref('p.id_producto'))
+                .where('vv.id_presentacion', '=', eb.ref('pr.id_presentacion'))
+                .select('vv.id_variante')
+            )
+          )
+        )
         .select(({ fn }) => ['pr.id_presentacion as id', 'pr.nombre', fn.count<string>('p.id_producto').distinct().as('cantidad')])
         .groupBy(['pr.id_presentacion', 'pr.nombre'])
         .execute(),
       this.base(t, f)
-        .innerJoin('variante as v', 'v.id_producto', 'p.id_producto')
-        .innerJoin('color as c', 'c.id_color', 'v.id_color')
-        .where('v.estado', '=', 'activo')
+        .innerJoin('color as c', (join) =>
+          join.on((eb) =>
+            eb.and([eb('c.estado', '=', 'activo'), this.ofreceColor(eb, eb.ref('c.id_color'))])
+          )
+        )
         .select(({ fn }) => ['c.id_color as id', 'c.nombre', fn.count<string>('p.id_producto').distinct().as('cantidad')])
         .groupBy(['c.id_color', 'c.nombre'])
         .execute(),
@@ -181,16 +193,31 @@ export class BusquedaRepository {
   }
 
   /**
-   * Base de la consulta: productos activos+publicados, más el término (HU-BUS-01)
+   * RF-BUS-01-05 / RF-BUS-02-03: el producto ofrece el color, sea porque una de sus
+   * variantes vendibles lo trae (colores fijos) o porque se prepara sobre una de
+   * sus bases o «sin base» según el catálogo de colores (entonable).
+   */
+  private ofreceColor(eb: EbProducto, idColor: Expression<number>): Expression<SqlBool> {
+    return eb.or([
+      eb.exists(variantesVendibles(eb.ref('p.id_producto')).where('vv.id_color', '=', idColor).select('vv.id_variante')),
+      eb.and([
+        eb('p.clase_color', '=', 'entonable'),
+        eb.exists(variantesPreparables(eb.ref('p.id_producto'), idColor).select('vv.id_variante')),
+      ]),
+    ]);
+  }
+
+  /**
+   * Base de la consulta: productos visibles en el catálogo (M01), más el término (HU-BUS-01)
    * y los filtros del catálogo (HU-BUS-02). Cada lista de filtro es un OR interno
    * (`in`) y entre filtros distintos es AND. Todo se resuelve sobre `producto` con
    * `EXISTS` para devolver productos, no variantes (RF-BUS-02-03). Sin anotación de
    * tipo: se deja inferir el builder de Kysely (encadenar `.where` conserva el tipo).
    */
   private base(termino: string | undefined, f: FiltrosBusqueda | undefined) {
-    let q = this.db.selectFrom('producto as p').where('p.estado', '=', 'activo').where('p.publicado', '=', true);
+    let q = this.db.selectFrom('producto as p').where(productoElegible);
 
-    if (termino) q = q.where(this.predicado(termino));
+    if (termino) q = q.where((eb) => this.predicado(eb, termino));
     if (!f) return q;
 
     if (f.idMarca?.length) q = q.where('p.id_marca', 'in', f.idMarca);
@@ -227,43 +254,21 @@ export class BusquedaRepository {
     if (f.idPresentacion?.length) {
       const ids = f.idPresentacion;
       q = q.where((eb) =>
-        eb.exists(
-          eb
-            .selectFrom('variante as v')
-            .whereRef('v.id_producto', '=', 'p.id_producto')
-            .where('v.estado', '=', 'activo')
-            .where('v.id_presentacion', 'in', ids)
-            .select('v.id_variante')
-        )
+        eb.exists(variantesVendibles(eb.ref('p.id_producto')).where('vv.id_presentacion', 'in', ids).select('vv.id_variante'))
       );
     }
 
     if (f.idColor?.length) {
       const ids = f.idColor;
       q = q.where((eb) =>
-        eb.or([
-          // Preparado: el producto tiene una variante activa con ese color.
-          eb.exists(
-            eb
-              .selectFrom('variante as v')
-              .whereRef('v.id_producto', '=', 'p.id_producto')
-              .where('v.estado', '=', 'activo')
-              .where('v.id_color', 'in', ids)
-              .select('v.id_variante')
-          ),
-          // Entonable: el producto se entona y el color existe en la carta de su marca.
-          eb.and([
-            eb('p.clase_color', '=', 'entonable'),
-            eb.exists(
-              eb
-                .selectFrom('color as c')
-                .whereRef('c.id_marca', '=', 'p.id_marca')
-                .where('c.estado', '=', 'activo')
-                .where('c.id_color', 'in', ids)
-                .select('c.id_color')
-            ),
-          ]),
-        ])
+        eb.exists(
+          eb
+            .selectFrom('color as cf')
+            .where('cf.id_color', 'in', ids)
+            .where('cf.estado', '=', 'activo')
+            .where((ec) => this.ofreceColor(eb, ec.ref('cf.id_color')))
+            .select('cf.id_color')
+        )
       );
     }
 
@@ -275,13 +280,10 @@ export class BusquedaRepository {
       const max = f.precioMax;
       q = q.where((eb) =>
         eb.exists(
-          eb
-            .selectFrom('variante as v')
-            .whereRef('v.id_producto', '=', 'p.id_producto')
-            .where('v.estado', '=', 'activo')
-            .$if(min !== undefined, (qb) => qb.where(sql<SqlBool>`v.precio_vigente >= ${min}`))
-            .$if(max !== undefined, (qb) => qb.where(sql<SqlBool>`v.precio_vigente <= ${max}`))
-            .select('v.id_variante')
+          variantesVendibles(eb.ref('p.id_producto'))
+            .$if(min !== undefined, (qb) => qb.where('vv.precio_vigente', '>=', String(min)))
+            .$if(max !== undefined, (qb) => qb.where('vv.precio_vigente', '<=', String(max)))
+            .select('vv.id_variante')
         )
       );
     }
@@ -314,17 +316,16 @@ export class BusquedaRepository {
 
   /**
    * Coincidencia sobre nombre, descripción, marca, línea y color (RF-BUS-01-03).
-   * En color incluye tanto los preparados (variante con ese color) como los
-   * entonables (producto entonable cuyo color existe en la carta de su marca),
-   * cumpliendo RF-BUS-01-05.
+   * En color incluye los colores que el producto ofrece: los de sus variantes
+   * vendibles y los que se preparan sobre él según el catálogo (RF-BUS-01-05).
    */
-  private predicado(t: string): RawBuilder<SqlBool> {
+  private predicado(eb: EbProducto, t: string): Expression<SqlBool> {
     const coincide = (col: RawBuilder<unknown>): RawBuilder<unknown> => sql`(
       unaccent(lower(${col})) ilike '%' || unaccent(lower(${t})) || '%'
       or word_similarity(unaccent(lower(${t})), unaccent(lower(${col}))) >= ${UMBRAL_SIMILITUD}
     )`;
 
-    return sql<SqlBool>`(
+    const textual = sql<SqlBool>`(
       ${coincide(sql.ref('p.nombre'))}
       or ${coincide(sql.ref('p.descripcion'))}
       or exists (
@@ -335,19 +336,15 @@ export class BusquedaRepository {
         select 1 from linea l
         where l.id_linea = p.id_linea and ${coincide(sql.ref('l.nombre'))}
       )
-      or exists (
-        select 1 from variante v
-        join color c on c.id_color = v.id_color
-        where v.id_producto = p.id_producto and v.estado = 'activo'
-          and ${coincide(sql.ref('c.nombre'))}
-      )
-      or (
-        p.clase_color = 'entonable' and exists (
-          select 1 from color c2
-          where c2.id_marca = p.id_marca and c2.estado = 'activo'
-            and ${coincide(sql.ref('c2.nombre'))}
-        )
-      )
     )`;
+    const porColor = eb.exists(
+      eb
+        .selectFrom('color as ct')
+        .where('ct.estado', '=', 'activo')
+        .where(sql<SqlBool>`${coincide(sql.ref('ct.nombre'))}`)
+        .where((ec) => this.ofreceColor(eb, ec.ref('ct.id_color')))
+        .select('ct.id_color')
+    );
+    return eb.or([textual, porColor]);
   }
 }
