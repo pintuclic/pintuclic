@@ -7,6 +7,18 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 > **Transición de esquema:** las entradas hasta `v3.29.0` usaron el esquema antiguo de tres segmentos y se conservan intactas como registro histórico (la equivalencia de `3.28.0` es `0.3.28.0`). Desde `v0.3.29.1` rige el esquema de cuatro segmentos definido en [CONTRIBUTING.md](../CONTRIBUTING.md), con actualización obligatoria de `.github/version.txt` en cada entrega.
 
 ---
+## [v0.4.8.0] - 2026-10-14
+- **Autor:** Mapachuelo (@Mapachuelo)
+### Core: Versionado — Publicación automática desde el título de la PR (CI)
+- **Alcance General:** Incremento **Minior-feat (v0.4.8.0)** sobre el empaquetado automático. La versión se declara en el título de la PR con el formato `tipo(scope) [X.Y.Z.W]: mensaje`, debe coincidir con `.github/version.txt` y con la entrada del CHANGELOG; al fusionar, el bot crea el tag anotado y publica el Release con notas basadas únicamente en la PR.
+- **Lint bloqueante (`.github/workflows/pr-title-lint.yml`):** valida el formato del título, que la versión sea el siguiente paso exacto de la tabla de `CONTRIBUTING.md` (solo avanza un segmento), la coincidencia con `.github/version.txt` y la presencia de `## [vX.Y.Z.W]` en `docs/CHANGELOG.md`; si algo falla, el merge queda bloqueado. También ejecuta las pruebas del motor.
+- **Publicación (`.github/workflows/version.yml`):** dispara en `push` a `main`/`develop` (una sola ejecución por merge), resuelve la PR del commit fusionado (squash/rebase/forks), revalida la coincidencia y publica el tag `vX.Y.Z.W` y el Release. `develop` publica pre-release y `main` publica o promueve el release estable. No crea commits porque los rulesets protegen las ramas; es idempotente ante reruns.
+- **Motor (`.github/scripts/versioning.mjs`):** parseo del título, cálculo del siguiente segmento de la tabla, validaciones de coincidencia, generación de notas y orquestación de tag/Release. Cubierto por `.github/scripts/versioning.test.mjs` (`node --test`).
+- **Corrección de duplicación:** se elimina la doble ejecución por merge (`push` + `pull_request`), la lista de commits en las notas (donde la PR se repetía) y la repetición de la versión en el cuerpo del Release.
+- **Autoría y fecha verificadas:** la entrada debe cumplir `## [vX.Y.Z.W] - AAAA-MM-DD` e incluir `- **Autor:** Nombre (@usuario)` con la persona real de la entrega (nunca la IA); el lint bloquea el merge si faltan y el bot avisa si el commit fusionado no los trae.
+- 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.4.8.0_core_versionado_por_pr.md](./walkthroughs/core/walkthrough_v0.4.8.0_core_versionado_por_pr.md)
+
+---
 ## [v0.4.7.3] - 2026-10-10
 ### Módulo: M17 Permisos y Roles — Resolución de inconsistencias de auditoría QA y extracción semántica de errores (Frontend)
 - **Alcance General:** Incremento **PATCH (v0.4.7.3)** sobre Frontend M17 Permisos y Roles (`HU-ADM-01`, `HU-ADM-02`, `HU-ADM-04`, `RF-ADM-06`). Resolución integral de observaciones reportadas en la auditoría técnica QA.
@@ -37,6 +49,7 @@ Todas las modificaciones, nuevas funcionalidades y refactorizaciones del proyect
 - **Canales sin cambios:** `develop` publica pre-release y `main` publica/promueve el release estable; el `bump` manual (`workflow_dispatch`) conserva su lógica.
 - **Verificación:** YAML validado con parser; lógica de resolución probada con 6 casos (título con/sin versión, sin prefijo `v`, versión menor, mismatch, fallback a `version.txt`) y parseo de PR asociada simulado con `[]` y payload real.
 - 🔗 **Walkthrough Técnico Oficial:** [walkthroughs/core/walkthrough_v0.4.7.1_core_tag_release_desde_pr.md](./walkthroughs/core/walkthrough_v0.4.7.1_core_tag_release_desde_pr.md)
+---
 
 ---
 
