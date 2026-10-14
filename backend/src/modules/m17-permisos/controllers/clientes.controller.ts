@@ -69,7 +69,16 @@ export class ClientesController {
 
     const resultado = await this.clientesService.bloquearCliente(idUsuario, parsed.data.motivo);
     if (!resultado.ok) {
-      sendError(res, resultado.error ?? 'Error al bloquear', 'CONFLICT', 409);
+      let status = 409;
+      let codigo = 'CONFLICT';
+      if (resultado.error?.includes('raiz')) {
+        status = 403;
+        codigo = 'FORBIDDEN';
+      } else if (resultado.error?.includes('no encontrado')) {
+        status = 404;
+        codigo = 'NOT_FOUND';
+      }
+      sendError(res, resultado.error ?? 'Error al bloquear', codigo, status);
       return;
     }
 
@@ -89,10 +98,21 @@ export class ClientesController {
 
     const resultado = await this.clientesService.desbloquearCliente(idUsuario);
     if (!resultado.ok) {
-      sendError(res, resultado.error ?? 'Error al desbloquear', 'CONFLICT', 409);
+      let status = 409;
+      let codigo = 'CONFLICT';
+      if (resultado.error?.includes('raiz')) {
+        status = 403;
+        codigo = 'FORBIDDEN';
+      } else if (resultado.error?.includes('no encontrado')) {
+        status = 404;
+        codigo = 'NOT_FOUND';
+      }
+      sendError(res, resultado.error ?? 'Error al desbloquear', codigo, status);
       return;
     }
 
     sendSuccess(res, null, 'Cliente desbloqueado exitosamente');
   };
 }
+
+

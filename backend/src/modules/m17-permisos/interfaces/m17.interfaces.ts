@@ -1,4 +1,4 @@
-import { EnumEstadoUsuario } from '../../../core/db/types';
+﻿import { EnumEstadoUsuario } from '../../../core/db/types';
 
 // ==============================================================================
 // M17 - ADMINISTRACIÓN, EMPLEADOS Y PERMISOS
@@ -71,13 +71,13 @@ export interface EmpleadoDetalle extends EmpleadoResumen {
 }
 
 /**
- * Resultado de crear un empleado: incluye la credencial temporal de un solo uso.
- * La contrasena temporal SOLO se retorna en esta respuesta (RF-ADM-01-04, HU-SEG-01).
+ * Resultado de crear un empleado.
+ * La credencial temporal viaja exclusivamente por SMTP via M18 (HU-SEG-06).
+ * Nunca se expone en el payload de respuesta HTTP.
  */
 export interface EmpleadoCreadoRespuesta {
   readonly id_usuario: number;
   readonly correo: string;
-  readonly contrasena_temporal: string;
 }
 
 // ------------------------------------------------------------------------------

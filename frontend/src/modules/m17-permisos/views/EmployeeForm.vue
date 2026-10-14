@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Button, Icon, PageHeader, Input, Alert } from "@/core/components";
-import { computed, onMounted, reactive, ref } from "vue";
+import axios from "axios";
+import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import {
   RouterLink,
   useRoute,
@@ -9,7 +10,12 @@ import {
 } from "vue-router";
 import { service } from "../services/m17.service";
 import { message, notify, useM17 } from "../store/useM17";
-import { crearEmpleadoSchema, actualizarEmpleadoSchema } from "../dtos/empleado.dto";
+import {
+  crearEmpleadoSchema,
+  actualizarEmpleadoSchema,
+  TELEFONO_DIGITOS,
+  DOCUMENTO_MAX,
+} from "../dtos/empleado.dto";
 const route = useRoute();
 const router = useRouter();
 const { refreshPeople } = useM17();
@@ -28,12 +34,46 @@ const form = reactive({
   correo: "",
   telefono: "",
 });
+type Campo = keyof typeof form;
 const initial = ref(JSON.stringify(form));
 const loading = ref(editing.value);
 const busy = ref(false);
 const error = ref("");
+const fieldErrors = reactive<Partial<Record<Campo, string>>>({});
 const saved = ref(false);
 const dirty = computed(() => JSON.stringify(form) !== initial.value);
+// Teléfono y documento solo aceptan dígitos: cualquier otro carácter se descarta al escribir o pegar.
+const soloDigitos = (valor: string, max: number) => valor.replace(/\D/g, "").slice(0, max);
+watch(() => form.telefono, (v) => { const d = soloDigitos(v, TELEFONO_DIGITOS); if (d !== v) form.telefono = d; });
+watch(() => form.doc_identidad, (v) => {
+  if (editing.value) return;
+  const d = soloDigitos(v, DOCUMENTO_MAX);
+  if (d !== v) form.doc_identidad = d;
+});
+// Al corregir un campo se retira su mensaje de error.
+(Object.keys(form) as Campo[]).forEach((campo) =>
+  watch(() => form[campo], () => { delete fieldErrors[campo]; }),
+);
+function setFieldErrors(issues: { field: string; message: string }[]) {
+  (Object.keys(fieldErrors) as Campo[]).forEach((campo) => delete fieldErrors[campo]);
+  for (const { field, message: text } of issues)
+    if (field in form && !fieldErrors[field as Campo]) fieldErrors[field as Campo] = text;
+  return Object.keys(fieldErrors).length > 0;
+}
+// Traduce la respuesta del backend a errores por campo cuando es posible.
+function backendFieldErrors(e: unknown) {
+  if (!axios.isAxiosError(e)) return false;
+  const body = e.response?.data as
+    | { error?: { message?: string; details?: { field?: string; message?: string }[] } }
+    | undefined;
+  const details = body?.error?.details;
+  if (e.response?.status === 400 && Array.isArray(details))
+    return setFieldErrors(details.map((d) => ({ field: d.field ?? "", message: d.message ?? "" })));
+  const text = body?.error?.message ?? "";
+  if (e.response?.status === 409 && /correo/i.test(text))
+    return setFieldErrors([{ field: "correo", message: "Ya existe una cuenta con este correo. Usa otro correo." }]);
+  return false;
+}
 async function load() {
   error.value = "";
   loading.value = editing.value;
@@ -46,6 +86,7 @@ async function load() {
         correo: p.correo,
         telefono: p.telefono || "",
       });
+      await nextTick(); // deja que el filtro de dígitos normalice el teléfono antes de fijar el estado inicial
       initial.value = JSON.stringify(form);
     } catch (e) {
       error.value = message(e);
@@ -68,19 +109,23 @@ function cancel() {
 }
 async function submit() {
   if (busy.value || saved.value) return;
-  busy.value = true;
   error.value = "";
+  const result = editing.value
+    ? actualizarEmpleadoSchema.safeParse(form)
+    : crearEmpleadoSchema.safeParse(form);
+  if (!result.success) {
+    setFieldErrors(result.error.issues.map((i) => ({ field: String(i.path[0] ?? ""), message: i.message })));
+    return;
+  }
+  setFieldErrors([]);
+  busy.value = true;
   try {
     let id: number;
     if (editing.value) {
-      const result = actualizarEmpleadoSchema.safeParse(form);
-      if (!result.success) throw new Error(result.error.issues[0]?.message);
       id = resolvedEmployeeId.value;
-      await service.update(id, result.data);
+      await service.update(id, actualizarEmpleadoSchema.parse(form));
     } else {
-      const result = crearEmpleadoSchema.safeParse(form);
-      if (!result.success) throw new Error(result.error.issues[0]?.message);
-      id = await service.create(result.data);
+      id = await service.create(crearEmpleadoSchema.parse(form));
     }
     saved.value = true;
     await refreshPeople("empleados");
@@ -98,7 +143,7 @@ async function submit() {
         : { path: "/admin/permisos", query: { empleado: id } },
     );
   } catch (e) {
-    error.value = message(e);
+    if (!backendFieldErrors(e)) error.value = message(e);
   } finally {
     busy.value = false;
   }
@@ -133,6 +178,7 @@ defineExpose({ cancel });
     v-else
     class="grid min-w-0 grid-cols-1 items-start gap-6"
     :class="drawer ? '' : 'xl:grid-cols-[minmax(0,1fr)_310px]'"
+    novalidate
     @submit.prevent="submit"
   >
     <section class="rounded-xl border border-neutral-light bg-neutral-white">
@@ -149,29 +195,32 @@ defineExpose({ cancel });
       <div class="grid min-w-0 grid-cols-1 gap-6 p-4 sm:p-6 sm:grid-cols-2">
         <div class="text-sm font-semibold sm:col-span-2"
           ><Input label="Nombre completo *" v-model="form.nombre"
+            :error="fieldErrors.nombre"
             :autofocus="drawer"
             required
-            minlength="2"
             maxlength="150"
             autocomplete="name"
             placeholder="Ej. Ana María Pérez"
              /></div><div class="text-sm font-semibold"
           ><Input :label="editing ? 'Documento de identidad' : 'Documento de identidad *'" v-model="form.doc_identidad"
+            :error="fieldErrors.doc_identidad"
             :required="!editing"
             :disabled="editing"
-            minlength="5"
-            maxlength="20"
+            :maxlength="DOCUMENTO_MAX"
             inputmode="numeric"
-            placeholder="Número de documento"
+            placeholder="Solo números, ej. 1023456789"
              /></div><div class="text-sm font-semibold"
           ><Input label="Teléfono *" v-model="form.telefono"
+            :error="fieldErrors.telefono"
             required
-            maxlength="20"
+            :maxlength="TELEFONO_DIGITOS"
             type="tel"
-            autocomplete="tel"
-            placeholder="Ej. 300 123 4567"
+            inputmode="numeric"
+            autocomplete="tel-national"
+            placeholder="10 dígitos, ej. 3001234567"
              /></div><div class="text-sm font-semibold sm:col-span-2"
           ><Input label="Correo electrónico *" v-model="form.correo"
+            :error="fieldErrors.correo"
             required
             :disabled="editing"
             type="email"

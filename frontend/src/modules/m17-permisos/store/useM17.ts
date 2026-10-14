@@ -53,7 +53,21 @@ export const useM17Store = defineStore("m17", () => {
           "La sesión ha finalizado. Inicia sesión de nuevo para continuar.";
         return state.error;
       }
+      const data = error.response?.data as {
+        message?: string;
+        error?: string | { code?: string; message?: string; details?: unknown };
+      } | undefined;
+
+      const serverMessage =
+        (typeof data?.error === "object" ? data.error?.message : undefined) ||
+        (typeof data?.error === "string" ? data.error : undefined) ||
+        data?.message;
+
       if (error.response?.status === 403) {
+        if (serverMessage) {
+          state.error = serverMessage;
+          return serverMessage;
+        }
         state.ready = false;
         state.employees = [];
         state.clients = [];
@@ -65,7 +79,7 @@ export const useM17Store = defineStore("m17", () => {
       }
       if (!error.response)
         return "No se pudo conectar con el servidor. Comprueba la conexión y vuelve a intentar.";
-      return error.response.data?.message || "No se pudo guardar el cambio.";
+      return serverMessage || "No se pudo guardar el cambio.";
     }
     return error instanceof Error
       ? error.message
